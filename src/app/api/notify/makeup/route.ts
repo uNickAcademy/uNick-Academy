@@ -16,12 +16,11 @@ export async function POST(req: NextRequest) {
 
   if (!lesson) return NextResponse.json({ error: 'Nie znaleziono lekcji' }, { status: 404 })
 
-  // @ts-expect-error zagnieżdżenie joinów
-  const teacher = Array.isArray(lesson.teacher) ? lesson.teacher[0] : lesson.teacher
-  const tProfile = Array.isArray(teacher?.profile) ? teacher.profile[0] : teacher?.profile
-  // @ts-expect-error zagnieżdżenie joinów
-  const student = Array.isArray(lesson.student) ? lesson.student[0] : lesson.student
-  const sProfile = Array.isArray(student?.profile) ? student.profile[0] : student?.profile
+  const rec = lesson as Record<string, unknown>
+  const teacher = (Array.isArray(rec.teacher) ? rec.teacher[0] : rec.teacher) as { profile?: unknown } | undefined
+  const tProfile = (Array.isArray(teacher?.profile) ? teacher!.profile[0] : teacher?.profile) as { email?: string; full_name?: string } | undefined
+  const student = (Array.isArray(rec.student) ? rec.student[0] : rec.student) as { profile?: unknown } | undefined
+  const sProfile = (Array.isArray(student?.profile) ? student!.profile[0] : student?.profile) as { full_name?: string } | undefined
 
   const teacherEmail: string | undefined = tProfile?.email
   const teacherName: string = tProfile?.full_name ?? 'Nauczycielu'

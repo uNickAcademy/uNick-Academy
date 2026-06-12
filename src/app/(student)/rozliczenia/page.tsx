@@ -1,6 +1,6 @@
 import { CreditCard, ArrowDownCircle, ArrowUpCircle, Gift, AlertCircle } from 'lucide-react'
 
-const BALANCE = -120 // ujemne = zaległość, 0 = wyrównane, dodatnie = nadpłata
+const BALANCE: number = -120 // ujemne = zaległość, 0 = wyrównane, dodatnie = nadpłata
 
 const TRANSACTIONS = [
   { id: '1', type: 'charge' as const, amount: -200, desc: 'Lekcja – Milly, 9 cze 2025', date: '9 cze 2025' },
