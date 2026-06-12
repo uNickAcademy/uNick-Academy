@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #7c3aed;
+  --primary-dark: #5b21b6;
+  --navy: #1e1b4b;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+}
+
+.animate-float { animation: float 4s ease-in-out infinite; }
+.gradient-primary { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); }
+.gradient-navy { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); }
+
+.gradient-primary { background: #D72614; }
+.gradient-navy { background: #23479E; }
