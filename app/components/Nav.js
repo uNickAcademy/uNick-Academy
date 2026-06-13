@@ -32,6 +32,7 @@ export default function Nav() {
           <>
             <Link href="/dashboard" style={{ color: '#fff', textDecoration: 'none' }}>Panel ucznia</Link>
             {user.isAdmin && <Link href="/admin/referrals" style={{ color: '#fff', textDecoration: 'none' }}>Panel admina</Link>}
+            {user.isAdmin && <Link href="/admin/students" style={{ color: '#fff', textDecoration: 'none' }}>Uczniowie</Link>}
             <span style={{ color: '#cbd5e1' }}>{user.name}</span>
             <button onClick={logout} style={{ background: 'transparent', color: '#fff', border: '1.5px solid #fff', borderRadius: 8, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Wyloguj</button>
           </>

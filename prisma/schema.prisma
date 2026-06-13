@@ -20,6 +20,13 @@ model User {
   referralCode String   @unique
   createdAt    DateTime @default(now())
 
+  // Optional employer, for corporate/group bookings (e.g. Democo).
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Optional teacher/schedule assignment.
+  enrollment Enrollment?
+
   // Referral this user *received* (i.e. the code they signed up with), if any.
   referralReceived Referral? @relation("ReferredUser")
 
@@ -29,6 +36,46 @@ model User {
   purchases          Purchase[]
   lessons            Lesson[]
   creditTransactions CreditTransaction[]
+}
+
+// ---------------------------------------------------------------------------
+// Companies / corporate clients
+// ---------------------------------------------------------------------------
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  students User[]
+}
+
+// ---------------------------------------------------------------------------
+// Teachers & lesson schedule assignments
+// ---------------------------------------------------------------------------
+
+model Teacher {
+  id   String @id @default(cuid())
+  name String @unique
+
+  enrollments Enrollment[]
+}
+
+model Enrollment {
+  id        String @id @default(cuid())
+  studentId String @unique
+  student   User   @relation(fields: [studentId], references: [id])
+
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+
+  mode      String? // e.g. "online" / "offline"
+  dayOfWeek String? // Polish weekday name, null if not yet scheduled
+  startTime String? // "HH:MM", null if not yet scheduled
+  level     String?
+  notes     String?
+
+  createdAt DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------

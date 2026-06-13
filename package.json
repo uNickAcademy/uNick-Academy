@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.mjs"
+    "db:seed": "node prisma/seed.mjs",
+    "db:import-democo": "node prisma/import-democo.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
