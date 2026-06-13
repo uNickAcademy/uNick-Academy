@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-unick-navy: #1C2B4A;
+  --color-unick-red: #C0392B;
+  --color-unick-cream: #FAF7F2;
+}
