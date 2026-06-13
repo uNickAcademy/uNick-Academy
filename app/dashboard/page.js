@@ -89,52 +89,65 @@ export default function DashboardPage() {
 
         {overview && (
           <>
-            {/* Referral code + explanation */}
-            <section style={cardStyle}>
-              <h2 style={cardTitle}>Program polecający</h2>
-              <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
-                Podaj swój kod znajomemu. Gdy zarejestruje się z Twoim kodem i dokona pierwszej
-                kwalifikującej się płatności (min. 200 PLN lub pierwszy pakiet/miesiąc lekcji),
-                obie strony otrzymują <strong>50 PLN</strong> na koncie. Twoja nagroda zostanie
-                przyznana, gdy nowy uczeń odbędzie co najmniej 4 lekcje i nie zwróci płatności.
-                Środki można wykorzystać na przyszłe lekcje (do 50% wartości faktury) - nie da
-                się ich wypłacić ani przekazać innej osobie, i nie obejmują lekcji próbnych.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ background: '#1C2B4A', color: '#fff', borderRadius: 8, padding: '12px 20px', fontWeight: 800, fontSize: 18, letterSpacing: 1 }}>
-                  {overview.referralCode}
-                </div>
-                <button onClick={copyCode} style={secondaryButton}>{copied ? 'Skopiowano!' : 'Kopiuj kod'}</button>
-              </div>
-            </section>
-
-            {/* Apply a referral code */}
-            {overview.canApplyReferralCode && (
+            {!overview.programmeAvailable && (
               <section style={cardStyle}>
-                <h2 style={cardTitle}>Masz kod polecający od znajomego?</h2>
-                <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 12 }}>
-                  Wpisz go poniżej przed pierwszą płatnością, aby otrzymać 50 PLN na koncie.
+                <h2 style={cardTitle}>Program polecający</h2>
+                <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>
+                  Konta firmowe (B2B) nie biorą udziału w programie polecającym.
                 </p>
-                <form onSubmit={applyCode} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  <input
-                    value={codeInput}
-                    onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-                    placeholder="np. UNICK-AB12CD"
-                    style={{ flex: 1, minWidth: 200, padding: 12, borderRadius: 8, border: '1.5px solid #ddd', fontSize: 14, boxSizing: 'border-box' }}
-                  />
-                  <button type="submit" style={primaryButton}>Zastosuj kod</button>
-                </form>
-                {applyMessage && (
-                  <p style={{ color: applyMessage.type === 'error' ? '#C0392B' : '#16A34A', fontSize: 13, marginTop: 10 }}>{applyMessage.text}</p>
-                )}
               </section>
             )}
-            {!overview.canApplyReferralCode && overview.referralReceived && (
-              <section style={cardStyle}>
-                <p style={{ color: '#6b7280', fontSize: 14 }}>
-                  Twoje konto zostało zarejestrowane z kodem polecającym - status: <strong>{referralStatusLabel(overview.referralReceived.status)}</strong>.
-                </p>
-              </section>
+
+            {overview.programmeAvailable && (
+              <>
+                {/* Referral code + explanation */}
+                <section style={cardStyle}>
+                  <h2 style={cardTitle}>Program polecający</h2>
+                  <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
+                    Podaj swój kod znajomemu. Gdy zarejestruje się z Twoim kodem i dokona pierwszej
+                    kwalifikującej się płatności (min. 200 PLN lub pierwszy pakiet/miesiąc lekcji),
+                    obie strony otrzymują <strong>50 PLN</strong> na koncie. Twoja nagroda zostanie
+                    przyznana, gdy nowy uczeń odbędzie co najmniej 4 lekcje i nie zwróci płatności.
+                    Środki można wykorzystać na przyszłe lekcje (do 50% wartości faktury) - nie da
+                    się ich wypłacić ani przekazać innej osobie, i nie obejmują lekcji próbnych.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ background: '#1C2B4A', color: '#fff', borderRadius: 8, padding: '12px 20px', fontWeight: 800, fontSize: 18, letterSpacing: 1 }}>
+                      {overview.referralCode}
+                    </div>
+                    <button onClick={copyCode} style={secondaryButton}>{copied ? 'Skopiowano!' : 'Kopiuj kod'}</button>
+                  </div>
+                </section>
+
+                {/* Apply a referral code */}
+                {overview.canApplyReferralCode && (
+                  <section style={cardStyle}>
+                    <h2 style={cardTitle}>Masz kod polecający od znajomego?</h2>
+                    <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 12 }}>
+                      Wpisz go poniżej przed pierwszą płatnością, aby otrzymać 50 PLN na koncie.
+                    </p>
+                    <form onSubmit={applyCode} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <input
+                        value={codeInput}
+                        onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                        placeholder="np. UNICK-AB12CD"
+                        style={{ flex: 1, minWidth: 200, padding: 12, borderRadius: 8, border: '1.5px solid #ddd', fontSize: 14, boxSizing: 'border-box' }}
+                      />
+                      <button type="submit" style={primaryButton}>Zastosuj kod</button>
+                    </form>
+                    {applyMessage && (
+                      <p style={{ color: applyMessage.type === 'error' ? '#C0392B' : '#16A34A', fontSize: 13, marginTop: 10 }}>{applyMessage.text}</p>
+                    )}
+                  </section>
+                )}
+                {!overview.canApplyReferralCode && overview.referralReceived && (
+                  <section style={cardStyle}>
+                    <p style={{ color: '#6b7280', fontSize: 14 }}>
+                      Twoje konto zostało zarejestrowane z kodem polecającym - status: <strong>{referralStatusLabel(overview.referralReceived.status)}</strong>.
+                    </p>
+                  </section>
+                )}
+              </>
             )}
 
             {/* Credits */}
@@ -158,34 +171,36 @@ export default function DashboardPage() {
             </section>
 
             {/* Referrals made */}
-            <section style={cardStyle}>
-              <h2 style={cardTitle}>Twoje polecenia</h2>
-              {overview.referrals.length === 0 && (
-                <p style={{ color: '#6b7280', fontSize: 14 }}>Jeszcze nikogo nie poleciłeś. Udostępnij swój kod, aby zacząć zbierać nagrody!</p>
-              )}
-              {overview.referrals.length > 0 && (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                  <thead>
-                    <tr style={{ textAlign: 'left', color: '#6b7280', borderBottom: '1px solid #eee' }}>
-                      <th style={{ padding: '8px 4px' }}>Osoba</th>
-                      <th style={{ padding: '8px 4px' }}>Data zaproszenia</th>
-                      <th style={{ padding: '8px 4px' }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {overview.referrals.map((r) => (
-                      <tr key={r.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
-                        <td style={{ padding: '8px 4px' }}>{r.referredFirstName}</td>
-                        <td style={{ padding: '8px 4px' }}>{new Date(r.createdAt).toLocaleDateString('pl-PL')}</td>
-                        <td style={{ padding: '8px 4px' }}>
-                          <span style={{ color: referralStatusColor(r.status), fontWeight: 700 }}>{referralStatusLabel(r.status)}</span>
-                        </td>
+            {overview.programmeAvailable && (
+              <section style={cardStyle}>
+                <h2 style={cardTitle}>Twoje polecenia</h2>
+                {overview.referrals.length === 0 && (
+                  <p style={{ color: '#6b7280', fontSize: 14 }}>Jeszcze nikogo nie poleciłeś. Udostępnij swój kod, aby zacząć zbierać nagrody!</p>
+                )}
+                {overview.referrals.length > 0 && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', color: '#6b7280', borderBottom: '1px solid #eee' }}>
+                        <th style={{ padding: '8px 4px' }}>Osoba</th>
+                        <th style={{ padding: '8px 4px' }}>Data zaproszenia</th>
+                        <th style={{ padding: '8px 4px' }}>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
+                    </thead>
+                    <tbody>
+                      {overview.referrals.map((r) => (
+                        <tr key={r.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
+                          <td style={{ padding: '8px 4px' }}>{r.referredFirstName}</td>
+                          <td style={{ padding: '8px 4px' }}>{new Date(r.createdAt).toLocaleDateString('pl-PL')}</td>
+                          <td style={{ padding: '8px 4px' }}>
+                            <span style={{ color: referralStatusColor(r.status), fontWeight: 700 }}>{referralStatusLabel(r.status)}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
 
             {/* Demo tools */}
             <section style={{ ...cardStyle, border: '1.5px dashed #ddd' }}>

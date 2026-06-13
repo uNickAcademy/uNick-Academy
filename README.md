@@ -24,6 +24,10 @@ registration or before their first purchase; both sides get a 50 PLN account
 credit once the referred student makes a qualifying purchase (>= 200 PLN, or
 a full package/month) and attends 4 lessons without a refund.
 
+B2B/corporate accounts (students belonging to a `Company`, e.g. Democo) are
+excluded from the programme entirely - their codes can't be redeemed and they
+can't redeem anyone else's.
+
 - **Schema**: `prisma/schema.prisma` - `User`, `Referral`, `CreditTransaction`
   (the credit ledger), `Purchase`, `Lesson`.
 - **Business logic & validation**: `lib/referrals.js` - eligibility checks,
