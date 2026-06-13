@@ -7,7 +7,10 @@ export default function Landing() {
     <div style={{ fontFamily:"sans-serif", background:"#FAF7F2", minHeight:"100vh" }}>
       <nav style={{ background:"#1C2B4A", padding:"16px 32px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ color:"#fff", fontWeight:700, fontSize:20 }}>uNick Academy</span>
-        <button onClick={() => setOpen(true)} style={{ background:"#C0392B", color:"#fff", border:"none", borderRadius:8, padding:"10px 24px", fontWeight:700, cursor:"pointer" }}>Zapisz się</button>
+        <div style={{ display:"flex", gap:16, alignItems:"center" }}>
+          <a href="/dashboard" style={{ color:"#fff", fontSize:14, textDecoration:"none" }}>Panel ucznia</a>
+          <button onClick={() => setOpen(true)} style={{ background:"#C0392B", color:"#fff", border:"none", borderRadius:8, padding:"10px 24px", fontWeight:700, cursor:"pointer" }}>Zapisz się</button>
+        </div>
       </nav>
       <div style={{ maxWidth:700, margin:"80px auto", padding:"0 24px", textAlign:"center" }}>
         <h1 style={{ fontSize:48, fontWeight:800, color:"#1C2B4A", marginBottom:16 }}>Mów po angielsku.<br/><span style={{ color:"#C0392B" }}>Naprawdę.</span></h1>

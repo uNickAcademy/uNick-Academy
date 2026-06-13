@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Users / students
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?  @unique
+  isAdmin      Boolean  @default(false)
+  referralCode String   @unique
+  createdAt    DateTime @default(now())
+
+  // Referral this user *received* (i.e. the code they signed up with), if any.
+  referralReceived Referral? @relation("ReferredUser")
+
+  // Referrals this user has made by sharing their own code.
+  referralsMade Referral[] @relation("ReferringUser")
+
+  purchases          Purchase[]
+  lessons            Lesson[]
+  creditTransactions CreditTransaction[]
+}
+
+// ---------------------------------------------------------------------------
+// Referrals
+// ---------------------------------------------------------------------------
+
+enum ReferralStatus {
+  pending // referred student signed up, no qualifying purchase yet
+  qualified // referred student made a qualifying purchase, their bonus is usable
+  reward_pending // referred student met all reward conditions, awaiting admin review (flagged)
+  rewarded // referrer received their credit
+  rejected // admin rejected the referral
+  cancelled // referral voided (refund, abuse, admin action, ...)
+}
+
+model Referral {
+  id   String @id @default(cuid())
+  code String
+
+  referrerId String
+  referrer   User   @relation("ReferringUser", fields: [referrerId], references: [id])
+
+  referredId String @unique
+  referred   User   @relation("ReferredUser", fields: [referredId], references: [id])
+
+  status ReferralStatus @default(pending)
+
+  // Abuse-prevention: flagged referrals require admin approval before any
+  // reward credit is granted, even if all conditions are otherwise met.
+  flagged    Boolean @default(false)
+  flagReason String?
+  adminNote  String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  qualifiedAt DateTime?
+  rewardedAt  DateTime?
+  cancelledAt DateTime?
+
+  // The purchase that made this referral "qualified". Tracked explicitly so
+  // a later refund/cancellation of *that* purchase can cleanly reverse the
+  // referral's credits.
+  qualifyingPurchaseId String?   @unique
+  qualifyingPurchase   Purchase? @relation("QualifyingPurchase", fields: [qualifyingPurchaseId], references: [id])
+
+  creditTransactions CreditTransaction[]
+}
+
+// ---------------------------------------------------------------------------
+// Account credit ledger
+// ---------------------------------------------------------------------------
+
+enum CreditReason {
+  referred_signup_bonus // 50 PLN credit for the new (referred) student
+  referrer_bonus // 50 PLN credit for the referring student
+  referral_reversal // claws back a previously granted referral credit
+  redemption // credit spent on a purchase/invoice
+  admin_adjustment // manual correction by an admin
+}
+
+enum CreditEntryStatus {
+  pending // granted but not usable yet (awaiting the qualifying purchase)
+  active // counts towards the spendable balance
+  cancelled // voided before it ever became usable
+}
+
+model CreditTransaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Positive = credit granted, negative = credit spent/reversed.
+  amount Float
+
+  reason CreditReason
+  status CreditEntryStatus @default(active)
+
+  referralId String?
+  referral   Referral? @relation(fields: [referralId], references: [id])
+
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
+
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Purchases
+// ---------------------------------------------------------------------------
+
+enum PurchaseType {
+  trial
+  single_lesson
+  package
+  monthly
+}
+
+enum PurchaseStatus {
+  paid
+  refunded
+  cancelled
+}
+
+model Purchase {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  amount Float
+  type   PurchaseType
+  status PurchaseStatus @default(paid)
+
+  // Snapshot of whether this purchase qualified the referral (>=200 PLN or a
+  // full package/month), computed when the purchase is created.
+  isQualifying Boolean @default(false)
+
+  // How much account credit was redeemed against this purchase.
+  creditApplied Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  lessons            Lesson[]
+  creditTransactions CreditTransaction[]
+  qualifiesReferral  Referral?           @relation("QualifyingPurchase")
+}
+
+// ---------------------------------------------------------------------------
+// Lessons
+// ---------------------------------------------------------------------------
+
+model Lesson {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
+
+  occurredAt DateTime @default(now())
+  attended   Boolean  @default(true)
+  isTrial    Boolean  @default(false)
+}

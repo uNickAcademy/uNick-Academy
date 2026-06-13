@@ -5,11 +5,18 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.mjs"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "next": "^16.2.7",
+    "prisma": "^6.19.3",
     "react": "^18",
     "react-dom": "^18"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
   }
 }
