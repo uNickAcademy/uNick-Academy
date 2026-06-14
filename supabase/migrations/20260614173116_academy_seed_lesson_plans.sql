@@ -1,0 +1,7 @@
+insert into public.lesson_plans (title, description, cefr_level, age_group, skills, pdf_path, is_free) values
+('Present Simple for Beginners', 'A friendly introduction to the present simple tense with routines, drills and a speaking activity for absolute beginners.', 'A1', 'young_learners', array['grammar','speaking'], 'samples/present-simple-a1.pdf', true),
+('Describing People: Adjectives', 'Build vocabulary for physical appearance and personality, with matching games and a guided writing task.', 'A1', 'young_learners', array['vocabulary','writing'], 'samples/describing-people-a1.pdf', true),
+('Daily Routines Vocabulary', 'Everyday routines vocabulary practised through listening, pair work and a personalised speaking task.', 'A2', 'young_learners', array['vocabulary','speaking','listening'], 'samples/daily-routines-a2.pdf', true),
+('Conditionals in Context', 'A communicative lesson contrasting first and second conditionals through real-life decision making scenarios.', 'B1', 'teens', array['grammar','speaking'], 'lessons/conditionals-b1.pdf', false),
+('Job Interview Role Play', 'Functional language for job interviews, with model dialogues and a full role-play simulation for adult learners.', 'B2', 'adults', array['speaking','vocabulary'], 'lessons/job-interview-b2.pdf', false),
+('Debate Skills: Expressing Opinions', 'Advanced phrases for agreeing, disagreeing and persuading, culminating in a structured class debate.', 'C1', 'adults', array['speaking','listening'], 'lessons/debate-skills-c1.pdf', false);
