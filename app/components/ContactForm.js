@@ -5,16 +5,15 @@ import Button from "./Button";
 import UNickorn from "./UNickorn";
 import styles from "./ContactForm.module.css";
 
-const AUDIENCE_OPTIONS = [
-  { value: "child", label: "My child" },
-  { value: "teen", label: "Myself — I'm a teenager" },
-  { value: "adult", label: "Myself — I'm an adult" },
-  { value: "company", label: "My company / team" },
-  { value: "unsure", label: "Not sure yet" },
-];
-
-export default function ContactForm() {
+export default function ContactForm({ dict }) {
   const [submitted, setSubmitted] = useState(false);
+
+  const t = dict.contactForm;
+  const fields = dict.common.formFields;
+  const audienceOptions = Object.entries(dict.common.audienceOptions).map(([value, label]) => ({
+    value,
+    label,
+  }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,11 +24,8 @@ export default function ContactForm() {
     return (
       <div className={`${styles.form} ${styles.success}`}>
         <UNickorn variant="trophy" size={84} />
-        <h2 className={styles.successTitle}>Thank you — we&rsquo;ll be in touch.</h2>
-        <p className={styles.successText}>
-          Someone from our team will reach out within one working day to find a time
-          that suits you.
-        </p>
+        <h2 className={styles.successTitle}>{t.success.title}</h2>
+        <p className={styles.successText}>{t.success.text}</p>
       </div>
     );
   }
@@ -39,34 +35,34 @@ export default function ContactForm() {
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-name">
-            Name
+            {fields.name}
           </label>
-          <input id="contact-name" name="name" type="text" required autoComplete="name" className={styles.input} placeholder="Your name" />
+          <input id="contact-name" name="name" type="text" required autoComplete="name" className={styles.input} placeholder={fields.namePlaceholder} />
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-email">
-            Email
+            {fields.email}
           </label>
-          <input id="contact-email" name="email" type="email" required autoComplete="email" className={styles.input} placeholder="you@example.com" />
+          <input id="contact-email" name="email" type="email" required autoComplete="email" className={styles.input} placeholder={fields.emailPlaceholder} />
         </div>
       </div>
 
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-phone">
-            Phone (optional)
+            {fields.phone}
           </label>
-          <input id="contact-phone" name="phone" type="tel" autoComplete="tel" className={styles.input} placeholder="+48 ..." />
+          <input id="contact-phone" name="phone" type="tel" autoComplete="tel" className={styles.input} placeholder={fields.phonePlaceholder} />
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-audience">
-            This is for
+            {t.audienceLabel}
           </label>
           <select id="contact-audience" name="audience" className={styles.select} defaultValue="">
             <option value="" disabled>
-              Choose one
+              {fields.chooseOne}
             </option>
-            {AUDIENCE_OPTIONS.map((opt) => (
+            {audienceOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -77,18 +73,18 @@ export default function ContactForm() {
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="contact-message">
-          Tell us a little about you
+          {t.messageLabel}
         </label>
         <textarea
           id="contact-message"
           name="message"
           className={styles.textarea}
-          placeholder="Current level, goals, scheduling preferences, anything that would help us..."
+          placeholder={t.messagePlaceholder}
         />
       </div>
 
       <Button type="submit" variant="primary" fullWidth>
-        Send message
+        {t.submit}
       </Button>
     </form>
   );

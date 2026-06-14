@@ -9,7 +9,7 @@ import { useConsultation } from "./ConsultationProvider";
  * an audience (e.g. "child", "teen", "adult", "company").
  */
 export default function ConsultationButton({ audience, children, onClick, ...rest }) {
-  const { open } = useConsultation();
+  const { open, dict } = useConsultation();
 
   const handleClick = (e) => {
     open(audience);
@@ -18,7 +18,7 @@ export default function ConsultationButton({ audience, children, onClick, ...res
 
   return (
     <Button onClick={handleClick} {...rest}>
-      {children || "Book a Free Consultation"}
+      {children || dict.common.buttons.bookConsultation}
     </Button>
   );
 }

@@ -5,8 +5,8 @@ import Reveal from "./Reveal";
 import styles from "./CTASection.module.css";
 
 export default function CTASection({
-  title = "Ready to start speaking?",
-  subtitle = "Tell us who you are, and we’ll help you find your people.",
+  title,
+  subtitle,
   secondaryHref,
   secondaryLabel,
   audience,

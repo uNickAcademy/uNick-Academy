@@ -90,6 +90,48 @@
   flex-shrink: 0;
 }
 
+.langSwitcher {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.langLink {
+  padding: 5px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-soft);
+  transition: color var(--transition-base), background var(--transition-base);
+}
+
+.langLink:hover {
+  color: var(--color-red);
+}
+
+.langActive {
+  color: var(--color-white);
+  background: var(--color-blue);
+}
+
+.langActive:hover {
+  color: var(--color-white);
+}
+
+.mobileLangSwitcher {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.mobileLangSwitcher .langLink {
+  padding: 8px 16px;
+  border: 1.5px solid var(--color-border);
+  font-size: 14px;
+}
+
 .ctaDesktop {
   display: none;
 }
@@ -169,6 +211,9 @@
   }
   .ctaDesktop {
     display: inline-flex;
+  }
+  .langSwitcher {
+    display: flex;
   }
   .menuToggle {
     display: none;

@@ -1,17 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
-import { footerNav, platformLinks, siteConfig } from "../lib/site-config";
+import { getFooterNav, platformLinks, siteConfig } from "../lib/site-config";
 import styles from "./Footer.module.css";
 
-export default function Footer() {
+export default function Footer({ locale, dict }) {
   const year = new Date().getFullYear();
+  const footerNav = getFooterNav(locale, dict);
+  const homeHref = `/${locale}`;
 
   return (
     <footer className={styles.footer}>
       <div className="container">
         <div className={styles.top}>
           <div className={styles.brand}>
-            <Link href="/" className={styles.logo}>
+            <Link href={homeHref} className={styles.logo}>
               <span className={styles.logoMark}>
                 <Image src="/brand/shield.png" alt="" width={28} height={35} aria-hidden="true" />
               </span>
@@ -19,7 +21,7 @@ export default function Footer() {
                 <span className={styles.logoRed}>uNick</span> Academy
               </span>
             </Link>
-            <p className={styles.tagline}>{siteConfig.description}</p>
+            <p className={styles.tagline}>{dict.meta.description}</p>
             <div className={styles.social}>
               <a
                 href={siteConfig.social.instagram}
@@ -74,11 +76,11 @@ export default function Footer() {
 
         <div className={styles.bottom}>
           <span>
-            © {year} {siteConfig.name}. Made with warmth in Poland &amp; the UK.
+            © {year} {siteConfig.name}. {dict.common.footer.copyright}
           </span>
           <div className={styles.bottomLinks}>
-            <Link href={platformLinks.studentLogin.href}>{platformLinks.studentLogin.label}</Link>
-            <Link href={platformLinks.adminPanel.href}>{platformLinks.adminPanel.label}</Link>
+            <Link href={platformLinks.studentLogin.href}>{dict.common.platformLinks.studentLogin}</Link>
+            <Link href={platformLinks.adminPanel.href}>{dict.common.platformLinks.adminPanel}</Link>
           </div>
         </div>
       </div>

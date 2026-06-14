@@ -1,15 +1,12 @@
 // ============================================================
 // Central, editable site configuration.
-// Update copy, links and contact details here without
-// touching component code.
+// Locale-independent facts live here. Translated copy lives in
+// app/lib/dictionaries/{en,pl}.js.
 // ============================================================
 
 export const siteConfig = {
   name: "uNick Academy",
   shortName: "uNick",
-  tagline: "English is about people. Not perfection.",
-  description:
-    "uNick Academy is a family-founded international language academy where children, teenagers, adults and companies learn to communicate through conversation, curiosity and genuine human connection.",
   url: "https://unick-academy.pl",
   email: "hello@unick-academy.pl",
   social: {
@@ -18,54 +15,67 @@ export const siteConfig = {
   },
 };
 
-// Primary navigation, shared across the whole site.
-export const primaryNav = [
-  { label: "Home", href: "/" },
-  { label: "Children", href: "/children" },
-  { label: "Teenagers", href: "/teenagers" },
-  { label: "Adults", href: "/adults" },
-  { label: "Companies", href: "/companies" },
-  { label: "How We Teach", href: "/how-we-teach" },
-  { label: "Meet Us", href: "/meet-us" },
-  { label: "Contact", href: "/contact" },
-];
-
 // ------------------------------------------------------------
 // Links into the EXISTING platform (student panel, sign in,
 // admin area, booking system, etc).
 //
 // These point at systems that already exist outside this
-// redesign. Replace the href values below with the real,
-// existing URLs/routes for the sign-in, student and admin
-// areas — nothing in those systems needs to change.
+// redesign and outside the [locale] routing — do not prefix
+// them with a locale. Labels are translated via
+// dict.common.platformLinks.
 // ------------------------------------------------------------
 export const platformLinks = {
-  studentLogin: { label: "Student Login", href: "/logowanie" },
-  parentLogin: { label: "Parent Login", href: "/logowanie" },
-  adminPanel: { label: "Admin Panel", href: "/admin" },
+  studentLogin: { href: "/logowanie" },
+  parentLogin: { href: "/logowanie" },
+  adminPanel: { href: "/admin" },
 };
 
-export const footerNav = [
-  {
-    heading: "Explore",
-    links: primaryNav.filter((item) => item.label !== "Home"),
-  },
-  {
-    heading: "Pathways",
-    links: [
-      { label: "Children", href: "/children" },
-      { label: "Teenagers", href: "/teenagers" },
-      { label: "Adults", href: "/adults" },
-      { label: "Companies", href: "/companies" },
-    ],
-  },
-  {
-    heading: "Academy",
-    links: [
-      { label: "How We Teach", href: "/how-we-teach" },
-      { label: "Meet Us", href: "/meet-us" },
-      { label: "Contact", href: "/contact" },
-      platformLinks.studentLogin,
-    ],
-  },
+// Route segments for the primary navigation, shared across the
+// whole site. Labels come from dict.common.nav[key].
+const NAV_ROUTES = [
+  { key: "home", path: "" },
+  { key: "children", path: "/children" },
+  { key: "teenagers", path: "/teenagers" },
+  { key: "adults", path: "/adults" },
+  { key: "companies", path: "/companies" },
+  { key: "howWeTeach", path: "/how-we-teach" },
+  { key: "meetUs", path: "/meet-us" },
+  { key: "contact", path: "/contact" },
 ];
+
+export function getPrimaryNav(locale, dict) {
+  return NAV_ROUTES.map((item) => ({
+    label: dict.common.nav[item.key],
+    href: `/${locale}${item.path}`,
+  }));
+}
+
+export function getFooterNav(locale, dict) {
+  const primary = getPrimaryNav(locale, dict);
+  const homeHref = `/${locale}`;
+
+  return [
+    {
+      heading: dict.common.footer.explore,
+      links: primary.filter((item) => item.href !== homeHref),
+    },
+    {
+      heading: dict.common.footer.pathways,
+      links: [
+        { label: dict.common.nav.children, href: `/${locale}/children` },
+        { label: dict.common.nav.teenagers, href: `/${locale}/teenagers` },
+        { label: dict.common.nav.adults, href: `/${locale}/adults` },
+        { label: dict.common.nav.companies, href: `/${locale}/companies` },
+      ],
+    },
+    {
+      heading: dict.common.footer.academy,
+      links: [
+        { label: dict.common.nav.howWeTeach, href: `/${locale}/how-we-teach` },
+        { label: dict.common.nav.meetUs, href: `/${locale}/meet-us` },
+        { label: dict.common.nav.contact, href: `/${locale}/contact` },
+        { label: dict.common.platformLinks.studentLogin, href: platformLinks.studentLogin.href },
+      ],
+    },
+  ];
+}

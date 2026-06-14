@@ -3,7 +3,7 @@ import PlaceholderMedia from "../PlaceholderMedia";
 import Icon from "../Icon";
 import styles from "./PathCard.module.css";
 
-export default function PathCard({ kicker, title, text, href, mediaCaption, tone }) {
+export default function PathCard({ kicker, title, text, href, mediaCaption, tone, exploreLabel }) {
   return (
     <Link href={href} className={styles.card}>
       <PlaceholderMedia caption={mediaCaption} tone={tone} ratio="3:2" />
@@ -12,7 +12,7 @@ export default function PathCard({ kicker, title, text, href, mediaCaption, tone
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.text}>{text}</p>
         <span className={styles.link}>
-          Explore {kicker.toLowerCase()} <Icon name="arrowRight" size={16} />
+          {exploreLabel} {kicker.toLowerCase()} <Icon name="arrowRight" size={16} />
         </span>
       </div>
     </Link>

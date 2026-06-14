@@ -5,15 +5,7 @@ import Button from "./Button";
 import UNickorn from "./UNickorn";
 import styles from "./ConsultationModal.module.css";
 
-const AUDIENCE_OPTIONS = [
-  { value: "child", label: "My child" },
-  { value: "teen", label: "Myself — I'm a teenager" },
-  { value: "adult", label: "Myself — I'm an adult" },
-  { value: "company", label: "My company / team" },
-  { value: "unsure", label: "Not sure yet" },
-];
-
-export default function ConsultationModal({ isOpen, onClose, audience }) {
+export default function ConsultationModal({ isOpen, onClose, audience, dict }) {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -34,6 +26,13 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
 
   if (!isOpen) return null;
 
+  const t = dict.consultationModal;
+  const fields = dict.common.formFields;
+  const audienceOptions = Object.entries(dict.common.audienceOptions).map(([value, label]) => ({
+    value,
+    label,
+  }));
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
@@ -53,7 +52,7 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
         aria-modal="true"
         aria-labelledby="consultation-title"
       >
-        <button className={styles.close} onClick={onClose} aria-label="Close">
+        <button className={styles.close} onClick={onClose} aria-label={t.closeAria}>
           ✕
         </button>
 
@@ -61,33 +60,25 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
           <div className={styles.success}>
             <UNickorn variant="trophy" size={84} className={styles.successMark} />
             <h2 id="consultation-title" className={styles.title}>
-              Thank you — we&rsquo;ll be in touch.
+              {t.success.title}
             </h2>
-            <p className={styles.subtitle}>
-              Someone from our team will reach out within one working day to find a
-              time that suits you. In the meantime, take a look around — there&rsquo;s
-              a place at the table for you.
-            </p>
+            <p className={styles.subtitle}>{t.success.subtitle}</p>
             <Button variant="secondary" onClick={onClose} fullWidth>
-              Close
+              {t.success.close}
             </Button>
           </div>
         ) : (
           <>
-            <span className={`eyebrow ${styles.eyebrow}`}>Free consultation</span>
+            <span className={`eyebrow ${styles.eyebrow}`}>{t.eyebrow}</span>
             <h2 id="consultation-title" className={styles.title}>
-              Let&rsquo;s find your people.
+              {t.title}
             </h2>
-            <p className={styles.subtitle}>
-              Tell us a little about you and we&rsquo;ll get back to you to arrange a
-              free, no-pressure conversation — about you, your goals, and whether
-              we&rsquo;re a good fit.
-            </p>
+            <p className={styles.subtitle}>{t.subtitle}</p>
 
             <form onSubmit={handleSubmit}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="consult-name">
-                  Name
+                  {fields.name}
                 </label>
                 <input
                   id="consult-name"
@@ -96,13 +87,13 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
                   required
                   autoComplete="name"
                   className={styles.input}
-                  placeholder="Your name"
+                  placeholder={fields.namePlaceholder}
                 />
               </div>
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="consult-email">
-                  Email
+                  {fields.email}
                 </label>
                 <input
                   id="consult-email"
@@ -111,13 +102,13 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
                   required
                   autoComplete="email"
                   className={styles.input}
-                  placeholder="you@example.com"
+                  placeholder={fields.emailPlaceholder}
                 />
               </div>
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="consult-phone">
-                  Phone (optional)
+                  {fields.phone}
                 </label>
                 <input
                   id="consult-phone"
@@ -125,13 +116,13 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
                   type="tel"
                   autoComplete="tel"
                   className={styles.input}
-                  placeholder="+48 ..."
+                  placeholder={fields.phonePlaceholder}
                 />
               </div>
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="consult-audience">
-                  This consultation is for
+                  {t.audienceLabel}
                 </label>
                 <select
                   id="consult-audience"
@@ -140,9 +131,9 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
                   defaultValue={audience || ""}
                 >
                   <option value="" disabled>
-                    Choose one
+                    {fields.chooseOne}
                   </option>
-                  {AUDIENCE_OPTIONS.map((opt) => (
+                  {audienceOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -152,25 +143,22 @@ export default function ConsultationModal({ isOpen, onClose, audience }) {
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="consult-message">
-                  Anything you&rsquo;d like us to know? (optional)
+                  {t.messageLabel}
                 </label>
                 <textarea
                   id="consult-message"
                   name="message"
                   className={styles.textarea}
-                  placeholder="e.g. current level, goals, scheduling preferences..."
+                  placeholder={t.messagePlaceholder}
                 />
               </div>
 
               <Button type="submit" variant="primary" fullWidth className={styles.submit}>
-                Send &amp; book my consultation
+                {t.submit}
               </Button>
             </form>
 
-            <p className={styles.fineprint}>
-              No pressure, no obligation — just a friendly conversation to see
-              where you fit at uNick Academy.
-            </p>
+            <p className={styles.fineprint}>{t.fineprint}</p>
           </>
         )}
       </div>
