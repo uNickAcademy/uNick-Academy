@@ -60,11 +60,20 @@ annual recurring prices in PLN, EUR and USD (see `lib/constants.js` ->
 `PRICES` for amounts: ~20 PLN / 5 EUR / 6 USD per month, annual priced at
 ~10x the monthly rate i.e. 2 months free).
 
-> The brief's monthly amounts (20 PLN / 5 EUR / 6 USD) are treated as
-> **VAT-inclusive** for v1 - Stripe automatic tax is not enabled. Annual
-> pricing wasn't specified in the brief; the "2 months free" amounts above
-> are a placeholder and should be reviewed before launch. Revisit VAT/tax
-> settings before going live, as noted in the brief.
+> The brief's monthly amounts (20 PLN / 5 EUR / 6 USD) are **net
+> (tax-exclusive)** prices. `scripts/setup-stripe.js` creates Stripe Prices
+> with `tax_behavior: 'exclusive'`, and the Checkout Session
+> (`app/academy/api/checkout/route.js`) has `automatic_tax: { enabled: true }`
+> and `customer_update: { address: 'auto', name: 'auto' }`, so Stripe Tax
+> calculates and adds VAT on top based on the customer's location/address.
+>
+> For this to actually calculate tax, **Stripe Tax must be enabled in the
+> Stripe Dashboard** (Settings -> Tax) with an origin address configured, and
+> the relevant tax registrations added (e.g. Poland VAT / EU OSS for selling
+> digital services to EU consumers). Without this, `automatic_tax` will
+> either error or calculate $0 tax. Annual pricing wasn't specified in the
+> brief; the "2 months free" amounts above are a placeholder and should be
+> reviewed before launch.
 
 ### Create the product & prices
 

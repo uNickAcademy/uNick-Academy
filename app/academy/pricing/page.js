@@ -64,6 +64,7 @@ export default async function PricingPage({ searchParams }) {
               {symbol}{price}
               <span className="text-base font-medium text-slate-500"> {period}</span>
             </p>
+            <p className="text-xs text-slate-400 mb-2">+ VAT where applicable</p>
             {plan === 'annual' && (
               <p className="text-sm text-sky-700 mb-4">2 months free vs. monthly</p>
             )}
@@ -96,8 +97,9 @@ export default async function PricingPage({ searchParams }) {
       </div>
 
       <p className="text-xs text-slate-400 mt-8">
-        Prices shown include VAT where applicable. You can cancel your membership at any time
-        from your account page.
+        Prices shown are exclusive of VAT. Where VAT applies, it will be added at checkout
+        based on your location. You can cancel your membership at any time from your account
+        page.
       </p>
     </div>
   )

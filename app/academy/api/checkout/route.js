@@ -56,6 +56,11 @@ export async function POST(request) {
     subscription_data: {
       metadata: { supabase_user_id: user.id },
     },
+    // Prices are tax-exclusive (net) - Stripe Tax adds VAT on top based on
+    // the customer's location. Requires Stripe Tax to be enabled with an
+    // origin address configured in the Dashboard.
+    automatic_tax: { enabled: true },
+    customer_update: { address: 'auto', name: 'auto' },
   })
 
   return NextResponse.redirect(session.url, 303)

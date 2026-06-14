@@ -60,6 +60,8 @@ async function findOrCreatePrice(product, plan, interval, currency, unitAmount) 
     recurring: { interval },
     lookup_key: lookupKey,
     nickname: `${plan} (${currency.toUpperCase()})`,
+    // Amounts are net (tax-exclusive) - Stripe Tax adds VAT on top.
+    tax_behavior: 'exclusive',
   })
 }
 
