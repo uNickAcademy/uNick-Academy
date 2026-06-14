@@ -1,0 +1,57 @@
+.frame {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(135deg, var(--tone-a, #E7ECF4) 0%, var(--tone-b, #F4EBDD) 100%);
+  box-shadow: var(--shadow-card);
+  isolation: isolate;
+}
+
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.5), transparent 45%),
+    radial-gradient(circle at 80% 75%, rgba(28, 43, 74, 0.12), transparent 50%);
+  mix-blend-mode: soft-light;
+}
+
+.caption {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 18px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-blue);
+  background: rgba(255, 253, 249, 0.72);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 253, 249, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-red);
+  box-shadow: var(--shadow-card);
+}
+
+.ratio1x1 { aspect-ratio: 1 / 1; }
+.ratio4x3 { aspect-ratio: 4 / 3; }
+.ratio3x4 { aspect-ratio: 3 / 4; }
+.ratio16x9 { aspect-ratio: 16 / 9; }
+.ratio3x2 { aspect-ratio: 3 / 2; }

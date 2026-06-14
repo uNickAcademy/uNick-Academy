@@ -1,0 +1,71 @@
+.form {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(28px, 4vw, 44px);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-warm-white);
+  font-size: 15px;
+  font-family: var(--font-body), sans-serif;
+  color: var(--color-ink);
+  transition: border-color var(--transition-base);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--color-red);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+
+.success {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.successTitle {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.successText {
+  color: var(--color-ink-soft);
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,215 @@
+/* Shared layout patterns for secondary (non-home) pages */
+
+.hero {
+  padding-top: clamp(40px, 6vw, 72px);
+  padding-bottom: clamp(24px, 4vw, 40px);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(36px, 6vw, 72px);
+  align-items: center;
+}
+
+.title {
+  font-size: clamp(36px, 6vw, 58px);
+  margin-bottom: 20px;
+}
+
+.accent {
+  color: var(--color-red);
+}
+
+.subtitle {
+  font-size: clamp(17px, 2vw, 19px);
+  color: var(--color-ink-soft);
+  line-height: 1.75;
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.media {
+  position: relative;
+}
+
+.unicornCorner {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+}
+
+.unicornCornerLeft {
+  position: absolute;
+  bottom: -20px;
+  left: -20px;
+}
+
+.altSection {
+  background: var(--color-cream);
+}
+
+.navySection {
+  background: var(--color-blue);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(36px, 6vw, 72px);
+  align-items: center;
+}
+
+.splitReverse {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(36px, 6vw, 72px);
+  align-items: center;
+}
+
+.splitReverse > *:first-child {
+  order: 2;
+}
+
+.copy h2 {
+  font-size: clamp(28px, 4vw, 38px);
+  margin-bottom: 20px;
+}
+
+.copy p {
+  color: var(--color-ink-soft);
+  font-size: 17px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  height: 100%;
+}
+
+.card h3 {
+  font-size: 19px;
+  margin-bottom: 10px;
+}
+
+.card p {
+  color: var(--color-ink-soft);
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 24px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.timelineItem:last-child {
+  border-bottom: none;
+}
+
+.timelineTime {
+  font-family: var(--font-display), serif;
+  font-weight: 600;
+  color: var(--color-red);
+}
+
+.timelineTitle {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.timelineText {
+  color: var(--color-ink-soft);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Numbered step list (e.g. process / how it works) */
+.stepList {
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 20px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.step:last-child {
+  border-bottom: none;
+}
+
+.stepNumber {
+  font-family: var(--font-display), serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-red);
+}
+
+.stepTitle {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.stepText {
+  color: var(--color-ink-soft);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+@media (max-width: 940px) {
+  .hero,
+  .split,
+  .splitReverse {
+    grid-template-columns: 1fr;
+  }
+
+  .media {
+    order: -1;
+  }
+
+  .splitReverse > *:first-child {
+    order: -1;
+  }
+
+  .unicornCorner,
+  .unicornCornerLeft {
+    display: none;
+  }
+
+  .timelineItem,
+  .step {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

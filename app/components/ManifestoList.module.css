@@ -1,0 +1,32 @@
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  padding: clamp(18px, 3vw, 28px) 0;
+  border-bottom: 1px solid rgba(250, 244, 236, 0.16);
+  display: flex;
+  align-items: baseline;
+  gap: clamp(16px, 3vw, 32px);
+}
+
+.item:first-child {
+  border-top: 1px solid rgba(250, 244, 236, 0.16);
+}
+
+.index {
+  font-family: var(--font-display), serif;
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--color-red-bright);
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 2.5em;
+}
+
+.text {
+  font-family: var(--font-display), serif;
+  font-size: clamp(20px, 3.4vw, 32px);
+  color: var(--color-warm-white);
+  line-height: 1.35;
+}

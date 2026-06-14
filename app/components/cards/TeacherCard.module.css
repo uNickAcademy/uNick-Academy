@@ -1,0 +1,41 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.country {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.name {
+  font-size: 19px;
+  margin: 0;
+}
+
+.flag {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+
+.quote {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--color-ink-soft);
+  line-height: 1.6;
+  position: relative;
+  padding-left: 16px;
+  border-left: 3px solid var(--color-red-soft);
+}
+
+.subject {
+  font-size: 13.5px;
+  color: var(--color-muted);
+}
