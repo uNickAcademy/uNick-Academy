@@ -1,22 +1,9 @@
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
-import "../globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { ConsultationProvider } from "../components/ConsultationProvider";
+import { SetHtmlLang } from "../components/SetHtmlLang";
 import { siteConfig } from "../lib/site-config";
 import { getDictionary, locales } from "../lib/dictionaries";
-
-const fraunces = Fraunces({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -59,22 +46,19 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function RootLayout({ children, params }) {
+export default async function LocaleLayout({ children, params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
 
   return (
-    <html lang={locale} className={`${fraunces.variable} ${jakarta.variable}`}>
-      <body>
-        <ConsultationProvider locale={locale}>
-          <a href="#main-content" className="visually-hidden">
-            {dict.common.skipToContent}
-          </a>
-          <Navbar locale={locale} dict={dict} />
-          <main id="main-content">{children}</main>
-          <Footer locale={locale} dict={dict} />
-        </ConsultationProvider>
-      </body>
-    </html>
+    <ConsultationProvider locale={locale}>
+      <SetHtmlLang locale={locale} />
+      <a href="#main-content" className="visually-hidden">
+        {dict.common.skipToContent}
+      </a>
+      <Navbar locale={locale} dict={dict} />
+      <main id="main-content">{children}</main>
+      <Footer locale={locale} dict={dict} />
+    </ConsultationProvider>
   );
 }

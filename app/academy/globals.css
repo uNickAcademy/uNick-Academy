@@ -1,0 +1,15 @@
+@tailwind components;
+@tailwind utilities;
+
+.academy-shell {
+  font-family: var(--font-lora), serif;
+}
+
+.academy-shell h1,
+.academy-shell h2,
+.academy-shell h3,
+.academy-shell h4,
+.academy-shell h5,
+.academy-shell h6 {
+  font-family: var(--font-poppins), sans-serif;
+}
