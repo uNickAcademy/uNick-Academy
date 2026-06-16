@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-navy:   #1C2B4A;
+    --color-red:    #C0392B;
+    --color-cream:  #FAF7F2;
+    --color-muted:  #F0EDE8;
+    --color-green:  #27AE60;
+    --color-amber:  #E67E22;
+    --color-subtle: #7B8FA1;
+
+    --background:   var(--color-cream);
+    --foreground:   var(--color-navy);
+    --sidebar-bg:   var(--color-navy);
+    --sidebar-text: #E8EBF0;
+    --card-bg:      #FFFFFF;
+    --border:       #E8EBF0;
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-navy);
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #C5CCDA;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  /* Karta – podstawowy element UI */
+  .card {
+    @apply bg-white rounded-lg shadow-card border border-[#E8EBF0] p-6;
+  }
+
+  /* Status pills */
+  .pill-green  { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800; }
+  .pill-amber  { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800; }
+  .pill-red    { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800; }
+  .pill-subtle { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600; }
+  .pill-navy   { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-navy-100 text-navy-600; }
+
+  /* Sidebar aktywny link */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#9DAAB8] hover:bg-white/10 hover:text-white transition-colors;
+  }
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-white/15 text-white;
+  }
+
+  /* Przycisk główny */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-navy-500 text-white text-sm font-medium rounded-md hover:bg-navy-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Przycisk drugorzędny */
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-white text-navy-500 text-sm font-medium rounded-md border border-[#E8EBF0] hover:bg-brand-muted transition-colors disabled:opacity-50;
+  }
+
+  /* Przycisk destrukcyjny */
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-brand-red text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-50;
+  }
+}
