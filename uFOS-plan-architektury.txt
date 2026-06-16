@@ -1,0 +1,1021 @@
+uFOS – uNick Financial Operating System
+Plan architektury i implementacji MVP
+================================================================================
+Data: 2026-06-16
+================================================================================
+
+
+1. ANALIZA WYMAGAŃ – WNIOSKI KLUCZOWE
+================================================================================
+
+Skala systemu: To nie jest aplikacja do faktur. To wewnętrzny dział finansowy
+obsługujący 3 podmioty prawne, kilkanaście modułów i kilka ról użytkowników
+z różnymi poziomami dostępu.
+
+Kluczowe napięcia projektowe:
+- Dane per-podmiot + widok konsolidowany dla Mileny
+- AI analizuje i rekomenduje, ale NIGDY nie decyduje samodzielnie
+- Fundacja wymaga osobnej warstwy compliance (separated funds)
+- System musi blokować, nie tylko ostrzegać
+
+Najważniejsze niefunkcjonalne:
+- Audit log jako first-class citizen (nie dodatek)
+- Month close jako proces blokujący, nie raport
+- Terminy i checklisty jako serce systemu (główny problem użytkownika)
+
+
+2. PROPONOWANA ARCHITEKTURA SYSTEMU
+================================================================================
+
+┌─────────────────────────────────────────────────────────────┐
+│                        NEXT.JS APP                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │  Dashboard   │  │   Modules    │  │   Admin/Config   │  │
+│  │  (Milena/Sara│  │  (Finance,   │  │  (Entities,      │  │
+│  │   /Advisor)  │  │   HR, AI...) │  │   Users, Integr.)│  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              API LAYER (Next.js Route Handlers)     │   │
+│  │  Auth │ Documents │ Finance │ HR │ AI │ Import │ ... │   │
+│  └─────────────────────────────────────────────────────┘   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        │                      │                      │
+   ┌────▼────┐          ┌──────▼──────┐        ┌─────▼─────┐
+   │SUPABASE │          │  AI LAYER   │        │INTEGRATION│
+   │Auth +   │          │  (Anthropic │        │  LAYER    │
+   │Postgres │          │   Claude)   │        │(wFirma,   │
+   │Storage  │          │             │        │ KSeF,Bank)│
+   │RLS      │          │             │        │           │
+   └─────────┘          └─────────────┘        └───────────┘
+
+Dlaczego Supabase:
+- Row-Level Security = bezpieczeństwo na poziomie bazy (nie tylko API)
+- Storage = pliki dokumentów
+- Realtime = notyfikacje dla Mileny i Sary
+- Auth = gotowe, bezpieczne
+- Postgres = pełne możliwości SQL dla raportów finansowych
+
+Dlaczego nie osobna baza per podmiot:
+Trzy podmioty, ale jedna Milena która widzi wszystko. Shared DB z entity_id
+na każdej tabeli + RLS. Łatwiej o konsolidację, trudniej o przypadkowe
+mieszanie danych.
+
+
+3. STRUKTURA FOLDERÓW
+================================================================================
+
+/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   └── invite/
+│   ├── (app)/
+│   │   ├── layout.tsx              # App shell z nawigacją
+│   │   ├── dashboard/
+│   │   │   ├── cfo/                # Dashboard Mileny
+│   │   │   └── ops/                # Dashboard Sary
+│   │   ├── documents/              # Moduł dokumentów
+│   │   ├── invoices/               # Faktury
+│   │   ├── accounting/             # Księgowość (VAT, CIT)
+│   │   ├── lessons/                # Dane lekcyjne
+│   │   │   ├── import/
+│   │   │   ├── revenue/
+│   │   │   └── profitability/
+│   │   ├── hr/                     # Kadry
+│   │   ├── payroll/                # Płace
+│   │   ├── cashflow/               # Cashflow
+│   │   ├── foundation/             # Fundacja
+│   │   ├── tasks/                  # Zadania i terminy
+│   │   ├── month-close/            # Zamknięcie miesiąca
+│   │   ├── advisor/                # Pytania do doradców
+│   │   ├── ai/                     # AI CFO + Tax Strategist
+│   │   ├── integrations/           # Konfiguracja integracji
+│   │   ├── audit-log/              # Historia zmian
+│   │   └── settings/               # Ustawienia systemu
+│   └── api/
+│       ├── auth/
+│       ├── documents/
+│       ├── invoices/
+│       ├── lessons/
+│       ├── payroll/
+│       ├── cashflow/
+│       ├── tasks/
+│       ├── month-close/
+│       ├── ai/
+│       │   ├── analyze/
+│       │   └── recommend/
+│       └── integrations/
+│           ├── import/
+│           └── webhook/
+│
+├── components/
+│   ├── ui/                         # shadcn/ui base
+│   ├── shared/                     # Wspólne (EntityBadge, StatusPill...)
+│   ├── dashboard/
+│   ├── documents/
+│   ├── lessons/
+│   ├── payroll/
+│   ├── cashflow/
+│   ├── tasks/
+│   ├── ai/
+│   └── charts/
+│
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts
+│   │   ├── server.ts
+│   │   └── middleware.ts
+│   ├── auth/
+│   │   ├── permissions.ts
+│   │   └── rbac.ts
+│   ├── ai/
+│   │   ├── cfo-analyzer.ts
+│   │   └── tax-strategist.ts
+│   ├── integrations/
+│   │   ├── base-adapter.ts
+│   │   ├── wfirma/
+│   │   ├── ksef/
+│   │   ├── bank/
+│   │   └── lessons-app/
+│   └── utils/
+│
+├── types/
+│   ├── database.types.ts           # Auto-generowane z Supabase
+│   ├── domain.ts                   # Typy biznesowe
+│   └── api.ts
+│
+├── hooks/
+├── stores/                         # Zustand (globalny stan UI)
+└── supabase/
+    ├── migrations/                 # Historia migracji DB
+    └── seed.sql                    # Dane startowe (podmioty, role)
+
+
+4. SCHEMAT BAZY DANYCH
+================================================================================
+
+--- WARSTWA TOŻSAMOŚCI I UPRAWNIEŃ ---
+
+entities (
+  id uuid PK,
+  name text NOT NULL,
+  short_name text,
+  type text,                     -- 'sp_zoo' | 'fundacja'
+  nip text UNIQUE,
+  krs text,
+  regon text,
+  address jsonb,
+  active boolean DEFAULT true,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+
+users (
+  id uuid PK REFERENCES auth.users,
+  email text NOT NULL,
+  full_name text NOT NULL,
+  avatar_url text,
+  active boolean DEFAULT true,
+  created_at timestamptz
+)
+
+user_entity_roles (
+  id uuid PK,
+  user_id uuid REFERENCES users,
+  entity_id uuid REFERENCES entities,  -- NULL = dostęp do wszystkich
+  role text NOT NULL,
+  granted_by uuid REFERENCES users,
+  granted_at timestamptz
+)
+
+permissions (
+  id uuid PK,
+  role text NOT NULL,
+  resource text NOT NULL,
+  action text NOT NULL,
+  conditions jsonb
+)
+
+--- DOKUMENTY ---
+
+documents (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  type text,
+  status text DEFAULT 'new',
+  title text,
+  description text,
+  document_date date,
+  upload_date timestamptz DEFAULT now(),
+  uploaded_by uuid REFERENCES users,
+  ksef_id text,
+  ksef_status text,
+  ai_confidence decimal(3,2),
+  ai_extracted_data jsonb,
+  duplicate_of uuid REFERENCES documents,
+  notes text,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+
+document_files (
+  id uuid PK,
+  document_id uuid REFERENCES documents,
+  storage_path text NOT NULL,
+  file_name text,
+  file_size integer,
+  mime_type text,
+  is_primary boolean DEFAULT false,
+  uploaded_at timestamptz
+)
+
+--- FAKTURY ---
+
+invoices (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  document_id uuid REFERENCES documents,
+  type text NOT NULL,            -- 'sales' | 'purchase'
+  number text,
+  issue_date date,
+  service_date date,
+  due_date date,
+  contractor_id uuid REFERENCES contractors,
+  contractor_snapshot jsonb,
+  net_amount decimal(12,2),
+  vat_amount decimal(12,2),
+  gross_amount decimal(12,2),
+  currency text DEFAULT 'PLN',
+  payment_status text,
+  paid_amount decimal(12,2),
+  paid_date date,
+  wfirma_id text,
+  notes text,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+
+invoice_lines (
+  id uuid PK,
+  invoice_id uuid REFERENCES invoices,
+  description text NOT NULL,
+  quantity decimal(10,3),
+  unit text,
+  unit_price_net decimal(12,2),
+  vat_rate decimal(5,2),
+  net_amount decimal(12,2),
+  vat_amount decimal(12,2),
+  gross_amount decimal(12,2)
+)
+
+contractors (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  name text NOT NULL,
+  nip text,
+  address jsonb,
+  email text,
+  phone text,
+  type text,                     -- 'customer' | 'supplier' | 'both'
+  active boolean DEFAULT true
+)
+
+--- BANK ---
+
+bank_accounts (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  iban text NOT NULL,
+  bank_name text,
+  currency text DEFAULT 'PLN',
+  account_name text,
+  active boolean DEFAULT true
+)
+
+bank_transactions (
+  id uuid PK,
+  bank_account_id uuid REFERENCES bank_accounts NOT NULL,
+  transaction_date date NOT NULL,
+  booking_date date,
+  amount decimal(12,2) NOT NULL,
+  balance_after decimal(12,2),
+  title text,
+  counterparty_name text,
+  counterparty_iban text,
+  reference text,
+  raw_data jsonb,
+  import_batch_id uuid REFERENCES import_batches,
+  created_at timestamptz
+)
+
+transaction_matches (
+  id uuid PK,
+  transaction_id uuid REFERENCES bank_transactions NOT NULL,
+  document_id uuid REFERENCES documents,
+  invoice_id uuid REFERENCES invoices,
+  match_type text,               -- 'auto' | 'manual' | 'partial'
+  match_confidence decimal(3,2),
+  matched_by uuid REFERENCES users,
+  matched_at timestamptz,
+  notes text
+)
+
+--- DANE LEKCYJNE ---
+
+staging_lessons (
+  id uuid PK,
+  batch_id uuid REFERENCES import_batches NOT NULL,
+  raw_data jsonb NOT NULL,
+  mapped_data jsonb,
+  validation_errors jsonb,
+  status text DEFAULT 'pending',
+  created_at timestamptz
+)
+
+lesson_revenue (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  import_batch_id uuid,
+  external_lesson_id text,
+  lesson_date date NOT NULL,
+  course_id uuid REFERENCES courses,
+  group_id uuid REFERENCES lesson_groups,
+  teacher_id uuid REFERENCES people,
+  student_id uuid REFERENCES students,
+  lesson_duration_minutes integer,
+  lesson_status text,            -- 'completed' | 'cancelled' | 'makeup'
+  location_type text,            -- 'online' | 'offline'
+  location text,
+  price_gross decimal(8,2),
+  price_net decimal(8,2),
+  payment_status text,
+  payment_date date,
+  teacher_rate decimal(8,2),
+  teacher_cost decimal(8,2),
+  gross_margin decimal(8,2),
+  margin_percentage decimal(5,2),
+  created_at timestamptz
+)
+
+courses (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  external_id text,
+  name text NOT NULL,
+  type text,
+  active boolean DEFAULT true
+)
+
+lesson_groups (
+  id uuid PK,
+  course_id uuid REFERENCES courses,
+  entity_id uuid REFERENCES entities,
+  external_id text,
+  name text NOT NULL,
+  max_students integer,
+  active boolean DEFAULT true
+)
+
+students (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  external_id text,
+  name text,
+  email text,
+  active boolean DEFAULT true
+)
+
+course_profitability_monthly (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  course_id uuid REFERENCES courses,
+  period date,
+  total_revenue decimal(12,2),
+  total_teacher_cost decimal(12,2),
+  gross_margin decimal(12,2),
+  margin_pct decimal(5,2),
+  lesson_count integer,
+  student_count integer,
+  cancelled_count integer
+)
+
+teacher_profitability_monthly (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  teacher_id uuid REFERENCES people,
+  period date,
+  revenue_generated decimal(12,2),
+  total_cost decimal(12,2),
+  gross_margin decimal(12,2),
+  margin_pct decimal(5,2),
+  hours_worked decimal(6,2),
+  lesson_count integer
+)
+
+--- KADRY I PŁACE ---
+
+people (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  full_name text NOT NULL,
+  type text NOT NULL,            -- 'employee' | 'contractor' | 'b2b' | 'board' | 'volunteer'
+  email text,
+  phone text,
+  pesel text,                    -- zaszyfrowane
+  address jsonb,
+  bank_iban text,                -- zaszyfrowane
+  is_teacher boolean DEFAULT false,
+  external_id text,
+  active boolean DEFAULT true,
+  created_at timestamptz
+)
+
+contracts (
+  id uuid PK,
+  person_id uuid REFERENCES people NOT NULL,
+  entity_id uuid REFERENCES entities NOT NULL,
+  type text NOT NULL,
+  start_date date NOT NULL,
+  end_date date,
+  rate decimal(10,2),
+  rate_type text,                -- 'hourly' | 'monthly' | 'per_lesson'
+  document_id uuid REFERENCES documents,
+  status text DEFAULT 'active',
+  notes text,
+  created_at timestamptz
+)
+
+payroll_periods (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  status text DEFAULT 'draft',   -- 'draft' | 'calculated' | 'reviewed' | 'approved' | 'paid'
+  approved_by uuid REFERENCES users,
+  approved_at timestamptz,
+  total_gross decimal(12,2),
+  total_net decimal(12,2),
+  total_zus_employee decimal(12,2),
+  total_zus_employer decimal(12,2),
+  total_pit decimal(12,2),
+  created_at timestamptz
+)
+
+payroll_items (
+  id uuid PK,
+  payroll_period_id uuid REFERENCES payroll_periods NOT NULL,
+  person_id uuid REFERENCES people NOT NULL,
+  contract_id uuid REFERENCES contracts,
+  hours_worked decimal(6,2),
+  gross_amount decimal(10,2),
+  zus_employee decimal(10,2),
+  zus_employer decimal(10,2),
+  pit_advance decimal(10,2),
+  net_amount decimal(10,2),
+  total_employer_cost decimal(10,2),
+  notes text
+)
+
+--- PODATKI I COMPLIANCE ---
+
+tax_obligations (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  type text NOT NULL,            -- 'vat' | 'cit' | 'pit4' | 'pit8a'
+  period date NOT NULL,
+  amount decimal(12,2),
+  due_date date NOT NULL,
+  status text DEFAULT 'pending',
+  paid_date date,
+  notes text
+)
+
+zus_obligations (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  period date NOT NULL,
+  type text,
+  amount decimal(12,2),
+  due_date date NOT NULL,
+  status text DEFAULT 'pending',
+  paid_date date
+)
+
+vat_register (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  period date NOT NULL,
+  type text,                     -- 'sales' | 'purchase'
+  invoice_id uuid REFERENCES invoices,
+  net_amount decimal(12,2),
+  vat_amount decimal(12,2),
+  vat_rate decimal(5,2)
+)
+
+--- FUNDACJA ---
+
+foundation_projects (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  name text NOT NULL,
+  type text,                     -- 'statutory_free' | 'statutory_paid' | 'economic'
+  description text,
+  start_date date,
+  end_date date,
+  status text DEFAULT 'active',
+  total_budget decimal(12,2),
+  funds_type text                -- 'restricted' | 'unrestricted'
+)
+
+grants (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  project_id uuid REFERENCES foundation_projects,
+  name text NOT NULL,
+  grantor text,
+  amount decimal(12,2),
+  start_date date,
+  end_date date,
+  reporting_deadline date,
+  status text,
+  conditions text
+)
+
+grant_budget_lines (
+  id uuid PK,
+  grant_id uuid REFERENCES grants NOT NULL,
+  category text NOT NULL,
+  planned_amount decimal(12,2),
+  spent_amount decimal(12,2) DEFAULT 0,
+  notes text
+)
+
+--- CASHFLOW ---
+
+cashflow_forecasts (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  scenario text NOT NULL,        -- 'conservative' | 'realistic' | 'growth'
+  status text DEFAULT 'draft',
+  created_by uuid REFERENCES users,
+  created_at timestamptz
+)
+
+cashflow_items (
+  id uuid PK,
+  forecast_id uuid REFERENCES cashflow_forecasts NOT NULL,
+  category text NOT NULL,
+  item_date date NOT NULL,
+  amount decimal(12,2) NOT NULL,
+  is_certain boolean DEFAULT false,
+  source_type text,
+  source_id uuid,
+  notes text
+)
+
+--- ZADANIA I TERMINY ---
+
+tasks (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  title text NOT NULL,
+  description text,
+  task_type text,                -- 'operational' | 'decision' | 'compliance' | 'advisory'
+  assignee_id uuid REFERENCES users,
+  created_by uuid REFERENCES users,
+  due_date timestamptz,
+  priority text DEFAULT 'normal',
+  status text DEFAULT 'open',
+  blocking_month_close_id uuid REFERENCES month_close,
+  requires_approval_from uuid REFERENCES users,
+  approved_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz
+)
+
+recurring_tasks (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  template jsonb NOT NULL,
+  frequency text NOT NULL,
+  frequency_config jsonb,
+  assignee_id uuid REFERENCES users,
+  active boolean DEFAULT true,
+  last_generated_at timestamptz
+)
+
+--- ZAMKNIĘCIE MIESIĄCA ---
+
+month_close (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  period date NOT NULL,          -- YYYY-MM-01
+  status text DEFAULT 'open',    -- 'open' | 'in_progress' | 'review' | 'approved' | 'closed'
+  started_at timestamptz,
+  approved_by uuid REFERENCES users,
+  approved_at timestamptz,
+  notes text,
+  UNIQUE(entity_id, period)
+)
+
+close_checklist_items (
+  id uuid PK,
+  month_close_id uuid REFERENCES month_close NOT NULL,
+  item_key text NOT NULL,
+  label text NOT NULL,
+  is_blocking boolean DEFAULT true,
+  status text DEFAULT 'pending',
+  completed_by uuid REFERENCES users,
+  completed_at timestamptz,
+  notes text
+)
+
+blocking_issues (
+  id uuid PK,
+  month_close_id uuid REFERENCES month_close NOT NULL,
+  description text NOT NULL,
+  severity text DEFAULT 'high',
+  resolved boolean DEFAULT false,
+  resolved_by uuid REFERENCES users,
+  resolved_at timestamptz
+)
+
+--- AI I DORADCY ---
+
+advisor_questions (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  asked_by uuid REFERENCES users NOT NULL,
+  category text,                 -- 'tax' | 'accounting' | 'legal' | 'hr'
+  risk_level text,
+  question text NOT NULL,
+  context jsonb,
+  status text DEFAULT 'open',
+  assigned_to uuid REFERENCES users,
+  answer text,
+  answered_at timestamptz,
+  created_at timestamptz
+)
+
+ai_recommendations (
+  id uuid PK,
+  entity_id uuid REFERENCES entities NOT NULL,
+  analysis_run_id uuid REFERENCES ai_analysis_runs,
+  type text NOT NULL,
+  title text NOT NULL,
+  content text NOT NULL,
+  data_sources jsonb,
+  confidence_level decimal(3,2),
+  risk_level text,               -- 'safe' | 'check' | 'high_risk' | 'needs_advisor'
+  financial_impact decimal(12,2),
+  suggested_action text,
+  status text DEFAULT 'draft',   -- 'draft' | 'needs_review' | 'approved' | 'rejected' | 'sent_to_advisor'
+  reviewed_by uuid REFERENCES users,
+  reviewed_at timestamptz,
+  created_at timestamptz
+)
+
+ai_analysis_runs (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  type text,
+  triggered_by uuid REFERENCES users,
+  status text,
+  started_at timestamptz,
+  completed_at timestamptz,
+  error_message text
+)
+
+--- INTEGRACJE ---
+
+integration_sources (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  name text NOT NULL,
+  type text NOT NULL,            -- 'lessons_app' | 'wfirma' | 'bank' | 'ksef' | 'manual'
+  config jsonb,
+  active boolean DEFAULT true,
+  created_at timestamptz
+)
+
+integration_mappings (
+  id uuid PK,
+  source_id uuid REFERENCES integration_sources NOT NULL,
+  external_field text NOT NULL,
+  internal_table text NOT NULL,
+  internal_field text NOT NULL,
+  transform text,
+  required boolean DEFAULT false
+)
+
+import_batches (
+  id uuid PK,
+  source_id uuid REFERENCES integration_sources NOT NULL,
+  entity_id uuid REFERENCES entities NOT NULL,
+  imported_by uuid REFERENCES users,
+  import_type text,
+  file_name text,
+  record_count integer,
+  imported_count integer,
+  error_count integer,
+  status text DEFAULT 'pending',
+  started_at timestamptz,
+  completed_at timestamptz
+)
+
+import_errors (
+  id uuid PK,
+  batch_id uuid REFERENCES import_batches NOT NULL,
+  row_number integer,
+  external_field text,
+  error_type text,
+  error_message text,
+  raw_value text,
+  created_at timestamptz
+)
+
+--- AUDIT LOG ---
+
+audit_log (
+  id uuid PK,
+  entity_id uuid REFERENCES entities,
+  user_id uuid REFERENCES users NOT NULL,
+  table_name text NOT NULL,
+  record_id uuid NOT NULL,
+  action text NOT NULL,          -- 'create' | 'update' | 'delete' | 'approve' | 'reject'
+  old_values jsonb,
+  new_values jsonb,
+  changed_fields text[],
+  reason text,
+  ip_address inet,
+  approved_by uuid REFERENCES users,
+  approved_at timestamptz,
+  created_at timestamptz DEFAULT now()
+)
+
+
+5. FLOW UŻYTKOWNIKÓW
+================================================================================
+
+MILENA (Owner / Group CFO)
+--------------------------
+Login
+  └─► Dashboard CFO
+        ├── [3 liczby] Stan gotówki per podmiot | cashflow 30 dni | VAT do zapłaty
+        ├── [3 ryzyka] Najpoważniejsze flagi z AI Tax Strategist
+        ├── [3 decyzje] Payroll do zatwierdzenia | Month close approval | Rekomendacja AI
+        └── [1 rekomendacja AI] Najważniejsza z current run
+
+Codziennie rano:
+  └─► Sprawdza dashboard → zatwierdza lub odrzuca → wraca do pracy
+
+Koniec miesiąca:
+  └─► Month Close Review
+        ├── Widzi status checklist per podmiot
+        ├── Widzi blocking issues od Sary
+        ├── Zatwierdza lub zwraca do poprawy
+        └── Podpisuje cyfrowo zamknięcie
+
+SARA (Accounting Operations Manager)
+--------------------------------------
+Login
+  └─► Dashboard Ops
+        ├── [Dzisiaj] Zadania na dziś | Terminy | Brakujące dokumenty
+        ├── [Do zrobienia] Faktury bez płatności | Płatności bez faktury
+        ├── [Do Mileny] Pytania wymagające decyzji | Payroll do zatwierdzenia
+        └── [Status miesiąca] Postęp checklist per podmiot
+
+Codziennie:
+  ├── Upload dokumentów → AI extraction → review → oznaczenie statusu
+  ├── Import CSV z banku → dopasowanie do faktur
+  ├── Sprawdzenie KSeF → oznaczenie statusu
+  └── Uzupełnianie zadań w checklist
+
+Koniec miesiąca (per podmiot):
+  ├── Faktury kompletne? → sprawdź i oznacz
+  ├── Bank zaimportowany? → sprawdź i dopasuj
+  ├── Payroll przygotowany? → oblicz, wyślij do Mileny
+  ├── VAT/ZUS/PIT → oblicz, zapisz
+  ├── Pytania do doradcy → oznacz, wyślij
+  └── Month close → submit do Mileny
+
+DORADCA PODATKOWY
+-----------------
+Login
+  └─► Widok ograniczony do:
+        ├── Lista pytań oznaczonych 'tax' skierowanych do niego
+        ├── Dokumenty z flagą 'high_risk' lub 'needs_advisor'
+        ├── AI Tax Strategist rekomendacje do wglądu
+        └── Możliwość odpowiedzi na pytania (text + załączniki)
+
+Brak dostępu do: payroll, pełnych danych pracowników, wszystkich faktur
+
+ZEWNĘTRZNA KSIĘGOWA (External Accountant Advisor)
+--------------------------------------------------
+Login
+  └─► Widok ograniczony do:
+        ├── Raporty miesięczne (read only)
+        ├── Month close status (read only)
+        ├── Pytania do niej skierowane
+        └── Możliwość odpowiedzi na pytania
+
+
+6. MODEL UPRAWNIEŃ
+================================================================================
+
+ROLE SYSTEMU:
+  owner_cfo           - Pełny dostęp do wszystkich podmiotów i modułów (Milena)
+  accounting_ops      - Operacyjny dostęp – tworzy, edytuje, nie zatwierdza decyzji (Sara)
+  payroll_operator    - Dostęp do kadr i płac, tworzy listy płac, nie zatwierdza
+  external_accountant - Read-only + pytania – raporty, month close status
+  tax_advisor         - Read-only tax + pytania – tylko materiały oznaczone tax/risk
+  read_only           - Widok wybranych raportów
+
+MATRYCA UPRAWNIEŃ:
+
+Zasób                    | owner_cfo | accounting_ops | payroll_op | ext_accountant | tax_advisor
+-------------------------|-----------|----------------|------------|----------------|------------
+Dokumenty – upload       |    TAK    |      TAK       |    TAK     |      NIE       |    NIE
+Dokumenty – approve      |    TAK    |      TAK       |    NIE     |      NIE       |    NIE
+Faktury – create         |    TAK    |      TAK       |    NIE     |      NIE       |    NIE
+Payroll – prepare        |    TAK    |      TAK       |    TAK     |      NIE       |    NIE
+Payroll – approve        |    TAK    |      NIE       |    NIE     |      NIE       |    NIE
+Month close – approve    |    TAK    |      NIE       |    NIE     |      NIE       |    NIE
+AI rec. – approve        |    TAK    |      NIE       |    NIE     |      NIE       |    NIE
+Audit log – view         |    TAK    |      NIE       |    NIE     |      NIE       |    NIE
+Tax items – view         |    TAK    |      TAK       |    NIE     |      NIE       |    TAK
+HR data – view           |    TAK    |      TAK       |    TAK     |      NIE       |    NIE
+Settings                 |    TAK    |      NIE       |    NIE     |      NIE       |    NIE
+
+RLS w Supabase: Każda tabela z entity_id ma politykę, że użytkownik widzi
+tylko dane podmiotów, do których ma przypisaną rolę. Milena z rolą owner_cfo
+bez entity_id = dostęp do wszystkich.
+
+
+7. PLAN IMPLEMENTACJI MVP
+================================================================================
+
+FAZA 0: Fundament (Tydzień 1)
+  [ ] Konfiguracja Next.js + TypeScript + Tailwind + shadcn/ui
+  [ ] Supabase: projekt, auth, Storage
+  [ ] Migracje: entities, users, user_entity_roles, permissions
+  [ ] Middleware autoryzacji + RLS
+  [ ] Seed: 3 podmioty, role Mileny i Sary
+  [ ] Podstawowy app shell (sidebar, topbar, entity switcher)
+
+FAZA 1: Dokumenty (Tydzień 2)
+  [ ] Upload dokumentów → Supabase Storage
+  [ ] Tabele: documents, document_files
+  [ ] Lista dokumentów z filtrami (podmiot, status, typ)
+  [ ] Zmiana statusu dokumentu
+  [ ] Podstawowy audit log (trigger Postgres)
+
+FAZA 2: Import danych lekcyjnych (Tydzień 3)
+  [ ] Tabele: integration_sources, integration_mappings, import_batches,
+              import_errors, staging_lessons
+  [ ] UI: ekran konfiguracji integracji z mapowaniem pól
+  [ ] CSV upload → parsing → staging
+  [ ] Walidacja i error log
+  [ ] Zatwierdzenie importu → lesson_revenue
+
+FAZA 3: Dane edukacyjne (Tydzień 4)
+  [ ] Tabele: courses, lesson_groups, students, people (nauczyciele)
+  [ ] Populacja z importu lekcyjnego
+  [ ] Kalkulacja: margin per lesson, teacher cost
+  [ ] Agregaty: course_profitability_monthly, teacher_profitability_monthly
+
+FAZA 4: Dashboard CFO (Tydzień 5)
+  [ ] Dashboard Mileny (3+3+3+1 layout)
+  [ ] Widget: stan gotówki per podmiot
+  [ ] Widget: cashflow 30 dni (dane z tax_obligations + payroll_periods)
+  [ ] Widget: rentowność kursów (top 3)
+  [ ] Widget: rentowność nauczycieli (top 3)
+
+FAZA 5: Dashboard Ops + Zadania (Tydzień 6)
+  [ ] Dashboard Sary
+  [ ] Tabele: tasks, recurring_tasks
+  [ ] Tworzenie i zamykanie zadań
+  [ ] Podstawowe przypomnienia (terminy)
+  [ ] Podgląd: faktury bez płatności, braki dokumentów
+
+FAZA 6: Month Close (Tydzień 7)
+  [ ] Tabele: month_close, close_checklist_items, blocking_issues
+  [ ] UI: checklist per podmiot per miesiąc
+  [ ] Logika blokowania zatwierdzenia przy blocking issues
+  [ ] Flow: Sara przygotowuje → Milena zatwierdza
+
+FAZA 7: AI CFO (Tydzień 8)
+  [ ] Integracja Claude API
+  [ ] Podstawowe analizy: rentowność, cashflow alert
+  [ ] Tabele: ai_recommendations, ai_analysis_runs
+  [ ] UI: karty rekomendacji z zatwierdzaniem/odrzucaniem
+  [ ] AI Tax Strategist: oznaczanie ryzyk
+
+FAZA 8+: Kolejne moduły
+  - Faktury i bank (import CSV)
+  - KSeF (model danych + placeholder)
+  - HR pełne (umowy, kadry)
+  - Payroll pełne (ZUS, PIT)
+  - Fundacja (projekty, granty)
+  - wFirma (eksport CSV)
+  - Cashflow forecasting z scenariuszami
+  - Advisor questions flow
+
+
+8. RYZYKA
+================================================================================
+
+TECHNICZNE:
+  Ryzyko                                          | Poziom  | Mitygacja
+  ------------------------------------------------|---------|----------------------------------
+  AI extraction faktur po polsku                  | Średni  | Zawsze human review; nie polegać
+                                                  |         | na AI bez weryfikacji
+  Wydajność przy dużym wolumenie lekcji           | Niski   | Tabele agregacyjne; indeksy na
+                                                  |         | entity_id+period
+  Różne formaty CSV z banków                      | Wysoki  | Elastyczny import z konfigurow.
+                                                  |         | mapowaniami
+  KSeF API zmiany                                 | Średni  | Warstwa abstrakcji; placeholder
+                                                  |         | gotowy na integrację
+  Bezpieczeństwo PESEL/IBAN                       | Wysoki  | Szyfrowanie column-level (pgcrypto)
+  Supabase RLS błędy konfiguracji                 | Wysoki  | Testy RLS jako część CI
+
+PRAWNE / COMPLIANCE:
+  Ryzyko                                          | Poziom  | Uwaga
+  ------------------------------------------------|---------|----------------------------------
+  RODO dla danych pracowników i uczniów           | Wysoki  | Polityka retencji, prawo do
+                                                  |         | usunięcia, log dostępu
+  Odpowiedzialność za błędy AI w podatkach        | Krytyczny| AI tylko rekomenduje; każda
+                                                  |         | decyzja wymaga human approval
+  Przechowywanie PESEL                            | Wysoki  | Szyfrowanie, dostęp tylko
+                                                  |         | payroll_operator+
+  Ceny transferowe między podmiotami              | Średni  | Oznaczanie w systemie; osobna
+                                                  |         | kategoria do doradcy
+
+KSIĘGOWE:
+  Ryzyko                                          | Poziom  | Uwaga
+  ------------------------------------------------|---------|----------------------------------
+  Błędy kalkulacji ZUS/PIT                        | Wysoki  | System liczy, Sara weryfikuje,
+                                                  |         | Milena zatwierdza
+  Mieszanie środków fundacji                      | Wysoki  | Mandatory project assignment;
+  (restricted/unrestricted)                       |         | blokada przy braku
+  VAT przy działalności mieszanej fundacji        | Wysoki  | Każda transakcja fundacji
+                                                  |         | oznaczona typem działalności
+  Estoński CIT – warunki                          | Średni  | AI Tax Strategist monitoruje;
+                                                  |         | alert dla doradcy
+
+
+9. KOLEJNOŚĆ BUDOWY MODUŁÓW
+================================================================================
+
+MUST HAVE MVP (~8 tygodni):
+  Fundament → Dokumenty → Import lekcji → Dane edukacyjne →
+  Dashboard CFO → Dashboard Ops + Zadania → Month Close → AI CFO
+
+SHOULD HAVE (kolejne 4-6 tygodni):
+  Faktury ← Rejestr VAT ← Bank CSV ← Dopasowania płatności ← KSeF placeholder
+
+NICE TO HAVE (po MVP):
+  HR pełne ← Payroll pełne ← Cashflow z scenariuszami ← Fundacja ← wFirma export
+
+INTEGRACJE (etapami):
+  CSV manual → API placeholder → wFirma API → KSeF API → Open Banking
+
+
+10. PROPONOWANY STOS TECHNOLOGICZNY
+================================================================================
+
+Frontend:     Next.js 14+ (App Router) + TypeScript
+UI:           Tailwind CSS + shadcn/ui + Recharts (wykresy)
+Backend:      Next.js Route Handlers (API)
+Database:     Supabase (Postgres 15 + RLS + Storage + Auth)
+State:        Zustand (globalny) + React Query (server state)
+AI:           Anthropic Claude API (do analizy)
+File storage: Supabase Storage
+Deployment:   Vercel (Next.js) + Supabase Cloud
+Monitoring:   Sentry (błędy) + Supabase Logs
+
+
+================================================================================
+PYTANIA PRZED STARTEM IMPLEMENTACJI
+================================================================================
+
+1. Kolorystyka/design: Landing page używa #1C2B4A (granatowy) i #C0392B (czerwony).
+   Czy uFOS ma być w tym samym stylu, czy inne podejście dla aplikacji wewnętrznej?
+
+2. Środowisko: Czy masz już projekt w Supabase, czy zakładam od zera?
+   Czy mam też skonfigurować Vercel, czy deployment na później?
+
+3. Język aplikacji: Interfejs w języku angielskim (jak nazwy modułów w wymaganiach)
+   czy po polsku? A może English UI, polskie dane?
+
+4. Priorytet MVP – potwierdzenie: Zaczynam od Fazy 0 (fundament) → 1 (dokumenty)
+   → 2 (import lekcji) → 3 (dane edukacyjne) → 4 (dashboard CFO)?
+
+================================================================================
+END OF DOCUMENT
+================================================================================
