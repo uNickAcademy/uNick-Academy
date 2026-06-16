@@ -1,0 +1,587 @@
+uFOS – uNick Financial Operating System
+Zaktualizowany Plan przed Implementacją
+================================================================================
+Data: 2026-06-16
+Wersja: 2.0 (po doprecyzowaniu wymagań)
+================================================================================
+
+
+1. ZAKTUALIZOWANA KOLEJNOŚĆ MVP
+================================================================================
+
+FAZA 0  Fundament
+        Next.js, TS, Supabase, Auth, Role, Podmioty, App Shell, Audit Log
+  │
+FAZA 1  Import danych
+        CSV import, mapping, staging, walidacja, zatwierdzenie
+  │
+FAZA 2  Rentowność
+        Kursy, grupy, uczniowie, nauczyciele, przychody, marże, zaległości
+  │
+FAZA 3  Dashboard Mileny
+        3 liczby + 3 ryzyka + 3 decyzje + 1 rekomendacja CFO
+  │
+FAZA 4  Dashboard Sary
+        Zadania operacyjne, importy, błędy, zaległości, do wyjaśnienia
+  │
+FAZA 5  Zadania i terminy
+        Recurring tasks, terminy księgowe/płacowe/podatkowe, blokujące
+  │
+FAZA 6  Dokumenty
+        Upload, faktury, statusy, przygotowanie pod wFirma/KSeF/bank
+  │
+FAZA 7  Month Close
+        Zamknięcie per podmiot, checklisty, approval Mileny
+  │
+FAZA 8  AI CFO
+        Rekomendacje, alerty, analiza rentowności, ryzyka podatkowe
+
+
+2. ARCHITEKTURA EKOSYSTEMU (modularny, nie zamknięty)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        EKOSYSTEM uNick                              │
+│                                                                     │
+│  ┌──────────────┐     ┌──────────────────────┐     ┌────────────┐  │
+│  │ Landing Page │────►│ Aplikacja uNick       │────►│    uFOS    │  │
+│  │              │     │ Academy               │     │            │  │
+│  │ • leady      │     │ • uczniowie           │     │ • finanse  │  │
+│  │ • formularze │     │ • nauczyciele         │     │ • marże    │  │
+│  │ • kampanie   │     │ • lekcje/grupy        │     │ • podatki  │  │
+│  │ • oferty     │     │ • płatności           │     │ • kadry    │  │
+│  └──────────────┘     │ • grafiki             │     │ • AI CFO   │  │
+│                       │ • odwołania           │     │            │  │
+│                       └──────────────────────┘     └─────┬──────┘  │
+│                                                          │          │
+│                                          ┌───────────────▼──────┐  │
+│                                          │  Dashboard Mileny    │  │
+│                                          │  Decyzje / Ryzyka    │  │
+│                                          │  Rentowność / CFO    │  │
+│                                          └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+
+Przepływ danych MVP:
+  uNick App (CSV export)
+    → uFOS Import
+    → Staging
+    → Walidacja
+    → Zatwierdzenie (human approval)
+    → lesson_revenue
+    → Dashboard Mileny
+
+Przyszłość:
+  uNick App (API/webhook) → uFOS Integration Layer → Auto-sync
+
+
+3. UPROSZCZONY SCHEMAT BAZY DANYCH – FAZY 0–3
+================================================================================
+
+--- FAZA 0: FUNDAMENT ---
+
+entities (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  name          text NOT NULL,
+  short_name    text NOT NULL,       -- 'UAI' | 'UA' | 'Fundacja'
+  type          text NOT NULL,       -- 'sp_zoo' | 'fundacja'
+  nip           text UNIQUE,
+  krs           text,
+  regon         text,
+  address       jsonb,
+  color         text,                -- kolor w UI do rozróżnienia podmiotów
+  active        boolean DEFAULT true,
+  created_at    timestamptz DEFAULT now()
+)
+
+users (
+  id            uuid PK REFERENCES auth.users(id) ON DELETE CASCADE,
+  email         text NOT NULL,
+  full_name     text NOT NULL,
+  role_label    text,                -- wyświetlana rola: 'CFO', 'Księgowość'
+  active        boolean DEFAULT true,
+  created_at    timestamptz DEFAULT now()
+)
+
+user_entity_roles (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES users(id),
+  entity_id     uuid REFERENCES entities(id),  -- NULL = dostęp do wszystkich
+  role          text NOT NULL,
+  -- 'owner_cfo' | 'accounting_ops' | 'payroll_operator'
+  -- | 'external_accountant' | 'tax_advisor' | 'read_only'
+  granted_by    uuid REFERENCES users(id),
+  granted_at    timestamptz DEFAULT now(),
+  UNIQUE(user_id, entity_id, role)
+)
+
+audit_log (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  entity_id     uuid REFERENCES entities(id),
+  user_id       uuid NOT NULL REFERENCES users(id),
+  table_name    text NOT NULL,
+  record_id     uuid NOT NULL,
+  action        text NOT NULL,       -- 'create' | 'update' | 'delete' | 'approve'
+  old_values    jsonb,
+  new_values    jsonb,
+  changed_fields text[],
+  reason        text,
+  created_at    timestamptz DEFAULT now()
+)
+
+
+--- FAZA 1: IMPORT DANYCH ---
+
+integration_sources (
+  id            uuid PK DEFAULT gen_random_uuid(),
+  entity_id     uuid REFERENCES entities(id),
+  name          text NOT NULL,       -- 'Aplikacja uNick Academy', 'wFirma', 'PKO Bank'
+  type          text NOT NULL,       -- 'lessons_app' | 'wfirma' | 'bank' | 'ksef'
+  description   text,
+  active        boolean DEFAULT true,
+  created_at    timestamptz DEFAULT now()
+)
+
+integration_mappings (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  source_id       uuid NOT NULL REFERENCES integration_sources(id) ON DELETE CASCADE,
+  external_field  text NOT NULL,     -- np. 'lesson_id', 'student_name', 'price'
+  internal_table  text NOT NULL,     -- np. 'lesson_revenue'
+  internal_field  text NOT NULL,     -- np. 'external_lesson_id'
+  transform       text,              -- 'date_iso', 'amount_decimal', 'trim', null
+  required        boolean DEFAULT false,
+  example_value   text,              -- przykład z CSV dla UI mappingu
+  UNIQUE(source_id, external_field)
+)
+
+import_batches (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  source_id       uuid NOT NULL REFERENCES integration_sources(id),
+  entity_id       uuid NOT NULL REFERENCES entities(id),
+  imported_by     uuid NOT NULL REFERENCES users(id),
+  file_name       text,
+  record_count    integer DEFAULT 0,
+  valid_count     integer DEFAULT 0,
+  error_count     integer DEFAULT 0,
+  status          text DEFAULT 'pending',
+  -- 'pending' | 'validating' | 'staged' | 'approved' | 'imported' | 'failed' | 'rejected'
+  approved_by     uuid REFERENCES users(id),
+  approved_at     timestamptz,
+  notes           text,
+  started_at      timestamptz DEFAULT now(),
+  completed_at    timestamptz
+)
+
+import_errors (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  batch_id        uuid NOT NULL REFERENCES import_batches(id) ON DELETE CASCADE,
+  row_number      integer NOT NULL,
+  external_field  text,
+  error_type      text NOT NULL,
+  -- 'missing_required' | 'invalid_format' | 'no_mapping' | 'duplicate' | 'unknown'
+  error_message   text NOT NULL,
+  raw_value       text,
+  created_at      timestamptz DEFAULT now()
+)
+
+staging_lessons (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  batch_id        uuid NOT NULL REFERENCES import_batches(id) ON DELETE CASCADE,
+  row_number      integer NOT NULL,
+  raw_data        jsonb NOT NULL,    -- oryginał z CSV
+  mapped_data     jsonb,             -- po zastosowaniu mappingów
+  is_valid        boolean,
+  validation_errors jsonb,
+  status          text DEFAULT 'pending',
+  -- 'pending' | 'valid' | 'invalid' | 'imported'
+  created_at      timestamptz DEFAULT now()
+)
+
+
+--- FAZA 2: DANE LEKCYJNE I RENTOWNOŚĆ ---
+
+people (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  entity_id       uuid REFERENCES entities(id),
+  full_name       text NOT NULL,
+  type            text DEFAULT 'teacher',   -- rozszerzy się w Fazie 6
+  external_id     text,                     -- ID z aplikacji uNick
+  email           text,
+  active          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now()
+)
+
+courses (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  entity_id       uuid REFERENCES entities(id),
+  external_id     text,
+  name            text NOT NULL,
+  type            text,              -- 'individual' | 'group' | 'corporate'
+  active          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now()
+)
+
+lesson_groups (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  course_id       uuid REFERENCES courses(id),
+  entity_id       uuid REFERENCES entities(id),
+  external_id     text,
+  name            text NOT NULL,
+  active          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now()
+)
+
+students (
+  id              uuid PK DEFAULT gen_random_uuid(),
+  entity_id       uuid REFERENCES entities(id),
+  external_id     text,
+  full_name       text NOT NULL,
+  email           text,
+  active          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now()
+)
+
+lesson_revenue (
+  id                    uuid PK DEFAULT gen_random_uuid(),
+  entity_id             uuid NOT NULL REFERENCES entities(id),
+  import_batch_id       uuid REFERENCES import_batches(id),
+  external_lesson_id    text,
+  lesson_date           date NOT NULL,
+  course_id             uuid REFERENCES courses(id),
+  group_id              uuid REFERENCES lesson_groups(id),
+  teacher_id            uuid REFERENCES people(id),
+  student_id            uuid REFERENCES students(id),
+  lesson_duration_min   integer,
+  lesson_status         text,
+  -- 'completed' | 'cancelled' | 'makeup' | 'pending'
+  location_type         text,        -- 'online' | 'offline'
+  price_gross           numeric(8,2),
+  payment_status        text,        -- 'paid' | 'unpaid' | 'partial' | 'overdue'
+  payment_date          date,
+  teacher_rate          numeric(8,2),
+  teacher_cost          numeric(8,2),
+  gross_margin          numeric(8,2) GENERATED ALWAYS AS
+                          (price_gross - teacher_cost) STORED,
+  margin_pct            numeric(5,2) GENERATED ALWAYS AS (
+                          CASE WHEN price_gross > 0
+                          THEN ROUND(((price_gross - teacher_cost) / price_gross * 100), 2)
+                          ELSE 0 END
+                        ) STORED,
+  created_at            timestamptz DEFAULT now()
+)
+
+-- Widoki agregacyjne (MATERIALIZED VIEW dla wydajności)
+
+CREATE MATERIALIZED VIEW course_profitability_monthly AS
+SELECT
+  entity_id,
+  course_id,
+  date_trunc('month', lesson_date)::date                        AS period,
+  COUNT(*) FILTER (WHERE lesson_status = 'completed')           AS lesson_count,
+  COUNT(DISTINCT student_id)                                    AS student_count,
+  COUNT(*) FILTER (WHERE lesson_status = 'cancelled')           AS cancelled_count,
+  SUM(price_gross) FILTER (WHERE lesson_status = 'completed')   AS total_revenue,
+  SUM(teacher_cost) FILTER (WHERE lesson_status = 'completed')  AS total_teacher_cost,
+  SUM(gross_margin) FILTER (WHERE lesson_status = 'completed')  AS total_margin,
+  ROUND(AVG(margin_pct) FILTER
+    (WHERE lesson_status = 'completed'), 2)                     AS avg_margin_pct,
+  SUM(price_gross) FILTER
+    (WHERE payment_status IN ('unpaid', 'overdue'))             AS unpaid_amount
+FROM lesson_revenue
+GROUP BY entity_id, course_id, date_trunc('month', lesson_date)::date;
+
+CREATE MATERIALIZED VIEW teacher_profitability_monthly AS
+SELECT
+  entity_id,
+  teacher_id,
+  date_trunc('month', lesson_date)::date                        AS period,
+  COUNT(*) FILTER (WHERE lesson_status = 'completed')           AS lesson_count,
+  SUM(lesson_duration_min) / 60.0                               AS hours_worked,
+  SUM(price_gross) FILTER (WHERE lesson_status = 'completed')   AS revenue_generated,
+  SUM(teacher_cost) FILTER (WHERE lesson_status = 'completed')  AS total_cost,
+  SUM(gross_margin) FILTER (WHERE lesson_status = 'completed')  AS total_margin,
+  ROUND(AVG(margin_pct) FILTER
+    (WHERE lesson_status = 'completed'), 2)                     AS avg_margin_pct
+FROM lesson_revenue
+GROUP BY entity_id, teacher_id, date_trunc('month', lesson_date)::date;
+
+
+4. SYSTEM KOLORÓW I DESIGN
+================================================================================
+
+Zmienne CSS – token design system:
+  --color-navy:    #1C2B4A   (primary, sidebar, nagłówki)
+  --color-red:     #C0392B   (ryzyko, błąd, akcja krytyczna)
+  --color-cream:   #FAF7F2   (tło główne)
+  --color-green:   #27AE60   (OK, zapłacone, zatwierdzone)
+  --color-amber:   #E67E22   (ostrzeżenie, do sprawdzenia)
+  --color-muted:   #F0EDE8   (tło kart, subtelne tło)
+  --color-text:    #1C2B4A   (główny tekst)
+  --color-subtle:  #7B8FA1   (pomocniczy tekst)
+
+Zasady UI dla osoby z ADHD:
+  • Dashboardy: maksymalnie 7 elementów widocznych bez scrollowania
+  • Każda karta ma: 1 liczba / 1 status / 1 akcja
+  • Kolory statusów konsekwentne w całej aplikacji
+    (zawsze zielony = OK, zawsze bursztynowy = uwaga, zawsze czerwony = ryzyko)
+  • Żadnych tabel z więcej niż 6 kolumnami na głównych widokach
+  • Każda decyzja = osobna karta z jednym przyciskiem akcji
+
+
+5. LISTA PLIKÓW DO UTWORZENIA (FAZY 0–3)
+================================================================================
+
+--- KONFIGURACJA PROJEKTU ---
+
+package.json                              # zaktualizowany z pełnymi zależnościami
+tsconfig.json                             # TypeScript config
+next.config.ts                            # Next.js config
+tailwind.config.ts                        # Tailwind + custom tokeny
+components.json                           # shadcn/ui config
+.env.local.example                        # template zmiennych środowiskowych
+.eslintrc.json                            # ESLint
+middleware.ts                             # Auth middleware (Supabase)
+
+--- MIGRACJE SUPABASE ---
+
+supabase/migrations/001_entities.sql
+supabase/migrations/002_users_and_roles.sql
+supabase/migrations/003_audit_log.sql
+supabase/migrations/004_rls_policies.sql
+supabase/migrations/005_integration_sources.sql
+supabase/migrations/006_import_batches.sql
+supabase/migrations/007_staging_lessons.sql
+supabase/migrations/008_lesson_data.sql
+supabase/migrations/009_profitability_views.sql
+supabase/seed.sql                         # 3 podmioty + role + użytkownicy testowi
+
+--- TYPY ---
+
+types/database.types.ts                   # generowane z Supabase
+types/domain.ts                           # typy biznesowe (Entity, Role, LessonStatus...)
+
+--- LIB / UTILITIES ---
+
+lib/supabase/client.ts                    # klient po stronie przeglądarki
+lib/supabase/server.ts                    # klient po stronie serwera (SSR)
+lib/auth/permissions.ts                   # sprawdzanie uprawnień per rola + zasób
+lib/auth/session.ts                       # helper do pobierania sesji
+lib/utils/formatters.ts                   # formatowanie PLN, dat, procentów
+lib/utils/cn.ts                           # classnames helper (shadcn)
+
+--- APP – LAYOUT I AUTH ---
+
+app/globals.css                           # tokeny CSS, Tailwind base
+app/layout.tsx                            # root layout
+app/(auth)/login/page.tsx                 # strona logowania
+app/(auth)/login/actions.ts               # server action – Supabase signIn
+app/(app)/layout.tsx                      # app shell (sidebar + topbar)
+
+--- APP – STRONY (FAZY 0–3) ---
+
+app/(app)/dashboard/cfo/page.tsx          # Dashboard Mileny
+app/(app)/dashboard/ops/page.tsx          # Dashboard Sary
+app/(app)/import/page.tsx                 # Import CSV – lista importów
+app/(app)/import/[batchId]/page.tsx       # Przegląd importu + mapping
+app/(app)/import/[batchId]/review/page.tsx  # Zatwierdzenie importu
+app/(app)/lekcje/page.tsx                 # Lista lekcji
+app/(app)/lekcje/rentownosc/page.tsx      # Rentowność kursów i grup
+app/(app)/lekcje/nauczyciele/page.tsx     # Rentowność nauczycieli
+app/(app)/lekcje/zaleglosci/page.tsx      # Zaległości płatnicze
+app/(app)/ustawienia/podmioty/page.tsx    # Zarządzanie podmiotami
+app/(app)/ustawienia/integracje/page.tsx  # Konfiguracja źródeł importu
+
+--- API ROUTE HANDLERS ---
+
+app/api/import/upload/route.ts            # POST – upload CSV
+app/api/import/validate/route.ts          # POST – walidacja staging
+app/api/import/approve/route.ts           # POST – zatwierdzenie → lesson_revenue
+app/api/lekcje/profitability/route.ts     # GET – dane rentowności
+app/api/lekcje/zaleglosci/route.ts        # GET – zaległości
+app/api/dashboard/cfo/route.ts            # GET – dane dla Mileny
+
+--- KOMPONENTY – LAYOUT ---
+
+components/layout/Sidebar.tsx             # Nawigacja boczna po polsku
+components/layout/Topbar.tsx              # Górny pasek (podmiot, user, notif.)
+components/layout/EntitySwitcher.tsx      # Przełącznik podmiotów
+components/layout/MobileNav.tsx           # Nawigacja mobilna
+
+--- KOMPONENTY – SHARED ---
+
+components/shared/EntityBadge.tsx         # Chip z nazwą podmiotu
+components/shared/StatusPill.tsx          # Kolorowy pill statusu
+components/shared/MetricCard.tsx          # Karta z pojedynczą liczbą (dashboard)
+components/shared/RiskBadge.tsx           # Chip ryzyka (zielony/bursztyn/czerwony)
+components/shared/EmptyState.tsx          # Stan pusty z opisem
+components/shared/LoadingState.tsx        # Skeleton loading
+components/shared/ConfirmDialog.tsx       # Dialog potwierdzenia akcji
+
+--- KOMPONENTY – IMPORT ---
+
+components/import/CsvUploader.tsx         # Drag & drop upload CSV
+components/import/FieldMapper.tsx         # UI mapowania kolumn
+components/import/ValidationReport.tsx    # Lista błędów walidacji
+components/import/StagingTable.tsx        # Podgląd danych staging
+components/import/ApproveButton.tsx       # Przycisk zatwierdzenia z potwierdzeniem
+
+--- KOMPONENTY – DASHBOARD ---
+
+components/dashboard/cfo/RevenueWidget.tsx      # Przychody miesiąca
+components/dashboard/cfo/MarginWidget.tsx        # Marża brutto
+components/dashboard/cfo/TopCoursesWidget.tsx    # Top 3 kursy
+components/dashboard/cfo/RiskWidget.tsx          # 3 ryzyka
+components/dashboard/cfo/DecisionsWidget.tsx     # 3 decyzje
+components/dashboard/ops/TasksWidget.tsx         # Zadania Sary
+components/dashboard/ops/ImportStatusWidget.tsx  # Status importów
+components/dashboard/ops/UnpaidWidget.tsx        # Zaległości
+
+--- KOMPONENTY – LEKCJE ---
+
+components/lessons/CourseTable.tsx        # Tabela kursów z marżami
+components/lessons/TeacherTable.tsx       # Tabela nauczycieli z rentownością
+components/lessons/UnpaidTable.tsx        # Zaległości płatnicze
+components/lessons/ProfitabilityChart.tsx # Wykres rentowności (Recharts)
+
+
+6. ZALEŻNOŚCI (PACKAGE.JSON)
+================================================================================
+
+dependencies:
+  next                      15.x
+  @supabase/ssr             ^0.5.x
+  @supabase/supabase-js     ^2.x
+  react                     ^18.x
+  react-dom                 ^18.x
+  recharts                  ^2.x
+  zustand                   ^5.x
+  @tanstack/react-query     ^5.x
+  papaparse                 ^5.x        (parsowanie CSV)
+  date-fns                  ^3.x        (formatowanie dat)
+  lucide-react              ^0.x        (ikony)
+  class-variance-authority  ^0.x        (shadcn)
+  clsx                      ^2.x
+  tailwind-merge            ^2.x
+  zod                       ^3.x        (walidacja danych)
+  react-dropzone            ^14.x       (upload plików)
+
+devDependencies:
+  typescript                ^5.x
+  @types/node               ^20.x
+  @types/react              ^18.x
+  @types/papaparse          ^5.x
+  tailwindcss               ^3.x
+  autoprefixer              ^10.x
+  postcss                   ^8.x
+  eslint                    ^8.x
+  eslint-config-next        15.x
+
+
+7. KLUCZOWE ZASADY IMPLEMENTACJI
+================================================================================
+
+BEZPIECZEŃSTWO AI (niezmienne):
+  AI może:
+    • analizować dane
+    • wykrywać błędy i anomalie
+    • tworzyć rekomendacje
+    • oznaczać ryzyka
+    • przygotowywać pytania do doradcy
+    • sugerować decyzje
+
+  AI NIE MOŻE:
+    • robić przelewów
+    • wysyłać deklaracji podatkowych
+    • samodzielnie zamykać miesiąca
+    • zmieniać danych bez audit log
+    • usuwać danych permanentnie
+    • podejmować decyzji podatkowych
+
+JĘZYK: POLISH UI / ENGLISH CODE:
+  Pliki, zmienne, funkcje  → angielski (camelCase, snake_case)
+  Interfejs użytkownika    → polski
+  Komunikaty błędów        → polskie
+  Kolumny tabel w UI       → polskie
+
+IMPORT: STAGING FIRST, ZAWSZE:
+  CSV upload
+    → parse
+    → map
+    → validate
+    → staging
+    → human review
+    → approve
+    → lesson_revenue
+  Żaden rekord nie trafia do tabel produkcyjnych bez zatwierdzenia człowieka
+
+AUDIT LOG: NA KAŻDEJ ZMIANIE:
+  Każda operacja CREATE / UPDATE / DELETE / APPROVE na kluczowych tabelach
+  zapisuje wpis w audit_log przez trigger Postgres
+
+RLS: DATA ISOLATION:
+  Każda tabela z entity_id ma policy RLS
+  Użytkownik widzi tylko dane podmiotów przypisanych w user_entity_roles
+  owner_cfo z entity_id = NULL widzi wszystko
+
+
+8. KOLEJNOŚĆ IMPLEMENTACJI – FAZA 0 (szczegóły dzień po dniu)
+================================================================================
+
+Dzień 1:
+  • package.json (zaktualizowany z wszystkimi zależnościami)
+  • tsconfig.json
+  • tailwind.config.ts (z tokenami kolorów uFOS)
+  • components.json (shadcn/ui)
+  • next.config.ts
+  • .env.local.example
+  • app/globals.css (tokeny CSS)
+  • middleware.ts (Supabase auth)
+
+Dzień 2:
+  • supabase/migrations/001_entities.sql
+  • supabase/migrations/002_users_and_roles.sql
+  • supabase/migrations/003_audit_log.sql
+  • supabase/migrations/004_rls_policies.sql
+  • supabase/seed.sql (3 podmioty + testowe konta)
+
+Dzień 3:
+  • types/domain.ts
+  • lib/supabase/client.ts
+  • lib/supabase/server.ts
+  • lib/auth/permissions.ts
+  • lib/auth/session.ts
+  • lib/utils/formatters.ts
+  • lib/utils/cn.ts
+  • app/layout.tsx
+  • app/(auth)/login/page.tsx
+  • app/(auth)/login/actions.ts
+
+Dzień 4:
+  • components/layout/Sidebar.tsx
+  • components/layout/Topbar.tsx
+  • components/layout/EntitySwitcher.tsx
+  • app/(app)/layout.tsx
+  • app/(app)/dashboard/cfo/page.tsx (placeholder)
+  • app/(app)/dashboard/ops/page.tsx (placeholder)
+  • Weryfikacja RLS, testy uprawnień
+
+
+9. PYTANIA PRZED STARTEM
+================================================================================
+
+Przed rozpoczęciem kodowania potrzebne jest potwierdzenie:
+
+1. ZGODA na rozpoczęcie kodowania?
+
+2. SUPABASE: Czy mam założyć nowy projekt przez Supabase MCP
+   (mam do niego dostęp w tej sesji), czy masz już istniejący projekt
+   i podasz URL + anon key?
+
+3. KOLEJNOŚĆ: Potwierdzasz start od Fazy 0 i iteracyjne przejście
+   przez kolejne fazy?
+
+================================================================================
+ŁĄCZNA LICZBA PLIKÓW DLA FAZ 0–3: ~55 plików
+SZACOWANY CZAS IMPLEMENTACJI FAZ 0–3: ~4 tygodnie
+================================================================================
+END OF DOCUMENT
+================================================================================
