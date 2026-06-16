@@ -14,6 +14,7 @@ import {
   LogOut,
   BarChart3,
   ArrowDownToLine,
+  Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { signOut } from "@/app/(auth)/login/actions"
@@ -84,6 +85,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/raporty",
     label: "Raporty",
     icon: BarChart3,
+  },
+  {
+    href: "/ai-cfo",
+    label: "AI CFO",
+    icon: Bot,
+    roles: ["owner_cfo"],
   },
   {
     href: "/ustawienia",
