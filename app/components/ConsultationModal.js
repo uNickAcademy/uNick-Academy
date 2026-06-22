@@ -5,7 +5,7 @@ import Button from "./Button";
 import UNickorn from "./UNickorn";
 import styles from "./ConsultationModal.module.css";
 
-export default function ConsultationModal({ isOpen, onClose, audience, dict }) {
+export default function ConsultationModal({ isOpen, onClose, audience, teacher, dict }) {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -150,6 +150,7 @@ export default function ConsultationModal({ isOpen, onClose, audience, dict }) {
                   name="message"
                   className={styles.textarea}
                   placeholder={t.messagePlaceholder}
+                  defaultValue={teacher ? `${t.teacherRequest || "I'd like to book a lesson with"} ${teacher}` : ""}
                 />
               </div>
 

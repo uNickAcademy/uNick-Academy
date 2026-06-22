@@ -2,7 +2,7 @@ import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
 import CTASection from "../../components/CTASection";
-import TeacherCard from "../../components/cards/TeacherCard";
+import TeacherCardWithBooking from "../../components/cards/TeacherCardWithBooking";
 import { getTeachers } from "../../lib/teachers";
 import { getDictionary } from "../../lib/dictionaries";
 import styles from "../../components/sections.module.css";
@@ -81,7 +81,7 @@ export default async function MeetUsPage({ params }) {
           <div className={styles.cardGrid}>
             {teachers.map((teacher, i) => (
               <Reveal as="div" key={teacher.name} delay={Math.min(i * 60, 300)}>
-                <TeacherCard {...teacher} />
+                <TeacherCardWithBooking {...teacher} bookLabel={dict.common.buttons.bookLesson || "Book a lesson"} />
               </Reveal>
             ))}
           </div>

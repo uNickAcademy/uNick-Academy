@@ -47,6 +47,7 @@ const pl = {
       seeADayInClass: "Zobacz dzień na zajęciach",
       explore: "Zobacz",
       signUp: "Chcę się zapisać",
+      bookLesson: "Zarezerwuj lekcję",
       sendMessage: "Wyślij wiadomość",
       sendAndBook: "Wyślij i zarezerwuj konsultację",
       close: "Zamknij",
@@ -670,6 +671,7 @@ const pl = {
     messageLabel: "Coś, co warto wiedzieć? (opcjonalnie)",
     messagePlaceholder: "np. obecny poziom, cele, preferencje dotyczące terminów...",
     submit: "Wyślij i zarezerwuj konsultację",
+    teacherRequest: "Chcę zarezerwować lekcję z",
     fineprint: "Bez presji, bez zobowiązań — po prostu przyjazna rozmowa, by sprawdzić, gdzie się wpasujesz w uNick Academy.",
     success: {
       title: "Dziękujemy — wkrótce się odezwiemy.",

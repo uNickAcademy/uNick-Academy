@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 const MAX_MESSAGES = 3
@@ -16,14 +16,45 @@ function incrementDemoCount() {
   return next
 }
 
+function speak(text, onEnd) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) {
+    onEnd?.()
+    return
+  }
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'en-GB'
+  utterance.rate = 0.95
+  utterance.pitch = 1.1
+
+  const voices = window.speechSynthesis.getVoices()
+  const preferred = voices.find(
+    (v) => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')
+  ) || voices.find((v) => v.lang.startsWith('en-GB'))
+    || voices.find((v) => v.lang.startsWith('en'))
+  if (preferred) utterance.voice = preferred
+
+  utterance.onend = () => onEnd?.()
+  utterance.onerror = () => onEnd?.()
+  window.speechSynthesis.speak(utterance)
+}
+
 export default function UnickornDemoPage() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+  const [voiceOn, setVoiceOn] = useState(true)
   const [demoUsed, setDemoUsed] = useState(0)
   const [limitReached, setLimitReached] = useState(false)
   const [started, setStarted] = useState(false)
   const bottomRef = useRef(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.getVoices()
+    }
+  }, [])
 
   useEffect(() => {
     const count = getDemoCount()
@@ -37,13 +68,27 @@ export default function UnickornDemoPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const speakReply = useCallback((text) => {
+    if (!voiceOn) return
+    setSpeaking(true)
+    speak(text, () => setSpeaking(false))
+  }, [voiceOn])
+
+  function toggleVoice() {
+    if (voiceOn) {
+      window.speechSynthesis?.cancel()
+      setSpeaking(false)
+    }
+    setVoiceOn((v) => !v)
+  }
+
   async function startDemo() {
     if (limitReached) return
     setStarted(true)
     setSending(true)
 
     const openingMessages = [
-      { role: 'user', content: '[SESSION_START] The visitor has opened a free demo. Greet them warmly and invite them to chat in English about anything they like.' },
+      { role: 'user', content: '[SESSION_START] The visitor has opened a free demo. Greet them warmly and invite them to chat in English about anything they like. Keep it short — 2 sentences max.' },
     ]
 
     const res = await fetch('/api/unickorn/demo', {
@@ -56,6 +101,7 @@ export default function UnickornDemoPage() {
 
     if (data.reply) {
       setMessages([{ role: 'assistant', content: data.reply }])
+      speakReply(data.reply)
     }
   }
 
@@ -63,6 +109,9 @@ export default function UnickornDemoPage() {
     e.preventDefault()
     const text = input.trim()
     if (!text || sending || limitReached) return
+
+    window.speechSynthesis?.cancel()
+    setSpeaking(false)
 
     const count = incrementDemoCount()
     setDemoUsed(count)
@@ -87,6 +136,7 @@ export default function UnickornDemoPage() {
 
     if (data.reply) {
       setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
+      speakReply(data.reply)
     }
 
     if (count >= MAX_MESSAGES) {
@@ -101,16 +151,16 @@ export default function UnickornDemoPage() {
           <div className="text-5xl mb-4">&#x1F984;</div>
           <h1 className="text-2xl font-extrabold text-navy mb-2">Try uNickorn free</h1>
           <p className="text-sm text-gray-500 mb-2">
-            Chat with our AI English tutor — no account needed.
+            Talk to our AI English tutor — no account needed.
           </p>
           <p className="text-xs text-gray-400 mb-6">
-            You get {MAX_MESSAGES} free messages to try it out.
+            uNickorn will speak to you! You get {MAX_MESSAGES} free messages.
           </p>
           <button
             onClick={startDemo}
             className="w-full bg-brand text-white rounded-full py-3 font-bold text-sm hover:bg-red-700 transition-colors"
           >
-            Start chatting
+            Start talking
           </button>
           <p className="text-xs text-gray-400 mt-4">
             <Link href="/academy/signup" className="text-navy font-semibold hover:underline">
@@ -130,7 +180,7 @@ export default function UnickornDemoPage() {
           <div className="text-5xl mb-4">&#x1F984;</div>
           <h1 className="text-xl font-extrabold text-navy mb-2">Demo finished</h1>
           <p className="text-sm text-gray-500 mb-6">
-            You've used your {MAX_MESSAGES} free messages. Sign up to keep chatting with uNickorn — with session recaps, vocabulary tracking, and personalised learning.
+            You've used your {MAX_MESSAGES} free messages. Sign up to keep talking with uNickorn — with session recaps, vocabulary tracking, and personalised learning.
           </p>
           <Link
             href="/academy/signup"
@@ -152,12 +202,24 @@ export default function UnickornDemoPage() {
   return (
     <div className="min-h-screen bg-amber-50 flex flex-col">
       <header className="bg-navy px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-extrabold">uNickorn <span className="text-xs font-normal opacity-70">free demo</span></span>
-        <span className="text-xs text-white opacity-70">
-          {limitReached
-            ? 'Demo finished'
-            : `${MAX_MESSAGES - demoUsed} message${MAX_MESSAGES - demoUsed !== 1 ? 's' : ''} left`}
+        <span className="text-white font-extrabold">
+          uNickorn <span className="text-xs font-normal opacity-70">free demo</span>
         </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleVoice}
+            className="text-white text-lg opacity-80 hover:opacity-100 transition-opacity"
+            aria-label={voiceOn ? 'Mute voice' : 'Enable voice'}
+            title={voiceOn ? 'Voice on' : 'Voice off'}
+          >
+            {voiceOn ? '\u{1F50A}' : '\u{1F507}'}
+          </button>
+          <span className="text-xs text-white opacity-70">
+            {limitReached
+              ? 'Demo finished'
+              : `${MAX_MESSAGES - demoUsed} left`}
+          </span>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
@@ -171,17 +233,22 @@ export default function UnickornDemoPage() {
             }`}
           >
             {message.content}
+            {message.role === 'assistant' && speaking && i === messages.length - 1 && (
+              <span className="inline-block ml-2 text-xs opacity-50 animate-pulse">
+                &#x1F50A;
+              </span>
+            )}
           </div>
         ))}
         {sending && (
           <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-white text-gray-400 mr-auto">
-            uNickorn is typing...
+            uNickorn is thinking...
           </div>
         )}
         {limitReached && (
           <div className="max-w-[90%] mx-auto bg-white rounded-2xl p-6 text-center mt-4 border border-gray-100">
             <p className="text-sm text-gray-600 mb-3">
-              That was your free demo! Sign up to keep chatting with uNickorn.
+              That was your free demo! Sign up to keep talking with uNickorn.
             </p>
             <Link
               href="/academy/signup"

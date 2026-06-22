@@ -47,6 +47,7 @@ const en = {
       seeADayInClass: "See a day in class",
       explore: "Explore",
       signUp: "I want to sign up",
+      bookLesson: "Book a lesson",
       sendMessage: "Send message",
       sendAndBook: "Send & book my consultation",
       close: "Close",
@@ -670,6 +671,7 @@ const en = {
     messageLabel: "Anything you'd like us to know? (optional)",
     messagePlaceholder: "e.g. current level, goals, scheduling preferences...",
     submit: "Send & book my consultation",
+    teacherRequest: "I'd like to book a lesson with",
     fineprint: "No pressure, no obligation — just a friendly conversation to see where you fit at uNick Academy.",
     success: {
       title: "Thank you — we'll be in touch.",

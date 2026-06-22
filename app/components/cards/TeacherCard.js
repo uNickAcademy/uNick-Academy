@@ -1,12 +1,23 @@
 import Image from "next/image";
-import PlaceholderMedia from "../PlaceholderMedia";
 import styles from "./TeacherCard.module.css";
 
-export default function TeacherCard({ name, role, photo, tone = "blue" }) {
+const TONES = {
+  blue: { a: "#E7ECF4", b: "#F4EBDD" },
+  red: { a: "#F7E2DD", b: "#FAF4EC" },
+  cream: { a: "#F4EBDD", b: "#ECDFC9" },
+  sand: { a: "#ECDFC9", b: "#E7ECF4" },
+};
+
+export default function TeacherCard({ name, role, photo, tone = "blue", bookLabel, onBook }) {
+  const { a, b } = TONES[tone] || TONES.blue;
+
   return (
     <div className={styles.card}>
-      {photo ? (
-        <div className={styles.photoFrame}>
+      <div
+        className={styles.photoFrame}
+        style={{ "--tone-a": a, "--tone-b": b }}
+      >
+        {photo ? (
           <Image
             src={photo}
             alt={name}
@@ -14,12 +25,21 @@ export default function TeacherCard({ name, role, photo, tone = "blue" }) {
             height={400}
             className={styles.photo}
           />
-        </div>
-      ) : (
-        <PlaceholderMedia caption={name} tone={tone} ratio="1:1" />
-      )}
+        ) : (
+          <span className={styles.initial}>{name.charAt(0)}</span>
+        )}
+      </div>
       <h3 className={styles.name}>{name}</h3>
       {role && <span className={styles.subject}>{role}</span>}
+      {bookLabel && (
+        <button
+          type="button"
+          className={styles.bookBtn}
+          onClick={() => onBook?.(name)}
+        >
+          {bookLabel}
+        </button>
+      )}
     </div>
   );
 }

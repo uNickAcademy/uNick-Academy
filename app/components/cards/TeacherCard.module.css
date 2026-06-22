@@ -1,15 +1,21 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   text-align: center;
 }
 
 .photoFrame {
   aspect-ratio: 1 / 1;
+  width: 100%;
   border-radius: 16px;
   overflow: hidden;
-  background: var(--color-border);
+  background: linear-gradient(135deg, var(--tone-a, #E7ECF4) 0%, var(--tone-b, #F4EBDD) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .photo {
@@ -20,6 +26,14 @@
   display: block;
 }
 
+.initial {
+  font-family: var(--font-display), serif;
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(28, 43, 74, 0.18);
+  user-select: none;
+}
+
 .name {
   font-size: 18px;
   margin: 0;
@@ -28,4 +42,26 @@
 .subject {
   font-size: 13.5px;
   color: var(--color-muted);
+}
+
+.bookBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--color-red);
+  background: transparent;
+  color: var(--color-red);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.bookBtn:hover {
+  background: var(--color-red);
+  color: var(--color-warm-white, #fff);
 }
