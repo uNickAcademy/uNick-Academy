@@ -13,13 +13,13 @@ export default async function UstawieniaPage() {
   const { data: entities } = await supabase
     .schema("ufos")
     .from("entities")
-    .select("id, short_name, full_name, tax_id, entity_type")
+    .select("id, short_name, name, nip, type")
     .order("short_name")
 
   const { data: ufosUsers } = await supabase
     .schema("ufos")
     .from("users")
-    .select("id, full_name, email, role")
+    .select("id, full_name, email, role_label")
     .order("full_name")
 
   return (
@@ -67,11 +67,11 @@ export default async function UstawieniaPage() {
               <div key={e.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-brand-muted/40">
                 <div>
                   <p className="text-sm font-medium text-navy-500">{e.short_name}</p>
-                  <p className="text-xs text-brand-subtle">{e.full_name}</p>
+                  <p className="text-xs text-brand-subtle">{e.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-brand-subtle">NIP: {e.tax_id ?? "—"}</p>
-                  <p className="text-xs text-brand-subtle capitalize">{e.entity_type}</p>
+                  <p className="text-xs text-brand-subtle">NIP: {e.nip ?? "—"}</p>
+                  <p className="text-xs text-brand-subtle capitalize">{e.type}</p>
                 </div>
               </div>
             ))}
@@ -96,7 +96,7 @@ export default async function UstawieniaPage() {
                   <p className="text-sm font-medium text-navy-500">{u.full_name}</p>
                   <p className="text-xs text-brand-subtle">{u.email}</p>
                 </div>
-                <span className="pill-subtle text-xs">{u.role}</span>
+                <span className="pill-subtle text-xs">{u.role_label}</span>
               </div>
             ))}
             {(!ufosUsers || ufosUsers.length === 0) && (
