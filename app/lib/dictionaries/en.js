@@ -612,6 +612,7 @@ const en = {
     cta: {
       title: "Ready to chat with uNickorn?",
       subtitle: "Sign up and start practising English with your personal AI tutor.",
+      tryButton: "Try uNickorn",
     },
   },
 

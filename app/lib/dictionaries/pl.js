@@ -612,6 +612,7 @@ const pl = {
     cta: {
       title: "Gotowy na rozmowę z uNickornem?",
       subtitle: "Zapisz się i zacznij ćwiczyć angielski ze swoim osobistym AI korepetytorem.",
+      tryButton: "Wypróbuj uNickorna",
     },
   },
 
