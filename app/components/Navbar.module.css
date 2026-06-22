@@ -83,6 +83,109 @@
   width: 100%;
 }
 
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.chevron {
+  margin-left: 4px;
+  transition: transform var(--transition-base);
+  flex-shrink: 0;
+}
+
+.dropdown[aria-expanded="true"] .chevron,
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  animation: dropIn 0.2s var(--ease-out);
+  z-index: 60;
+}
+
+.dropdownLink {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  border-radius: 10px;
+  transition: background var(--transition-base), color var(--transition-base);
+  white-space: nowrap;
+}
+
+.dropdownLink:hover,
+.dropdownLink.active {
+  background: var(--color-cream);
+  color: var(--color-red);
+}
+
+/* Mobile group (For whom accordion) */
+.mobileGroup {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobileGroupToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 4px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mobileSubLinks {
+  padding: 0 0 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileSubLink {
+  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  border-radius: 10px;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+.mobileSubLink:hover {
+  background: var(--color-cream);
+  color: var(--color-red);
+}
+
 .actions {
   display: flex;
   align-items: center;

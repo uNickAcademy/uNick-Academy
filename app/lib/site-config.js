@@ -30,24 +30,38 @@ export const platformLinks = {
   adminPanel: { href: "/admin" },
 };
 
-// Route segments for the primary navigation, shared across the
-// whole site. Labels come from dict.common.nav[key].
 const NAV_ROUTES = [
   { key: "home", path: "" },
-  { key: "children", path: "/children" },
-  { key: "teenagers", path: "/teenagers" },
-  { key: "adults", path: "/adults" },
-  { key: "companies", path: "/companies" },
+  {
+    key: "forWhom",
+    children: [
+      { key: "children", path: "/children" },
+      { key: "teenagers", path: "/teenagers" },
+      { key: "adults", path: "/adults" },
+      { key: "companies", path: "/companies" },
+    ],
+  },
   { key: "howWeTeach", path: "/how-we-teach" },
   { key: "meetUs", path: "/meet-us" },
   { key: "contact", path: "/contact" },
 ];
 
 export function getPrimaryNav(locale, dict) {
-  return NAV_ROUTES.map((item) => ({
-    label: dict.common.nav[item.key],
-    href: `/${locale}${item.path}`,
-  }));
+  return NAV_ROUTES.map((item) => {
+    if (item.children) {
+      return {
+        label: dict.common.nav[item.key],
+        children: item.children.map((child) => ({
+          label: dict.common.nav[child.key],
+          href: `/${locale}${child.path}`,
+        })),
+      };
+    }
+    return {
+      label: dict.common.nav[item.key],
+      href: `/${locale}${item.path}`,
+    };
+  });
 }
 
 export function getFooterNav(locale, dict) {
@@ -57,7 +71,9 @@ export function getFooterNav(locale, dict) {
   return [
     {
       heading: dict.common.footer.explore,
-      links: primary.filter((item) => item.href !== homeHref),
+      links: primary
+        .flatMap((item) => (item.children ? item.children : [item]))
+        .filter((item) => item.href !== homeHref),
     },
     {
       heading: dict.common.footer.pathways,

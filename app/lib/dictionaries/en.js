@@ -12,6 +12,7 @@ const en = {
     skipToContent: "Skip to content",
     nav: {
       home: "Home",
+      forWhom: "For Whom",
       children: "Children",
       teenagers: "Teenagers",
       adults: "Adults",

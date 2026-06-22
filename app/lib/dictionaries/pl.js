@@ -12,6 +12,7 @@ const pl = {
     skipToContent: "Przejdź do treści",
     nav: {
       home: "Strona główna",
+      forWhom: "Dla kogo",
       children: "Dzieci",
       teenagers: "Młodzież",
       adults: "Dorośli",

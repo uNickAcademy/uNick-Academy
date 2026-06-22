@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -15,8 +15,69 @@ function switchLocalePath(pathname, targetLocale) {
   return segments.join("/") || `/${targetLocale}`;
 }
 
+function DropdownItem({ item, pathname, onNavigate }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isChildActive = item.children.some((child) => pathname === child.href);
+
+  return (
+    <div
+      className={styles.dropdown}
+      ref={dropdownRef}
+      onMouseEnter={() => setDropdownOpen(true)}
+      onMouseLeave={() => setDropdownOpen(false)}
+    >
+      <button
+        className={`${styles.navLink} ${isChildActive ? styles.active : ""}`}
+        onClick={() => setDropdownOpen((v) => !v)}
+        aria-expanded={dropdownOpen}
+        aria-haspopup="true"
+        type="button"
+      >
+        {item.label}
+        <svg className={styles.chevron} width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {dropdownOpen && (
+        <div className={styles.dropdownMenu}>
+          {item.children.map((child) => {
+            const isActive = pathname === child.href;
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                className={`${styles.dropdownLink} ${isActive ? styles.active : ""}`}
+                aria-current={isActive ? "page" : undefined}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  onNavigate?.();
+                }}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar({ locale, dict }) {
   const [open, setOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const pathname = usePathname();
   const primaryNav = getPrimaryNav(locale, dict);
   const homeHref = `/${locale}`;
@@ -35,6 +96,9 @@ export default function Navbar({ locale, dict }) {
 
         <nav className={styles.nav} aria-label="Primary">
           {primaryNav.map((item) => {
+            if (item.children) {
+              return <DropdownItem key={item.label} item={item} pathname={pathname} />;
+            }
             const isActive = pathname === item.href;
             return (
               <Link
@@ -78,16 +142,49 @@ export default function Navbar({ locale, dict }) {
 
       {open && (
         <div className={styles.mobilePanel}>
-          {primaryNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={styles.mobileLink}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {primaryNav.map((item) => {
+            if (item.children) {
+              return (
+                <div key={item.label} className={styles.mobileGroup}>
+                  <button
+                    className={styles.mobileGroupToggle}
+                    onClick={() => setMobileExpanded((v) => !v)}
+                    aria-expanded={mobileExpanded}
+                    type="button"
+                  >
+                    {item.label}
+                    <svg className={`${styles.chevron} ${mobileExpanded ? styles.chevronOpen : ""}`} width="12" height="7" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                      <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {mobileExpanded && (
+                    <div className={styles.mobileSubLinks}>
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={styles.mobileSubLink}
+                          onClick={() => { setOpen(false); setMobileExpanded(false); }}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={styles.mobileLink}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           <div className={styles.mobileExtra}>
             <Link
               href={platformLinks.studentLogin.href}
