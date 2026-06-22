@@ -11,6 +11,8 @@ export default function CTASection({
   secondaryLabel,
   audience,
   showUnicorn = true,
+  signupHref,
+  signupLabel,
 }) {
   return (
     <Reveal as="div" className="section container">
@@ -20,7 +22,13 @@ export default function CTASection({
           <h2 className={styles.title}>{title}</h2>
           <p className={styles.subtitle}>{subtitle}</p>
           <div className={styles.actions}>
-            <ConsultationButton audience={audience} />
+            {signupHref ? (
+              <Button href={signupHref} variant="primary" onDark>
+                {signupLabel}
+              </Button>
+            ) : (
+              <ConsultationButton audience={audience} />
+            )}
             {secondaryHref && (
               <Button href={secondaryHref} variant="secondary" onDark>
                 {secondaryLabel}

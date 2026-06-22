@@ -23,7 +23,12 @@ export default async function HomePage({ params }) {
       <MeetPeople dict={dict} locale={locale} />
       <Stories dict={dict} />
       <Manifesto dict={dict} />
-      <CTASection title={dict.home.finalCta.title} subtitle={dict.home.finalCta.subtitle} />
+      <CTASection
+        title={dict.home.finalCta.title}
+        subtitle={dict.home.finalCta.subtitle}
+        signupHref="/academy/signup"
+        signupLabel={dict.common.buttons.signUp}
+      />
     </>
   );
 }

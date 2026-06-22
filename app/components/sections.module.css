@@ -187,6 +187,44 @@
   line-height: 1.7;
 }
 
+/* Signature (e.g. Milena's sign-off) */
+.signature {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  color: var(--color-blue);
+  font-size: 17px;
+  margin-top: 12px;
+  white-space: pre-line;
+}
+
+/* Check-mark list (e.g. what we offer) */
+.checkList {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.checkList li {
+  position: relative;
+  padding-left: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--color-ink-soft);
+}
+
+.checkList li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--color-red);
+  font-size: 18px;
+}
+
 @media (max-width: 940px) {
   .hero,
   .split,

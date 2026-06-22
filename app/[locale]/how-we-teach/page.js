@@ -69,7 +69,12 @@ export default async function HowWeTeachPage({ params }) {
         </div>
       </section>
 
-      <CTASection title={t.finalCta.title} subtitle={t.finalCta.subtitle} />
+      <CTASection
+        title={t.finalCta.title}
+        subtitle={t.finalCta.subtitle}
+        signupHref="/academy/signup"
+        signupLabel={dict.common.buttons.signUp}
+      />
     </>
   );
 }

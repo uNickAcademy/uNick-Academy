@@ -1,7 +1,6 @@
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
-import ConsultationButton from "../../components/ConsultationButton";
 import CTASection from "../../components/CTASection";
 import TeacherCard from "../../components/cards/TeacherCard";
 import { getTeachers } from "../../lib/teachers";
@@ -28,12 +27,8 @@ export default async function MeetUsPage({ params }) {
           <h1 className={styles.title}>
             {t.hero.titleStart}
             <span className={styles.accent}>{t.hero.titleAccent}</span>
-            {t.hero.titleEnd}
           </h1>
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
-          <div className={styles.actions}>
-            <ConsultationButton />
-          </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
           <PlaceholderMedia tone="cream" ratio="4:3" caption={t.hero.mediaCaption} />
@@ -59,6 +54,29 @@ export default async function MeetUsPage({ params }) {
 
       <section className="section">
         <div className="container">
+          <Reveal as="div" className={styles.copy}>
+            <span className="eyebrow">{t.worldTeam.eyebrow}</span>
+            <h2>{t.worldTeam.title}</h2>
+            <p>{t.worldTeam.paragraph1}</p>
+            <p>{t.worldTeam.paragraph2}</p>
+            <p className={styles.signature}>{t.worldTeam.signature}</p>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className={`section ${styles.altSection}`}>
+        <div className="container">
+          <SectionHeading eyebrow={t.whatWeOffer.eyebrow} title={t.whatWeOffer.title} />
+          <Reveal as="ul" className={styles.checkList}>
+            {t.whatWeOffer.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
           <SectionHeading eyebrow={t.team.eyebrow} title={t.team.title} subtitle={t.team.subtitle} />
           <div className={styles.cardGrid}>
             {teachers.map((teacher, i) => (
@@ -70,21 +88,12 @@ export default async function MeetUsPage({ params }) {
         </div>
       </section>
 
-      <section className={`section ${styles.altSection}`}>
-        <div className="container">
-          <SectionHeading eyebrow={t.lookFor.eyebrow} title={t.lookFor.title} />
-          <div className={styles.cardGrid}>
-            {t.lookFor.items.map((item, i) => (
-              <Reveal as="div" key={item.title} delay={i * 70} className={styles.card}>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <CTASection title={t.finalCta.title} subtitle={t.finalCta.subtitle} />
+      <CTASection
+        title={t.finalCta.title}
+        subtitle={t.finalCta.subtitle}
+        signupHref="/academy/signup"
+        signupLabel={dict.common.buttons.signUp}
+      />
     </>
   );
 }

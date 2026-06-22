@@ -111,7 +111,8 @@ export default async function TeenagersPage({ params }) {
       <CTASection
         title={t.finalCta.title}
         subtitle={t.finalCta.subtitle}
-        audience="teen"
+        signupHref="/academy/signup"
+        signupLabel={dict.common.buttons.signUp}
         secondaryHref={`/${locale}/meet-us`}
         secondaryLabel={dict.common.buttons.meetTheTeam}
         showUnicorn={false}

@@ -44,6 +44,7 @@ const en = {
       meetWholeTeam: "Meet the whole team",
       seeADayInClass: "See a day in class",
       explore: "Explore",
+      signUp: "I want to sign up",
       sendMessage: "Send message",
       sendAndBook: "Send & book my consultation",
       close: "Close",
@@ -506,51 +507,60 @@ const en = {
     meta: {
       title: "Meet Us",
       description:
-        "The people behind uNick Academy — founders Milena and Nick, and the international team of teachers who bring the academy to life.",
+        "Meet uNick Academy — a school from Rumianek where teachers from around the world have been teaching English the un-school way for 10 years.",
     },
     hero: {
       eyebrow: "Meet us",
-      titleStart: "The family behind ",
-      titleAccent: "the table.",
+      titleStart: "10 years of ",
+      titleAccent: "uNick adventure.",
       subtitle:
-        "uNick Academy started as two people who believed language should bring people together, not sort them into who's good enough and who isn't. Here's who we are — and who you'll actually be learning with.",
-      mediaCaption: "Milena and Nick, at the table where it all began",
+        "We're based in Rumianek, but our teachers come from all over the world — and we teach languages the un-school way!",
+      mediaCaption: "Milena and Nick — uNick Academy",
     },
     ourStory: {
-      eyebrow: "Our story, in full",
-      title: "Two people, two countries, one frustration",
+      eyebrow: "Our story",
+      title: "How it all started",
       paragraph1:
-        "Milena grew up in Poland in classrooms where English was something you were tested on, not something you used. Nick grew up in England, surrounded by people who'd studied languages for years and still couldn't hold a conversation when it mattered.",
+        "Our adventure with uNick Academy began exactly 10 years ago. Before that, it was just Nick running 'English with an Englishman'. His lessons were so popular I seriously considered cloning him. I was working in a corporation at the time. But fate stepped in — the company let me go, which in hindsight turned out to be the best thing that could have happened. So instead of cloning Nick, I joined the team.",
       paragraph2:
-        "When they met, they realised they'd been seeing the same problem from opposite sides: schools that taught language as a subject to be examined, rather than a skill to be lived. People who knew the rules but froze the moment a real conversation needed courage.",
+        "At first we divided things up — he taught adults, I taught children. But I noticed one difference — when Nick taught, the children spoke English much more willingly than in my classes. Why? The answer is actually simple — because with me it was artificially forced. That's just how our brains work — they take the path of least resistance. If this lady speaks Polish, she'll understand what I say in Polish. That's when I realised why lessons with a foreigner are so much more effective. The brain sees a natural need to communicate in another language.",
       paragraph3:
-        "uNick Academy began small — a few lessons, a shared belief that mistakes are part of speaking, not a failure of it. It's grown since, but the rule hasn't changed: every student is a person first, with a story worth hearing — not just a level to move up.",
+        "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be unique. You might even say uNique… or rather uNick.",
       galleryCaptions: [
-        "Milena, early teaching days",
-        "Nick, early teaching days",
-        "The first 'classroom' — a kitchen table",
-        "uNick Academy today — still the same spirit",
+        "Milena and Nick — where it all began",
+        "The first lessons, before uNick had a name",
+        "A classroom that feels more like a living room",
+        "uNick Academy today — same spirit as day one",
+      ],
+    },
+    worldTeam: {
+      eyebrow: "Our teachers",
+      title: "From every corner of the world",
+      paragraph1:
+        "First Gui from Portugal joined us, then Camilla from Canada — they were wonderful and the students loved them. Then came the equally amazing Kimy from Ecuador, Mona and Hussain from Saudi Arabia, and many, many other fantastic people from every corner of the world.",
+      paragraph2:
+        "Over these 10 years we've received countless messages from students and their parents about how we've directly or indirectly impacted their lives. Not just by breaking the language barrier, but by opening their minds to the world. And I have to say, I'm incredibly proud of that.",
+      signature: "Big hugs,\nMilena",
+    },
+    whatWeOffer: {
+      eyebrow: "Why uNick",
+      title: "English that actually works",
+      items: [
+        "You speak from the very first lesson — no more language barrier",
+        "Learning tailored to you — conversations, films, games, real-life situations",
+        "English you'll actually use — at work, travelling and in everyday life",
+        "International teachers and a relaxed atmosphere — zero stress, 100% results",
       ],
     },
     team: {
       eyebrow: "Our team",
       title: "Teachers from around the world",
       subtitle:
-        "Different countries, accents and personalities — all genuinely invested in you. Hover-worthy CVs aren't the point; these people are.",
-    },
-    lookFor: {
-      eyebrow: "Joining the team",
-      title: "What we look for in a teacher",
-      items: [
-        { title: "They actually like people", text: "Subject knowledge can be taught. Genuine warmth towards students can't — so we look for it first." },
-        { title: "They've been the outsider too", text: "Many of our teachers know what it's like to feel out of place in a classroom, a country, or a language. It shows in how they teach." },
-        { title: "They can laugh at themselves", text: "Teachers who take themselves too seriously make students afraid to make mistakes. Ours don't." },
-        { title: "They keep learning too", text: "Our best teachers are still curious — about language, about people, about how to explain things better." },
-      ],
+        "Different countries, accents and personalities — all genuinely invested in you.",
     },
     finalCta: {
-      title: "Ready to meet us in person?",
-      subtitle: "Book a free consultation — the easiest way to get a feel for who we are.",
+      title: "Want to see how it works?",
+      subtitle: "Sign up for your first lesson and feel the difference!",
     },
   },
 

@@ -44,6 +44,7 @@ const pl = {
       meetWholeTeam: "Poznaj cały zespół",
       seeADayInClass: "Zobacz dzień na zajęciach",
       explore: "Zobacz",
+      signUp: "Chcę się zapisać",
       sendMessage: "Wyślij wiadomość",
       sendAndBook: "Wyślij i zarezerwuj konsultację",
       close: "Zamknij",
@@ -506,51 +507,60 @@ const pl = {
     meta: {
       title: "Poznaj nas",
       description:
-        "Ludzie, którzy stoją za uNick Academy — założyciele Milena i Nick oraz międzynarodowy zespół nauczycieli, którzy tworzą akademię.",
+        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. 10 lat nauki angielskiego w nieszkolny sposób.",
     },
     hero: {
       eyebrow: "Poznaj nas",
-      titleStart: "Rodzina, która stoi za ",
-      titleAccent: "tym stołem.",
+      titleStart: "10 lat ",
+      titleAccent: "uNickatowej przygody.",
       subtitle:
-        "uNick Academy zaczęła się od dwóch osób, które wierzyły, że język powinien łączyć ludzi, nie dzielić ich na „wystarczająco dobrych” i resztę. Oto kim jesteśmy — i z kim naprawdę będziesz się uczyć.",
-      mediaCaption: "Milena i Nick, przy stole, gdzie wszystko się zaczęło",
+        "Jesteśmy z Rumianka, ale uczą u nas nauczyciele z całego świata i uczymy języków w nieszkolny sposób!",
+      mediaCaption: "Milena i Nick — uNick Academy",
     },
     ourStory: {
-      eyebrow: "Nasza historia, w całości",
-      title: "Dwoje ludzi, dwa kraje, jedna frustracja",
+      eyebrow: "Nasza historia",
+      title: "Jak to się zaczęło",
       paragraph1:
-        "Milena wychowała się w Polsce, w klasach, gdzie angielski był czymś, z czego cię sprawdzano, nie czymś, czego używałeś. Nick wychował się w Anglii, otoczony ludźmi, którzy uczyli się języków latami i wciąż nie umieli poprowadzić rozmowy, gdy to się liczyło.",
+        "Nasza przygoda z uNick Academy zaczęła się dokładnie 10 lat temu. Do tamtej pory był tylko Nick prowadzący Angielski z Anglikiem. Jego lekcje cieszyły się tak dużą popularnością, że serio zastanawiałam się nad jego sklonowaniem. Ja wówczas pracowałam w korporacji. Los jednak sprawił tak, że firma podziękowała mi za współpracę, co z perspektywy czasu okazało się najlepszą rzeczą, która mogła mnie spotkać. I zamiast klonować Nicka dołączyłam do zespołu.",
       paragraph2:
-        "Gdy się poznali, zrozumieli, że widzieli ten sam problem z dwóch różnych stron: szkoły, które uczyły języka jako przedmiotu do zaliczenia, a nie umiejętności do życia. Ludzi, którzy znali reguły, ale zamierali, gdy prawdziwa rozmowa wymagała odwagi.",
+        "Na początku podzieliliśmy się — on uczył dorosłych, a ja dzieci. Zauważyłam jednak jedną różnicę — gdy Nick prowadził zajęcia dzieci dużo chętniej mówiły po angielsku niż jak zajęcia były ze mną. Dlaczego? Odpowiedź jest w sumie prosta — bo było to sztucznie wymuszane. Tak już działa nasz mózg — idzie po linii najmniejszego oporu. Jeśli ta pani mówi po polsku to zrozumie co do niej powiem po polsku. Wtedy doszłam do tego, dlaczego takie lekcje z obcokrajowcem są dużo bardziej skuteczne. Mózg widzi naturalną potrzebę komunikowania się w innym języku.",
       paragraph3:
-        "uNick Academy zaczęła się skromnie — kilka lekcji, wspólne przekonanie, że błędy są częścią mówienia, nie jego porażką. Od tamtej pory akademia urosła, ale reguła się nie zmieniła: każdy uczeń jest najpierw osobą, z historią warto wysłuchania — nie tylko poziomem do podniesienia.",
+        "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie wyjątkowa. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       galleryCaptions: [
-        "Milena, początki nauczania",
-        "Nick, początki nauczania",
-        "Pierwsza „klasa” — kuchenny stół",
+        "Milena i Nick — tam, gdzie wszystko się zaczęło",
+        "Pierwsze lekcje, zanim uNick miał nazwę",
+        "Sala, która bardziej przypomina salon",
         "uNick Academy dziś — wciąż w tym samym duchu",
+      ],
+    },
+    worldTeam: {
+      eyebrow: "Nasi nauczyciele",
+      title: "Z każdego zakątka świata",
+      paragraph1:
+        "I tak pierwszy dołączył do nas Gui z Portugalii, potem Camilla z Kanady, byli cudowni i uczniowie ich uwielbiali. Później równie wspaniali Kimy z Ekwadoru, Mona i Hussain z Arabii Saudyjskiej i wielu wielu innych fantastycznych ludzi z każdego zakątka świata.",
+      paragraph2:
+        "Przez te 10 lat otrzymaliśmy mnóstwo wiadomości od uczniów i ich rodziców o tym, że pośrednio lub bezpośrednio mieliśmy wpływ na ich życie. Nie tylko przełamując barierę językową, ale otwierając im głowę na Świat. I muszę powiedzieć, że jestem z tego niezmiernie dumna.",
+      signature: "Ściskam Was mocno,\nMilena",
+    },
+    whatWeOffer: {
+      eyebrow: "Dlaczego uNick",
+      title: "Angielski, który naprawdę działa",
+      items: [
+        "Mówisz od pierwszych zajęć — koniec z barierą językową",
+        "Nauka dopasowana do Ciebie — rozmowy, filmy, gry, realne sytuacje",
+        "Angielski, który naprawdę się przyda — w pracy, podróży i codziennym życiu",
+        "Międzynarodowi nauczyciele i luźna atmosfera — zero stresu, 100% efektów",
       ],
     },
     team: {
       eyebrow: "Nasz zespół",
       title: "Nauczyciele z całego świata",
       subtitle:
-        "Różne kraje, akcenty i osobowości — wszyscy naprawdę zaangażowani w to, co robisz. Liczą się nie CV, a te osoby.",
-    },
-    lookFor: {
-      eyebrow: "Dołącz do zespołu",
-      title: "Czego szukamy u nauczyciela",
-      items: [
-        { title: "Naprawdę lubią ludzi", text: "Wiedzy przedmiotowej można nauczyć. Prawdziwego ciepła wobec uczniów nie da się — więc szukamy go najpierw." },
-        { title: "Też byli outsiderami", text: "Wielu naszych nauczycieli wie, jak to jest czuć się nie na miejscu w klasie, kraju czy języku. To widać w sposobie, jak uczą." },
-        { title: "Umieją się z siebie śmiać", text: "Nauczyciele, którzy traktują się za serio, sprawiają, że uczniowie boją się błędów. Nasi nie." },
-        { title: "Wciąż się uczą", text: "Nasi najlepsi nauczyciele wciąż są ciekawi — języka, ludzi, sposobów lepszego wyjaśniania." },
-      ],
+        "Różne kraje, akcenty i osobowości — wszyscy naprawdę zaangażowani w to, co robisz.",
     },
     finalCta: {
-      title: "Gotowy poznać nas osobiście?",
-      subtitle: "Zarezerwuj bezpłatną konsultację — to najprostszy sposób, by poczuć, kim jesteśmy.",
+      title: "Chcesz przekonać się, jak to działa?",
+      subtitle: "Zapisz się na pierwszą lekcję i poczuj różnicę!",
     },
   },
 

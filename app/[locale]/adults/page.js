@@ -102,7 +102,8 @@ export default async function AdultsPage({ params }) {
       <CTASection
         title={t.finalCta.title}
         subtitle={t.finalCta.subtitle}
-        audience="adult"
+        signupHref="/academy/signup"
+        signupLabel={dict.common.buttons.signUp}
         secondaryHref={`/${locale}/meet-us`}
         secondaryLabel={dict.common.buttons.meetTheTeam}
       />
