@@ -1,14 +1,23 @@
-// Editable roster of teachers. Add, remove or reorder freely.
-// Translated fields (country, role, quote) live in
-// app/lib/dictionaries/{en,pl}.js under teachers.<key>.
+// Real teacher roster — order matters (Nick first, Toni second).
+// photo: filename at unickacademy.pl/wp-content/uploads/2024/08/
+// Translated fields (role) live in dictionaries/{en,pl}.js under teachers.<id>.
+
+const PHOTO_BASE = "https://unickacademy.pl/wp-content/uploads/2024/08";
 
 export const teachers = [
-  { id: "nick", name: "Nick", tone: "blue", audiences: [] },
-  { id: "milena", name: "Milena", tone: "red", audiences: [] },
-  { id: "amara", name: "Amara", tone: "cream", audiences: ["teen", "adult"] },
-  { id: "diego", name: "Diego", tone: "sand", audiences: ["adult", "company"] },
-  { id: "hana", name: "Hana", tone: "blue", audiences: ["children"] },
-  { id: "tomasz", name: "Tomasz", tone: "red", audiences: ["teen"] },
+  { id: "nick", name: "Nick", tone: "blue", photo: `${PHOTO_BASE}/Nick.png`, audiences: [] },
+  { id: "toni", name: "Toni", tone: "red", photo: null, audiences: [] },
+  { id: "adriana", name: "Adriana", tone: "cream", photo: `${PHOTO_BASE}/Adriana.png`, audiences: [] },
+  { id: "elliot", name: "Elliot", tone: "sand", photo: `${PHOTO_BASE}/Elliott.png`, audiences: [] },
+  { id: "gio", name: "Gio", tone: "blue", photo: `${PHOTO_BASE}/Gio.png`, audiences: [] },
+  { id: "jack", name: "Jack", tone: "red", photo: `${PHOTO_BASE}/Jack.png`, audiences: [] },
+  { id: "mada", name: "Mada", tone: "cream", photo: `${PHOTO_BASE}/Mada.png`, audiences: [] },
+  { id: "tim", name: "Tim", tone: "sand", photo: `${PHOTO_BASE}/Tim.png`, audiences: [] },
+  { id: "michelle", name: "Michelle", tone: "blue", photo: null, audiences: [] },
+  { id: "stefania", name: "Stefania", tone: "red", photo: null, audiences: [] },
+  { id: "yan", name: "Yan", tone: "cream", photo: null, audiences: [] },
+  { id: "shakina", name: "Shakina", tone: "sand", photo: null, audiences: [] },
+  { id: "bertie", name: "Bertie", tone: "blue", photo: null, audiences: [] },
 ];
 
 export function getTeachers(dict) {

@@ -79,8 +79,8 @@ export default async function MeetUnickornPage({ params }) {
       <CTASection
         title={t.cta.title}
         subtitle={t.cta.subtitle}
-        signupHref="/academy/talk-to-unickorn"
-        signupLabel={t.cta.tryButton || "Try uNickorn"}
+        signupHref="/academy/talk-to-unickorn/demo"
+        signupLabel={t.cta.tryButton || "Try uNickorn free"}
         secondaryHref="/academy/signup"
         secondaryLabel={dict.common.buttons.signUp}
       />

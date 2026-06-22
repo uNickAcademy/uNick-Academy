@@ -691,36 +691,19 @@ const en = {
   },
 
   teachers: {
-    nick: {
-      country: "England",
-      role: "Co-founder & teacher",
-      quote: "I want my students to argue with me in English. That's when I know it's working.",
-    },
-    milena: {
-      country: "Poland",
-      role: "Co-founder & teacher",
-      quote: "I remember exactly what it feels like to be too scared to speak. I built this place for that version of me.",
-    },
-    amara: {
-      country: "Nigeria",
-      role: "Teaches teenagers & adults",
-      quote: "My classroom rule is simple: say it badly before you say it perfectly. Both are welcome.",
-    },
-    diego: {
-      country: "Argentina",
-      role: "Teaches adults & companies",
-      quote: "Half of my job is teaching English. The other half is reminding people they already have something to say.",
-    },
-    hana: {
-      country: "Czech Republic",
-      role: "Teaches children",
-      quote: "The best lessons happen when the children forget they're 'in a lesson' at all.",
-    },
-    tomasz: {
-      country: "Poland",
-      role: "Teaches teenagers",
-      quote: "I was the quiet kid at the back too. I know what it takes to get someone talking.",
-    },
+    nick: { role: "Co-founder & teacher" },
+    toni: { role: "English teacher" },
+    adriana: { role: "English teacher" },
+    elliot: { role: "English teacher" },
+    gio: { role: "English teacher" },
+    jack: { role: "English teacher" },
+    mada: { role: "English teacher" },
+    tim: { role: "English teacher" },
+    michelle: { role: "English teacher" },
+    stefania: { role: "English teacher" },
+    yan: { role: "English teacher" },
+    shakina: { role: "English teacher" },
+    bertie: { role: "English teacher" },
   },
 };
 

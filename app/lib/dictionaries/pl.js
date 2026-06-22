@@ -691,36 +691,19 @@ const pl = {
   },
 
   teachers: {
-    nick: {
-      country: "Anglia",
-      role: "Współzałożyciel i nauczyciel",
-      quote: "Chcę, żeby moi uczniowie kłócili się ze mną po angielsku. Wtedy wiem, że to działa.",
-    },
-    milena: {
-      country: "Polska",
-      role: "Współzałożycielka i nauczycielka",
-      quote: "Dokładnie pamiętam, jak to jest bać się mówić. Stworzyłam to miejsce dla tamtej wersji siebie.",
-    },
-    amara: {
-      country: "Nigeria",
-      role: "Uczy młodzież i dorosłych",
-      quote: "Moja zasada w klasie jest prosta: powiedz to źle, zanim powiesz to idealnie. Oba warianty są mile widziane.",
-    },
-    diego: {
-      country: "Argentyna",
-      role: "Uczy dorosłych i firmy",
-      quote: "Połowa mojej pracy to nauczanie angielskiego. Druga połowa to przypominanie ludziom, że mają już coś do powiedzenia.",
-    },
-    hana: {
-      country: "Czechy",
-      role: "Uczy dzieci",
-      quote: "Najlepsze lekcje dzieją się, gdy dzieci zapominają, że są „na lekcji”.",
-    },
-    tomasz: {
-      country: "Polska",
-      role: "Uczy młodzież",
-      quote: "Też byłem tym cichym z ostatniej ławki. Wiem, co trzeba, żeby kogoś zachęcić do mówienia.",
-    },
+    nick: { role: "Współzałożyciel i nauczyciel" },
+    toni: { role: "Lektor angielskiego" },
+    adriana: { role: "Lektorka angielskiego" },
+    elliot: { role: "Lektor angielskiego" },
+    gio: { role: "Lektor angielskiego" },
+    jack: { role: "Lektor angielskiego" },
+    mada: { role: "Lektorka angielskiego" },
+    tim: { role: "Lektor angielskiego" },
+    michelle: { role: "Lektorka angielskiego" },
+    stefania: { role: "Lektorka angielskiego" },
+    yan: { role: "Lektor angielskiego" },
+    shakina: { role: "Lektorka angielskiego" },
+    bertie: { role: "Lektor angielskiego" },
   },
 };
 
