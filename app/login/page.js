@@ -69,18 +69,19 @@ export default async function UnifiedLoginPage({ searchParams }) {
                 justifyContent: "center",
                 padding: "4px 5px",
                 borderRadius: 14,
-                background: "var(--color-warm-white)",
+                background: "var(--color-cream)",
                 border: "1px solid var(--color-border)",
               }}
             >
-              <Image src="/brand/shield.png" alt="" width={26} height={33} />
+              <Image src="/brand/shield.png" alt="" width={22} height={28} />
             </span>
             <span
               style={{
-                fontFamily: "var(--font-display), serif",
+                fontFamily: "var(--font-display), Georgia, serif",
                 fontWeight: 700,
                 fontSize: 22,
                 color: "var(--color-blue)",
+                letterSpacing: "-0.01em",
               }}
             >
               <span style={{ color: "var(--color-red)" }}>uNick</span> Academy
@@ -88,17 +89,19 @@ export default async function UnifiedLoginPage({ searchParams }) {
           </Link>
           <h1
             style={{
-              fontFamily: "var(--font-display), serif",
+              fontFamily: "var(--font-display), Georgia, serif",
               fontSize: 28,
               color: "var(--color-blue)",
               marginTop: 20,
               marginBottom: 8,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.15,
             }}
           >
             Log in to your account
           </h1>
           <p style={{ color: "var(--color-muted)", fontSize: 15 }}>
-            Students, teachers and admins — all in one place.
+            Students, teachers and admins &mdash; all in one place.
           </p>
         </div>
 
@@ -108,7 +111,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
               background: "var(--color-red-soft)",
               color: "var(--color-red)",
               fontSize: 14,
-              borderRadius: 12,
+              borderRadius: 24,
               padding: "12px 16px",
               marginBottom: 16,
             }}
@@ -126,7 +129,8 @@ export default async function UnifiedLoginPage({ searchParams }) {
             padding: 28,
             display: "flex",
             flexDirection: "column",
-            gap: 18,
+            gap: 20,
+            boxShadow: "0 14px 40px -20px rgba(28, 43, 74, 0.18)",
           }}
         >
           <div>
@@ -137,7 +141,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
                 fontSize: 13,
                 fontWeight: 600,
                 color: "var(--color-blue)",
-                marginBottom: 6,
+                marginBottom: 8,
               }}
             >
               I am a...
@@ -206,6 +210,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
                 fontSize: 15,
                 outline: "none",
                 boxSizing: "border-box",
+                transition: "border-color 0.2s",
               }}
             />
           </div>
@@ -237,6 +242,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
                 fontSize: 15,
                 outline: "none",
                 boxSizing: "border-box",
+                transition: "border-color 0.2s",
               }}
             />
           </div>
@@ -255,6 +261,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
               cursor: "pointer",
               fontFamily: "inherit",
               marginTop: 4,
+              transition: "background 0.2s",
             }}
           >
             Log in
@@ -280,7 +287,7 @@ export default async function UnifiedLoginPage({ searchParams }) {
 
         <p style={{ textAlign: "center", marginTop: 12 }}>
           <Link
-            href="/"
+            href="/en"
             style={{ fontSize: 13, color: "var(--color-muted)" }}
           >
             &larr; Back to homepage

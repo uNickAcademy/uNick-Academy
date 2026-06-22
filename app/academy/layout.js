@@ -1,18 +1,6 @@
-import { Poppins, Lora } from 'next/font/google'
 import './globals.css'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
-  variable: '--font-poppins',
-})
-
-const lora = Lora({
-  subsets: ['latin'],
-  variable: '--font-lora',
-})
 
 export const metadata = {
   title: 'uNick Teachers Academy',
@@ -22,9 +10,7 @@ export const metadata = {
 
 export default function AcademyLayout({ children }) {
   return (
-    <div
-      className={`${poppins.variable} ${lora.variable} academy-shell font-body bg-white text-navy min-h-screen flex flex-col`}
-    >
+    <div className="academy-shell font-body bg-warm-white text-ink min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />

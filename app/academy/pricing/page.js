@@ -25,23 +25,26 @@ export default async function PricingPage({ searchParams }) {
   const symbol = CURRENCY_SYMBOLS[currency]
   const plans = [
     { plan: 'monthly', label: 'Monthly', price: PRICES.monthly[currency], period: '/ month' },
-    { plan: 'annual', label: 'Annual', price: PRICES.annual[currency], period: '/ year' },
+    { plan: 'annual', label: 'Annual', price: PRICES.annual[currency], period: '/ year', badge: '2 months free' },
   ]
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 text-center">
-      <h1 className="font-heading font-bold text-3xl text-navy mb-2">Membership pricing</h1>
-      <p className="text-slate-600 mb-6">
+    <div className="max-w-[900px] mx-auto px-6 py-14 text-center">
+      <span className="inline-flex items-center gap-2 text-[13px] font-bold tracking-[0.18em] uppercase text-brand mb-3">Pricing</span>
+      <h1 className="font-heading font-bold text-3xl sm:text-[2.2rem] text-navy mb-2 tracking-tight">Membership pricing</h1>
+      <p className="text-muted mb-8 max-w-lg mx-auto">
         Unlimited access to the full lesson plan library, cancel anytime.
       </p>
 
-      <div className="flex justify-center gap-2 mb-8 text-sm">
+      <div className="flex justify-center gap-2 mb-10 text-sm">
         {CURRENCIES.map((c) => (
           <Link
             key={c}
             href={`/academy/pricing?currency=${c}`}
-            className={`rounded-full px-4 py-1.5 border ${
-              c === currency ? 'bg-navy text-white border-navy' : 'border-slate-300 text-slate-600 hover:border-navy'
+            className={`rounded-full px-4 py-1.5 border transition-colors ${
+              c === currency
+                ? 'bg-navy text-white border-navy'
+                : 'border-ui-border text-muted hover:border-navy hover:text-navy'
             }`}
           >
             {c.toUpperCase()}
@@ -50,35 +53,36 @@ export default async function PricingPage({ searchParams }) {
       </div>
 
       {subscriptionStatus === 'active' && (
-        <p className="bg-sky/10 text-navy text-sm rounded-lg px-4 py-3 mb-6">
+        <div className="bg-cream border border-ui-border text-navy text-sm rounded-card px-5 py-4 mb-8 max-w-lg mx-auto">
           You already have an active membership. Manage it from your{' '}
           <Link href="/academy/account" className="font-semibold underline">account page</Link>.
-        </p>
+        </div>
       )}
 
-      <div className="grid sm:grid-cols-2 gap-5">
-        {plans.map(({ plan, label, price, period }) => (
-          <div key={plan} className="bg-white border border-slate-200 rounded-2xl p-6">
-            <h2 className="font-heading font-bold text-xl text-navy mb-1">{label}</h2>
-            <p className="text-3xl font-extrabold text-navy mb-1">
-              {symbol}{price}
-              <span className="text-base font-medium text-slate-500"> {period}</span>
-            </p>
-            <p className="text-xs text-slate-400 mb-2">+ VAT where applicable</p>
-            {plan === 'annual' && (
-              <p className="text-sm text-sky-700 mb-4">2 months free vs. monthly</p>
+      <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        {plans.map(({ plan, label, price, period, badge }) => (
+          <div key={plan} className="bg-white border border-ui-border rounded-card p-7 shadow-card relative">
+            {badge && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-white text-xs font-bold px-4 py-1 rounded-full">
+                {badge}
+              </span>
             )}
-            {plan === 'monthly' && <p className="mb-4" />}
+            <h2 className="font-heading font-bold text-xl text-navy mb-2">{label}</h2>
+            <p className="text-[2rem] font-bold text-navy mb-1 tracking-tight">
+              {symbol}{price}
+              <span className="text-base font-medium text-muted"> {period}</span>
+            </p>
+            <p className="text-xs text-muted mb-5">+ VAT where applicable</p>
             {user ? (
               subscriptionStatus === 'active' ? (
-                <span className="block text-sm text-slate-400">Already subscribed</span>
+                <span className="block text-sm text-muted">Already subscribed</span>
               ) : (
                 <form action="/academy/api/checkout" method="POST">
                   <input type="hidden" name="plan" value={plan} />
                   <input type="hidden" name="currency" value={currency} />
                   <button
                     type="submit"
-                    className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold"
+                    className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold text-[15px]"
                   >
                     Subscribe
                   </button>
@@ -87,7 +91,7 @@ export default async function PricingPage({ searchParams }) {
             ) : (
               <Link
                 href={`/academy/signup?redirect=${encodeURIComponent('/academy/pricing')}`}
-                className="block w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold"
+                className="block w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold text-[15px] text-center"
               >
                 Sign up to subscribe
               </Link>
@@ -96,7 +100,7 @@ export default async function PricingPage({ searchParams }) {
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 mt-8">
+      <p className="text-xs text-muted mt-10 max-w-lg mx-auto">
         Prices shown are exclusive of VAT. Where VAT applies, it will be added at checkout
         based on your location. You can cancel your membership at any time from your account
         page.

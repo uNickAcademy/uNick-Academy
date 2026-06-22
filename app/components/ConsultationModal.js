@@ -7,10 +7,13 @@ import styles from "./ConsultationModal.module.css";
 
 export default function ConsultationModal({ isOpen, onClose, audience, teacher, dict }) {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   useEffect(() => {
     if (!isOpen) {
       setSubmitted(false);
+      setSubmitError(null);
       return;
     }
     const onKeyDown = (e) => {
@@ -33,9 +36,38 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
     label,
   }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      audience: formData.get("audience"),
+      message: formData.get("message"),
+    };
+
+    try {
+      const res = await fetch("/api/consultation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || "Submission failed");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -74,6 +106,12 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
               {t.title}
             </h2>
             <p className={styles.subtitle}>{t.subtitle}</p>
+
+            {submitError && (
+              <p style={{ color: "var(--color-red)", fontSize: 14, marginBottom: 12 }}>
+                {submitError}
+              </p>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className={styles.field}>
@@ -154,8 +192,8 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
                 />
               </div>
 
-              <Button type="submit" variant="primary" fullWidth className={styles.submit}>
-                {t.submit}
+              <Button type="submit" variant="primary" fullWidth className={styles.submit} disabled={submitting}>
+                {submitting ? "..." : t.submit}
               </Button>
             </form>
 

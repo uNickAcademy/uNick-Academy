@@ -28,29 +28,30 @@ export default async function AccountPage({ searchParams }) {
     : null
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
-      <h1 className="font-heading font-bold text-3xl text-navy mb-6">Your account</h1>
+    <div className="max-w-lg mx-auto px-6 py-12">
+      <span className="inline-flex items-center gap-2 text-[13px] font-bold tracking-[0.18em] uppercase text-brand mb-3">Account</span>
+      <h1 className="font-heading font-bold text-3xl text-navy mb-6 tracking-tight">Your account</h1>
 
       {checkoutSuccess && (
-        <p className="bg-sky/10 text-navy text-sm rounded-lg px-4 py-3 mb-6">
+        <div className="bg-cream border border-ui-border text-navy text-sm rounded-card px-5 py-4 mb-6">
           Thanks for subscribing! It may take a few seconds for your membership to activate.
-        </p>
+        </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+      <div className="bg-white border border-ui-border rounded-card p-7 space-y-5 shadow-card">
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Email</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Email</p>
           <p className="text-navy">{profile?.email ?? user.email}</p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Membership status</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Membership status</p>
           <p className="text-navy font-semibold">{STATUS_LABELS[status] ?? status}</p>
         </div>
 
         {profile?.subscription_plan && (
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Plan</p>
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Plan</p>
             <p className="text-navy capitalize">
               {profile.subscription_plan}
               {currencySymbol ? ` (${currencySymbol})` : ''}
@@ -63,7 +64,7 @@ export default async function AccountPage({ searchParams }) {
             <form action="/academy/api/portal" method="POST">
               <button
                 type="submit"
-                className="w-full bg-navy hover:bg-navy/90 transition-colors text-white rounded-full px-6 py-3 font-semibold"
+                className="w-full bg-navy hover:bg-navy-bright transition-colors text-white rounded-full px-6 py-3 font-semibold text-[15px]"
               >
                 Manage billing
               </button>
@@ -71,7 +72,7 @@ export default async function AccountPage({ searchParams }) {
           ) : (
             <Link
               href="/academy/pricing"
-              className="block w-full text-center bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold"
+              className="block w-full text-center bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold text-[15px]"
             >
               Choose a membership plan
             </Link>
@@ -79,8 +80,8 @@ export default async function AccountPage({ searchParams }) {
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 text-center mt-6">
-        <Link href="/academy/library" className="text-navy font-semibold hover:text-sky">
+      <p className="text-sm text-muted text-center mt-6">
+        <Link href="/academy/library" className="text-navy font-semibold hover:text-brand transition-colors">
           Browse the lesson plan library &rarr;
         </Link>
       </p>

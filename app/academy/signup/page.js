@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { signUp } from '../auth/actions'
 
 export default async function SignupPage({ searchParams }) {
@@ -7,59 +8,81 @@ export default async function SignupPage({ searchParams }) {
   const redirectTo = params?.redirect || '/academy/pricing'
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12">
-      <h1 className="font-heading font-bold text-2xl text-navy mb-2 text-center">Create your account</h1>
-      <p className="text-sm text-slate-600 text-center mb-6">
-        Sign up for free, then subscribe to unlock the full lesson plan library.
-      </p>
-
-      {error && (
-        <p className="bg-red-50 text-brand text-sm rounded-lg px-4 py-3 mb-4">{error}</p>
-      )}
-
-      <form action={signUp} className="space-y-4">
-        <input type="hidden" name="redirect" value={redirectTo} />
-        <div>
-          <label className="block text-sm font-medium text-navy mb-1" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky"
-          />
+    <div className="min-h-[80vh] flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-[420px]">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center p-[3px] rounded-[10px] bg-cream border border-ui-border">
+              <Image src="/brand/shield.png" alt="" width={22} height={28} />
+            </span>
+            <span className="font-heading font-bold text-xl tracking-tight text-navy">
+              <span className="text-brand">uNick</span> Academy
+            </span>
+          </Link>
+          <h1 className="font-heading font-bold text-[1.7rem] text-navy mt-5 mb-2 tracking-tight">
+            Create your account
+          </h1>
+          <p className="text-muted text-[15px]">
+            Sign up for free, then subscribe to unlock the full lesson plan library.
+          </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-navy mb-1" htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold"
+
+        {error && (
+          <p className="bg-brand-soft text-brand text-sm rounded-2xl px-4 py-3 mb-4">{error}</p>
+        )}
+
+        <form
+          action={signUp}
+          className="bg-white border border-ui-border rounded-card p-7 flex flex-col gap-5 shadow-card"
         >
-          Sign up
-        </button>
-      </form>
+          <input type="hidden" name="redirect" value={redirectTo} />
+          <div>
+            <label className="block text-[13px] font-semibold text-navy mb-1.5" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="w-full rounded-xl border-[1.5px] border-ui-border px-4 py-2.5 text-[15px] focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-semibold text-navy mb-1.5" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              className="w-full rounded-xl border-[1.5px] border-ui-border px-4 py-2.5 text-[15px] focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-3 font-semibold text-[15px] mt-1"
+          >
+            Sign up
+          </button>
+        </form>
 
-      <p className="text-sm text-slate-600 text-center mt-6">
-        Already have an account?{' '}
-        <Link href="/academy/login" className="text-navy font-semibold hover:text-sky">
-          Log in
-        </Link>
-      </p>
+        <p className="text-sm text-muted text-center mt-6">
+          Already have an account?{' '}
+          <Link href="/login" className="text-navy font-semibold hover:text-brand transition-colors">
+            Log in
+          </Link>
+        </p>
+        <p className="text-center mt-3">
+          <Link href="/en" className="text-[13px] text-muted hover:text-navy transition-colors">
+            &larr; Back to homepage
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

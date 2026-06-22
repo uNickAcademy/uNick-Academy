@@ -7,6 +7,8 @@ import styles from "./ContactForm.module.css";
 
 export default function ContactForm({ dict }) {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const t = dict.contactForm;
   const fields = dict.common.formFields;
@@ -15,9 +17,38 @@ export default function ContactForm({ dict }) {
     label,
   }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      audience: formData.get("audience"),
+      message: formData.get("message"),
+    };
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || "Submission failed");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -32,6 +63,12 @@ export default function ContactForm({ dict }) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
+      {submitError && (
+        <p style={{ color: "var(--color-red)", fontSize: 14, marginBottom: 12 }}>
+          {submitError}
+        </p>
+      )}
+
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-name">
@@ -83,8 +120,8 @@ export default function ContactForm({ dict }) {
         />
       </div>
 
-      <Button type="submit" variant="primary" fullWidth>
-        {t.submit}
+      <Button type="submit" variant="primary" fullWidth disabled={submitting}>
+        {submitting ? "..." : t.submit}
       </Button>
     </form>
   );

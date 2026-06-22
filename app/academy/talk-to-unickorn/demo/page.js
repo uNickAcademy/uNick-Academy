@@ -146,24 +146,24 @@ export default function UnickornDemoPage() {
 
   if (!started && !limitReached) {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-8 text-center">
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <div className="w-full max-w-sm bg-white border border-ui-border rounded-card shadow-card p-8 text-center">
           <div className="text-5xl mb-4">&#x1F984;</div>
-          <h1 className="text-2xl font-extrabold text-navy mb-2">Try uNickorn free</h1>
-          <p className="text-sm text-gray-500 mb-2">
-            Talk to our AI English tutor — no account needed.
+          <h1 className="font-heading font-bold text-2xl text-navy mb-2 tracking-tight">Try uNickorn free</h1>
+          <p className="text-sm text-muted mb-2">
+            Talk to our AI English tutor &mdash; no account needed.
           </p>
-          <p className="text-xs text-gray-400 mb-6">
+          <p className="text-xs text-muted mb-6">
             uNickorn will speak to you! You get {MAX_MESSAGES} free messages.
           </p>
           <button
             onClick={startDemo}
-            className="w-full bg-brand text-white rounded-full py-3 font-bold text-sm hover:bg-red-700 transition-colors"
+            className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full py-3.5 font-semibold text-[15px]"
           >
             Start talking
           </button>
-          <p className="text-xs text-gray-400 mt-4">
-            <Link href="/academy/signup" className="text-navy font-semibold hover:underline">
+          <p className="text-xs text-muted mt-4">
+            <Link href="/academy/signup" className="text-navy font-semibold hover:text-brand transition-colors">
               Sign up
             </Link>{' '}
             for unlimited conversations with session recaps and personalised learning.
@@ -175,22 +175,22 @@ export default function UnickornDemoPage() {
 
   if (limitReached && messages.length === 0) {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-8 text-center">
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <div className="w-full max-w-sm bg-white border border-ui-border rounded-card shadow-card p-8 text-center">
           <div className="text-5xl mb-4">&#x1F984;</div>
-          <h1 className="text-xl font-extrabold text-navy mb-2">Demo finished</h1>
-          <p className="text-sm text-gray-500 mb-6">
-            You've used your {MAX_MESSAGES} free messages. Sign up to keep talking with uNickorn — with session recaps, vocabulary tracking, and personalised learning.
+          <h1 className="font-heading font-bold text-xl text-navy mb-2 tracking-tight">Demo finished</h1>
+          <p className="text-sm text-muted mb-6">
+            You&apos;ve used your {MAX_MESSAGES} free messages. Sign up to keep talking with uNickorn &mdash; with session recaps, vocabulary tracking, and personalised learning.
           </p>
           <Link
             href="/academy/signup"
-            className="block w-full bg-brand text-white rounded-full py-3 font-bold text-sm text-center hover:bg-red-700 transition-colors"
+            className="block w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full py-3.5 font-semibold text-[15px] text-center"
           >
             Sign up free
           </Link>
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="text-xs text-muted mt-4">
             Already have an account?{' '}
-            <Link href="/login" className="text-navy font-semibold hover:underline">
+            <Link href="/login" className="text-navy font-semibold hover:text-brand transition-colors">
               Log in
             </Link>
           </p>
@@ -200,10 +200,10 @@ export default function UnickornDemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       <header className="bg-navy px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-extrabold">
-          uNickorn <span className="text-xs font-normal opacity-70">free demo</span>
+        <span className="text-white font-heading font-bold tracking-tight">
+          uNickorn <span className="text-xs font-body font-normal opacity-70">free demo</span>
         </span>
         <div className="flex items-center gap-3">
           <button
@@ -226,9 +226,9 @@ export default function UnickornDemoPage() {
         {messages.map((message, i) => (
           <div
             key={i}
-            className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+            className={`max-w-[80%] rounded-card px-5 py-3.5 text-sm whitespace-pre-wrap leading-relaxed ${
               message.role === 'assistant'
-                ? 'bg-white text-navy mr-auto'
+                ? 'bg-white text-navy mr-auto border border-ui-border shadow-sm'
                 : 'bg-navy text-white ml-auto'
             }`}
           >
@@ -241,24 +241,24 @@ export default function UnickornDemoPage() {
           </div>
         ))}
         {sending && (
-          <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-white text-gray-400 mr-auto">
+          <div className="max-w-[80%] rounded-card px-5 py-3.5 text-sm bg-white text-muted mr-auto border border-ui-border">
             uNickorn is thinking...
           </div>
         )}
         {limitReached && (
-          <div className="max-w-[90%] mx-auto bg-white rounded-2xl p-6 text-center mt-4 border border-gray-100">
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="max-w-[90%] mx-auto bg-white rounded-card p-6 text-center mt-4 border border-ui-border shadow-card">
+            <p className="text-sm text-muted mb-3">
               That was your free demo! Sign up to keep talking with uNickorn.
             </p>
             <Link
               href="/academy/signup"
-              className="inline-block bg-brand text-white rounded-full px-6 py-2.5 font-bold text-sm hover:bg-red-700 transition-colors"
+              className="inline-block bg-brand hover:bg-red-700 transition-colors text-white rounded-full px-6 py-2.5 font-semibold text-sm"
             >
               Sign up free
             </Link>
-            <p className="text-xs text-gray-400 mt-3">
+            <p className="text-xs text-muted mt-3">
               Already have an account?{' '}
-              <Link href="/login" className="text-navy font-semibold hover:underline">Log in</Link>
+              <Link href="/login" className="text-navy font-semibold hover:text-brand transition-colors">Log in</Link>
             </p>
           </div>
         )}
@@ -266,19 +266,19 @@ export default function UnickornDemoPage() {
       </div>
 
       {!limitReached && (
-        <form onSubmit={handleSend} className="px-4 py-4 bg-white flex gap-2">
+        <form onSubmit={handleSend} className="px-4 py-4 bg-white border-t border-ui-border flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Write something in English..."
             disabled={sending}
-            className="flex-1 px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-navy/30"
+            className="flex-1 px-4 py-3 rounded-xl border-[1.5px] border-ui-border text-sm focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft transition-colors"
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="bg-brand text-white rounded-lg px-6 font-bold text-sm disabled:opacity-60"
+            className="bg-brand hover:bg-red-700 transition-colors text-white rounded-xl px-6 font-semibold text-sm disabled:opacity-50"
           >
             Send
           </button>

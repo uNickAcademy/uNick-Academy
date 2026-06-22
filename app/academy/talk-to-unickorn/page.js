@@ -137,7 +137,7 @@ export default function TalkToUnickornPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center">
+      <div className="min-h-[80vh] flex items-center justify-center">
         <p className="text-navy font-semibold">Loading...</p>
       </div>
     )
@@ -146,15 +146,15 @@ export default function TalkToUnickornPage() {
   if (status === 'gated') {
     const copy = REASON_COPY[access?.reason] || DEFAULT_COPY
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-6 text-center">
-          <h1 className="text-xl font-extrabold text-navy mb-2">{copy.title}</h1>
-          <p className="text-sm text-gray-500 mb-6">{copy.body}</p>
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <div className="w-full max-w-sm bg-white border border-ui-border rounded-card shadow-card p-7 text-center">
+          <h1 className="font-heading font-bold text-xl text-navy mb-2">{copy.title}</h1>
+          <p className="text-sm text-muted mb-6">{copy.body}</p>
           {copy.action === 'upgrade' && (
             <button
               onClick={handleCheckout}
               disabled={checkoutLoading}
-              className="w-full bg-brand text-white rounded-lg py-3 font-bold text-sm disabled:opacity-60"
+              className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full py-3 font-semibold text-[15px] disabled:opacity-50"
             >
               {checkoutLoading ? 'Loading...' : 'Go to payment'}
             </button>
@@ -166,29 +166,29 @@ export default function TalkToUnickornPage() {
 
   if (status === 'ended') {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-6">
-          <h1 className="text-xl font-extrabold text-navy mb-2">See you next time!</h1>
-          {recap?.summary && <p className="text-sm text-gray-600 mb-4">{recap.summary}</p>}
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <div className="w-full max-w-sm bg-white border border-ui-border rounded-card shadow-card p-7">
+          <h1 className="font-heading font-bold text-xl text-navy mb-2">See you next time!</h1>
+          {recap?.summary && <p className="text-sm text-muted mb-4 leading-relaxed">{recap.summary}</p>}
 
           {recap?.topics?.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs font-bold text-navy uppercase mb-1">Topics</p>
-              <p className="text-sm text-gray-600">{recap.topics.join(', ')}</p>
+              <p className="text-xs font-bold text-navy uppercase tracking-wider mb-1">Topics</p>
+              <p className="text-sm text-muted">{recap.topics.join(', ')}</p>
             </div>
           )}
 
           {recap?.newVocabulary?.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs font-bold text-navy uppercase mb-1">New vocabulary</p>
-              <p className="text-sm text-gray-600">{recap.newVocabulary.join(', ')}</p>
+              <p className="text-xs font-bold text-navy uppercase tracking-wider mb-1">New vocabulary</p>
+              <p className="text-sm text-muted">{recap.newVocabulary.join(', ')}</p>
             </div>
           )}
 
           {recap?.gentleCorrections?.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs font-bold text-navy uppercase mb-1">Things to practise</p>
-              <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+              <p className="text-xs font-bold text-navy uppercase tracking-wider mb-1">Things to practise</p>
+              <ul className="text-sm text-muted list-disc list-inside space-y-1">
                 {recap.gentleCorrections.map((c, i) => (
                   <li key={i}>{typeof c === 'string' ? c : `${c.original} → ${c.corrected}`}</li>
                 ))}
@@ -198,7 +198,7 @@ export default function TalkToUnickornPage() {
 
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-brand text-white rounded-lg py-3 font-bold text-sm mt-2"
+            className="w-full bg-brand hover:bg-red-700 transition-colors text-white rounded-full py-3 font-semibold text-[15px] mt-2"
           >
             Start a new conversation
           </button>
@@ -208,9 +208,9 @@ export default function TalkToUnickornPage() {
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       <header className="bg-navy px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-extrabold">uNickorn</span>
+        <span className="text-white font-heading font-bold tracking-tight">uNickorn</span>
         <button
           onClick={handleEndSession}
           disabled={ending}
@@ -224,9 +224,9 @@ export default function TalkToUnickornPage() {
         {messages.filter(isVisibleMessage).map((message, i) => (
           <div
             key={i}
-            className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+            className={`max-w-[80%] rounded-card px-5 py-3.5 text-sm whitespace-pre-wrap leading-relaxed ${
               message.role === 'assistant'
-                ? 'bg-white text-navy mr-auto'
+                ? 'bg-white text-navy mr-auto border border-ui-border shadow-sm'
                 : 'bg-navy text-white ml-auto'
             }`}
           >
@@ -234,26 +234,26 @@ export default function TalkToUnickornPage() {
           </div>
         ))}
         {sending && (
-          <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-white text-gray-400 mr-auto">
+          <div className="max-w-[80%] rounded-card px-5 py-3.5 text-sm bg-white text-muted mr-auto border border-ui-border">
             uNickorn is typing...
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSend} className="px-4 py-4 bg-white flex gap-2">
+      <form onSubmit={handleSend} className="px-4 py-4 bg-white border-t border-ui-border flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Write something in English..."
           disabled={sending}
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-navy/30"
+          className="flex-1 px-4 py-3 rounded-xl border-[1.5px] border-ui-border text-sm focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft transition-colors"
         />
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="bg-brand text-white rounded-lg px-6 font-bold text-sm disabled:opacity-60"
+          className="bg-brand hover:bg-red-700 transition-colors text-white rounded-xl px-6 font-semibold text-sm disabled:opacity-50"
         >
           Send
         </button>

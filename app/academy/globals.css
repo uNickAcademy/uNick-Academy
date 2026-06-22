@@ -2,7 +2,7 @@
 @tailwind utilities;
 
 .academy-shell {
-  font-family: var(--font-lora), serif;
+  font-family: var(--font-body), "Segoe UI", system-ui, sans-serif;
 }
 
 .academy-shell h1,
@@ -11,5 +11,8 @@
 .academy-shell h4,
 .academy-shell h5,
 .academy-shell h6 {
-  font-family: var(--font-poppins), sans-serif;
+  font-family: var(--font-display), Georgia, serif;
+  color: #1C2B4A;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
