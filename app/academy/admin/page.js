@@ -30,6 +30,14 @@ export default async function AdminPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <Link
+          href="/academy/admin/referrals"
+          className="border border-slate-200 hover:bg-slate-50 transition-colors text-navy rounded-full px-5 py-2.5 font-semibold text-sm"
+        >
+          Referrals
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="font-heading font-bold text-3xl text-navy">Lesson plans</h1>
         <Link

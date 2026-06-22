@@ -39,7 +39,7 @@ async function handleLogin(formData) {
     case "admin":
       redirect("/academy/admin");
     default:
-      redirect("/academy/library");
+      redirect("/academy/dashboard");
   }
 }
 

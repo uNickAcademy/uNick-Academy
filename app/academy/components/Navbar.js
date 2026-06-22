@@ -33,6 +33,8 @@ export default async function Navbar() {
           )}
           {user ? (
             <>
+              <Link href="/academy/dashboard" className="hover:text-sky">Dashboard</Link>
+              <Link href="/academy/talk-to-unickorn" className="hover:text-sky">uNickorn</Link>
               <Link href="/academy/account" className="hover:text-sky">Account</Link>
               <form action={signOut}>
                 <button
