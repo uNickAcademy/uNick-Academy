@@ -19,7 +19,9 @@ const en = {
       companies: "Companies",
       howWeTeach: "How We Teach",
       meetUs: "Meet Us",
+      meetUnickorn: "Meet uNickorn",
       contact: "Contact",
+      login: "Log in",
     },
     footer: {
       explore: "Explore",
@@ -561,6 +563,55 @@ const en = {
     finalCta: {
       title: "Want to see how it works?",
       subtitle: "Sign up for your first lesson and feel the difference!",
+    },
+  },
+
+
+  meetUnickorn: {
+    meta: {
+      title: "Meet uNickorn — Your AI English Tutor",
+      description:
+        "Meet uNickorn, the uNick Academy AI tutor. Practise English conversation anytime, get gentle corrections, build vocabulary and confidence — all at your own pace.",
+    },
+    hero: {
+      eyebrow: "Meet uNickorn",
+      titleStart: "Your personal ",
+      titleAccent: "AI English tutor.",
+      subtitle:
+        "uNickorn is our AI-powered conversation partner. Practise speaking English anytime you want — with patient, friendly feedback and zero judgement.",
+    },
+    whatIs: {
+      eyebrow: "What is uNickorn",
+      title: "A friendly unicorn who helps you speak",
+      paragraph1:
+        "uNickorn is the uNick Academy mascot — and now also your personal AI English tutor. Built on advanced AI, uNickorn has real conversations with you in English, gently corrects mistakes, teaches new vocabulary, and adapts to your level.",
+      paragraph2:
+        "Think of uNickorn as a patient practice partner who’s always available — between your regular lessons with real teachers, or whenever you want extra practice. No scheduling, no pressure, just conversation.",
+    },
+    features: {
+      eyebrow: "What uNickorn can do",
+      title: "Practice English your way",
+      items: [
+        "Real conversations — talk about anything, from daily life to work to travel",
+        "Gentle corrections — uNickorn notices mistakes and helps you fix them naturally",
+        "Vocabulary building — learn new words in context, not from flashcards",
+        "Session recaps — after each chat, get a summary of what you learned",
+        "Adapts to your level — beginner to advanced, uNickorn meets you where you are",
+        "Available 24/7 — practise whenever suits you, as often as you like",
+      ],
+    },
+    howItWorks: {
+      eyebrow: "How it works",
+      title: "Three simple steps",
+      items: [
+        { title: "Sign up or log in", text: "Create your uNick Academy account or log in if you already have one." },
+        { title: "Start a conversation", text: "Open uNickorn and just start talking — in text or voice. Pick a topic or let the conversation flow naturally." },
+        { title: "Learn and improve", text: "Get real-time feedback, gentle corrections, and a recap of everything you practised at the end of each session." },
+      ],
+    },
+    cta: {
+      title: "Ready to chat with uNickorn?",
+      subtitle: "Sign up and start practising English with your personal AI tutor.",
     },
   },
 

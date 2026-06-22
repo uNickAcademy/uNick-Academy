@@ -235,6 +235,23 @@
   font-size: 14px;
 }
 
+.loginLink {
+  display: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-blue);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  transition: color var(--transition-base), background var(--transition-base);
+  white-space: nowrap;
+}
+
+.loginLink:hover {
+  color: var(--color-red);
+  background: var(--color-cream);
+}
+
 .ctaDesktop {
   display: none;
 }
@@ -317,6 +334,9 @@
   }
   .langSwitcher {
     display: flex;
+  }
+  .loginLink {
+    display: inline-flex;
   }
   .menuToggle {
     display: none;

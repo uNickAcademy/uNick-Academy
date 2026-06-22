@@ -25,9 +25,11 @@ export const siteConfig = {
 // dict.common.platformLinks.
 // ------------------------------------------------------------
 export const platformLinks = {
-  studentLogin: { href: "/logowanie" },
-  parentLogin: { href: "/logowanie" },
-  adminPanel: { href: "/admin" },
+  studentLogin: { href: "/academy/login" },
+  parentLogin: { href: "/academy/login" },
+  adminPanel: { href: "/academy/admin" },
+  login: { href: "/login" },
+  signup: { href: "/academy/signup" },
 };
 
 const NAV_ROUTES = [
@@ -43,6 +45,7 @@ const NAV_ROUTES = [
   },
   { key: "howWeTeach", path: "/how-we-teach" },
   { key: "meetUs", path: "/meet-us" },
+  { key: "meetUnickorn", path: "/meet-unickorn" },
   { key: "contact", path: "/contact" },
 ];
 

@@ -19,7 +19,9 @@ const pl = {
       companies: "Firmy",
       howWeTeach: "Jak uczymy",
       meetUs: "Poznaj nas",
+      meetUnickorn: "Poznaj uNickorna",
       contact: "Kontakt",
+      login: "Zaloguj się",
     },
     footer: {
       explore: "Poznaj nas",
@@ -561,6 +563,55 @@ const pl = {
     finalCta: {
       title: "Chcesz przekonać się, jak to działa?",
       subtitle: "Zapisz się na pierwszą lekcję i poczuj różnicę!",
+    },
+  },
+
+
+  meetUnickorn: {
+    meta: {
+      title: "Poznaj uNickorna — Twój AI korepetytor angielskiego",
+      description:
+        "Poznaj uNickorna, AI korepetytora uNick Academy. Ćwicz rozmowy po angielsku w dowolnym momencie, otrzymuj delikatne korekty i buduj pewność siebie — we własnym tempie.",
+    },
+    hero: {
+      eyebrow: "Poznaj uNickorna",
+      titleStart: "Twój osobisty ",
+      titleAccent: "AI korepetytor angielskiego.",
+      subtitle:
+        "uNickorn to nasz partner konwersacyjny oparty na AI. Ćwicz mówienie po angielsku kiedy chcesz — z cierpliwym, przyjaznym feedbackiem i zero oceniania.",
+    },
+    whatIs: {
+      eyebrow: "Kim jest uNickorn",
+      title: "Przyjazny jednożec, który pomaga Ci mówić",
+      paragraph1:
+        "uNickorn to maskotka uNick Academy — a teraz także Twój osobisty AI korepetytor angielskiego. Oparty na zaawansowanej sztucznej inteligencji, uNickorn prowadzi z Tobą prawdziwe rozmowy po angielsku, delikatnie poprawia błędy, uczy nowego słownictwa i dostosowuje się do Twojego poziomu.",
+      paragraph2:
+        "Pomyśl o uNickornie jak o cierpliwym partnerze do ćwiczeń, który jest zawsze dostępny — między regularnymi lekcjami z prawdziwymi nauczycielami, lub kiedy chcesz dodatkowej praktyki. Bez umówionych terminów, bez presji, tylko rozmowa.",
+    },
+    features: {
+      eyebrow: "Co potrafi uNickorn",
+      title: "Ćwicz angielski po swojemu",
+      items: [
+        "Prawdziwe rozmowy — rozmawiaj o czymkolwiek, od codziennego życia po pracę i podróże",
+        "Delikatne korekty — uNickorn zauważa błędy i pomaga je naturalnie poprawić",
+        "Budowanie słownictwa — ucz się nowych słów w kontekście, nie z fiszek",
+        "Podsumowania sesji — po każdym czacie otrzymaj podsumowanie tego, czego się nauczyłeś",
+        "Dostosowuje się do poziomu — od początkującego do zaawansowanego",
+        "Dostępny 24/7 — ćwicz kiedy Ci pasuje, tak często jak chcesz",
+      ],
+    },
+    howItWorks: {
+      eyebrow: "Jak to działa",
+      title: "Trzy proste kroki",
+      items: [
+        { title: "Zarejestruj się lub zaloguj", text: "Załóż konto w uNick Academy lub zaloguj się, jeśli już je masz." },
+        { title: "Zacznij rozmowę", text: "Otwórz uNickorna i po prostu zacznij rozmawiać. Wybierz temat lub pozwól rozmowie płynąć naturalnie." },
+        { title: "Ucz się i rozwijaj", text: "Otrzymuj feedback w czasie rzeczywistym, delikatne korekty i podsumowanie wszystkiego, co ćwiczyłeś na koniec każdej sesji." },
+      ],
+    },
+    cta: {
+      title: "Gotowy na rozmowę z uNickornem?",
+      subtitle: "Zapisz się i zacznij ćwiczyć angielski ze swoim osobistym AI korepetytorem.",
     },
   },
 

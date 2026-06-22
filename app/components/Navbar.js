@@ -126,6 +126,9 @@ export default function Navbar({ locale, dict }) {
               </Link>
             ))}
           </div>
+          <Link href="/academy/login" className={styles.loginLink}>
+            {dict.common.nav.login}
+          </Link>
           <ConsultationButton small className={styles.ctaDesktop}>
             {dict.common.buttons.freeConsultation}
           </ConsultationButton>
