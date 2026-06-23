@@ -35,7 +35,7 @@ export function ConsultationProvider({ children, locale }) {
   return (
     <ConsultationContext.Provider value={{ open, close, isOpen, audience, teacher, dict }}>
       {children}
-      <ConsultationModal isOpen={isOpen} onClose={close} audience={audience} teacher={teacher} dict={dict} />
+      <ConsultationModal isOpen={isOpen} onClose={close} audience={audience} teacher={teacher} dict={dict} locale={locale} />
     </ConsultationContext.Provider>
   );
 }

@@ -1,11 +1,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { signUp } from '../auth/actions'
+import ConsentCheckboxes from '../../components/ConsentCheckboxes'
+import { getDictionary } from '../../lib/dictionaries'
 
 export default async function SignupPage({ searchParams }) {
   const params = await searchParams
   const error = params?.error
   const redirectTo = params?.redirect || '/academy/pricing'
+  const dict = getDictionary('pl')
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 py-12">
@@ -62,6 +65,9 @@ export default async function SignupPage({ searchParams }) {
               autoComplete="new-password"
               className="w-full rounded-xl border-[1.5px] border-ui-border px-4 py-2.5 text-[15px] focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft transition-colors"
             />
+          </div>
+          <div className="mt-2">
+            <ConsentCheckboxes locale="pl" dict={dict} showMarketing />
           </div>
           <button
             type="submit"

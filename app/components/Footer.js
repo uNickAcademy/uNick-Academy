@@ -79,8 +79,9 @@ export default function Footer({ locale, dict }) {
             © {year} {siteConfig.name}. {dict.common.footer.copyright}
           </span>
           <div className={styles.bottomLinks}>
+            <Link href={`/${locale}/privacy-policy`}>{dict.legal.privacyPolicy.title}</Link>
+            <Link href={`/${locale}/terms-of-service`}>{dict.legal.termsOfService.title}</Link>
             <Link href={platformLinks.studentLogin.href}>{dict.common.platformLinks.studentLogin}</Link>
-            <Link href={platformLinks.adminPanel.href}>{dict.common.platformLinks.adminPanel}</Link>
           </div>
         </div>
       </div>

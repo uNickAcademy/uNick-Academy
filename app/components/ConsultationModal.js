@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
 import UNickorn from "./UNickorn";
+import ConsentCheckboxes from "./ConsentCheckboxes";
 import styles from "./ConsultationModal.module.css";
 
-export default function ConsultationModal({ isOpen, onClose, audience, teacher, dict }) {
+export default function ConsultationModal({ isOpen, onClose, audience, teacher, dict, locale }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -191,6 +192,8 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
                   defaultValue={teacher ? `${t.teacherRequest || "I'd like to book a lesson with"} ${teacher}` : ""}
                 />
               </div>
+
+              <ConsentCheckboxes locale={locale} dict={dict} showMarketing />
 
               <Button type="submit" variant="primary" fullWidth className={styles.submit} disabled={submitting}>
                 {submitting ? "..." : t.submit}

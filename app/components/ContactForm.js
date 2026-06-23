@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Button from "./Button";
 import UNickorn from "./UNickorn";
+import ConsentCheckboxes from "./ConsentCheckboxes";
 import styles from "./ContactForm.module.css";
 
-export default function ContactForm({ dict }) {
+export default function ContactForm({ dict, locale }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -119,6 +120,8 @@ export default function ContactForm({ dict }) {
           placeholder={t.messagePlaceholder}
         />
       </div>
+
+      <ConsentCheckboxes locale={locale} dict={dict} showMarketing />
 
       <Button type="submit" variant="primary" fullWidth disabled={submitting}>
         {submitting ? "..." : t.submit}

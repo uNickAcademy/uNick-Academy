@@ -1,0 +1,83 @@
+.banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  background: var(--color-blue);
+  color: var(--color-cream);
+  padding: 18px var(--section-padding-x);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.35s var(--ease-out);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+.link {
+  text-decoration: underline;
+  color: var(--color-cream);
+  font-weight: 600;
+}
+
+.link:hover {
+  color: var(--color-warm-white);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.reject,
+.accept {
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: opacity var(--transition-base);
+}
+
+.reject {
+  background: transparent;
+  color: var(--color-cream);
+  border: 1.5px solid rgba(250, 244, 236, 0.35);
+}
+
+.reject:hover {
+  border-color: var(--color-cream);
+}
+
+.accept {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.accept:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 640px) {
+  .banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+    gap: 14px;
+  }
+}

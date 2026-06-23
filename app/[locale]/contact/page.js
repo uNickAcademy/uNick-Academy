@@ -39,7 +39,7 @@ export default async function ContactPage({ params }) {
       <section className="section">
         <div className={`container ${styles.split}`}>
           <Reveal as="div">
-            <ContactForm dict={dict} />
+            <ContactForm dict={dict} locale={locale} />
           </Reveal>
 
           <Reveal as="div" delay={100} className={styles.copy}>
