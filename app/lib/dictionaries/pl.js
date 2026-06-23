@@ -12,15 +12,15 @@ const pl = {
     skipToContent: "Przejdź do treści",
     nav: {
       home: "Strona główna",
-      forWhom: "Dla kogo",
+      isItForMe: "Czy to dla mnie?",
       children: "Dzieci",
       teenagers: "Młodzież",
       adults: "Dorośli",
       companies: "Firmy",
       howWeTeach: "Jak uczymy",
       meetUs: "Poznaj nas",
-      meetUnickorn: "Poznaj uNickorna",
       contact: "Kontakt",
+      teachersZone: "Strefa nauczyciela",
       login: "Zaloguj się",
     },
     footer: {
@@ -567,6 +567,37 @@ const pl = {
     },
   },
 
+
+  teachersZone: {
+    meta: {
+      title: "Strefa nauczyciela — uNick Academy",
+      description:
+        "Materiały dla nauczycieli, sklep z konspektami lekcji i logowanie do panelu nauczyciela uNick Academy.",
+    },
+    hero: {
+      eyebrow: "Strefa nauczyciela",
+      titleStart: "Wszystko czego potrzebujesz, ",
+      titleAccent: "w jednym miejscu.",
+      subtitle:
+        "Zaloguj się do panelu nauczyciela, przeglądaj gotowe konspekty lekcji i znajdź materiały, dzięki którym Twoje zajęcia będą jeszcze lepsze.",
+    },
+    login: {
+      eyebrow: "Logowanie nauczyciela",
+      title: "Wejdź do panelu",
+      subtitle: "Zaloguj się, by zarządzać lekcjami, uczniami i harmonogramem.",
+      button: "Zaloguj się jako nauczyciel",
+    },
+    shop: {
+      eyebrow: "Sklep z konspektami",
+      title: "Gotowe konspekty lekcji",
+      subtitle: "Przeglądaj naszą kolekcję konspektów, aktywności i materiałów dydaktycznych — zaprojektowanych przez doświadczonych nauczycieli do prawdziwych klas.",
+      comingSoon: "Wkrótce — przygotowujemy sklep dla Ciebie.",
+    },
+    finalCta: {
+      title: "Chcesz uczyć z nami?",
+      subtitle: "Zawsze szukamy pełnych pasji, międzynarodowych nauczycieli. Skontaktuj się i opowiedz nam o sobie.",
+    },
+  },
 
   meetUnickorn: {
     meta: {

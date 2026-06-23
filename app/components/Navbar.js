@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import ConsultationButton from "./ConsultationButton";
 import { getPrimaryNav, platformLinks, siteConfig } from "../lib/site-config";
-import { locales } from "../lib/dictionaries";
+
 import styles from "./Navbar.module.css";
 
 function switchLocalePath(pathname, targetLocale) {
@@ -115,16 +115,24 @@ export default function Navbar({ locale, dict }) {
 
         <div className={styles.actions}>
           <div className={styles.langSwitcher} aria-label={dict.common.languageSwitcher.label}>
-            {locales.map((loc) => (
-              <Link
-                key={loc}
-                href={switchLocalePath(pathname, loc)}
-                className={`${styles.langLink} ${loc === locale ? styles.langActive : ""}`}
-                aria-current={loc === locale ? "true" : undefined}
-              >
-                {loc.toUpperCase()}
-              </Link>
-            ))}
+            <Link
+              href={switchLocalePath(pathname, "en")}
+              className={`${styles.flagLink} ${"en" === locale ? styles.flagActive : ""}`}
+              aria-current={"en" === locale ? "true" : undefined}
+              aria-label="English"
+              title="English"
+            >
+              <Image src="/flags/gb.svg" alt="" width={22} height={16} aria-hidden="true" />
+            </Link>
+            <Link
+              href={switchLocalePath(pathname, "pl")}
+              className={`${styles.flagLink} ${"pl" === locale ? styles.flagActive : ""}`}
+              aria-current={"pl" === locale ? "true" : undefined}
+              aria-label="Polski"
+              title="Polski"
+            >
+              <Image src="/flags/pl.svg" alt="" width={22} height={16} aria-hidden="true" />
+            </Link>
           </div>
           <Link href="/academy/login" className={styles.loginLink}>
             {dict.common.nav.login}
@@ -199,17 +207,26 @@ export default function Navbar({ locale, dict }) {
             <ConsultationButton fullWidth onClick={() => setOpen(false)} />
           </div>
           <div className={styles.mobileLangSwitcher}>
-            {locales.map((loc) => (
-              <Link
-                key={loc}
-                href={switchLocalePath(pathname, loc)}
-                className={`${styles.langLink} ${loc === locale ? styles.langActive : ""}`}
-                onClick={() => setOpen(false)}
-                aria-current={loc === locale ? "true" : undefined}
-              >
-                {dict.common.languageSwitcher[loc]}
-              </Link>
-            ))}
+            <Link
+              href={switchLocalePath(pathname, "en")}
+              className={`${styles.flagLink} ${"en" === locale ? styles.flagActive : ""}`}
+              onClick={() => setOpen(false)}
+              aria-current={"en" === locale ? "true" : undefined}
+              aria-label="English"
+            >
+              <Image src="/flags/gb.svg" alt="" width={26} height={19} aria-hidden="true" />
+              <span>English</span>
+            </Link>
+            <Link
+              href={switchLocalePath(pathname, "pl")}
+              className={`${styles.flagLink} ${"pl" === locale ? styles.flagActive : ""}`}
+              onClick={() => setOpen(false)}
+              aria-current={"pl" === locale ? "true" : undefined}
+              aria-label="Polski"
+            >
+              <Image src="/flags/pl.svg" alt="" width={26} height={19} aria-hidden="true" />
+              <span>Polski</span>
+            </Link>
           </div>
         </div>
       )}

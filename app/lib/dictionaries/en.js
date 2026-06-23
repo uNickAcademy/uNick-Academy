@@ -12,15 +12,15 @@ const en = {
     skipToContent: "Skip to content",
     nav: {
       home: "Home",
-      forWhom: "For Whom",
+      isItForMe: "Is it for me?",
       children: "Children",
       teenagers: "Teenagers",
       adults: "Adults",
       companies: "Companies",
       howWeTeach: "How We Teach",
       meetUs: "Meet Us",
-      meetUnickorn: "Meet uNickorn",
       contact: "Contact",
+      teachersZone: "Teachers Zone",
       login: "Log in",
     },
     footer: {
@@ -567,6 +567,37 @@ const en = {
     },
   },
 
+
+  teachersZone: {
+    meta: {
+      title: "Teachers Zone — uNick Academy",
+      description:
+        "Teacher resources, lesson plan shop, and teacher login for uNick Academy.",
+    },
+    hero: {
+      eyebrow: "Teachers Zone",
+      titleStart: "Everything you need, ",
+      titleAccent: "in one place.",
+      subtitle:
+        "Log in to the teacher panel, browse ready-made lesson plans, and find resources to make your classes even better.",
+    },
+    login: {
+      eyebrow: "Teacher login",
+      title: "Access your panel",
+      subtitle: "Log in to manage your lessons, students and schedule.",
+      button: "Log in as teacher",
+    },
+    shop: {
+      eyebrow: "Lesson plan shop",
+      title: "Ready-made lesson plans",
+      subtitle: "Browse our collection of lesson plans, activities, and teaching materials — designed by experienced teachers for real classrooms.",
+      comingSoon: "Coming soon — we're preparing the shop for you.",
+    },
+    finalCta: {
+      title: "Want to teach with us?",
+      subtitle: "We're always looking for passionate, international teachers. Get in touch and tell us about yourself.",
+    },
+  },
 
   meetUnickorn: {
     meta: {

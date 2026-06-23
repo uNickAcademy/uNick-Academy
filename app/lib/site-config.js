@@ -35,7 +35,7 @@ export const platformLinks = {
 const NAV_ROUTES = [
   { key: "home", path: "" },
   {
-    key: "forWhom",
+    key: "isItForMe",
     children: [
       { key: "children", path: "/children" },
       { key: "teenagers", path: "/teenagers" },
@@ -45,8 +45,8 @@ const NAV_ROUTES = [
   },
   { key: "howWeTeach", path: "/how-we-teach" },
   { key: "meetUs", path: "/meet-us" },
-  { key: "meetUnickorn", path: "/meet-unickorn" },
   { key: "contact", path: "/contact" },
+  { key: "teachersZone", path: "/teachers-zone" },
 ];
 
 export function getPrimaryNav(locale, dict) {
@@ -93,6 +93,7 @@ export function getFooterNav(locale, dict) {
         { label: dict.common.nav.howWeTeach, href: `/${locale}/how-we-teach` },
         { label: dict.common.nav.meetUs, href: `/${locale}/meet-us` },
         { label: dict.common.nav.contact, href: `/${locale}/contact` },
+        { label: dict.common.nav.teachersZone, href: `/${locale}/teachers-zone` },
         { label: dict.common.platformLinks.studentLogin, href: platformLinks.studentLogin.href },
       ],
     },
