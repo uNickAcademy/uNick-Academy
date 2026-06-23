@@ -2,6 +2,8 @@ import Link from "next/link";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import ConsultationButton from "../../components/ConsultationButton";
+import LessonPlanShop from "../../components/LessonPlanShop";
+import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "../../lib/dictionaries";
 import styles from "../../components/sections.module.css";
 
@@ -11,10 +13,27 @@ export async function generateMetadata({ params }) {
   return dict.teachersZone.meta;
 }
 
-export default async function TeachersZonePage({ params }) {
+export default async function TeachersZonePage({ params, searchParams }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.teachersZone;
+
+  const sp = await searchParams;
+  const level = sp?.level || "";
+  const age = sp?.age || "";
+  const skill = sp?.skill || "";
+
+  const supabase = await createClient();
+  let query = supabase
+    .from("lesson_plans")
+    .select("id, title, description, cefr_level, age_group, skills, is_free")
+    .order("created_at", { ascending: false });
+
+  if (level) query = query.eq("cefr_level", level);
+  if (age) query = query.eq("age_group", age);
+  if (skill) query = query.contains("skills", [skill]);
+
+  const { data: lessons } = await query;
 
   return (
     <>
@@ -44,24 +63,20 @@ export default async function TeachersZonePage({ params }) {
         </Reveal>
       </section>
 
-      <section className={`container ${styles.section}`}>
-        <Reveal as="div">
+      <section className={`section ${styles.altSection}`}>
+        <div className="container">
           <SectionHeading eyebrow={t.shop.eyebrow} title={t.shop.title} subtitle={t.shop.subtitle} />
-          <div
-            style={{
-              marginTop: "2rem",
-              padding: "3rem 2rem",
-              textAlign: "center",
-              background: "var(--color-cream)",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-ink-soft)",
-              fontSize: "1.05rem",
-            }}
-          >
-            {t.shop.comingSoon}
-          </div>
-        </Reveal>
+          <Reveal as="div" style={{ marginTop: "2rem" }}>
+            <LessonPlanShop
+              lessons={lessons || []}
+              locale={locale}
+              t={t.shop}
+              level={level}
+              age={age}
+              skill={skill}
+            />
+          </Reveal>
+        </div>
       </section>
 
       <section className={`container ${styles.cta}`}>

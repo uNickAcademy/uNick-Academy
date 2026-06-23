@@ -6,7 +6,7 @@ const PHOTO_BASE = "https://unickacademy.pl/wp-content/uploads/2024/08";
 
 export const teachers = [
   { id: "nick", name: "Nick", tone: "blue", photo: `${PHOTO_BASE}/Nick.png`, audiences: [] },
-  { id: "toni", name: "Toni", tone: "red", photo: null, audiences: [] },
+  { id: "toni", name: "Toni", tone: "red", photo: "/team/toni.png", audiences: [] },
   { id: "adriana", name: "Adriana", tone: "cream", photo: `${PHOTO_BASE}/Adriana.png`, audiences: [] },
   { id: "elliot", name: "Elliot", tone: "sand", photo: `${PHOTO_BASE}/Elliott.png`, audiences: [] },
   { id: "gio", name: "Gio", tone: "blue", photo: `${PHOTO_BASE}/Gio.png`, audiences: [] },
