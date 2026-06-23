@@ -95,9 +95,11 @@ const en = {
       titleLine1: "We didn't build another language school.",
       titleLine2: "We built the place we wished had existed.",
       paragraph1:
-        "Milena grew up in Poland, learning English through rules, red pens and the constant fear of getting it wrong. Nick grew up in England, watching people freeze the moment a conversation needed courage rather than correctness. They met somewhere in between — and realised they were tired of the same story everywhere: clever people, silenced by the idea that language has to be perfect before it counts.",
+        "Our adventure with uNick Academy began over a decade ago. Before that, it was just Nick running 'English with an Englishman'. His lessons were so popular I seriously considered cloning him. I was working in a corporation at the time. But fate stepped in — the company let me go, which in hindsight turned out to be the best thing that could have happened. So instead of cloning Nick, I joined the team.",
       paragraph2:
-        "So they started uNick Academy around a kitchen table, with one rule: real conversation first, everything else second. No judgement for mistakes. No shame for accents. No one left out because they learn differently. What began as a handful of lessons between friends grew into a small, international academy — still run the same way, by people who actually know your name.",
+        "At first we divided things up — he taught adults, I taught children. But I noticed one difference — when Nick taught, the children spoke English much more willingly than in my classes. Why? The answer is actually simple — because with me it was artificially forced. That's just how our brains work — they take the path of least resistance. If this lady speaks Polish, she'll understand what I say in Polish. That's when I realised why lessons with a foreigner are so much more effective. The brain sees a natural need to communicate in another language.",
+      paragraph3:
+        "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       signature: "— Milena & Nick, founders",
       galleryCaptions: [
         "Milena & Nick, at the table where it all began",
@@ -510,25 +512,25 @@ const en = {
     meta: {
       title: "Meet Us",
       description:
-        "Meet uNick Academy — a school from Rumianek where teachers from around the world have been teaching English the un-school way for 10 years.",
+        "Meet uNick Academy — a school from Rumianek where teachers from around the world have been teaching English the un-school way for over a decade.",
     },
     hero: {
       eyebrow: "Meet us",
-      titleStart: "10 years of ",
+      titleStart: "Over a decade of ",
       titleAccent: "uNick adventure.",
       subtitle:
-        "We're based in Rumianek, but our teachers come from all over the world — and we teach languages the un-school way!",
+        "We're based in Rumianek, but our teachers come from all over the world — and we've been teaching languages the un-school way for over a decade!",
       mediaCaption: "Milena and Nick — uNick Academy",
     },
     ourStory: {
       eyebrow: "Our story",
       title: "How it all started",
       paragraph1:
-        "Our adventure with uNick Academy began exactly 10 years ago. Before that, it was just Nick running 'English with an Englishman'. His lessons were so popular I seriously considered cloning him. I was working in a corporation at the time. But fate stepped in — the company let me go, which in hindsight turned out to be the best thing that could have happened. So instead of cloning Nick, I joined the team.",
+        "Our adventure with uNick Academy began over a decade ago. Before that, it was just Nick running 'English with an Englishman'. His lessons were so popular I seriously considered cloning him. I was working in a corporation at the time. But fate stepped in — the company let me go, which in hindsight turned out to be the best thing that could have happened. So instead of cloning Nick, I joined the team.",
       paragraph2:
         "At first we divided things up — he taught adults, I taught children. But I noticed one difference — when Nick taught, the children spoke English much more willingly than in my classes. Why? The answer is actually simple — because with me it was artificially forced. That's just how our brains work — they take the path of least resistance. If this lady speaks Polish, she'll understand what I say in Polish. That's when I realised why lessons with a foreigner are so much more effective. The brain sees a natural need to communicate in another language.",
       paragraph3:
-        "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be unique. You might even say uNique… or rather uNick.",
+        "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       galleryCaptions: [
         "Milena and Nick — where it all began",
         "The first lessons, before uNick had a name",
@@ -542,7 +544,7 @@ const en = {
       paragraph1:
         "First Gui from Portugal joined us, then Camilla from Canada — they were wonderful and the students loved them. Then came the equally amazing Kimy from Ecuador, Mona and Hussain from Saudi Arabia, and many, many other fantastic people from every corner of the world.",
       paragraph2:
-        "Over these 10 years we've received countless messages from students and their parents about how we've directly or indirectly impacted their lives. Not just by breaking the language barrier, but by opening their minds to the world. And I have to say, I'm incredibly proud of that.",
+        "Over the years we've received countless messages from students and their parents about how we've directly or indirectly impacted their lives. Not just by breaking the language barrier, but by opening their minds to the world. And I have to say, I'm incredibly proud of that.",
       signature: "Big hugs,\nMilena",
     },
     whatWeOffer: {

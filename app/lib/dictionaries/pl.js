@@ -95,9 +95,11 @@ const pl = {
       titleLine1: "Nie zbudowaliśmy kolejnej szkoły językowej.",
       titleLine2: "Zbudowaliśmy miejsce, którego sami szukaliśmy.",
       paragraph1:
-        "Milena wychowała się w Polsce, uczyła się angielskiego przez reguły, czerwony długopis i nieustanny strach przed błędem. Nick wychował się w Anglii, obserwując, jak ludzie zamierają, gdy rozmowa wymaga odwagi, a nie poprawności. Spotkali się gdzieś pomiędzy — i odkryli, że mają dość tej samej historii wszędzie: zdolni ludzie, uciszani przekonaniem, że język musi być idealny, by się liczył.",
+        "Nasza przygoda z uNick Academy zaczęła się ponad dekadę temu. Do tamtej pory był tylko Nick prowadzący Angielski z Anglikiem. Jego lekcje cieszyły się tak dużą popularnością, że serio zastanawiałam się nad jego sklonowaniem. Ja wówczas pracowałam w korporacji. Los jednak sprawił tak, że firma podziękowała mi za współpracę, co z perspektywy czasu okazało się najlepszą rzeczą, która mogła mnie spotkać. I zamiast klonować Nicka dołączyłam do zespołu.",
       paragraph2:
-        "Tak powstała uNick Academy — przy kuchennym stole, z jedną zasadą: najpierw prawdziwa rozmowa, wszystko inne potem. Bez oceniania błędów. Bez wstydu za akcent. Bez wykluczania kogoś, kto uczy się inaczej. To, co zaczęło się jako kilka lekcji między znajomymi, wyrosło w niewielką, międzynarodową akademię — wciąż prowadzoną tak samo, przez ludzi, którzy naprawdę znają twoje imię.",
+        "Na początku podzieliliśmy się — on uczył dorosłych, a ja dzieci. Zauważyłam jednak jedną różnicę — gdy Nick prowadził zajęcia dzieci dużo chętniej mówiły po angielsku niż jak zajęcia były ze mną. Dlaczego? Odpowiedź jest w sumie prosta — bo było to sztucznie wymuszane. Tak już działa nasz mózg — idzie po linii najmniejszego oporu. Jeśli ta pani mówi po polsku to zrozumie co do niej powiem po polsku. Wtedy doszłam do tego, dlaczego takie lekcje z obcokrajowcem są dużo bardziej skuteczne. Mózg widzi naturalną potrzebę komunikowania się w innym języku.",
+      paragraph3:
+        "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       signature: "— Milena i Nick, założyciele",
       galleryCaptions: [
         "Milena i Nick, przy stole, gdzie wszystko się zaczęło",
@@ -510,25 +512,25 @@ const pl = {
     meta: {
       title: "Poznaj nas",
       description:
-        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. 10 lat nauki angielskiego w nieszkolny sposób.",
+        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad dekada nauki angielskiego w nieszkolny sposób.",
     },
     hero: {
       eyebrow: "Poznaj nas",
-      titleStart: "10 lat ",
+      titleStart: "Ponad dekada ",
       titleAccent: "uNickatowej przygody.",
       subtitle:
-        "Jesteśmy z Rumianka, ale uczą u nas nauczyciele z całego świata i uczymy języków w nieszkolny sposób!",
+        "Jesteśmy z Rumianka, ale uczą u nas nauczyciele z całego świata i od ponad dekady uczymy języków w nieszkolny sposób!",
       mediaCaption: "Milena i Nick — uNick Academy",
     },
     ourStory: {
       eyebrow: "Nasza historia",
       title: "Jak to się zaczęło",
       paragraph1:
-        "Nasza przygoda z uNick Academy zaczęła się dokładnie 10 lat temu. Do tamtej pory był tylko Nick prowadzący Angielski z Anglikiem. Jego lekcje cieszyły się tak dużą popularnością, że serio zastanawiałam się nad jego sklonowaniem. Ja wówczas pracowałam w korporacji. Los jednak sprawił tak, że firma podziękowała mi za współpracę, co z perspektywy czasu okazało się najlepszą rzeczą, która mogła mnie spotkać. I zamiast klonować Nicka dołączyłam do zespołu.",
+        "Nasza przygoda z uNick Academy zaczęła się ponad dekadę temu. Do tamtej pory był tylko Nick prowadzący Angielski z Anglikiem. Jego lekcje cieszyły się tak dużą popularnością, że serio zastanawiałam się nad jego sklonowaniem. Ja wówczas pracowałam w korporacji. Los jednak sprawił tak, że firma podziękowała mi za współpracę, co z perspektywy czasu okazało się najlepszą rzeczą, która mogła mnie spotkać. I zamiast klonować Nicka dołączyłam do zespołu.",
       paragraph2:
         "Na początku podzieliliśmy się — on uczył dorosłych, a ja dzieci. Zauważyłam jednak jedną różnicę — gdy Nick prowadził zajęcia dzieci dużo chętniej mówiły po angielsku niż jak zajęcia były ze mną. Dlaczego? Odpowiedź jest w sumie prosta — bo było to sztucznie wymuszane. Tak już działa nasz mózg — idzie po linii najmniejszego oporu. Jeśli ta pani mówi po polsku to zrozumie co do niej powiem po polsku. Wtedy doszłam do tego, dlaczego takie lekcje z obcokrajowcem są dużo bardziej skuteczne. Mózg widzi naturalną potrzebę komunikowania się w innym języku.",
       paragraph3:
-        "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie wyjątkowa. Można by wręcz rzec unikatowa… czy też uNickatowa.",
+        "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       galleryCaptions: [
         "Milena i Nick — tam, gdzie wszystko się zaczęło",
         "Pierwsze lekcje, zanim uNick miał nazwę",
@@ -542,7 +544,7 @@ const pl = {
       paragraph1:
         "I tak pierwszy dołączył do nas Gui z Portugalii, potem Camilla z Kanady, byli cudowni i uczniowie ich uwielbiali. Później równie wspaniali Kimy z Ekwadoru, Mona i Hussain z Arabii Saudyjskiej i wielu wielu innych fantastycznych ludzi z każdego zakątka świata.",
       paragraph2:
-        "Przez te 10 lat otrzymaliśmy mnóstwo wiadomości od uczniów i ich rodziców o tym, że pośrednio lub bezpośrednio mieliśmy wpływ na ich życie. Nie tylko przełamując barierę językową, ale otwierając im głowę na Świat. I muszę powiedzieć, że jestem z tego niezmiernie dumna.",
+        "Przez te lata otrzymaliśmy mnóstwo wiadomości od uczniów i ich rodziców o tym, że pośrednio lub bezpośrednio mieliśmy wpływ na ich życie. Nie tylko przełamując barierę językową, ale otwierając im głowę na Świat. I muszę powiedzieć, że jestem z tego niezmiernie dumna.",
       signature: "Ściskam Was mocno,\nMilena",
     },
     whatWeOffer: {

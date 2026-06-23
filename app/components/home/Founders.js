@@ -29,6 +29,7 @@ export default function Founders({ dict, locale }) {
           </h2>
           <p>{t.paragraph1}</p>
           <p>{t.paragraph2}</p>
+          {t.paragraph3 && <p>{t.paragraph3}</p>}
           <p className={styles.signature}>{t.signature}</p>
           <Button href={`/${locale}/meet-us`} variant="ghost">
             {dict.common.buttons.readFullStory}
