@@ -1,11 +1,25 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { PwaRegister } from './PwaRegister'
 
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'latin-ext'],
+})
+
+// Fonty strony marketingowej (sekcja [locale]). Zmienne CSS są dostępne
+// globalnie, lecz korzystają z nich tylko style marketingu (marketing.css).
+const fraunces = Fraunces({
+  variable: '--font-display',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+})
+
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-body',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -26,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pl" className={`${inter.variable} h-full antialiased`}>
+    <html lang="pl" className={`${inter.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {children}
         <PwaRegister />

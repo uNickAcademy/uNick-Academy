@@ -1,0 +1,33 @@
+.wrap {
+  max-width: 720px;
+  margin-bottom: clamp(36px, 5vw, 56px);
+}
+
+.center {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: clamp(28px, 4.5vw, 44px);
+  margin-bottom: 16px;
+}
+
+.subtitle {
+  font-size: clamp(16px, 2vw, 19px);
+  color: var(--color-ink-soft);
+  line-height: 1.7;
+}
+
+.onDark .subtitle {
+  color: var(--color-cream-deep);
+}
+
+.onDark .title {
+  color: var(--color-warm-white);
+}
