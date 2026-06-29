@@ -1,7 +1,7 @@
+import Image from "next/image";
 import Reveal from "../Reveal";
 import Button from "../Button";
 import ConsultationButton from "../ConsultationButton";
-import PlaceholderMedia from "../PlaceholderMedia";
 import UNickorn from "../UNickorn";
 import styles from "./Hero.module.css";
 
@@ -27,7 +27,17 @@ export default function Hero({ dict, locale }) {
       </Reveal>
 
       <Reveal as="div" delay={120} className={styles.media}>
-        <PlaceholderMedia kind="video" tone="red" ratio="4:3" caption={t.mediaCaption} />
+        <div className={styles.heroImage}>
+          <Image
+            src="/team/team-hero.jpg"
+            alt={t.mediaCaption}
+            width={640}
+            height={640}
+            priority
+            sizes="(max-width: 940px) 100vw, 50vw"
+            className={styles.heroImg}
+          />
+        </div>
         <UNickorn variant="wave" size={88} className={styles.unicorn} float />
       </Reveal>
     </div>

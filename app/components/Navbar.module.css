@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding-top: 14px;
   padding-bottom: 14px;
 }
@@ -47,11 +47,10 @@
   display: none;
   align-items: center;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-ink-soft);
-  flex-shrink: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 
 .navLink {
@@ -334,7 +333,7 @@
   gap: 12px;
 }
 
-@media (min-width: 1240px) {
+@media (min-width: 1440px) {
   .nav {
     display: flex;
   }
