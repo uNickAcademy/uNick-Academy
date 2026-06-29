@@ -8,13 +8,24 @@ import {
   bulkMessageEmail,
 } from './templates'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
+
+// Leniwa inicjalizacja — klient powstaje dopiero przy wysyłce, gdy jest klucz.
+// Dzięki temu build nie wywala się, gdy RESEND_API_KEY nie jest ustawiony.
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY
+  return key ? new Resend(key) : null
+}
 
 // ──────────────────────────────────────────
 // Pomocnik wysyłki
 // ──────────────────────────────────────────
 async function send(to: string, subject: string, html: string) {
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[Email] Brak RESEND_API_KEY — pomijam wysyłkę e-maila.')
+    return
+  }
   try {
     await resend.emails.send({ from: FROM, to, subject, html })
   } catch (err) {
