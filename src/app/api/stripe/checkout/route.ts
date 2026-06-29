@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia' as Stripe.StripeConfig['apiVersion'],
-})
+// Leniwa inicjalizacja — klient powstaje dopiero w handlerze, gdy jest klucz.
+// Dzięki temu build nie wywala się, gdy STRIPE_SECRET_KEY nie jest ustawiony.
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY
+  return key
+    ? new Stripe(key, { apiVersion: '2025-01-27.acacia' as Stripe.StripeConfig['apiVersion'] })
+    : null
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe()
+    if (!stripe) {
+      return NextResponse.json({ error: 'Płatności nie są skonfigurowane.' }, { status: 503 })
+    }
+
     const { amount, studentId, description } = await req.json()
 
     const session = await stripe.checkout.sessions.create({
