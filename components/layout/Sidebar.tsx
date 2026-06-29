@@ -15,6 +15,7 @@ import {
   BarChart3,
   ArrowDownToLine,
   Bot,
+  Landmark,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { signOut } from "@/app/(auth)/login/actions"
@@ -55,6 +56,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/lekcje/rentownosc",
     label: "Rentowność",
     icon: TrendingUp,
+    roles: ["owner_cfo", "accounting_ops"],
+  },
+  {
+    href: "/platnosci",
+    label: "Płatności",
+    icon: Landmark,
     roles: ["owner_cfo", "accounting_ops"],
   },
   {
