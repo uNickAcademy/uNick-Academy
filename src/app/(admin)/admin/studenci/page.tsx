@@ -14,7 +14,7 @@ export default async function StudenciPage() {
   const rows = students.map((s) => ({
     id: s.id,
     profileId: s.profile_id,
-    name: s.profile?.full_name ?? '—',
+    name: s.full_name ?? s.profile?.full_name ?? '—',
     email: s.profile?.email ?? '',
     phone: s.profile?.phone ?? '',
     level: s.level,
@@ -35,7 +35,7 @@ export default async function StudenciPage() {
   }))
 
   const teacherOptions = teachers.map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))
-  const deletedRows = deleted.map((s) => ({ id: s.id, name: s.profile?.full_name ?? '—', email: s.profile?.email ?? '' }))
+  const deletedRows = deleted.map((s) => ({ id: s.id, name: s.full_name ?? s.profile?.full_name ?? '—', email: s.profile?.email ?? '' }))
 
   return <StudentsTable rows={rows} teacherOptions={teacherOptions} deletedRows={deletedRows} />
 }

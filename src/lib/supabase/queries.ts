@@ -5,7 +5,8 @@ import type { Student, Teacher, Lesson, Transaction, Referral, Availability, Hol
 // STUDENT
 // ──────────────────────────────────────────
 
-export async function getStudentByProfileId(profileId: string): Promise<Student | null> {
+// Wszystkie dzieci/podkonta wiszące pod jednym kontem rodzica (profilem).
+export async function getStudentsByProfileId(profileId: string): Promise<Student[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('students')
@@ -15,8 +16,21 @@ export async function getStudentByProfileId(profileId: string): Promise<Student 
       teacher:teachers(*, profile:profiles(*))
     `)
     .eq('profile_id', profileId)
-    .single()
-  return data as Student | null
+    .is('deleted_at', null)
+    .order('joined_at', { ascending: true })
+  return (data as Student[]) ?? []
+}
+
+// Pierwsze podkonto (zachowuje zgodność tam, gdzie pokazujemy jednego ucznia).
+export async function getStudentByProfileId(profileId: string): Promise<Student | null> {
+  const students = await getStudentsByProfileId(profileId)
+  return students[0] ?? null
+}
+
+// Łączne saldo rodziny = suma sald wszystkich podkont danego rodzica.
+export async function getFamilyBalance(profileId: string): Promise<number> {
+  const students = await getStudentsByProfileId(profileId)
+  return students.reduce((sum, s) => sum + (s.credit_balance ?? 0), 0)
 }
 
 export async function getStudentLessons(studentId: string): Promise<Lesson[]> {
@@ -141,6 +155,7 @@ export async function getAllTeachers(): Promise<Teacher[]> {
     .from('teachers')
     .select(`*, profile:profiles(*)`)
     .eq('is_active', true)
+    .order('sort_order')
     .order('created_at')
   return (data as Teacher[]) ?? []
 }
@@ -151,6 +166,7 @@ export async function getAllTeachersAdmin(): Promise<Teacher[]> {
   const { data } = await supabase
     .from('teachers')
     .select(`*, profile:profiles(*)`)
+    .order('sort_order')
     .order('created_at')
   return (data as Teacher[]) ?? []
 }
@@ -651,4 +667,64 @@ export async function getAllGroups(): Promise<Group[]> {
     // spłaszcz members z zagnieżdżenia group_members → student
     members: (g.members ?? []).map((m: { student: Student }) => m.student),
   })) as Group[]
+}
+
+// ──────────────────────────────────────────
+// PUBLICZNE – KREATOR ZAPISÓW
+// ──────────────────────────────────────────
+
+export type PublicGroup = {
+  id: string; name: string; level: string; schedule_text: string; description: string
+  age_range: string; color: string; capacity: number; taken: number; spots: number
+  teacherName: string
+}
+
+// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu)
+export async function getPublicGroups(): Promise<PublicGroup[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('groups')
+    .select(`id, name, level, color, capacity, schedule_text, description, age_range,
+             teacher:teachers(profile:profiles(full_name)),
+             members:group_members(student_id)`)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+  return (data ?? []).map((g) => {
+    const capacity = (g.capacity as number) ?? 0
+    const taken = ((g.members as unknown[]) ?? []).length
+    const teacher = g.teacher as { profile?: { full_name?: string } } | null
+    return {
+      id: g.id as string, name: g.name as string, level: g.level as string,
+      schedule_text: (g.schedule_text as string) ?? '', description: (g.description as string) ?? '',
+      age_range: (g.age_range as string) ?? '', color: (g.color as string) ?? '#23479E',
+      capacity, taken, spots: Math.max(capacity - taken, 0),
+      teacherName: teacher?.profile?.full_name ?? '—',
+    }
+  })
+}
+
+// Tygodniowa dostępność wszystkich nauczycieli (mapowanie teacherId → sloty)
+export async function getPublicAvailability(): Promise<Record<string, Availability[]>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('availability')
+    .select('*')
+    .eq('is_active', true)
+    .order('day_of_week', { ascending: true })
+    .order('start_time', { ascending: true })
+  const map: Record<string, Availability[]> = {}
+  for (const a of (data as Availability[]) ?? []) {
+    (map[a.teacher_id] ??= []).push(a)
+  }
+  return map
+}
+
+// Prośby o zapis stacjonarny (panel admina)
+export async function getBookingRequests(): Promise<Record<string, unknown>[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('booking_requests')
+    .select('*, student:students(id, full_name)')
+    .order('created_at', { ascending: false })
+  return (data as Record<string, unknown>[]) ?? []
 }

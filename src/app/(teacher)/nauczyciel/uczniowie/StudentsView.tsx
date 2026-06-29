@@ -87,7 +87,7 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
                 <div key={student.id} className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-bold text-gray-900">{student.profile?.full_name}</h3>
+                      <h3 className="font-bold text-gray-900">{student.full_name ?? student.profile?.full_name}</h3>
                       <p className="text-xs text-gray-400">{student.profile?.email}</p>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${LEVEL_COLORS[student.level] ?? 'bg-gray-50 text-gray-600'}`}>
@@ -146,7 +146,7 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
                           className="absolute inset-0.5 rounded-lg px-2 py-1 bg-[#23479E] overflow-hidden"
                           title={l.topic || 'Lesson'}
                         >
-                          <p className="text-white text-xs font-bold leading-tight truncate">{l.student?.profile?.full_name}</p>
+                          <p className="text-white text-xs font-bold leading-tight truncate">{l.student?.full_name ?? l.student?.profile?.full_name}</p>
                           <p className="text-white/75 text-xs truncate">{l.topic || 'Lesson'}</p>
                         </div>
                       ))}

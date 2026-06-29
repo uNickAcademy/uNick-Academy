@@ -66,6 +66,8 @@ export interface Teacher {
   rating: number
   review_count: number
   video_url?: string
+  photo_url?: string
+  sort_order?: number
   color: string
   is_active: boolean
   hourly_rate?: number
@@ -86,6 +88,9 @@ export interface Availability {
 export interface Student {
   id: string
   profile_id: string
+  full_name?: string
+  guardian_name?: string
+  age?: number
   teacher_id?: string
   level: LanguageLevel
   status: StudentStatus
@@ -172,6 +177,10 @@ export interface Group {
   level: LanguageLevel
   color: string
   is_active: boolean
+  capacity?: number
+  schedule_text?: string
+  description?: string
+  age_range?: string
   teacher?: Teacher
   members?: Student[]
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Star, Play, CheckCircle, ChevronDown } from 'lucide-react'
+import { Star, CheckCircle, ChevronDown } from 'lucide-react'
 import type { LanguageLevel } from '@/types'
 
 const TEACHERS = [
@@ -39,7 +39,7 @@ const TEACHERS = [
 ]
 
 const STEPS = [
-  { n: '01', title: 'Wybierz nauczyciela', desc: 'Przejrzyj profile, obejrzyj wideo i wybierz osobę, z którą chcesz się uczyć.' },
+  { n: '01', title: 'Wybierz nauczyciela', desc: 'Przejrzyj profile i wybierz osobę, z którą chcesz się uczyć.' },
   { n: '02', title: 'Zarezerwuj termin', desc: 'Znajdź wolny slot w kalendarzu i zarezerwuj lekcję próbną.' },
   { n: '03', title: 'Zacznij mówić', desc: 'Dołącz do lekcji online lub offline i zacznij swoją przygodę z angielskim.' },
 ]
@@ -153,18 +153,12 @@ export default function DlaSiebiePage() {
                       </span>
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-100 text-sm font-medium text-gray-700 hover:bg-[#EAF3FF] hover:text-[#23479E] transition-colors">
-                      <Play size={14} />
-                      Wideo
-                    </button>
-                    <Link
-                      href="/zapisy"
-                      className="flex-1 py-2 rounded-xl gradient-primary text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity"
-                    >
-                      Zarezerwuj
-                    </Link>
-                  </div>
+                  <Link
+                    href="/zapisy"
+                    className="block w-full py-2 rounded-xl gradient-primary text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity"
+                  >
+                    Zarezerwuj
+                  </Link>
                 </div>
               </div>
             ))}

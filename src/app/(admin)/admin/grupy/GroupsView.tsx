@@ -101,6 +101,10 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
   const [teacherId, setTeacherId] = useState(teacherOptions[0]?.id ?? '')
   const [level, setLevel] = useState<LanguageLevel>('A1')
   const [color, setColor] = useState(COLORS[0])
+  const [capacity, setCapacity] = useState(6)
+  const [scheduleText, setScheduleText] = useState('')
+  const [ageRange, setAgeRange] = useState('')
+  const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,7 +112,11 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
     if (!name.trim()) { setError('Podaj nazwę grupy.'); return }
     setSaving(true); setError(null)
     const supabase = createClient()
-    const { error } = await supabase.from('groups').insert({ name: name.trim(), teacher_id: teacherId || null, level, color })
+    const { error } = await supabase.from('groups').insert({
+      name: name.trim(), teacher_id: teacherId || null, level, color,
+      capacity, schedule_text: scheduleText.trim() || null,
+      age_range: ageRange.trim() || null, description: description.trim() || null,
+    })
     setSaving(false)
     if (error) { setError('Nie udało się utworzyć: ' + error.message); return }
     onSaved()
@@ -142,6 +150,28 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
                 {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Limit miejsc</label>
+              <input type="number" min={1} max={30} value={capacity} onChange={(e) => setCapacity(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Wiek (opc.)</label>
+              <input type="text" value={ageRange} onChange={(e) => setAgeRange(e.target.value)} placeholder="np. 10–13 lat"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Harmonogram (opc.)</label>
+            <input type="text" value={scheduleText} onChange={(e) => setScheduleText(e.target.value)} placeholder="np. Śr 18:20"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Opis (opc.)</label>
+            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Krótki opis widoczny przy zapisie"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Kolor</label>

@@ -27,10 +27,15 @@ export default async function NauczycielePage() {
 
             return (
               <div key={teacher.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="h-24 flex items-center justify-center" style={{ backgroundColor: teacher.color }}>
-                  <span className="text-5xl font-black text-white/80">
-                    {teacher.profile?.full_name?.[0] ?? '?'}
-                  </span>
+                <div className="h-40 flex items-center justify-center overflow-hidden" style={{ backgroundColor: teacher.color }}>
+                  {teacher.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={teacher.photo_url} alt={teacher.profile?.full_name ?? 'Lektor'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-5xl font-black text-white/80">
+                      {teacher.profile?.full_name?.[0] ?? '?'}
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-5">

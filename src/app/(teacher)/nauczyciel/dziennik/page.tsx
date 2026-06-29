@@ -18,7 +18,7 @@ export default async function TeacherRegisterPage() {
 
   const rows = lessons.map((l) => ({
     id: l.id,
-    student: l.group ? `${l.group.name} (grupa)` : (l.student?.profile?.full_name ?? '—'),
+    student: l.group ? `${l.group.name} (grupa)` : (l.student?.full_name ?? l.student?.profile?.full_name ?? '—'),
     startsAt: l.starts_at,
     endsAt: l.ends_at,
     type: l.type,

@@ -56,7 +56,7 @@ export default async function TeacherDashboard() {
                     <p className="text-xs text-gray-500">
                       {new Date(lesson.starts_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                       {' · '}
-                      {lesson.student?.profile?.full_name}
+                      {lesson.student?.full_name ?? lesson.student?.profile?.full_name}
                     </p>
                   </div>
                 </div>

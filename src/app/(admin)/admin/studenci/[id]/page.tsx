@@ -31,8 +31,9 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900">{student.profile?.full_name}</h1>
+            <h1 className="text-2xl font-black text-gray-900">{student.full_name ?? student.profile?.full_name}</h1>
             <p className="text-sm text-gray-500 mt-1">{student.profile?.email}{student.profile?.phone ? ` · ${student.profile.phone}` : ''}</p>
+            {student.guardian_name && <p className="text-xs text-gray-400 mt-0.5">Rodzic/opiekun: {student.guardian_name}</p>}
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#EAF3FF] text-[#23479E]">{student.level}</span>
               {student.age_group && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{student.age_group}</span>}
