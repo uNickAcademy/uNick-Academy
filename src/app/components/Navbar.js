@@ -32,12 +32,7 @@ function DropdownItem({ item, pathname, onNavigate }) {
   const isChildActive = item.children.some((child) => pathname === child.href);
 
   return (
-    <div
-      className={styles.dropdown}
-      ref={dropdownRef}
-      onMouseEnter={() => setDropdownOpen(true)}
-      onMouseLeave={() => setDropdownOpen(false)}
-    >
+    <div className={styles.dropdown} ref={dropdownRef}>
       <button
         className={`${styles.navLink} ${isChildActive ? styles.active : ""}`}
         onClick={() => setDropdownOpen((v) => !v)}
