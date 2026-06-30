@@ -63,15 +63,5 @@ create policy "Admins manage lesson plans"
       where profiles.id = auth.uid() and profiles.role = 'admin')
   );
 
--- 5) Przykładowe konspekty (możesz je później usunąć)
-insert into public.lesson_plans (title, description, cefr_level, age_group, skills, pdf_path, is_free)
-select 'Present Simple – daily routines','Wprowadzenie do Present Simple na przykładzie codziennych czynności.','A1','teens',array['grammar','speaking'],'samples/present-simple.pdf',true
-where not exists (select 1 from public.lesson_plans where title = 'Present Simple – daily routines');
-
-insert into public.lesson_plans (title, description, cefr_level, age_group, skills, pdf_path, is_free)
-select 'Business email essentials','Pisanie profesjonalnych e-maili po angielsku.','B2','adults',array['writing','vocabulary'],'samples/business-email.pdf',false
-where not exists (select 1 from public.lesson_plans where title = 'Business email essentials');
-
-insert into public.lesson_plans (title, description, cefr_level, age_group, skills, pdf_path, is_free)
-select 'Animal vocabulary games','Słownictwo: zwierzęta — gry i aktywności dla najmłodszych.','A1','young_learners',array['vocabulary','speaking'],'samples/animals.pdf',true
-where not exists (select 1 from public.lesson_plans where title = 'Animal vocabulary games');
+-- Bez danych przykładowych — realne konspekty dodaje się przez panel admina
+-- albo bezpośrednio w bazie.
