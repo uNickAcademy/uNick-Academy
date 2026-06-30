@@ -6,14 +6,21 @@ export const AGE_GROUPS = [
   { value: 'adults', label: 'Adults' },
 ]
 
-export const SKILLS = [
-  'grammar',
-  'vocabulary',
-  'speaking',
-  'listening',
-  'reading',
-  'writing',
-  'pronunciation',
+export const THEMES = [
+  'Business English',
+  'TV & Film',
+  'Music',
+  'Sports',
+  'Brand Stories',
+  'In The News',
+  'British Culture',
+  'Travel & The World',
+  'Conversation Starters',
+  'Vocabulary & Language',
+  'Seasonal',
+  'Polish Connection',
+  'Retro & Nostalgia',
+  'In Memory Of',
 ]
 
 export const CURRENCIES = ['usd', 'eur', 'pln']

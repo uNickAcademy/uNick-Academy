@@ -30,7 +30,7 @@ create table if not exists public.lesson_plans (
   description text,
   cefr_level text not null check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
   age_group text not null check (age_group in ('young_learners','teens','adults')),
-  skills text[] not null default '{}',
+  themes text[] not null default '{}',
   pdf_path text not null,
   is_free boolean not null default false,
   created_at timestamptz not null default now(),

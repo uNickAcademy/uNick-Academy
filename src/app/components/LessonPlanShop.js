@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CEFR_LEVELS, AGE_GROUPS, SKILLS } from "@/lib/constants";
+import { CEFR_LEVELS, AGE_GROUPS, THEMES } from "@/lib/constants";
 import styles from "./LessonPlanShop.module.css";
 
 function ShopCard({ lesson, t }) {
@@ -21,9 +21,9 @@ function ShopCard({ lesson, t }) {
       <p className={styles.cardDesc}>{lesson.description}</p>
       <div className={styles.tags}>
         <span className={styles.tag}>{ageLabel}</span>
-        {(lesson.skills || []).map((skill) => (
-          <span key={skill} className={styles.tag}>
-            {skill}
+        {(lesson.themes || []).map((theme) => (
+          <span key={theme} className={styles.tag}>
+            {theme}
           </span>
         ))}
       </div>
@@ -40,7 +40,7 @@ function ShopCard({ lesson, t }) {
   );
 }
 
-export default function LessonPlanShop({ lessons, locale, t, level, age, skill }) {
+export default function LessonPlanShop({ lessons, locale, t, level, age, theme }) {
   const basePath = `/${locale}/teachers-zone`;
 
   return (
@@ -69,10 +69,10 @@ export default function LessonPlanShop({ lessons, locale, t, level, age, skill }
           </select>
         </div>
         <div className={styles.filterGroup}>
-          <label htmlFor="shop-skill">{t.filterSkill}</label>
-          <select id="shop-skill" name="skill" defaultValue={skill}>
-            <option value="">{t.allSkills}</option>
-            {SKILLS.map((v) => (
+          <label htmlFor="shop-theme">{t.filterTheme}</label>
+          <select id="shop-theme" name="theme" defaultValue={theme}>
+            <option value="">{t.allThemes}</option>
+            {THEMES.map((v) => (
               <option key={v} value={v}>
                 {v}
               </option>

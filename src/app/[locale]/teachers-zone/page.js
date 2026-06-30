@@ -21,17 +21,17 @@ export default async function TeachersZonePage({ params, searchParams }) {
   const sp = await searchParams;
   const level = sp?.level || "";
   const age = sp?.age || "";
-  const skill = sp?.skill || "";
+  const theme = sp?.theme || "";
 
   const supabase = await createClient();
   let query = supabase
     .from("lesson_plans")
-    .select("id, title, description, cefr_level, age_group, skills, is_free")
+    .select("id, title, description, cefr_level, age_group, themes, is_free")
     .order("created_at", { ascending: false });
 
   if (level) query = query.eq("cefr_level", level);
   if (age) query = query.eq("age_group", age);
-  if (skill) query = query.contains("skills", [skill]);
+  if (theme) query = query.contains("themes", [theme]);
 
   const { data: lessons } = await query;
 
@@ -53,7 +53,7 @@ export default async function TeachersZonePage({ params, searchParams }) {
           <SectionHeading eyebrow={t.login.eyebrow} title={t.login.title} subtitle={t.login.subtitle} />
           <div style={{ marginTop: "2rem", textAlign: "center" }}>
             <Link
-              href="/academy/login"
+              href="/login"
               className="pill-btn"
               style={{ display: "inline-flex", padding: "14px 36px", fontSize: "16px" }}
             >
@@ -73,7 +73,7 @@ export default async function TeachersZonePage({ params, searchParams }) {
               t={t.shop}
               level={level}
               age={age}
-              skill={skill}
+              theme={theme}
             />
           </Reveal>
         </div>
