@@ -8,27 +8,37 @@ const TONES = {
   sand: { a: "#ECDFC9", b: "#E7ECF4" },
 };
 
-export default function TeacherCard({ name, role, photo, tone = "blue", bookLabel, onBook }) {
+export default function TeacherCard({ name, role, photo, tone = "blue", bookLabel, onBook, onPhotoClick }) {
   const { a, b } = TONES[tone] || TONES.blue;
+
+  const frame = (
+    <div
+      className={`${styles.photoFrame} ${onPhotoClick ? styles.photoFrameClickable : ""}`}
+      style={{ "--tone-a": a, "--tone-b": b }}
+    >
+      {photo ? (
+        <Image
+          src={photo}
+          alt={name}
+          width={400}
+          height={400}
+          className={styles.photo}
+        />
+      ) : (
+        <span className={styles.initial}>{name.charAt(0)}</span>
+      )}
+    </div>
+  );
 
   return (
     <div className={styles.card}>
-      <div
-        className={styles.photoFrame}
-        style={{ "--tone-a": a, "--tone-b": b }}
-      >
-        {photo ? (
-          <Image
-            src={photo}
-            alt={name}
-            width={400}
-            height={400}
-            className={styles.photo}
-          />
-        ) : (
-          <span className={styles.initial}>{name.charAt(0)}</span>
-        )}
-      </div>
+      {onPhotoClick ? (
+        <button type="button" className={styles.photoButton} onClick={() => onPhotoClick(name)} aria-label={name}>
+          {frame}
+        </button>
+      ) : (
+        frame
+      )}
       <h3 className={styles.name}>{name}</h3>
       {role && <span className={styles.subject}>{role}</span>}
       {bookLabel && (

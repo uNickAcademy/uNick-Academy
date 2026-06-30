@@ -26,6 +26,27 @@
   display: block;
 }
 
+.photoButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.photoFrameClickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.photoFrameClickable:hover,
+.photoFrameClickable:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(28, 43, 74, 0.16);
+}
+
 .initial {
   font-family: var(--font-display), serif;
   font-size: 64px;

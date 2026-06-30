@@ -3,10 +3,10 @@ import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
 import Image from "next/image";
 import CTASection from "../../components/CTASection";
-import TeacherCardWithBooking from "../../components/cards/TeacherCardWithBooking";
+import TeacherGrid from "../../components/cards/TeacherGrid";
 import { getTeachers } from "../../lib/teachers";
 import { getDictionary } from "../../lib/dictionaries";
-import { getTeacherPhotoMap } from "@/lib/supabase/queries";
+import { getTeacherPublicProfiles } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
 
 // Teacher photos come from Supabase and can change between deploys (self-service upload),
@@ -23,11 +23,16 @@ export default async function MeetUsPage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.meetUs;
-  const photoMap = await getTeacherPhotoMap();
-  const teachers = getTeachers(dict).map((teacher) => ({
-    ...teacher,
-    photo: photoMap[teacher.id] || teacher.photo,
-  }));
+  const profiles = await getTeacherPublicProfiles();
+  const teachers = getTeachers(dict).map((teacher) => {
+    const profile = profiles[teacher.id];
+    return {
+      ...teacher,
+      photo: profile?.photo || teacher.photo,
+      bio: profile?.bio || "",
+      availability: profile?.availability || [],
+    };
+  });
 
   return (
     <>
@@ -108,13 +113,7 @@ export default async function MeetUsPage({ params }) {
       <section className="section">
         <div className="container">
           <SectionHeading eyebrow={t.team.eyebrow} title={t.team.title} subtitle={t.team.subtitle} />
-          <div className={styles.cardGrid}>
-            {teachers.map((teacher, i) => (
-              <Reveal as="div" key={teacher.name} delay={Math.min(i * 60, 300)}>
-                <TeacherCardWithBooking {...teacher} bookLabel={dict.common.buttons.bookLesson || "Book a lesson"} />
-              </Reveal>
-            ))}
-          </div>
+          <TeacherGrid teachers={teachers} dict={dict} cardGridClassName={styles.cardGrid} />
         </div>
       </section>
 

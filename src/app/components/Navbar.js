@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import ConsultationButton from "./ConsultationButton";
+import Button from "./Button";
 import { getPrimaryNav, platformLinks, siteConfig } from "../lib/site-config";
 
 import styles from "./Navbar.module.css";
@@ -132,9 +132,9 @@ export default function Navbar({ locale, dict }) {
           <Link href="/login" className={styles.loginLink}>
             {dict.common.nav.login}
           </Link>
-          <ConsultationButton small className={styles.ctaDesktop}>
-            {dict.common.buttons.freeConsultation}
-          </ConsultationButton>
+          <Button href={platformLinks.signup.href} small className={styles.ctaDesktop}>
+            {dict.common.buttons.signUpShort}
+          </Button>
           <button
             className={styles.menuToggle}
             aria-expanded={open}
@@ -199,7 +199,9 @@ export default function Navbar({ locale, dict }) {
             >
               {dict.common.platformLinks.studentLogin}
             </Link>
-            <ConsultationButton fullWidth onClick={() => setOpen(false)} />
+            <Button href={platformLinks.signup.href} fullWidth onClick={() => setOpen(false)}>
+              {dict.common.buttons.signUpShort}
+            </Button>
           </div>
           <div className={styles.mobileLangSwitcher}>
             <Link

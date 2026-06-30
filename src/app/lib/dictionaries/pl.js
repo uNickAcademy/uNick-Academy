@@ -47,6 +47,7 @@ const pl = {
       seeADayInClass: "Zobacz dzień na zajęciach",
       explore: "Zobacz",
       signUp: "Chcę się zapisać",
+      signUpShort: "Zapisz się",
       bookLesson: "Zarezerwuj lekcję",
       sendMessage: "Wyślij wiadomość",
       sendAndBook: "Wyślij i zarezerwuj konsultację",
@@ -563,6 +564,11 @@ const pl = {
       title: "Nauczyciele z całego świata",
       subtitle:
         "Różne kraje, akcenty i osobowości — wszyscy naprawdę zaangażowani w to, co robisz.",
+      noBio: "Opis wkrótce się pojawi.",
+      availabilityLabel: "Dostępność",
+      noAvailability: "Dostępność wkrótce się pojawi — zapytaj nas przy zapisie.",
+      closeAria: "Zamknij",
+      days: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
     },
     finalCta: {
       title: "Chcesz przekonać się, jak to działa?",
@@ -751,7 +757,7 @@ const pl = {
     mada: { role: "Lektorka angielskiego" },
     tim: { role: "Lektor angielskiego" },
     michelle: { role: "Lektorka angielskiego" },
-    stefania: { role: "Lektorka angielskiego" },
+    stefania: { role: "Lektorka niemieckiego" },
     yan: { role: "Lektor angielskiego" },
     shakina: { role: "Lektorka angielskiego" },
     bertie: { role: "Lektor angielskiego" },

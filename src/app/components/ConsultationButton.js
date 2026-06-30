@@ -8,6 +8,9 @@ import { useConsultation } from "./ConsultationProvider";
  * Opens the shared consultation modal, optionally pre-selecting
  * an audience (e.g. "child", "teen", "adult", "company").
  */
+/**
+ * @param {{ audience?: string, children?: import("react").ReactNode, onClick?: (e: import("react").MouseEvent) => void, [key: string]: any }} props
+ */
 export default function ConsultationButton({ audience, children, onClick, ...rest }) {
   const { open, dict } = useConsultation();
 

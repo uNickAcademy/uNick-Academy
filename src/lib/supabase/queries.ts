@@ -311,23 +311,33 @@ export async function getTeacherByProfileId(profileId: string): Promise<Teacher 
   return data as Teacher | null
 }
 
-// Mapuje nauczycieli na ich aktualne zdjęcie profilowe, kluczowane prefiksem e-maila
-// (np. "nick@unick-academy.pl" → "nick"), żeby strona marketingowa /meet-us mogła
-// nadpisać statyczne zdjęcia tymi przesłanymi przez nauczycieli w panelu.
-export async function getTeacherPhotoMap(): Promise<Record<string, string>> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('teachers')
-    .select('photo_url, profile:profiles(email)')
-    .not('photo_url', 'is', null)
+export type TeacherPublicProfile = { photo: string | null; bio: string; availability: Availability[] }
 
-  const map: Record<string, string> = {}
-  for (const t of data ?? []) {
+// Mapuje aktywnych nauczycieli na dane potrzebne na stronie /meet-us (zdjęcie, bio,
+// dostępność), kluczowane prefiksem e-maila (np. "nick@unick-academy.pl" → "nick"),
+// żeby strona marketingowa mogła nadpisać statyczny opis tymi danymi z panelu nauczyciela.
+export async function getTeacherPublicProfiles(): Promise<Record<string, TeacherPublicProfile>> {
+  const supabase = await createClient()
+  const [teachersRes, availRes] = await Promise.all([
+    supabase.from('teachers').select('id, bio, photo_url, profile:profiles(email)').eq('is_active', true),
+    supabase.from('availability').select('*').eq('is_active', true),
+  ])
+
+  const availByTeacher: Record<string, Availability[]> = {}
+  for (const a of (availRes.data as Availability[]) ?? []) {
+    (availByTeacher[a.teacher_id] ??= []).push(a)
+  }
+
+  const map: Record<string, TeacherPublicProfile> = {}
+  for (const t of teachersRes.data ?? []) {
     const rec = t as Record<string, unknown>
     const profile = rec.profile as { email?: string } | null
     const email = profile?.email
-    if (email && rec.photo_url) {
-      map[email.split('@')[0].toLowerCase()] = rec.photo_url as string
+    if (!email) continue
+    map[email.split('@')[0].toLowerCase()] = {
+      photo: (rec.photo_url as string) ?? null,
+      bio: (rec.bio as string) ?? '',
+      availability: availByTeacher[rec.id as string] ?? [],
     }
   }
   return map

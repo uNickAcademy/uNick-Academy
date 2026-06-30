@@ -1,5 +1,7 @@
 import { getAllTeachers, getCurrentTerms, getConsentTypes, getPublicGroups, getPublicAvailability } from '@/lib/supabase/queries'
 import { BookingWizard } from './BookingWizard'
+import { ConsultationProvider } from '@/app/components/ConsultationProvider'
+import ConsultationButton from '@/app/components/ConsultationButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,11 +11,13 @@ export default async function ZapisyPage() {
   ])
 
   return (
+    <ConsultationProvider locale="pl">
     <div className="min-h-screen bg-[#FFF8F0] py-12 px-4">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-gray-900 mb-2">Zapisz się na zajęcia</h1>
-          <p className="text-gray-500">Wybierz formę nauki, która Ci pasuje</p>
+          <p className="text-gray-500 mb-6">Wybierz formę nauki, która Ci pasuje</p>
+          <ConsultationButton fullWidth>Bezpłatna konsultacja</ConsultationButton>
         </div>
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
           <BookingWizard
@@ -28,5 +32,6 @@ export default async function ZapisyPage() {
         </div>
       </div>
     </div>
+    </ConsultationProvider>
   )
 }

@@ -47,6 +47,7 @@ const en = {
       seeADayInClass: "See a day in class",
       explore: "Explore",
       signUp: "I want to sign up",
+      signUpShort: "Sign up",
       bookLesson: "Book a lesson",
       sendMessage: "Send message",
       sendAndBook: "Send & book my consultation",
@@ -563,6 +564,11 @@ const en = {
       title: "Teachers from around the world",
       subtitle:
         "Different countries, accents and personalities — all genuinely invested in you.",
+      noBio: "Bio coming soon.",
+      availabilityLabel: "Availability",
+      noAvailability: "Availability coming soon — ask us when you book.",
+      closeAria: "Close",
+      days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
     },
     finalCta: {
       title: "Want to see how it works?",
@@ -751,7 +757,7 @@ const en = {
     mada: { role: "English teacher" },
     tim: { role: "English teacher" },
     michelle: { role: "English teacher" },
-    stefania: { role: "English teacher" },
+    stefania: { role: "German teacher" },
     yan: { role: "English teacher" },
     shakina: { role: "English teacher" },
     bertie: { role: "English teacher" },
