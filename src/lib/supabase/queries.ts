@@ -311,6 +311,28 @@ export async function getTeacherByProfileId(profileId: string): Promise<Teacher 
   return data as Teacher | null
 }
 
+// Mapuje nauczycieli na ich aktualne zdjęcie profilowe, kluczowane prefiksem e-maila
+// (np. "nick@unick-academy.pl" → "nick"), żeby strona marketingowa /meet-us mogła
+// nadpisać statyczne zdjęcia tymi przesłanymi przez nauczycieli w panelu.
+export async function getTeacherPhotoMap(): Promise<Record<string, string>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('teachers')
+    .select('photo_url, profile:profiles(email)')
+    .not('photo_url', 'is', null)
+
+  const map: Record<string, string> = {}
+  for (const t of data ?? []) {
+    const rec = t as Record<string, unknown>
+    const profile = rec.profile as { email?: string } | null
+    const email = profile?.email
+    if (email && rec.photo_url) {
+      map[email.split('@')[0].toLowerCase()] = rec.photo_url as string
+    }
+  }
+  return map
+}
+
 export async function updateTeacherProfile(
   teacherId: string,
   updates: { bio?: string; contact_email?: string }

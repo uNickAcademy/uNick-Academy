@@ -5,7 +5,12 @@ import CTASection from "../../components/CTASection";
 import TeacherCardWithBooking from "../../components/cards/TeacherCardWithBooking";
 import { getTeachers } from "../../lib/teachers";
 import { getDictionary } from "../../lib/dictionaries";
+import { getTeacherPhotoMap } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
+
+// Teacher photos come from Supabase and can change between deploys (self-service upload),
+// so revalidate periodically instead of freezing them at build time forever.
+export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -17,7 +22,11 @@ export default async function MeetUsPage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.meetUs;
-  const teachers = getTeachers(dict);
+  const photoMap = await getTeacherPhotoMap();
+  const teachers = getTeachers(dict).map((teacher) => ({
+    ...teacher,
+    photo: photoMap[teacher.id] || teacher.photo,
+  }));
 
   return (
     <>
