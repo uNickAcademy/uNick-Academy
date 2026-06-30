@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const studentPaths = ['/dashboard', '/lekcje', '/postepy', '/polecenia', '/platnosci', '/rozliczenia', '/profil']
   const teacherPaths = ['/nauczyciel/']
-  const adminPaths = ['/admin']
+  const adminPaths = ['/admin', '/ufos']
   const hrPaths = ['/firma']
   const protectedPaths = [...studentPaths, ...teacherPaths, ...adminPaths, ...hrPaths]
 

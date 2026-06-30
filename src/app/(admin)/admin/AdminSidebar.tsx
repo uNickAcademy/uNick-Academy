@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox
+  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark
 } from 'lucide-react'
 
 // adminOnly: pozycje konfiguracyjne niedostępne dla recepcji
@@ -25,6 +25,7 @@ const NAV = [
   { href: '/admin/platnosci', label: 'Płatności', icon: CreditCard },
   { href: '/admin/komunikacja', label: 'Komunikacja', icon: Megaphone },
   { href: '/admin/polecenia', label: 'Polecenia', icon: Gift, adminOnly: true },
+  { href: '/ufos', label: 'Finanse (uFOS)', icon: Landmark, adminOnly: true },
 ]
 
 export function AdminSidebar({ role }: { role: string }) {
