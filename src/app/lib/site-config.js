@@ -48,7 +48,7 @@ const NAV_ROUTES = [
   { key: "howWeTeach", path: "/how-we-teach" },
   { key: "meetUs", path: "/meet-us" },
   { key: "contact", path: "/contact" },
-  { key: "teachersZone", path: "/teachers-zone" },
+  // teachersZone (sklep z konspektami) wróci w Fazie 4 — wymaga wpięcia Supabase.
 ];
 
 export function getPrimaryNav(locale, dict) {
@@ -95,7 +95,6 @@ export function getFooterNav(locale, dict) {
         { label: dict.common.nav.howWeTeach, href: `/${locale}/how-we-teach` },
         { label: dict.common.nav.meetUs, href: `/${locale}/meet-us` },
         { label: dict.common.nav.contact, href: `/${locale}/contact` },
-        { label: dict.common.nav.teachersZone, href: `/${locale}/teachers-zone` },
         { label: dict.common.platformLinks.studentLogin, href: platformLinks.studentLogin.href },
       ],
     },

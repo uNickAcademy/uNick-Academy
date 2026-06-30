@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "xkydfgunafxfuzsggmca.supabase.co" },
+      // Zdjęcia nauczycieli na stronie marketingowej (z obecnej strony WP).
+      { protocol: "https", hostname: "unickacademy.pl", pathname: "/wp-content/uploads/**" },
     ],
   },
 };
