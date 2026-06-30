@@ -26,7 +26,7 @@ export default async function HomePage({ params }) {
       <CTASection
         title={dict.home.finalCta.title}
         subtitle={dict.home.finalCta.subtitle}
-        signupHref="/academy/signup"
+        signupHref="/zapisy"
         signupLabel={dict.common.buttons.signUp}
       />
     </>

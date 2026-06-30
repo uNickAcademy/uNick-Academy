@@ -105,7 +105,7 @@ export default async function CompaniesPage({ params }) {
       <CTASection
         title={t.finalCta.title}
         subtitle={t.finalCta.subtitle}
-        signupHref="/academy/signup"
+        signupHref="/zapisy"
         signupLabel={dict.common.buttons.signUp}
         secondaryHref={`/${locale}/contact`}
         secondaryLabel={dict.common.buttons.contactUs}
