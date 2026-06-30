@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { Settings, Plug, Building2, Users, Shield } from "lucide-react"
+import { Settings, Plug, Building2, Users, Shield, Plus } from "lucide-react"
 import type { Metadata } from "next"
+import Link from "next/link"
 
 export const metadata: Metadata = { title: "Ustawienia" }
 
@@ -53,14 +54,19 @@ export default async function UstawieniaPage() {
 
         {/* Spółki */}
         <div className="card py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-brand-muted flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-navy-400" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-brand-muted flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-navy-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-navy-500">Spółki</p>
+                <p className="text-xs text-brand-subtle">Podmioty prawne w systemie</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-navy-500">Spółki</p>
-              <p className="text-xs text-brand-subtle">Podmioty prawne w systemie</p>
-            </div>
+            <Link href="/ustawienia/spolki/nowa" className="btn-secondary text-xs">
+              <Plus className="w-3.5 h-3.5" /> Dodaj spółkę
+            </Link>
           </div>
           <div className="space-y-2">
             {(entities ?? []).map((e) => (
