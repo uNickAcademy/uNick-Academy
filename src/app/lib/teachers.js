@@ -8,7 +8,7 @@ export const teachers = [
   { id: "nick", name: "Nick", tone: "blue", photo: `${PHOTO_BASE}/Nick.png`, audiences: [] },
   { id: "toni", name: "Toni", tone: "red", photo: "/team/toni.png", audiences: [] },
   { id: "adriana", name: "Adriana", tone: "cream", photo: `${PHOTO_BASE}/Adriana.png`, audiences: [] },
-  { id: "elliot", name: "Elliot", tone: "sand", photo: `${PHOTO_BASE}/Elliott.png`, audiences: [] },
+  { id: "elliot", name: "Elliott", tone: "sand", photo: `${PHOTO_BASE}/Elliott.png`, audiences: [] },
   { id: "gio", name: "Gio", tone: "blue", photo: "https://unickacademy.pl/wp-content/uploads/2024/09/Gio.png", audiences: [] },
   { id: "jack", name: "Jack", tone: "red", photo: `${PHOTO_BASE}/Jack.png`, audiences: [] },
   { id: "mada", name: "Mada", tone: "cream", photo: `${PHOTO_BASE}/Mada.png`, audiences: [] },
