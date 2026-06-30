@@ -102,9 +102,10 @@ const pl = {
         "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       signature: "— Milena i Nick, założyciele",
       galleryCaptions: [
-        "Milena i Nick, przy stole, gdzie wszystko się zaczęło",
-        "Pierwsze lekcje, zanim uNick miało nazwę",
-        "Klasa, która czuje się jak salon",
+        "Milena i Nick",
+        "Pierwszy zespół i uNickorn",
+        "Te dzieci teraz u nas uczą",
+        "Pierwsze lekcje Nicka",
       ],
     },
     differentiators: {
@@ -512,11 +513,11 @@ const pl = {
     meta: {
       title: "Poznaj nas",
       description:
-        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad dekada nauki angielskiego w nieszkolny sposób.",
+        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad 10 lat nauki angielskiego w nieszkolny sposób.",
     },
     hero: {
       eyebrow: "Poznaj nas",
-      titleStart: "Ponad dekada ",
+      titleStart: "Ponad 10 lat ",
       titleAccent: "uNickatowej przygody.",
       subtitle:
         "Jesteśmy z Rumianka, ale uczą u nas nauczyciele z całego świata i od ponad dekady uczymy języków w nieszkolny sposób!",
@@ -532,10 +533,10 @@ const pl = {
       paragraph3:
         "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       galleryCaptions: [
-        "Milena i Nick — tam, gdzie wszystko się zaczęło",
-        "Pierwsze lekcje, zanim uNick miał nazwę",
-        "Sala, która bardziej przypomina salon",
-        "uNick Academy dziś — wciąż w tym samym duchu",
+        "Milena i Nick",
+        "Pierwszy zespół i uNickorn",
+        "Te dzieci teraz u nas uczą",
+        "Pierwsze lekcje Nicka",
       ],
     },
     worldTeam: {

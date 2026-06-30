@@ -102,9 +102,10 @@ const en = {
         "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       signature: "— Milena & Nick, founders",
       galleryCaptions: [
-        "Milena & Nick, at the table where it all began",
-        "Early lessons, before uNick had a name",
-        "A classroom that feels like a living room",
+        "Milena and Nick",
+        "The first team and uNickorn",
+        "These kids now teach with us",
+        "Nick's first lessons",
       ],
     },
     differentiators: {
@@ -516,7 +517,7 @@ const en = {
     },
     hero: {
       eyebrow: "Meet us",
-      titleStart: "Over a decade of ",
+      titleStart: "Over 10 years of ",
       titleAccent: "uNick adventure.",
       subtitle:
         "We're based in Rumianek, but our teachers come from all over the world — and we've been teaching languages the un-school way for over a decade!",
@@ -532,10 +533,10 @@ const en = {
       paragraph3:
         "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       galleryCaptions: [
-        "Milena and Nick — where it all began",
-        "The first lessons, before uNick had a name",
-        "A classroom that feels more like a living room",
-        "uNick Academy today — same spirit as day one",
+        "Milena and Nick",
+        "The first team and uNickorn",
+        "These kids now teach with us",
+        "Nick's first lessons",
       ],
     },
     worldTeam: {

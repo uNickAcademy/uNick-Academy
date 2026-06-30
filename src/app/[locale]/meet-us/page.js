@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
+import Image from "next/image";
 import CTASection from "../../components/CTASection";
 import TeacherCardWithBooking from "../../components/cards/TeacherCardWithBooking";
 import { getTeachers } from "../../lib/teachers";
@@ -40,15 +41,35 @@ export default async function MeetUsPage({ params }) {
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia tone="cream" ratio="4:3" caption={t.hero.mediaCaption} />
+          <div className={styles.heroImage}>
+            <Image
+              src="/team/team-hero.jpg"
+              alt={t.hero.mediaCaption}
+              width={640}
+              height={640}
+              priority
+              sizes="(max-width: 940px) 100vw, 50vw"
+              className={styles.heroImg}
+            />
+          </div>
         </Reveal>
       </div>
 
       <section className={`section ${styles.altSection}`}>
         <div className={`container ${styles.split}`}>
           <Reveal as="div" className={styles.gallery}>
-            {t.ourStory.galleryCaptions.map((caption, i) => (
-              <PlaceholderMedia key={caption} tone={["blue", "red", "sand", "cream"][i]} ratio="1:1" caption={caption} />
+            {[
+              { src: "/team/milly-nick.jpg", caption: t.ourStory.galleryCaptions[0] },
+              { src: "/team/first-team.jpg", caption: t.ourStory.galleryCaptions[1] },
+              { src: "/team/kids-learning.jpg", caption: t.ourStory.galleryCaptions[2] },
+              { src: "/team/nick-first-lessons.jpg", caption: t.ourStory.galleryCaptions[3] },
+            ].map(({ src, caption }) => (
+              <figure key={src} className={styles.galleryItem}>
+                <div className={styles.galleryImageWrap}>
+                  <Image src={src} alt={caption} fill sizes="(max-width: 768px) 50vw, 25vw" className={styles.galleryImage} />
+                </div>
+                <figcaption className={styles.galleryCaption}>{caption}</figcaption>
+              </figure>
             ))}
           </Reveal>
           <Reveal as="div" delay={100} className={styles.copy}>
