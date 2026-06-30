@@ -535,6 +535,7 @@ const en = {
         "Milena and Nick",
         "The first team and uNickorn",
         "These kids now teach with us",
+        "Nick's first lessons",
       ],
     },
     worldTeam: {

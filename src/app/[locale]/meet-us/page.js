@@ -53,6 +53,7 @@ export default async function MeetUsPage({ params }) {
               { src: "/team/milly-nick.jpg", caption: t.ourStory.galleryCaptions[0] },
               { src: "/team/first-team.jpg", caption: t.ourStory.galleryCaptions[1] },
               { src: "/team/kids-learning.jpg", caption: t.ourStory.galleryCaptions[2] },
+              { src: "/team/nick-first-lessons.jpg", caption: t.ourStory.galleryCaptions[3] },
             ].map(({ src, caption }) => (
               <figure key={src} className={styles.galleryItem}>
                 <div className={styles.galleryImageWrap}>

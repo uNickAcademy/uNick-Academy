@@ -535,6 +535,7 @@ const pl = {
         "Milena i Nick",
         "Pierwszy zespół i uNickorn",
         "Te dzieci teraz u nas uczą",
+        "Pierwsze lekcje Nicka",
       ],
     },
     worldTeam: {
