@@ -743,7 +743,7 @@ const pl = {
   teachers: {
     nick: { role: "Współzałożyciel i nauczyciel" },
     toni: { role: "Lektor angielskiego" },
-    adriana: { role: "Lektorka angielskiego" },
+    adriana: { role: "Lektorka hiszpańskiego" },
     elliot: { role: "Lektor angielskiego" },
     gio: { role: "Lektor angielskiego" },
     jack: { role: "Lektor angielskiego" },

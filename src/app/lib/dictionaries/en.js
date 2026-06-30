@@ -743,7 +743,7 @@ const en = {
   teachers: {
     nick: { role: "Co-founder & teacher" },
     toni: { role: "English teacher" },
-    adriana: { role: "English teacher" },
+    adriana: { role: "Spanish teacher" },
     elliot: { role: "English teacher" },
     gio: { role: "English teacher" },
     jack: { role: "English teacher" },
