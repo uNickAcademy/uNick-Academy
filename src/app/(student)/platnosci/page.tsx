@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { CreditCard, FileText, ExternalLink } from 'lucide-react'
 
 const NEXT_PAYMENT = {
@@ -13,7 +15,13 @@ const INVOICES = [
   { id: 'INV-2025-04', date: 'Kwiecień 2025', amount: 200, status: 'paid', url: '#' },
 ]
 
-export default function PlatnosciPage() {
+export default async function PlatnosciPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: student } = await supabase.from('students').select('billing_type').eq('profile_id', user.id).single()
+    if (student?.billing_type === 'b2b') redirect('/dashboard')
+  }
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-black text-gray-900 mb-6">Płatności</h1>

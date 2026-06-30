@@ -1,18 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Building2, UserPlus, Users, FileText, Check } from 'lucide-react'
+import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Company = { id: string; name: string; nip: string; address: string; employeeCount: number; hrName: string | null }
 type StudentOpt = { id: string; name: string; companyId: string }
 type Inv = { id: string; companyId: string; number: string; gross: number; period: string; issuedAt: string; companyName: string | null }
+type EntityOpt = { id: string; short_name: string; name: string; vat_payer: boolean }
 
 export function CompaniesView({ companies, students, invoices }: { companies: Company[]; students: StudentOpt[]; invoices: Inv[] }) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
   const [managing, setManaging] = useState<Company | null>(null)
+  const [entities, setEntities] = useState<EntityOpt[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.rpc('list_billing_entities').then(({ data }) => {
+      if (data) setEntities(data as EntityOpt[])
+    })
+  }, [])
+
+  const uaEntity = entities.find((e) => e.vat_payer)
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -53,7 +64,7 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
 
       {creating && <CompanyModal onClose={() => setCreating(false)} onSaved={() => { setCreating(false); router.refresh() }} />}
       {managing && (
-        <ManageModal company={managing} students={students}
+        <ManageModal company={managing} students={students} uaEntityId={uaEntity?.id ?? null}
           invoices={invoices.filter((i) => i.companyId === managing.id)}
           onClose={() => setManaging(null)} onChanged={() => router.refresh()} />
       )}
@@ -62,17 +73,48 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
 }
 
 function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(''); const [nip, setNip] = useState(''); const [address, setAddress] = useState('')
-  const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null)
+  const [name, setName] = useState('')
+  const [nip, setNip] = useState('')
+  const [address, setAddress] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [gusLoading, setGusLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [gusError, setGusError] = useState<string | null>(null)
+
+  const nipDigits = nip.replace(/[^0-9]/g, '')
+
+  async function fetchFromGus() {
+    setGusLoading(true)
+    setGusError(null)
+    try {
+      const res = await fetch(`/api/admin/companies/gus-lookup?nip=${encodeURIComponent(nipDigits)}`)
+      const data = await res.json()
+      if (!res.ok) {
+        setGusError(data.error ?? 'Błąd GUS')
+        return
+      }
+      if (data.name) setName(data.name)
+      const { street, city, postal_code } = data.address ?? {}
+      const parts = [street, postal_code && city ? `${postal_code} ${city}` : city].filter(Boolean)
+      if (parts.length) setAddress(parts.join(', '))
+    } catch {
+      setGusError('Nie udało się pobrać danych z GUS')
+    } finally {
+      setGusLoading(false)
+    }
+  }
+
   async function save() {
     if (!name.trim()) { setError('Podaj nazwę.'); return }
     setSaving(true); setError(null)
     const supabase = createClient()
+    // legal_entity_id defaults to UA via DB column default set in migration
     const { error } = await supabase.from('companies').insert({ name: name.trim(), nip: nip || null, address: address || null })
     setSaving(false)
     if (error) { setError('Nie udało się: ' + error.message); return }
     onSaved()
   }
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -81,12 +123,26 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <div className="space-y-3">
+          <div>
+            <div className="flex gap-2">
+              <input type="text" value={nip} onChange={(e) => { setNip(e.target.value); setGusError(null) }} placeholder="NIP (10 cyfr)"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+              <button
+                onClick={fetchFromGus}
+                disabled={nipDigits.length !== 10 || gusLoading}
+                title="Pobierz dane z GUS"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-[#23479E] hover:bg-[#EAF3FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
+                <Search size={14} />
+                {gusLoading ? 'Szukam...' : 'Pobierz z GUS'}
+              </button>
+            </div>
+            {gusError && <p className="text-xs text-red-500 mt-1">{gusError}</p>}
+          </div>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nazwa firmy"
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-          <input type="text" value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adres"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+          <p className="text-xs text-gray-400">Każda firma korporacyjna jest rozliczana przez UA (spółka z VAT).</p>
         </div>
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-6">
@@ -100,8 +156,8 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   )
 }
 
-function ManageModal({ company, students, invoices, onClose, onChanged }: {
-  company: Company; students: StudentOpt[]; invoices: Inv[]; onClose: () => void; onChanged: () => void
+function ManageModal({ company, students, invoices, uaEntityId, onClose, onChanged }: {
+  company: Company; students: StudentOpt[]; invoices: Inv[]; uaEntityId: string | null; onClose: () => void; onChanged: () => void
 }) {
   const employees = students.filter((s) => s.companyId === company.id)
   const available = students.filter((s) => !s.companyId)
@@ -110,13 +166,14 @@ function ManageModal({ company, students, invoices, onClose, onChanged }: {
   const [hrPassword, setHrPassword] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  // faktura
   const [invNum, setInvNum] = useState(''); const [net, setNet] = useState(''); const [vat, setVat] = useState('23'); const [period, setPeriod] = useState(''); const [gtu, setGtu] = useState('')
 
   async function addEmployee() {
     if (!toAdd) return
     const supabase = createClient()
-    await supabase.from('students').update({ company_id: company.id, billing_type: 'b2b' }).eq('id', toAdd)
+    const update: Record<string, unknown> = { company_id: company.id, billing_type: 'b2b' }
+    if (uaEntityId) update.legal_entity_id = uaEntityId
+    await supabase.from('students').update(update).eq('id', toAdd)
     setToAdd(''); onChanged()
   }
   async function removeEmployee(id: string) {

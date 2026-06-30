@@ -1,10 +1,10 @@
-import { CreditCard } from 'lucide-react'
-import { getHrEmployees } from '@/lib/supabase/queries'
+import { CreditCard, FileText } from 'lucide-react'
+import { getHrEmployees, getHrInvoices } from '@/lib/supabase/queries'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HrPaymentsPage() {
-  const employees = await getHrEmployees()
+  const [employees, invoices] = await Promise.all([getHrEmployees(), getHrInvoices()])
   const totalOwed = employees.reduce((acc, e) => acc + (e.credit_balance < 0 ? -e.credit_balance : 0), 0)
 
   return (
@@ -12,7 +12,7 @@ export default async function HrPaymentsPage() {
       <h1 className="text-2xl font-black text-gray-900 mb-2 flex items-center gap-2"><CreditCard size={22} />Płatności pracowników</h1>
       <p className="text-gray-500 mb-6">Łączne zaległości: <span className="font-bold text-red-500">{totalOwed.toLocaleString('pl-PL')} zł</span></p>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-50 bg-gray-50">
@@ -38,6 +38,37 @@ export default async function HrPaymentsPage() {
               </tr>
             ))}
             {employees.length === 0 && <tr><td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-sm">Brak pracowników.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2"><FileText size={18} />Faktury</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-50 bg-gray-50">
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Numer</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Okres</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Netto</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Brutto</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {invoices.map((inv) => (
+              <tr key={inv.id} className="hover:bg-gray-50">
+                <td className="px-5 py-3 font-mono text-gray-900">{inv.number}</td>
+                <td className="px-5 py-3 text-gray-500">{inv.period ?? '—'}</td>
+                <td className="px-5 py-3 text-gray-700">{Number(inv.net_amount).toLocaleString('pl-PL')} zł</td>
+                <td className="px-5 py-3 font-bold text-gray-900">{Number(inv.gross_amount).toLocaleString('pl-PL')} zł</td>
+                <td className="px-5 py-3">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {inv.status === 'paid' ? 'Opłacona' : 'Wystawiona'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {invoices.length === 0 && <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-sm">Brak faktur.</td></tr>}
           </tbody>
         </table>
       </div>

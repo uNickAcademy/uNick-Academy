@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Video, MapPin, X, Calendar } from 'lucide-react'
+import { CheckCircle, XCircle, Video, MapPin, X, Calendar, RotateCcw, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
 type UpcomingLesson = { id: string; startsAt: string; endsAt: string; topic: string; teacherId: string; teacherName: string; type: LessonType }
 type Row = {
   id: string; name: string; email: string; level: LanguageLevel; balance: number
-  teacherName: string; teacherId: string; present: number; absent: number; upcoming: UpcomingLesson[]
+  teacherName: string; teacherId: string
+  present: number; absent: number; rescheduled: number; lateCancelled: number
+  upcoming: UpcomingLesson[]
 }
 
 function toLocalInput(iso: string) {
@@ -23,14 +25,7 @@ function fmt(iso: string) {
 export function EmployeesView({ rows }: { rows: Row[] }) {
   const router = useRouter()
   const [reschedule, setReschedule] = useState<{ lesson: UpcomingLesson; employee: string } | null>(null)
-
-  async function cancelLesson(id: string) {
-    if (!confirm('Odwołać tę lekcję w imieniu pracownika?')) return
-    const supabase = createClient()
-    const { error } = await supabase.from('lessons').delete().eq('id', id)
-    if (error) { alert('Nie udało się odwołać: ' + error.message); return }
-    router.refresh()
-  }
+  const [cancelModal, setCancelModal] = useState<UpcomingLesson | null>(null)
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -50,9 +45,11 @@ export function EmployeesView({ rows }: { rows: Row[] }) {
                   <h3 className="font-bold text-gray-900">{e.name}</h3>
                   <p className="text-xs text-gray-400">{e.email} · poziom {e.level} · {e.teacherName}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1 text-sm"><CheckCircle size={15} className="text-green-600" /><b>{e.present}</b> <span className="text-gray-400 text-xs">ob.</span></span>
-                  <span className="flex items-center gap-1 text-sm"><XCircle size={15} className="text-red-500" /><b>{e.absent}</b> <span className="text-gray-400 text-xs">nieob.</span></span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex items-center gap-1 text-sm" title="Odbyte"><CheckCircle size={15} className="text-green-600" /><b>{e.present}</b></span>
+                  <span className="flex items-center gap-1 text-sm" title="Przełożone"><RotateCcw size={15} className="text-blue-500" /><b>{e.rescheduled}</b></span>
+                  <span className="flex items-center gap-1 text-sm" title="Nieobecności (no-show)"><XCircle size={15} className="text-red-500" /><b>{e.absent}</b></span>
+                  <span className="flex items-center gap-1 text-sm" title="Odwołane < 24h"><AlertTriangle size={15} className="text-amber-500" /><b>{e.lateCancelled}</b></span>
                   <span className={`text-sm font-bold ${e.balance < 0 ? 'text-red-500' : 'text-gray-600'}`}>
                     {e.balance < 0 ? `${e.balance} zł` : 'opłacone'}
                   </span>
@@ -71,7 +68,7 @@ export function EmployeesView({ rows }: { rows: Row[] }) {
                         <p className="text-xs text-gray-500">{fmt(l.startsAt)} · {l.teacherName}</p>
                       </div>
                       <button onClick={() => setReschedule({ lesson: l, employee: e.name })} className="text-xs text-[#23479E] hover:underline font-medium">Przełóż</button>
-                      <button onClick={() => cancelLesson(l.id)} className="text-xs text-gray-400 hover:text-red-500">Odwołaj</button>
+                      <button onClick={() => setCancelModal(l)} className="text-xs text-gray-400 hover:text-red-500">Odwołaj</button>
                     </div>
                   ))}
                 </div>
@@ -84,6 +81,58 @@ export function EmployeesView({ rows }: { rows: Row[] }) {
       {reschedule && (
         <RescheduleModal data={reschedule} onClose={() => setReschedule(null)} onSaved={() => { setReschedule(null); router.refresh() }} />
       )}
+      {cancelModal && (
+        <CancelModal lesson={cancelModal} onClose={() => setCancelModal(null)} onSaved={() => { setCancelModal(null); router.refresh() }} />
+      )}
+    </div>
+  )
+}
+
+function CancelModal({ lesson, onClose, onSaved }: { lesson: UpcomingLesson; onClose: () => void; onSaved: () => void }) {
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isLate = Date.now() > new Date(lesson.startsAt).getTime() - 24 * 3600 * 1000
+
+  async function confirmCancel() {
+    setSaving(true); setError(null)
+    const supabase = createClient()
+    const { error } = await supabase.from('lessons').update({
+      cancelled_reason: reason.trim() || null,
+      cancelled_at: new Date().toISOString(),
+    }).eq('id', lesson.id)
+    setSaving(false)
+    if (error) { setError('Nie udało się odwołać: ' + error.message); return }
+    onSaved()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-black text-gray-900">Odwołaj lekcję</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-gray-600 mb-3">{fmt(lesson.startsAt)} · {lesson.teacherName}</p>
+        {isLate && (
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3 text-xs text-amber-700">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            Odwołujesz lekcję w ciągu 24h — zostanie zarejestrowana jako odwołanie z krótkim wyprzedzeniem.
+          </div>
+        )}
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2}
+          placeholder="Powód odwołania (opcjonalnie)"
+          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none mb-3" />
+        {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
+          <button onClick={confirmCancel} disabled={saving}
+            className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 disabled:opacity-60">
+            {saving ? 'Odwoływanie...' : 'Potwierdź odwołanie'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -101,7 +150,7 @@ function RescheduleModal({ data, onClose, onSaved }: { data: { lesson: UpcomingL
     const newEnd = new Date(newStart.getTime() + durationMs)
     const supabase = createClient()
 
-    // Kolizja nauczyciela – przez funkcję SECURITY DEFINER (HR nie widzi cudzych lekcji)
+    // Teacher collision check via SECURITY DEFINER (HR doesn't see other companies' lessons)
     const { data: busy } = await supabase.rpc('teacher_busy_slots', {
       p_teacher: lesson.teacherId, p_from: newStart.toISOString(), p_to: newEnd.toISOString(),
     })
@@ -110,8 +159,12 @@ function RescheduleModal({ data, onClose, onSaved }: { data: { lesson: UpcomingL
       && new Date(b.starts_at).getTime() !== new Date(lesson.startsAt).getTime())
     if (clash) { setSaving(false); setError('Nauczyciel ma już lekcję w tym terminie.'); return }
 
-    const { error } = await supabase.from('lessons')
-      .update({ starts_at: newStart.toISOString(), ends_at: newEnd.toISOString() }).eq('id', lesson.id)
+    // Atomic RPC: sets original_starts_at, increments reschedule_count, updates starts_at/ends_at
+    const { error } = await supabase.rpc('hr_reschedule_lesson', {
+      p_lesson_id: lesson.id,
+      p_new_start: newStart.toISOString(),
+      p_new_end: newEnd.toISOString(),
+    })
     setSaving(false)
     if (error) { setError('Nie udało się przełożyć: ' + error.message); return }
     onSaved()

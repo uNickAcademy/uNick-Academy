@@ -47,7 +47,10 @@ type Row = {
   companyName: string
   ageGroup: string
   customFields: Record<string, string>
+  legalEntityId: string
 }
+
+type EntityOption = { id: string; short_name: string; name: string; vat_payer: boolean }
 
 type DeletedRow = { id: string; name: string; email: string }
 
@@ -55,10 +58,12 @@ export function StudentsTable({
   rows,
   teacherOptions,
   deletedRows,
+  entityOptions = [],
 }: {
   rows: Row[]
   teacherOptions: { id: string; name: string }[]
   deletedRows: DeletedRow[]
+  entityOptions?: EntityOption[]
 }) {
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -215,6 +220,7 @@ export function StudentsTable({
         <EditModal
           row={editing}
           teacherOptions={teacherOptions}
+          entityOptions={entityOptions}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
@@ -338,11 +344,13 @@ function AddStudentModal({
 function EditModal({
   row,
   teacherOptions,
+  entityOptions,
   onClose,
   onSaved,
 }: {
   row: Row
   teacherOptions: { id: string; name: string }[]
+  entityOptions: EntityOption[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -351,6 +359,7 @@ function EditModal({
   const [teacherId, setTeacherId] = useState(row.teacherId)
   const [phone, setPhone] = useState(row.phone)
   const [billingType, setBillingType] = useState<'individual' | 'b2b'>(row.billingType)
+  const [legalEntityId, setLegalEntityId] = useState(row.legalEntityId)
   const [customPrice, setCustomPrice] = useState(row.customPrice != null ? String(row.customPrice) : '')
   const [vatRate, setVatRate] = useState(row.vatRate != null ? String(row.vatRate) : '23')
   const [nip, setNip] = useState(row.nip)
@@ -361,6 +370,15 @@ function EditModal({
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function handleBillingTypeChange(bt: 'individual' | 'b2b') {
+    setBillingType(bt)
+    // Auto-suggest legal entity based on billing type, but remain overridable
+    const vatEntity = entityOptions.find((e) => e.vat_payer)
+    const nonVatEntity = entityOptions.find((e) => !e.vat_payer)
+    if (bt === 'b2b' && vatEntity) setLegalEntityId(vatEntity.id)
+    else if (bt === 'individual' && nonVatEntity) setLegalEntityId(nonVatEntity.id)
+  }
 
   function setField(i: number, key: 'k' | 'v', val: string) {
     setFields((f) => f.map((x, idx) => idx === i ? { ...x, [key]: val } : x))
@@ -380,6 +398,7 @@ function EditModal({
         age_group: ageGroup || null,
         custom_fields: customFields,
         billing_type: billingType,
+        legal_entity_id: legalEntityId || null,
         custom_monthly_price: customPrice === '' ? null : Number(customPrice),
         vat_rate: billingType === 'b2b' && vatRate !== '' ? Number(vatRate) : null,
         nip: billingType === 'b2b' ? (nip || null) : null,
@@ -486,7 +505,7 @@ function EditModal({
             <label className="block text-xs font-medium text-gray-600 mb-2">Typ rozliczenia</label>
             <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-3">
               {(['individual', 'b2b'] as const).map((bt) => (
-                <button key={bt} type="button" onClick={() => setBillingType(bt)}
+                <button key={bt} type="button" onClick={() => handleBillingTypeChange(bt)}
                   className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${billingType === bt ? 'bg-[#23479E] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                   {bt === 'individual' ? 'Indywidualny' : 'B2B (firma)'}
                 </button>
@@ -505,6 +524,19 @@ function EditModal({
               </div>
             )}
           </div>
+
+          {entityOptions.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Spółka rozliczeniowa</label>
+              <select value={legalEntityId} onChange={(e) => setLegalEntityId(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                {entityOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.short_name} — {opt.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Domyślnie UAI (bez VAT) dla klientów indywidualnych, UA (VAT) dla B2B. Można zmienić ręcznie.</p>
+            </div>
+          )}
         </div>
 
         <p className="text-xs text-gray-400 mt-3">Saldo wyliczane jest z transakcji (zakładka Płatności).</p>

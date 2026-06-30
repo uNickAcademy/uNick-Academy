@@ -5,19 +5,20 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, BookOpen, TrendingUp, Gift, CreditCard, Receipt, LogOut, User } from 'lucide-react'
 import { t, type Lang } from '@/lib/i18n'
 
-export function StudentShell({ lang, children }: { lang: Lang; children: React.ReactNode }) {
+export function StudentShell({ lang, billingType = 'individual', children }: { lang: Lang; billingType?: 'individual' | 'b2b'; children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
 
-  const NAV_ITEMS = [
-    { href: '/dashboard', label: t(lang, 'nav_dashboard'), icon: LayoutDashboard },
-    { href: '/lekcje', label: t(lang, 'nav_lessons'), icon: BookOpen },
-    { href: '/postepy', label: t(lang, 'nav_progress'), icon: TrendingUp },
-    { href: '/polecenia', label: t(lang, 'nav_referrals'), icon: Gift },
-    { href: '/platnosci', label: t(lang, 'nav_payments'), icon: CreditCard },
-    { href: '/rozliczenia', label: t(lang, 'nav_billing'), icon: Receipt },
-    { href: '/profil', label: t(lang, 'nav_profile'), icon: User },
+  const ALL_NAV_ITEMS = [
+    { href: '/dashboard', label: t(lang, 'nav_dashboard'), icon: LayoutDashboard, b2bHidden: false },
+    { href: '/lekcje', label: t(lang, 'nav_lessons'), icon: BookOpen, b2bHidden: false },
+    { href: '/postepy', label: t(lang, 'nav_progress'), icon: TrendingUp, b2bHidden: false },
+    { href: '/polecenia', label: t(lang, 'nav_referrals'), icon: Gift, b2bHidden: false },
+    { href: '/platnosci', label: t(lang, 'nav_payments'), icon: CreditCard, b2bHidden: true },
+    { href: '/rozliczenia', label: t(lang, 'nav_billing'), icon: Receipt, b2bHidden: true },
+    { href: '/profil', label: t(lang, 'nav_profile'), icon: User, b2bHidden: false },
   ]
+  const NAV_ITEMS = ALL_NAV_ITEMS.filter((item) => billingType !== 'b2b' || !item.b2bHidden)
 
   function setLang(next: Lang) {
     document.cookie = `lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`

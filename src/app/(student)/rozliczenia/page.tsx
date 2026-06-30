@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { CreditCard, ArrowDownCircle, ArrowUpCircle, Gift, AlertCircle } from 'lucide-react'
 
 const BALANCE: number = -120 // ujemne = zaległość, 0 = wyrównane, dodatnie = nadpłata
@@ -19,7 +21,13 @@ const TYPE_CONFIG = {
   credit: { icon: Gift, color: 'text-[#23479E]', bg: 'bg-[#EAF3FF]', sign: '+' },
 }
 
-export default function RozliczeniaPage() {
+export default async function RozliczeniaPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: student } = await supabase.from('students').select('billing_type').eq('profile_id', user.id).single()
+    if (student?.billing_type === 'b2b') redirect('/dashboard')
+  }
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-black text-gray-900 mb-6">Rozliczenia</h1>

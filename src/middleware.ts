@@ -52,6 +52,18 @@ export async function middleware(req: NextRequest) {
     if (role === 'student' && otherRolePath(studentPaths)) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
+
+    // B2B employees (billing_type='b2b') cannot access payment pages
+    if (role === 'student' && (path.startsWith('/platnosci') || path.startsWith('/rozliczenia'))) {
+      const { data: student } = await supabase
+        .from('students')
+        .select('billing_type')
+        .eq('profile_id', user.id)
+        .single()
+      if (student?.billing_type === 'b2b') {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+    }
     if (role === 'teacher' && otherRolePath(teacherPaths)) {
       return NextResponse.redirect(new URL('/nauczyciel/dashboard', req.url))
     }
