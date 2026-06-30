@@ -532,10 +532,9 @@ const pl = {
       paragraph3:
         "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       galleryCaptions: [
-        "Milena i Nick — tam, gdzie wszystko się zaczęło",
-        "Pierwsze lekcje, zanim uNick miał nazwę",
-        "Sala, która bardziej przypomina salon",
-        "uNick Academy dziś — wciąż w tym samym duchu",
+        "Milena i Nick",
+        "Pierwszy zespół i uNickorn",
+        "Te dzieci teraz u nas uczą",
       ],
     },
     worldTeam: {

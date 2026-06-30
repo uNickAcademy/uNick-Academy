@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
+import Image from "next/image";
 import CTASection from "../../components/CTASection";
 import TeacherCardWithBooking from "../../components/cards/TeacherCardWithBooking";
 import { getTeachers } from "../../lib/teachers";
@@ -38,8 +39,17 @@ export default async function MeetUsPage({ params }) {
       <section className={`section ${styles.altSection}`}>
         <div className={`container ${styles.split}`}>
           <Reveal as="div" className={styles.gallery}>
-            {t.ourStory.galleryCaptions.map((caption, i) => (
-              <PlaceholderMedia key={caption} tone={["blue", "red", "sand", "cream"][i]} ratio="1:1" caption={caption} />
+            {[
+              { src: "/team/milly-nick.jpg", caption: t.ourStory.galleryCaptions[0] },
+              { src: "/team/first-team.jpg", caption: t.ourStory.galleryCaptions[1] },
+              { src: "/team/kids-learning.jpg", caption: t.ourStory.galleryCaptions[2] },
+            ].map(({ src, caption }) => (
+              <figure key={src} className={styles.galleryItem}>
+                <div className={styles.galleryImageWrap}>
+                  <Image src={src} alt={caption} fill sizes="(max-width: 768px) 50vw, 25vw" className={styles.galleryImage} />
+                </div>
+                <figcaption className={styles.galleryCaption}>{caption}</figcaption>
+              </figure>
             ))}
           </Reveal>
           <Reveal as="div" delay={100} className={styles.copy}>

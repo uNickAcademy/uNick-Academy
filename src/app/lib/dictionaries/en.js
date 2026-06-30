@@ -532,10 +532,9 @@ const en = {
       paragraph3:
         "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       galleryCaptions: [
-        "Milena and Nick — where it all began",
-        "The first lessons, before uNick had a name",
-        "A classroom that feels more like a living room",
-        "uNick Academy today — same spirit as day one",
+        "Milena and Nick",
+        "The first team and uNickorn",
+        "These kids now teach with us",
       ],
     },
     worldTeam: {
