@@ -1,0 +1,78 @@
+export const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
+export const AGE_GROUPS = [
+  { value: 'young_learners', label: 'Young learners' },
+  { value: 'teens', label: 'Teens' },
+  { value: 'adults', label: 'Adults' },
+]
+
+export const SKILLS = [
+  'grammar',
+  'vocabulary',
+  'speaking',
+  'listening',
+  'reading',
+  'writing',
+  'pronunciation',
+]
+
+export const CURRENCIES = ['usd', 'eur', 'pln']
+
+export const CURRENCY_SYMBOLS = {
+  usd: '$',
+  eur: '€',
+  pln: 'zł',
+}
+
+// Headline monthly/annual prices per currency. These are net (tax-exclusive)
+// amounts - VAT (where applicable) is added on top at checkout via Stripe
+// Tax. They are the amounts shown on the pricing page and must match the
+// Stripe Price objects referenced by PRICE_ID_ENV_KEYS below (see
+// scripts/setup-stripe.js, which creates prices with tax_behavior:
+// 'exclusive').
+export const PRICES = {
+  monthly: { usd: 6, eur: 5, pln: 20 },
+  annual: { usd: 60, eur: 50, pln: 200 },
+}
+
+// Maps [plan][currency] to the env var holding the Stripe Price ID.
+export const PRICE_ID_ENV_KEYS = {
+  monthly: {
+    usd: 'STRIPE_PRICE_MONTHLY_USD',
+    eur: 'STRIPE_PRICE_MONTHLY_EUR',
+    pln: 'STRIPE_PRICE_MONTHLY_PLN',
+  },
+  annual: {
+    usd: 'STRIPE_PRICE_ANNUAL_USD',
+    eur: 'STRIPE_PRICE_ANNUAL_EUR',
+    pln: 'STRIPE_PRICE_ANNUAL_PLN',
+  },
+}
+
+export function getPriceId(plan, currency) {
+  const key = PRICE_ID_ENV_KEYS[plan]?.[currency]
+  return key ? process.env[key] : undefined
+}
+
+// Best-effort currency guess from a country code (e.g. Vercel's
+// x-vercel-ip-country header). Defaults to USD.
+const EUR_COUNTRIES = new Set([
+  'AT', 'BE', 'CY', 'DE', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'IE', 'IT',
+  'LT', 'LU', 'LV', 'MT', 'NL', 'PT', 'SI', 'SK',
+])
+
+export function currencyForCountry(countryCode) {
+  if (!countryCode) return 'usd'
+  const code = countryCode.toUpperCase()
+  if (code === 'PL') return 'pln'
+  if (EUR_COUNTRIES.has(code)) return 'eur'
+  return 'usd'
+}
+
+// Referral programme
+export const REFERRAL_BONUS_PLN = 50
+export const QUALIFYING_PURCHASE_MIN_PLN = 200
+export const QUALIFYING_PURCHASE_TYPES = ['package', 'monthly']
+export const CREDIT_INELIGIBLE_PURCHASE_TYPES = ['trial']
+export const MIN_LESSONS_FOR_REFERRER_REWARD = 4
+export const MAX_CREDIT_REDEMPTION_RATIO = 0.5

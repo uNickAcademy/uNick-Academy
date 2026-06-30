@@ -28,11 +28,11 @@ function ShopCard({ lesson, t }) {
         ))}
       </div>
       {lesson.is_free ? (
-        <Link href={`/academy/library/${lesson.id}`} className={styles.cardActionFree}>
+        <Link href="/login" className={styles.cardActionFree}>
           {t.download}
         </Link>
       ) : (
-        <Link href="/academy/pricing" className={styles.cardActionPaid}>
+        <Link href="/login" className={styles.cardActionPaid}>
           {t.subscribeCta}
         </Link>
       )}
@@ -91,7 +91,7 @@ export default function LessonPlanShop({ lessons, locale, t, level, age, skill }
 
       <div className={styles.banner}>
         {t.subscribeBanner}{" "}
-        <Link href="/academy/pricing">{t.subscribeBannerLink}</Link>
+        <Link href="/login">{t.subscribeBannerLink}</Link>
       </div>
 
       {lessons && lessons.length > 0 ? (
