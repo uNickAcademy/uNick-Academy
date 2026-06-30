@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -28,10 +29,30 @@ const NAV = [
   { href: '/ufos', label: 'Finanse (uFOS)', icon: Landmark, adminOnly: true },
 ]
 
-export function AdminSidebar({ role }: { role: string }) {
+export function AdminSidebar({ role, pendingRequests = 0 }: { role: string; pendingRequests?: number }) {
   const pathname = usePathname()
   const isAdmin = role === 'admin'
   const items = NAV.filter((i) => isAdmin || !i.adminOnly)
+  const [pending, setPending] = useState(pendingRequests)
+
+  useEffect(() => {
+    setPending(pendingRequests)
+  }, [pendingRequests])
+
+  useEffect(() => {
+    const tick = async () => {
+      try {
+        const res = await fetch('/api/admin/booking-requests', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (typeof data.pending === 'number') setPending(data.pending)
+      } catch {
+        // ignorujemy chwilowe błędy sieci — odśwież przy następnym ticku
+      }
+    }
+    const interval = setInterval(tick, 20000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <aside className="w-60 bg-gray-900 text-white flex flex-col py-6 px-3 fixed h-full z-10">
@@ -42,10 +63,17 @@ export function AdminSidebar({ role }: { role: string }) {
       <nav className="flex-1 space-y-0.5 overflow-y-auto">
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
+          const badge = href === '/admin/zapisy' && pending > 0 ? pending : null
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-[#23479E] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-              <Icon size={17} />{label}
+              <Icon size={17} />
+              <span className="flex-1">{label}</span>
+              {badge !== null && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                  {badge}
+                </span>
+              )}
             </Link>
           )
         })}

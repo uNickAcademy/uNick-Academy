@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+export async function GET() {
+  const auth = await createClient()
+  const { data: { user } } = await auth.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Brak autoryzacji' }, { status: 401 })
+  const { data: profile } = await auth.from('profiles').select('role').eq('id', user.id).single()
+  if (!profile || !['admin', 'reception'].includes(profile.role as string)) {
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
+  }
+
+  const { count } = await auth.from('booking_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+  return NextResponse.json({ pending: count ?? 0 })
+}
+
 export async function POST(req: NextRequest) {
   // tylko admin/recepcja
   const auth = await createClient()

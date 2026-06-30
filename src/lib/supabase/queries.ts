@@ -760,3 +760,13 @@ export async function getBookingRequests(): Promise<Record<string, unknown>[]> {
     .order('created_at', { ascending: false })
   return (data as Record<string, unknown>[]) ?? []
 }
+
+// Liczba oczekujących próśb o zapis (do odznaki w panelu admina)
+export async function getPendingBookingRequestsCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('booking_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending')
+  return count ?? 0
+}
