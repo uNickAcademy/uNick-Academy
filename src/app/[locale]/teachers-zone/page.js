@@ -23,17 +23,25 @@ export default async function TeachersZonePage({ params, searchParams }) {
   const age = sp?.age || "";
   const theme = sp?.theme || "";
 
-  const supabase = await createClient();
-  let query = supabase
-    .from("lesson_plans")
-    .select("id, title, description, cefr_level, age_group, themes, is_free")
-    .order("created_at", { ascending: false });
+  // Odporne na brak konfiguracji/błędy bazy: w razie problemu pokazujemy
+  // pusty sklep zamiast błędu 500.
+  let lessons = [];
+  try {
+    const supabase = await createClient();
+    let query = supabase
+      .from("lesson_plans")
+      .select("id, title, description, cefr_level, age_group, themes, is_free")
+      .order("created_at", { ascending: false });
 
-  if (level) query = query.eq("cefr_level", level);
-  if (age) query = query.eq("age_group", age);
-  if (theme) query = query.contains("themes", [theme]);
+    if (level) query = query.eq("cefr_level", level);
+    if (age) query = query.eq("age_group", age);
+    if (theme) query = query.contains("themes", [theme]);
 
-  const { data: lessons } = await query;
+    const { data } = await query;
+    lessons = data || [];
+  } catch {
+    lessons = [];
+  }
 
   return (
     <>
