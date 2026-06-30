@@ -102,9 +102,10 @@ const pl = {
         "I tak się zaczęło — skoro Nicka nie dało się sklonować, ze mną zajęcia nie były tak skuteczne (chociaż i ja i dzieci bawiliśmy się przednio) — postanowiliśmy że nasza szkoła będzie inna. Można by wręcz rzec unikatowa… czy też uNickatowa.",
       signature: "— Milena i Nick, założyciele",
       galleryCaptions: [
-        "Milena i Nick, przy stole, gdzie wszystko się zaczęło",
-        "Pierwsze lekcje, zanim uNick miało nazwę",
-        "Klasa, która czuje się jak salon",
+        "Milena i Nick",
+        "Pierwszy zespół i uNickorn",
+        "Te dzieci teraz u nas uczą",
+        "Pierwsze lekcje Nicka",
       ],
     },
     differentiators: {

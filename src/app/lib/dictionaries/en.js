@@ -102,9 +102,10 @@ const en = {
         "And that's how it started — since Nick couldn't be cloned, and my lessons weren't as effective (though the kids and I had a blast) — we decided our school would be different. You might even say unique… or rather uNick.",
       signature: "— Milena & Nick, founders",
       galleryCaptions: [
-        "Milena & Nick, at the table where it all began",
-        "Early lessons, before uNick had a name",
-        "A classroom that feels like a living room",
+        "Milena and Nick",
+        "The first team and uNickorn",
+        "These kids now teach with us",
+        "Nick's first lessons",
       ],
     },
     differentiators: {
