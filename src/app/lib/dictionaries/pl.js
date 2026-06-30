@@ -512,11 +512,11 @@ const pl = {
     meta: {
       title: "Poznaj nas",
       description:
-        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad dekada nauki angielskiego w nieszkolny sposób.",
+        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad 10 lat nauki angielskiego w nieszkolny sposób.",
     },
     hero: {
       eyebrow: "Poznaj nas",
-      titleStart: "Ponad dekada ",
+      titleStart: "Ponad 10 lat ",
       titleAccent: "uNickatowej przygody.",
       subtitle:
         "Jesteśmy z Rumianka, ale uczą u nas nauczyciele z całego świata i od ponad dekady uczymy języków w nieszkolny sposób!",

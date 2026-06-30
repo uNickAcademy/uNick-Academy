@@ -516,7 +516,7 @@ const en = {
     },
     hero: {
       eyebrow: "Meet us",
-      titleStart: "Over a decade of ",
+      titleStart: "Over 10 years of ",
       titleAccent: "uNick adventure.",
       subtitle:
         "We're based in Rumianek, but our teachers come from all over the world — and we've been teaching languages the un-school way for over a decade!",

@@ -32,7 +32,14 @@ export default async function MeetUsPage({ params }) {
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia tone="cream" ratio="4:3" caption={t.hero.mediaCaption} />
+          <div className={styles.videoWrap}>
+            <iframe
+              src="https://www.youtube.com/embed/W3c0GcLv8Ag"
+              title={t.hero.mediaCaption}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </Reveal>
       </div>
 
