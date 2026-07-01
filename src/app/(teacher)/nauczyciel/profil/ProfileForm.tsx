@@ -9,16 +9,19 @@ export function ProfileForm({
   bio: initialBio,
   contactEmail: initialContactEmail,
   whatsappPhone: initialWhatsappPhone,
+  videoUrl: initialVideoUrl,
 }: {
   teacherId: string
   fullName: string
   bio: string
   contactEmail: string
   whatsappPhone: string
+  videoUrl: string
 }) {
   const [bio, setBio] = useState(initialBio)
   const [contactEmail, setContactEmail] = useState(initialContactEmail)
   const [whatsappPhone, setWhatsappPhone] = useState(initialWhatsappPhone)
+  const [videoUrl, setVideoUrl] = useState(initialVideoUrl)
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState<string | null>(null)
 
@@ -35,7 +38,7 @@ export function ProfileForm({
     const supabase = createClient()
     const { error } = await supabase
       .from('teachers')
-      .update({ bio, contact_email: contactEmail, whatsapp_phone: whatsappPhone || null })
+      .update({ bio, contact_email: contactEmail, whatsapp_phone: whatsappPhone || null, video_url: videoUrl || null })
       .eq('id', teacherId)
 
     setSaving(false)
@@ -104,6 +107,20 @@ export function ProfileForm({
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
           />
           <p className="text-xs text-gray-400 mt-1">Used so the school can message you and your students on WhatsApp.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Intro video (YouTube link)</label>
+          <input
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://youtu.be/..."
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            If set, students see a video tile instead of your photo on the &quot;Meet Us&quot; page — clicking it plays the video.
+          </p>
         </div>
 
         <div>

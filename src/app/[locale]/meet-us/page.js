@@ -30,6 +30,7 @@ export default async function MeetUsPage({ params }) {
       ...teacher,
       photo: profile?.photo || teacher.photo,
       bio: profile?.bio || "",
+      video: profile?.video || null,
       availability: profile?.availability || [],
     };
   });

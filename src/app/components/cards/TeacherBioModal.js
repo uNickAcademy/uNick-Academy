@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Button from "../Button";
 import styles from "./TeacherBioModal.module.css";
+import { youtubeId } from "../../lib/youtube";
 
 function formatTime(time) {
   return time.slice(0, 5);
 }
 
 export default function TeacherBioModal({ teacher, t, bookLabel, onBook, onClose }) {
+  const [playing, setPlaying] = useState(false);
+
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") onClose();
@@ -24,8 +27,9 @@ export default function TeacherBioModal({ teacher, t, bookLabel, onBook, onClose
 
   if (!teacher) return null;
 
-  const { name, role, photo, bio, availability } = teacher;
+  const { name, role, photo, bio, video, availability } = teacher;
   const sortedAvailability = [...availability].sort((a, b) => a.day_of_week - b.day_of_week);
+  const ytId = youtubeId(video);
 
   return (
     <div
@@ -40,13 +44,40 @@ export default function TeacherBioModal({ teacher, t, bookLabel, onBook, onClose
           ✕
         </button>
 
-        <div className={styles.photoFrame}>
-          {photo ? (
-            <Image src={photo} alt={name} width={160} height={160} className={styles.photo} />
-          ) : (
-            <span className={styles.initial}>{name.charAt(0)}</span>
-          )}
-        </div>
+        {ytId && playing ? (
+          <div className={styles.videoEmbed}>
+            <iframe
+              src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+              title={name}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+        ) : ytId ? (
+          <button
+            type="button"
+            className={styles.videoTile}
+            onClick={() => setPlaying(true)}
+            aria-label={t.playVideoAria || name}
+          >
+            {photo ? (
+              <Image src={photo} alt={name} fill className={styles.videoTilePhoto} />
+            ) : (
+              <span className={styles.initial}>{name.charAt(0)}</span>
+            )}
+            <span className={styles.playIcon} aria-hidden="true">
+              ▶
+            </span>
+          </button>
+        ) : (
+          <div className={styles.photoFrame}>
+            {photo ? (
+              <Image src={photo} alt={name} width={160} height={160} className={styles.photo} />
+            ) : (
+              <span className={styles.initial}>{name.charAt(0)}</span>
+            )}
+          </div>
+        )}
 
         <h2 id="teacher-bio-title" className={styles.title}>
           {name}

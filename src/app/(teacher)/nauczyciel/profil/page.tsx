@@ -27,6 +27,7 @@ export default async function TeacherProfilePage() {
         bio={teacher.bio ?? ''}
         contactEmail={teacher.contact_email ?? ''}
         whatsappPhone={teacher.whatsapp_phone ?? ''}
+        videoUrl={teacher.video_url ?? ''}
       />
     </div>
   )

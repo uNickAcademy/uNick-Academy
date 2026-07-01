@@ -311,15 +311,15 @@ export async function getTeacherByProfileId(profileId: string): Promise<Teacher 
   return data as Teacher | null
 }
 
-export type TeacherPublicProfile = { photo: string | null; bio: string; availability: Availability[] }
+export type TeacherPublicProfile = { photo: string | null; bio: string; video: string | null; availability: Availability[] }
 
 // Mapuje aktywnych nauczycieli na dane potrzebne na stronie /meet-us (zdjęcie, bio,
-// dostępność), kluczowane prefiksem e-maila (np. "nick@unick-academy.pl" → "nick"),
+// dostępność, filmik), kluczowane prefiksem e-maila (np. "nick@unick-academy.pl" → "nick"),
 // żeby strona marketingowa mogła nadpisać statyczny opis tymi danymi z panelu nauczyciela.
 export async function getTeacherPublicProfiles(): Promise<Record<string, TeacherPublicProfile>> {
   const supabase = await createClient()
   const [teachersRes, availRes] = await Promise.all([
-    supabase.from('teachers').select('id, bio, photo_url, profile:profiles(email)').eq('is_active', true),
+    supabase.from('teachers').select('id, bio, photo_url, video_url, profile:profiles(email)').eq('is_active', true),
     supabase.from('availability').select('*').eq('is_active', true),
   ])
 
@@ -337,6 +337,7 @@ export async function getTeacherPublicProfiles(): Promise<Record<string, Teacher
     map[email.split('@')[0].toLowerCase()] = {
       photo: (rec.photo_url as string) ?? null,
       bio: (rec.bio as string) ?? '',
+      video: (rec.video_url as string) ?? null,
       availability: availByTeacher[rec.id as string] ?? [],
     }
   }
