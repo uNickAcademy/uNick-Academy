@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Trash2, RotateCcw } from 'lucide-react'
+import { Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Clock, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { StudentStatus, LanguageLevel } from '@/types'
 
@@ -94,7 +94,7 @@ export function StudentsTable({
           {deletedRows.length > 0 && (
             <button onClick={() => setShowTrash((v) => !v)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
-              <Trash2 size={16} />Kosz ({deletedRows.length})
+              <Clock size={16} />Poczekalnia ({deletedRows.length})
             </button>
           )}
           <button onClick={() => setAdding(true)}
@@ -106,7 +106,7 @@ export function StudentsTable({
 
       {showTrash && (
         <div className="bg-white rounded-2xl border border-gray-100 mb-6 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 text-sm font-bold text-gray-700">Kosz — usunięci uczniowie</div>
+          <div className="px-5 py-3 border-b border-gray-100 text-sm font-bold text-gray-700">Poczekalnia — uczniowie</div>
           <div className="divide-y divide-gray-50">
             {deletedRows.map((d) => (
               <div key={d.id} className="flex items-center gap-3 px-5 py-3">
@@ -419,7 +419,7 @@ function EditModal({
   }
 
   async function softDelete() {
-    if (!confirm('Usunąć ucznia? Trafi do kosza i można go przywrócić.')) return
+    if (!confirm('Przenieść ucznia do poczekalni? Można go stamtąd przywrócić.')) return
     const supabase = createClient()
     const { error } = await supabase.from('students').update({ deleted_at: new Date().toISOString() }).eq('id', row.id)
     if (error) { setError('Nie udało się usunąć: ' + error.message); return }
@@ -551,9 +551,9 @@ function EditModal({
           <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50">
             Anuluj
           </button>
-          <button onClick={softDelete} title="Przenieś do kosza"
-            className="ml-auto px-3 py-2.5 rounded-xl border border-red-200 text-red-500 font-medium text-sm hover:bg-red-50 flex items-center gap-1.5">
-            <Trash2 size={15} />Usuń
+          <button onClick={softDelete} title="Przenieś do poczekalni"
+            className="ml-auto px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 flex items-center gap-1.5">
+            <Clock size={15} />Przenieś do poczekalni
           </button>
         </div>
       </div>

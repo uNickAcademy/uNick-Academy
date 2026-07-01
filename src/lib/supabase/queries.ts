@@ -102,7 +102,7 @@ export async function getAllStudents(): Promise<Student[]> {
   return (data as Student[]) ?? []
 }
 
-// Kosz – uczniowie usunięci (do przywrócenia)
+// Poczekalnia – uczniowie przeniesieni (do przywrócenia)
 export async function getDeletedStudents(): Promise<Student[]> {
   const supabase = await createClient()
   const { data } = await supabase

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search, Trash2, RotateCcw, EyeOff, Eye } from 'lucide-react'
+import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search, Clock, RotateCcw, EyeOff, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Company = { id: string; name: string; nip: string; address: string; employeeCount: number; hrName: string | null; isActive: boolean }
@@ -43,7 +43,7 @@ export function CompaniesView({ companies, students, invoices, deletedCompanies 
           {deletedCompanies.length > 0 && (
             <button onClick={() => setShowTrash((v) => !v)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
-              <Trash2 size={16} />Kosz ({deletedCompanies.length})
+              <Clock size={16} />Poczekalnia ({deletedCompanies.length})
             </button>
           )}
           <button onClick={() => setCreating(true)}
@@ -55,7 +55,7 @@ export function CompaniesView({ companies, students, invoices, deletedCompanies 
 
       {showTrash && (
         <div className="bg-white rounded-2xl border border-gray-100 mb-6 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 text-sm font-bold text-gray-700">Kosz — usunięte firmy</div>
+          <div className="px-5 py-3 border-b border-gray-100 text-sm font-bold text-gray-700">Poczekalnia — firmy</div>
           <div className="divide-y divide-gray-50">
             {deletedCompanies.map((d) => (
               <div key={d.id} className="flex items-center gap-3 px-5 py-3">
@@ -266,8 +266,8 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
 
   async function softDelete() {
     const warning = employees.length > 0
-      ? `Firma ma ${employees.length} przypisanych pracowników — pozostaną w systemie, ale firma zniknie z listy. Trafi do kosza, można ją przywrócić. Kontynuować?`
-      : 'Usunąć firmę? Trafi do kosza, można ją przywrócić.'
+      ? `Firma ma ${employees.length} przypisanych pracowników — pozostaną w systemie, ale firma zniknie z listy. Trafi do poczekalni, można ją stamtąd przywrócić. Kontynuować?`
+      : 'Przenieść firmę do poczekalni? Można ją stamtąd przywrócić.'
     if (!confirm(warning)) return
     setBusy(true); setError(null)
     const supabase = createClient()
@@ -417,8 +417,8 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
             {company.isActive ? <><EyeOff size={14} />Oznacz jako nieaktywną</> : <><Eye size={14} />Oznacz jako aktywną</>}
           </button>
           <button onClick={softDelete} disabled={busy}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-500 font-medium text-sm hover:bg-red-50 disabled:opacity-60">
-            <Trash2 size={14} />Usuń firmę
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 disabled:opacity-60">
+            <Clock size={14} />Przenieś do poczekalni
           </button>
         </div>
       </div>
