@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Plus, X, CalendarOff, Trash2, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X, CalendarOff, Trash2, Users, Settings2, Ban } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType, Holiday } from '@/types'
 
@@ -18,7 +18,9 @@ type CalLesson = {
   startsAt: string
   endsAt: string
   student: string
+  studentId: string
   isGroup?: boolean
+  groupId?: string
   teacherId: string
   teacherName: string
   color: string
@@ -51,26 +53,100 @@ function minutesSinceMidnight(iso: string) {
   return d.getHours() * 60 + d.getMinutes()
 }
 
+type RawLessonRow = {
+  id: string
+  starts_at: string
+  ends_at: string
+  teacher_id: string
+  student_id: string | null
+  group_id: string | null
+  topic: string | null
+  type: LessonType
+  cancelled_at: string | null
+  student: { profile: { full_name: string } | null } | null
+  teacher: { profile: { full_name: string } | null } | null
+  group: { name: string; color: string } | null
+}
+
 export function AdminCalendar({
-  lessons,
+  initialLessons,
+  initialWeekStart,
   teacherOptions,
   studentOptions,
   groupOptions,
   holidays,
 }: {
-  lessons: CalLesson[]
+  initialLessons: CalLesson[]
+  initialWeekStart: string
   teacherOptions: TeacherOpt[]
   studentOptions: StudentOpt[]
   groupOptions: GroupOpt[]
   holidays: Holiday[]
 }) {
   const router = useRouter()
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(initialWeekStart)))
+  const [lessons, setLessons] = useState<CalLesson[]>(initialLessons)
+  const [loading, setLoading] = useState(false)
   const [teacherFilter, setTeacherFilter] = useState('')
   const [adding, setAdding] = useState(false)
   const [managingHolidays, setManagingHolidays] = useState(false)
+  const [managingLesson, setManagingLesson] = useState<CalLesson | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
   const [pendingMove, setPendingMove] = useState<{ lesson: CalLesson; newStart: Date; newEnd: Date } | null>(null)
+
+  const teacherColorMap = useMemo(() => new Map(teacherOptions.map((t) => [t.id, t.color])), [teacherOptions])
+  const isFirstRender = useRef(true)
+
+  async function fetchWeek(start: Date) {
+    setLoading(true)
+    const supabase = createClient()
+    const end = new Date(start.getTime() + 7 * 86400000)
+    const { data } = await supabase
+      .from('lessons')
+      .select(`
+        id, starts_at, ends_at, teacher_id, student_id, group_id, topic, type, cancelled_at,
+        student:students(profile:profiles(full_name)),
+        teacher:teachers(profile:profiles(full_name)),
+        group:groups(name, color)
+      `)
+      .gte('starts_at', start.toISOString())
+      .lt('starts_at', end.toISOString())
+      .order('starts_at', { ascending: true })
+
+    setLoading(false)
+    const rows = (data as unknown as RawLessonRow[]) ?? []
+    const mapped: CalLesson[] = rows
+      .filter((l) => !l.cancelled_at)
+      .map((l) => ({
+        id: l.id,
+        startsAt: l.starts_at,
+        endsAt: l.ends_at,
+        student: l.group ? l.group.name : (l.student?.profile?.full_name ?? '—'),
+        studentId: l.student_id ?? '',
+        isGroup: !!l.group_id,
+        groupId: l.group_id ?? '',
+        teacherId: l.teacher_id,
+        teacherName: l.teacher?.profile?.full_name ?? '—',
+        color: l.group ? l.group.color : (teacherColorMap.get(l.teacher_id) ?? '#23479E'),
+        topic: l.topic ?? '',
+        type: l.type,
+      }))
+    setLessons(mapped)
+  }
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    fetchWeek(weekStart)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart])
+
+  function refresh() {
+    fetchWeek(weekStart)
+    router.refresh()
+  }
 
   function handleDrop(e: React.DragEvent, day: Date) {
     e.preventDefault()
@@ -137,7 +213,8 @@ export function AdminCalendar({
           <button onClick={() => shiftWeek(1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50"><ChevronRight size={16} /></button>
         </div>
         <span className="text-sm font-semibold text-gray-700">{weekLabel}</span>
-        <span className="hidden md:inline text-xs text-gray-400">· przeciągnij lekcję, aby ją przełożyć</span>
+        {loading && <span className="text-xs text-gray-400">Ładowanie...</span>}
+        <span className="hidden md:inline text-xs text-gray-400">· przeciągnij, aby przełożyć · kliknij, aby zarządzać</span>
         <select value={teacherFilter} onChange={(e) => setTeacherFilter(e.target.value)}
           className="ml-auto px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
           <option value="">Wszyscy nauczyciele</option>
@@ -194,9 +271,10 @@ export function AdminCalendar({
                       <div key={l.id} draggable
                         onDragStart={() => setDragId(l.id)}
                         onDragEnd={() => setDragId(null)}
-                        className={`absolute left-1 right-1 rounded-md px-1.5 py-0.5 overflow-hidden text-white cursor-grab active:cursor-grabbing ${dragId === l.id ? 'opacity-40' : ''}`}
+                        onClick={() => setManagingLesson(l)}
+                        className={`absolute left-1 right-1 rounded-md px-1.5 py-0.5 overflow-hidden text-white cursor-pointer active:cursor-grabbing ${dragId === l.id ? 'opacity-40' : ''}`}
                         style={{ top, height, backgroundColor: l.color }}
-                        title={`${l.student} · ${l.teacherName} · ${l.topic} — przeciągnij, aby przełożyć`}>
+                        title={`${l.student} · ${l.teacherName} · ${l.topic} — kliknij, aby zarządzać, przeciągnij, aby przełożyć`}>
                         <p className="text-[11px] font-bold leading-tight truncate flex items-center gap-1">
                           {l.isGroup && <Users size={10} className="flex-shrink-0" />}{l.student}
                         </p>
@@ -219,7 +297,7 @@ export function AdminCalendar({
           holidays={holidays}
           defaultDate={days[0]}
           onClose={() => setAdding(false)}
-          onSaved={() => { setAdding(false); router.refresh() }}
+          onSaved={() => { setAdding(false); refresh() }}
         />
       )}
 
@@ -235,9 +313,206 @@ export function AdminCalendar({
         <ConfirmMoveModal
           move={pendingMove}
           onClose={() => setPendingMove(null)}
-          onDone={() => { setPendingMove(null); router.refresh() }}
+          onDone={() => { setPendingMove(null); refresh() }}
         />
       )}
+
+      {managingLesson && (
+        <ManageLessonModal
+          lesson={managingLesson}
+          teacherOptions={teacherOptions}
+          onClose={() => setManagingLesson(null)}
+          onDone={() => { setManagingLesson(null); refresh() }}
+        />
+      )}
+    </div>
+  )
+}
+
+function toLocalInput(iso: string) {
+  const d = new Date(iso); const off = d.getTimezoneOffset() * 60000
+  return new Date(d.getTime() - off).toISOString().slice(0, 16)
+}
+
+function ManageLessonModal({
+  lesson,
+  teacherOptions,
+  onClose,
+  onDone,
+}: {
+  lesson: CalLesson
+  teacherOptions: TeacherOpt[]
+  onClose: () => void
+  onDone: () => void
+}) {
+  const durationMs = new Date(lesson.endsAt).getTime() - new Date(lesson.startsAt).getTime()
+  const [start, setStart] = useState(toLocalInput(lesson.startsAt))
+  const [duration, setDuration] = useState(Math.round(durationMs / 60000))
+  const [teacherId, setTeacherId] = useState(lesson.teacherId)
+  const [type, setType] = useState<LessonType>(lesson.type)
+  const [topic, setTopic] = useState(lesson.topic)
+  const [mode, setMode] = useState<'edit' | 'cancel'>('edit')
+  const [cancelReason, setCancelReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isLate = mode === 'cancel' && Date.now() > new Date(lesson.startsAt).getTime() - 24 * 3600 * 1000
+
+  async function teacherHasConflict(newStart: Date, newEnd: Date) {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('lessons')
+      .select('id')
+      .eq('teacher_id', teacherId)
+      .lt('starts_at', newEnd.toISOString())
+      .gt('ends_at', newStart.toISOString())
+    return (data ?? []).some((r) => r.id !== lesson.id)
+  }
+
+  async function saveChanges() {
+    setSaving(true); setError(null)
+    const newStart = new Date(start)
+    const newEnd = new Date(newStart.getTime() + duration * 60000)
+    const teacherChanged = teacherId !== lesson.teacherId
+    const timeChanged = newStart.getTime() !== new Date(lesson.startsAt).getTime() || newEnd.getTime() !== new Date(lesson.endsAt).getTime()
+
+    if (teacherChanged || timeChanged) {
+      if (await teacherHasConflict(newStart, newEnd)) {
+        setSaving(false); setError('Nauczyciel ma już lekcję w tym terminie.'); return
+      }
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase.from('lessons').update({
+      starts_at: newStart.toISOString(),
+      ends_at: newEnd.toISOString(),
+      teacher_id: teacherId,
+      type,
+      topic: topic || null,
+    }).eq('id', lesson.id)
+    setSaving(false)
+    if (error) { setError('Nie udało się zapisać: ' + error.message); return }
+    onDone()
+  }
+
+  async function confirmCancel() {
+    setSaving(true); setError(null)
+    const supabase = createClient()
+    const { error } = await supabase.from('lessons').update({
+      cancelled_reason: cancelReason.trim() || null,
+      cancelled_at: new Date().toISOString(),
+    }).eq('id', lesson.id)
+    setSaving(false)
+    if (error) { setError('Nie udało się odwołać: ' + error.message); return }
+    onDone()
+  }
+
+  async function hardDelete() {
+    if (!confirm('Usunąć tę lekcję na stałe? Tej operacji nie można cofnąć.')) return
+    setSaving(true); setError(null)
+    const supabase = createClient()
+    const { error } = await supabase.from('lessons').delete().eq('id', lesson.id)
+    setSaving(false)
+    if (error) { setError('Nie udało się usunąć: ' + error.message); return }
+    onDone()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-black text-gray-900 flex items-center gap-2"><Settings2 size={18} />Zarządzaj lekcją</h2>
+            <p className="text-xs text-gray-400">{lesson.student}{lesson.isGroup ? ' (grupa)' : ''}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden mb-4">
+          <button type="button" onClick={() => setMode('edit')}
+            className={`flex-1 py-2 text-sm font-semibold transition-colors ${mode === 'edit' ? 'bg-[#23479E] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+            Edytuj
+          </button>
+          <button type="button" onClick={() => setMode('cancel')}
+            className={`flex-1 py-2 text-sm font-semibold transition-colors ${mode === 'cancel' ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+            Odwołaj
+          </button>
+        </div>
+
+        {mode === 'edit' ? (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Termin</label>
+              <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Czas (min)</label>
+                <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                  {[30, 45, 60, 90].map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Nauczyciel</label>
+                <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                  {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Typ</label>
+              <select value={type} onChange={(e) => setType(e.target.value as LessonType)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                <option value="online">Online</option>
+                <option value="offline">Stacjonarnie</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Temat</label>
+              <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="np. Business English"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <div className="flex gap-2 pt-2">
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
+              <button onClick={saveChanges} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60">
+                {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+              </button>
+            </div>
+            <button onClick={hardDelete} disabled={saving}
+              className="w-full mt-1 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-red-500 flex items-center justify-center gap-1.5">
+              <Trash2 size={13} />Usuń lekcję na stałe
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">{new Date(lesson.startsAt).toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {lesson.teacherName}</p>
+            {isLate && (
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700">
+                <Ban size={14} className="mt-0.5 shrink-0" />
+                Odwołujesz lekcję w ciągu 24h — zostanie zarejestrowana jako odwołanie z krótkim wyprzedzeniem.
+              </div>
+            )}
+            <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={2}
+              placeholder="Powód odwołania (opcjonalnie)"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <div className="flex gap-2">
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Wróć</button>
+              <button onClick={confirmCancel} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 disabled:opacity-60">
+                {saving ? 'Odwoływanie...' : 'Potwierdź odwołanie'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
