@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -72,48 +72,76 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
   )
 }
 
+type GusAddress = { street: string | null; city: string | null; postal_code: string | null }
+type GusResult = { name: string; regon: string | null; address: GusAddress }
+
+function formatGusAddress(address?: GusAddress) {
+  if (!address) return ''
+  const { street, city, postal_code } = address
+  const parts = [street, postal_code && city ? `${postal_code} ${city}` : city].filter(Boolean)
+  return parts.join(', ')
+}
+
 function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState('')
   const [nip, setNip] = useState('')
-  const [address, setAddress] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [gusLoading, setGusLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'found' | 'error' | 'not_configured'>('idle')
+  const [gusData, setGusData] = useState<GusResult | null>(null)
   const [gusError, setGusError] = useState<string | null>(null)
+  const [manualName, setManualName] = useState('')
+  const [manualAddress, setManualAddress] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const nipDigits = nip.replace(/[^0-9]/g, '')
+  const lookedUpNip = useRef<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
-  async function fetchFromGus() {
-    setGusLoading(true)
-    setGusError(null)
-    try {
-      const res = await fetch(`/api/admin/companies/gus-lookup?nip=${encodeURIComponent(nipDigits)}`)
-      const data = await res.json()
-      if (!res.ok) {
-        setGusError(data.error ?? 'Błąd GUS')
-        return
-      }
-      if (data.name) setName(data.name)
-      const { street, city, postal_code } = data.address ?? {}
-      const parts = [street, postal_code && city ? `${postal_code} ${city}` : city].filter(Boolean)
-      if (parts.length) setAddress(parts.join(', '))
-    } catch {
-      setGusError('Nie udało się pobrać danych z GUS')
-    } finally {
-      setGusLoading(false)
+  useEffect(() => {
+    if (nipDigits.length !== 10) {
+      setStatus('idle'); setGusData(null); setGusError(null); lookedUpNip.current = null
+      return
     }
+    if (lookedUpNip.current === nipDigits) return // już sprawdzone dla tego NIP
+    lookedUpNip.current = nipDigits
+    let cancelled = false
+    setStatus('loading'); setGusError(null); setGusData(null)
+    fetch(`/api/admin/companies/gus-lookup?nip=${encodeURIComponent(nipDigits)}`)
+      .then(async (res) => {
+        const data = await res.json()
+        if (cancelled) return
+        if (res.status === 503) { setStatus('not_configured'); setGusError(data.error ?? 'Wyszukiwanie GUS nie jest skonfigurowane'); return }
+        if (!res.ok) { setStatus('error'); setGusError(data.error ?? 'Błąd GUS'); return }
+        setGusData(data as GusResult)
+        setStatus('found')
+      })
+      .catch(() => { if (!cancelled) { setStatus('error'); setGusError('Nie udało się połączyć z GUS') } })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nipDigits, attempt])
+
+  function retry() {
+    lookedUpNip.current = null
+    setAttempt((a) => a + 1)
   }
 
   async function save() {
-    if (!name.trim()) { setError('Podaj nazwę.'); return }
-    setSaving(true); setError(null)
+    setError(null)
+    const useManual = status === 'not_configured'
+    const name = useManual ? manualName.trim() : gusData?.name.trim()
+    if (!name) { setError('Podaj nazwę firmy.'); return }
+    if (nipDigits.length !== 10) { setError('Podaj poprawny NIP (10 cyfr).'); return }
+
+    setSaving(true)
     const supabase = createClient()
+    const address = useManual ? manualAddress.trim() || null : formatGusAddress(gusData?.address) || null
     // legal_entity_id defaults to UA via DB column default set in migration
-    const { error } = await supabase.from('companies').insert({ name: name.trim(), nip: nip || null, address: address || null })
+    const { error } = await supabase.from('companies').insert({ name, nip: nipDigits, address })
     setSaving(false)
     if (error) { setError('Nie udało się: ' + error.message); return }
     onSaved()
   }
+
+  const canSave = (status === 'found' && !!gusData) || (status === 'not_configured' && manualName.trim().length > 0)
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -124,30 +152,52 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
         </div>
         <div className="space-y-3">
           <div>
-            <div className="flex gap-2">
-              <input type="text" value={nip} onChange={(e) => { setNip(e.target.value); setGusError(null) }} placeholder="NIP (10 cyfr)"
-                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-              <button
-                onClick={fetchFromGus}
-                disabled={nipDigits.length !== 10 || gusLoading}
-                title="Pobierz dane z GUS"
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-[#23479E] hover:bg-[#EAF3FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
-                <Search size={14} />
-                {gusLoading ? 'Szukam...' : 'Pobierz z GUS'}
-              </button>
+            <label className="block text-xs font-medium text-gray-600 mb-1">NIP</label>
+            <div className="relative">
+              <input type="text" value={nip} onChange={(e) => setNip(e.target.value)} placeholder="np. 7812028328" maxLength={13}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+              {status === 'loading' && (
+                <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 animate-pulse" />
+              )}
             </div>
-            {gusError && <p className="text-xs text-red-500 mt-1">{gusError}</p>}
+            <p className="text-xs text-gray-400 mt-1">Wpisz 10-cyfrowy NIP — nazwa i adres firmy zostaną pobrane automatycznie z rejestru GUS.</p>
           </div>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nazwa firmy"
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adres"
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+
+          {status === 'loading' && (
+            <p className="text-sm text-gray-500">Szukam danych w GUS...</p>
+          )}
+
+          {status === 'found' && gusData && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-1">
+              <p className="text-sm font-bold text-gray-900">{gusData.name}</p>
+              <p className="text-xs text-gray-600">{formatGusAddress(gusData.address) || 'Brak adresu w GUS'}</p>
+              {gusData.regon && <p className="text-xs text-gray-400">REGON: {gusData.regon}</p>}
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+              <p className="text-xs text-red-600 mb-2">{gusError}</p>
+              <button onClick={retry} className="text-xs font-medium text-[#23479E] hover:underline">Spróbuj ponownie</button>
+            </div>
+          )}
+
+          {status === 'not_configured' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-amber-700">{gusError} — dodaj dane ręcznie.</p>
+              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Nazwa firmy"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+              <input type="text" value={manualAddress} onChange={(e) => setManualAddress(e.target.value)} placeholder="Adres"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          )}
+
           <p className="text-xs text-gray-400">Każda firma korporacyjna jest rozliczana przez UA (spółka z VAT).</p>
         </div>
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-6">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
-          <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60">
+          <button onClick={save} disabled={saving || !canSave} className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-40">
             {saving ? 'Tworzenie...' : 'Utwórz firmę'}
           </button>
         </div>
