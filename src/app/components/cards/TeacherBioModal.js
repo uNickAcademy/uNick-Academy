@@ -102,6 +102,12 @@ export default function TeacherBioModal({ teacher, t, bookLabel, onBook, onClose
           <p className={styles.noAvailability}>{t.noAvailability}</p>
         )}
 
+        {ytId && !playing && (
+          <button type="button" className={styles.watchVideoBtn} onClick={() => setPlaying(true)}>
+            <span aria-hidden="true">▶</span> {t.watchVideo || "Poznaj mnie"}
+          </button>
+        )}
+
         <Button variant="primary" fullWidth className={styles.bookBtn} onClick={() => onBook(name)}>
           {bookLabel}
         </Button>
