@@ -1,25 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Megaphone, Mail, MessageSquare, Send, Users, GraduationCap, CalendarRange, UsersRound } from 'lucide-react'
+import { Megaphone, Mail, MessageSquare, MessageCircle, Send, Users, GraduationCap, CalendarRange, UsersRound } from 'lucide-react'
 
 type Segment = 'all_students' | 'all_teachers' | 'group' | 'lessons_range'
 
 const SEGMENTS: { id: Segment; label: string; icon: typeof Users; desc: string }[] = [
   { id: 'all_students', label: 'Wszyscy uczniowie', icon: Users, desc: 'Każdy zapisany uczeń' },
   { id: 'all_teachers', label: 'Wszyscy lektorzy', icon: GraduationCap, desc: 'Cały zespół nauczycieli' },
-  { id: 'group', label: 'Grupa', icon: UsersRound, desc: 'Członkowie wybranej grupy' },
+  { id: 'group', label: 'Grupa (lekcja grupowa)', icon: UsersRound, desc: 'Wszyscy uczestnicy grupy + prowadzący' },
   { id: 'lessons_range', label: 'Uczniowie z lekcją w terminie', icon: CalendarRange, desc: 'Np. wszyscy z zajęciami w ten weekend' },
 ]
 
 export function CommunicationView({
-  groupOptions, emailConfigured, smsConfigured,
+  groupOptions, emailConfigured, smsConfigured, whatsappConfigured,
 }: {
   groupOptions: { id: string; name: string }[]
   emailConfigured: boolean
   smsConfigured: boolean
+  whatsappConfigured: boolean
 }) {
-  const [channel, setChannel] = useState<'email' | 'sms'>('email')
+  const [channel, setChannel] = useState<'email' | 'whatsapp' | 'sms'>('email')
   const [segment, setSegment] = useState<Segment>('all_students')
   const [groupId, setGroupId] = useState(groupOptions[0]?.id ?? '')
   const [dateFrom, setDateFrom] = useState('')
@@ -34,7 +35,7 @@ export function CommunicationView({
     setResult(null); setPreviewCount(null)
     const res = await fetch('/api/admin/communication/send', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ segment, groupId, dateFrom, dateTo, preview: true }),
+      body: JSON.stringify({ channel, segment, groupId, dateFrom, dateTo, preview: true }),
     })
     const data = await res.json()
     if (!res.ok) { setResult('Błąd: ' + (data.error ?? 'nie udało się')); return }
@@ -42,20 +43,24 @@ export function CommunicationView({
   }
 
   async function handleSend() {
-    if (!subject.trim() || !body.trim()) { setResult('Podaj temat i treść.'); return }
+    if (channel !== 'whatsapp' && !subject.trim()) { setResult('Podaj temat.'); return }
+    if (!body.trim()) { setResult('Podaj treść.'); return }
     if (!confirm(`Wysłać wiadomość${previewCount != null ? ` do ${previewCount} odbiorców` : ''}? Tej operacji nie można cofnąć.`)) return
     setSending(true); setResult(null)
     const res = await fetch('/api/admin/communication/send', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ segment, subject, body, groupId, dateFrom, dateTo }),
+      body: JSON.stringify({ channel, segment, subject, body, groupId, dateFrom, dateTo }),
     })
     const data = await res.json()
     setSending(false)
     if (!res.ok) { setResult('Błąd: ' + (data.error ?? 'nie udało się')); return }
-    if (data.emailConfigured) {
-      setResult(`✅ Wysłano do ${data.sent} odbiorców.`)
+    if (data.channelConfigured) {
+      const failedNote = data.failed ? ` (${data.failed} nieudanych — np. poza 24h oknem WhatsApp)` : ''
+      setResult(`✅ Wysłano do ${data.sent} odbiorców.${failedNote}`)
     } else {
-      setResult(`📋 Segment obejmuje ${data.recipients} odbiorców. E-mail (Resend) jest nieaktywny — skonfiguruj RESEND_API_KEY, aby wysyłać.`)
+      const provider = channel === 'whatsapp' ? 'WhatsApp (Zapier)' : 'E-mail (Resend)'
+      const envVar = channel === 'whatsapp' ? 'ZAPIER_WHATSAPP_WEBHOOK_URL' : 'RESEND_API_KEY'
+      setResult(`📋 Segment obejmuje ${data.recipients} odbiorców. ${provider} jest nieaktywny — skonfiguruj ${envVar}, aby wysyłać.`)
     }
   }
 
@@ -68,6 +73,10 @@ export function CommunicationView({
         <button onClick={() => setChannel('email')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${channel === 'email' ? 'bg-[#23479E] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
           <Mail size={16} />E-mail {!emailConfigured && <span className="text-xs opacity-70">(nieaktywny)</span>}
+        </button>
+        <button onClick={() => setChannel('whatsapp')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${channel === 'whatsapp' ? 'bg-[#23479E] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+          <MessageCircle size={16} />WhatsApp {!whatsappConfigured && <span className="text-xs opacity-70">(nieaktywny)</span>}
         </button>
         <button onClick={() => setChannel('sms')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${channel === 'sms' ? 'bg-[#23479E] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
@@ -129,17 +138,25 @@ export function CommunicationView({
           )}
 
           {/* Treść */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Temat</label>
-            <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="np. Zmiana planu na ten tydzień"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-          </div>
+          {channel !== 'whatsapp' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Temat</label>
+              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="np. Zmiana planu na ten tydzień"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Treść wiadomości</label>
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} placeholder="Cześć! Chcieliśmy poinformować, że..."
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
             <p className="text-xs text-gray-400 mt-1">Każdy odbiorca dostanie spersonalizowane „Cześć [imię]!" na początku.</p>
           </div>
+
+          {channel === 'whatsapp' && segment === 'group' && (
+            <p className="text-xs text-gray-400">
+              WhatsApp nie obsługuje grupowych wątków — każdy uczestnik i prowadzący dostaną tę wiadomość jako osobną wiadomość 1:1.
+            </p>
+          )}
 
           {previewCount != null && <div className="text-sm text-[#23479E] bg-[#EAF3FF] rounded-xl px-4 py-3">Ten segment obejmuje <strong>{previewCount}</strong> odbiorców.</div>}
           {result && <div className="text-sm text-gray-700 bg-gray-50 rounded-xl px-4 py-3">{result}</div>}
@@ -156,7 +173,9 @@ export function CommunicationView({
           </div>
 
           <p className="text-xs text-gray-400 text-center">
-            Wiadomości operacyjne idą przez Resend. Newslettery i kampanie marketingowe planujemy osobnym torem (Brevo/Zapier) — Faza 5.
+            {channel === 'whatsapp'
+              ? 'Wiadomości WhatsApp idą przez Zapier. Odbiorca musi napisać do nas na WhatsApp w ciągu ostatnich 24h, inaczej wysyłka do niego się nie powiedzie.'
+              : 'Wiadomości operacyjne idą przez Resend. Newslettery i kampanie marketingowe planujemy osobnym torem (Brevo/Zapier) — Faza 5.'}
           </p>
         </div>
       )}

@@ -75,6 +75,7 @@ export interface Teacher {
   hourly_rate?: number
   rate_group?: number
   location?: string
+  whatsapp_phone?: string
   profile?: Profile
 }
 

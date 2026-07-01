@@ -26,6 +26,7 @@ export default async function TeacherProfilePage() {
         fullName={teacher.profile?.full_name ?? ''}
         bio={teacher.bio ?? ''}
         contactEmail={teacher.contact_email ?? ''}
+        whatsappPhone={teacher.whatsapp_phone ?? ''}
       />
     </div>
   )

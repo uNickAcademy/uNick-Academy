@@ -8,14 +8,17 @@ export function ProfileForm({
   fullName,
   bio: initialBio,
   contactEmail: initialContactEmail,
+  whatsappPhone: initialWhatsappPhone,
 }: {
   teacherId: string
   fullName: string
   bio: string
   contactEmail: string
+  whatsappPhone: string
 }) {
   const [bio, setBio] = useState(initialBio)
   const [contactEmail, setContactEmail] = useState(initialContactEmail)
+  const [whatsappPhone, setWhatsappPhone] = useState(initialWhatsappPhone)
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState<string | null>(null)
 
@@ -32,7 +35,7 @@ export function ProfileForm({
     const supabase = createClient()
     const { error } = await supabase
       .from('teachers')
-      .update({ bio, contact_email: contactEmail })
+      .update({ bio, contact_email: contactEmail, whatsapp_phone: whatsappPhone || null })
       .eq('id', teacherId)
 
     setSaving(false)
@@ -89,6 +92,18 @@ export function ProfileForm({
             placeholder="contact@unick-academy.pl"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp number</label>
+          <input
+            type="tel"
+            value={whatsappPhone}
+            onChange={(e) => setWhatsappPhone(e.target.value)}
+            placeholder="+48 600 100 200"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
+          />
+          <p className="text-xs text-gray-400 mt-1">Used so the school can message you and your students on WhatsApp.</p>
         </div>
 
         <div>
