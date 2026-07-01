@@ -26,6 +26,7 @@ type CalLesson = {
   color: string
   topic: string
   type: LessonType
+  meetingUrl: string
 }
 
 type TeacherOpt = { id: string; name: string; color: string; location: string }
@@ -63,6 +64,7 @@ type RawLessonRow = {
   topic: string | null
   type: LessonType
   cancelled_at: string | null
+  meeting_url: string | null
   student: { profile: { full_name: string } | null } | null
   teacher: { profile: { full_name: string } | null } | null
   group: { name: string; color: string } | null
@@ -104,7 +106,7 @@ export function AdminCalendar({
     const { data } = await supabase
       .from('lessons')
       .select(`
-        id, starts_at, ends_at, teacher_id, student_id, group_id, topic, type, cancelled_at,
+        id, starts_at, ends_at, teacher_id, student_id, group_id, topic, type, cancelled_at, meeting_url,
         student:students(profile:profiles(full_name)),
         teacher:teachers(profile:profiles(full_name)),
         group:groups(name, color)
@@ -130,6 +132,7 @@ export function AdminCalendar({
         color: l.group ? l.group.color : (teacherColorMap.get(l.teacher_id) ?? '#23479E'),
         topic: l.topic ?? '',
         type: l.type,
+        meetingUrl: l.meeting_url ?? '',
       }))
     setLessons(mapped)
   }
@@ -351,6 +354,7 @@ function ManageLessonModal({
   const [teacherId, setTeacherId] = useState(lesson.teacherId)
   const [type, setType] = useState<LessonType>(lesson.type)
   const [topic, setTopic] = useState(lesson.topic)
+  const [meetingUrl, setMeetingUrl] = useState(lesson.meetingUrl)
   const [mode, setMode] = useState<'edit' | 'cancel'>('edit')
   const [cancelReason, setCancelReason] = useState('')
   const [saving, setSaving] = useState(false)
@@ -389,6 +393,7 @@ function ManageLessonModal({
       teacher_id: teacherId,
       type,
       topic: topic || null,
+      meeting_url: meetingUrl || null,
     }).eq('id', lesson.id)
     setSaving(false)
     if (error) { setError('Nie udało się zapisać: ' + error.message); return }
@@ -470,6 +475,14 @@ function ManageLessonModal({
                 <option value="offline">Stacjonarnie</option>
               </select>
             </div>
+            {type === 'online' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Link do zajęć online (Zoom / Meet)</label>
+                <input type="url" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..."
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+                <p className="text-xs text-gray-400 mt-1">Widoczny dla ucznia na liście jego lekcji.</p>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Temat</label>
               <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="np. Business English"
@@ -739,6 +752,7 @@ function AddLessonModal({
   const [duration, setDuration] = useState(60)
   const [type, setType] = useState<LessonType>('online')
   const [topic, setTopic] = useState('')
+  const [meetingUrl, setMeetingUrl] = useState('')
   const [recurring, setRecurring] = useState(false)
   const [weeks, setWeeks] = useState(8)
   const [saving, setSaving] = useState(false)
@@ -826,6 +840,7 @@ function AddLessonModal({
         group_id: mode === 'group' ? groupId : null,
         teacher_id: teacherId, type, format: mode === 'group' ? 'group' : 'individual', level,
         topic: topic || null, starts_at: r.starts_at, ends_at: r.ends_at,
+        meeting_url: type === 'online' ? (meetingUrl || null) : null,
       }))
     )
     setSaving(false)
@@ -927,6 +942,13 @@ function AddLessonModal({
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="np. Business English"
               className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
+          {type === 'online' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Link do zajęć online (Zoom / Meet, opcjonalnie)</label>
+              <input type="url" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..."
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-200 p-3">
             <label className="flex items-center gap-2.5 cursor-pointer">

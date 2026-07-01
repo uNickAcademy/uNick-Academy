@@ -42,6 +42,7 @@ export default async function KalendarzPage() {
       color: l.group ? l.group.color : (teacherMap.get(l.teacher_id)?.color ?? '#23479E'),
       topic: l.topic ?? '',
       type: l.type,
+      meetingUrl: l.meeting_url ?? '',
     }))
 
   const teacherOptions = teachers
