@@ -1,4 +1,4 @@
-import { getHrEmployees, getHrLessons } from '@/lib/supabase/queries'
+import { getHrEmployees, getHrLessons, getAllTeachersAdmin } from '@/lib/supabase/queries'
 import { EmployeesView } from './EmployeesView'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,8 @@ type LessonExtra = { cancelled_at?: string | null; reschedule_count?: number }
 export default async function HrEmployeesPage() {
   const from = new Date(Date.now() - 30 * 86400000).toISOString()
   const to = new Date(Date.now() + 30 * 86400000).toISOString()
-  const [employees, lessons] = await Promise.all([getHrEmployees(), getHrLessons(from, to)])
+  const [employees, lessons, teachers] = await Promise.all([getHrEmployees(), getHrLessons(from, to), getAllTeachersAdmin()])
+  const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))
 
   const now = Date.now()
   const rows = employees.map((e) => {
@@ -43,5 +44,5 @@ export default async function HrEmployeesPage() {
     }
   })
 
-  return <EmployeesView rows={rows} />
+  return <EmployeesView rows={rows} teacherOptions={teacherOptions} />
 }
