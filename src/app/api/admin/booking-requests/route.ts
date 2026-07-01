@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
   }
 
-  const { id, action, teacherId, slot, rate } = await req.json()
+  const { id, action, teacherId, slot, rate, durationMinutes } = await req.json()
   if (!id || !action) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
 
   const db = createAdminClient()
@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
 
   if (action === 'approve') {
     if (!teacherId || !slot) return NextResponse.json({ error: 'Wybierz nauczyciela i termin' }, { status: 400 })
+    const minutes = Number(durationMinutes) > 0 ? Number(durationMinutes) : 60
     const startsAt = new Date(slot)
-    const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000)
+    const endsAt = new Date(startsAt.getTime() + minutes * 60 * 1000)
 
     if (reqRow.student_id) {
       await db.from('lessons').insert({

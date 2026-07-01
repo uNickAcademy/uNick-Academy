@@ -48,21 +48,28 @@ export function RequestsView({ rows, teacherOptions }: { rows: Row[]; teacherOpt
   )
 }
 
+const DURATION_OPTIONS = [20, 30, 40, 60]
+
 function RequestCard({ r, teacherOptions }: { r: Row; teacherOptions: TeacherOpt[] }) {
   const router = useRouter()
   const [teacherId, setTeacherId] = useState(teacherOptions[0]?.id ?? '')
   const [slot, setSlot] = useState('')
   const [rate, setRate] = useState('')
+  const [duration, setDuration] = useState<number | 'custom'>(60)
+  const [customDuration, setCustomDuration] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const durationMinutes = duration === 'custom' ? Number(customDuration) : duration
 
   async function act(action: 'approve' | 'reject') {
     setError(null)
     if (action === 'approve' && (!teacherId || !slot)) { setError('Wybierz nauczyciela i termin.'); return }
+    if (action === 'approve' && (!durationMinutes || durationMinutes <= 0)) { setError('Podaj poprawny czas zajęć.'); return }
     setBusy(true)
     const res = await fetch('/api/admin/booking-requests', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: r.id, action, teacherId, slot: slot ? new Date(slot).toISOString() : null, rate }),
+      body: JSON.stringify({ id: r.id, action, teacherId, slot: slot ? new Date(slot).toISOString() : null, rate, durationMinutes }),
     })
     setBusy(false)
     if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'Błąd.'); return }
@@ -96,13 +103,24 @@ function RequestCard({ r, teacherOptions }: { r: Row; teacherOptions: TeacherOpt
         {r.notes && <p className="text-xs text-gray-400">{r.notes}</p>}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-gray-100 pt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-gray-100 pt-4">
         <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
           className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
           {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         <input type="datetime-local" value={slot} onChange={(e) => setSlot(e.target.value)}
           className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+        <div className="flex gap-2">
+          <select value={duration} onChange={(e) => setDuration(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
+            className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+            {DURATION_OPTIONS.map((d) => <option key={d} value={d}>{d} min</option>)}
+            <option value="custom">Inny...</option>
+          </select>
+          {duration === 'custom' && (
+            <input type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} placeholder="min"
+              className="w-20 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+          )}
+        </div>
         <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="Stawka zł/h"
           className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
       </div>
