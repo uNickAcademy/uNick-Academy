@@ -24,6 +24,8 @@ export interface Company {
   name: string
   nip?: string
   address?: string
+  is_active: boolean
+  deleted_at?: string | null
 }
 
 export type B2bStage = 'find' | 'approach' | 'convert' | 'retain' | 'expand'

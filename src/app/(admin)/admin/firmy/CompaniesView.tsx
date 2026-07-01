@@ -2,18 +2,22 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search } from 'lucide-react'
+import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search, Trash2, RotateCcw, EyeOff, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-type Company = { id: string; name: string; nip: string; address: string; employeeCount: number; hrName: string | null }
+type Company = { id: string; name: string; nip: string; address: string; employeeCount: number; hrName: string | null; isActive: boolean }
+type DeletedCompany = { id: string; name: string }
 type StudentOpt = { id: string; name: string; companyId: string }
 type Inv = { id: string; companyId: string; number: string; gross: number; period: string; issuedAt: string; companyName: string | null }
 type EntityOpt = { id: string; short_name: string; name: string; vat_payer: boolean }
 
-export function CompaniesView({ companies, students, invoices }: { companies: Company[]; students: StudentOpt[]; invoices: Inv[] }) {
+export function CompaniesView({ companies, students, invoices, deletedCompanies }: {
+  companies: Company[]; students: StudentOpt[]; invoices: Inv[]; deletedCompanies: DeletedCompany[]
+}) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
   const [managing, setManaging] = useState<Company | null>(null)
+  const [showTrash, setShowTrash] = useState(false)
   const [entities, setEntities] = useState<EntityOpt[]>([])
 
   useEffect(() => {
@@ -25,15 +29,43 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
 
   const uaEntity = entities.find((e) => e.vat_payer)
 
+  async function restore(id: string) {
+    const supabase = createClient()
+    await supabase.from('companies').update({ deleted_at: null }).eq('id', id)
+    router.refresh()
+  }
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2"><Building2 size={22} />Firmy (B2B)</h1>
-        <button onClick={() => setCreating(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
-          <Plus size={16} /> Nowa firma
-        </button>
+        <div className="flex items-center gap-2">
+          {deletedCompanies.length > 0 && (
+            <button onClick={() => setShowTrash((v) => !v)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <Trash2 size={16} />Kosz ({deletedCompanies.length})
+            </button>
+          )}
+          <button onClick={() => setCreating(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            <Plus size={16} /> Nowa firma
+          </button>
+        </div>
       </div>
+
+      {showTrash && (
+        <div className="bg-white rounded-2xl border border-gray-100 mb-6 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 text-sm font-bold text-gray-700">Kosz — usunięte firmy</div>
+          <div className="divide-y divide-gray-50">
+            {deletedCompanies.map((d) => (
+              <div key={d.id} className="flex items-center gap-3 px-5 py-3">
+                <p className="flex-1 text-sm font-medium text-gray-900">{d.name}</p>
+                <button onClick={() => restore(d.id)} className="flex items-center gap-1.5 text-xs text-[#23479E] hover:underline font-medium"><RotateCcw size={13} />Przywróć</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {companies.length === 0 ? (
         <div className="bg-white rounded-2xl p-10 border border-gray-100 text-center text-gray-400 text-sm">
@@ -42,10 +74,13 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {companies.map((c) => (
-            <div key={c.id} className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div key={c.id} className={`bg-white rounded-2xl border p-5 ${c.isActive ? 'border-gray-100' : 'border-gray-200 opacity-70'}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-lg font-black text-gray-900">{c.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-black text-gray-900">{c.name}</h3>
+                    {!c.isActive && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 uppercase tracking-wide">Nieaktywna</span>}
+                  </div>
                   {c.nip && <p className="text-xs text-gray-400">NIP: {c.nip}</p>}
                 </div>
                 <span className="flex items-center gap-1 text-xs text-gray-500"><Users size={13} />{c.employeeCount}</span>
@@ -66,7 +101,8 @@ export function CompaniesView({ companies, students, invoices }: { companies: Co
       {managing && (
         <ManageModal company={managing} students={students} uaEntityId={uaEntity?.id ?? null}
           invoices={invoices.filter((i) => i.companyId === managing.id)}
-          onClose={() => setManaging(null)} onChanged={() => router.refresh()} />
+          onClose={() => setManaging(null)} onChanged={() => router.refresh()}
+          onDeleted={() => { setManaging(null); router.refresh() }} />
       )}
     </div>
   )
@@ -206,8 +242,9 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   )
 }
 
-function ManageModal({ company, students, invoices, uaEntityId, onClose, onChanged }: {
-  company: Company; students: StudentOpt[]; invoices: Inv[]; uaEntityId: string | null; onClose: () => void; onChanged: () => void
+function ManageModal({ company, students, invoices, uaEntityId, onClose, onChanged, onDeleted }: {
+  company: Company; students: StudentOpt[]; invoices: Inv[]; uaEntityId: string | null
+  onClose: () => void; onChanged: () => void; onDeleted: () => void
 }) {
   const employees = students.filter((s) => s.companyId === company.id)
   const available = students.filter((s) => !s.companyId)
@@ -217,6 +254,28 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [invNum, setInvNum] = useState(''); const [net, setNet] = useState(''); const [vat, setVat] = useState('23'); const [period, setPeriod] = useState(''); const [gtu, setGtu] = useState('')
+
+  async function toggleActive() {
+    setBusy(true); setError(null)
+    const supabase = createClient()
+    const { error } = await supabase.from('companies').update({ is_active: !company.isActive }).eq('id', company.id)
+    setBusy(false)
+    if (error) { setError('Nie udało się zmienić statusu: ' + error.message); return }
+    onChanged()
+  }
+
+  async function softDelete() {
+    const warning = employees.length > 0
+      ? `Firma ma ${employees.length} przypisanych pracowników — pozostaną w systemie, ale firma zniknie z listy. Trafi do kosza, można ją przywrócić. Kontynuować?`
+      : 'Usunąć firmę? Trafi do kosza, można ją przywrócić.'
+    if (!confirm(warning)) return
+    setBusy(true); setError(null)
+    const supabase = createClient()
+    const { error } = await supabase.from('companies').update({ deleted_at: new Date().toISOString() }).eq('id', company.id)
+    setBusy(false)
+    if (error) { setError('Nie udało się usunąć: ' + error.message); return }
+    onDeleted()
+  }
 
   async function addEmployee() {
     if (!toAdd) return
@@ -351,6 +410,17 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
           </div>
           <p className="text-xs text-gray-400 mt-2">Generowanie PDF i integracja z systemem księgowym (wFirma/Fakturownia) — do włączenia później. Tu rejestrujemy wystawione faktury, widoczne dla HR.</p>
         </section>
+
+        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-gray-100">
+          <button onClick={toggleActive} disabled={busy}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60">
+            {company.isActive ? <><EyeOff size={14} />Oznacz jako nieaktywną</> : <><Eye size={14} />Oznacz jako aktywną</>}
+          </button>
+          <button onClick={softDelete} disabled={busy}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-500 font-medium text-sm hover:bg-red-50 disabled:opacity-60">
+            <Trash2 size={14} />Usuń firmę
+          </button>
+        </div>
       </div>
     </div>
   )

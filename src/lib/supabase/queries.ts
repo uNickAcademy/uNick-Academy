@@ -546,7 +546,7 @@ export async function getHolidays(): Promise<Holiday[]> {
 export async function getAllCompanies(): Promise<(Company & { employeeCount: number; hrName: string | null })[]> {
   const supabase = await createClient()
   const [companiesRes, studentsRes, hrRes] = await Promise.all([
-    supabase.from('companies').select('*').order('created_at', { ascending: false }),
+    supabase.from('companies').select('*').is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('students').select('company_id'),
     supabase.from('profiles').select('full_name, company_id').eq('role', 'hr'),
   ])
@@ -557,6 +557,16 @@ export async function getAllCompanies(): Promise<(Company & { employeeCount: num
   return (companiesRes.data ?? []).map((c) => ({
     ...c, employeeCount: counts[c.id] ?? 0, hrName: hrByCompany[c.id] ?? null,
   })) as (Company & { employeeCount: number; hrName: string | null })[]
+}
+
+export async function getDeletedCompanies(): Promise<Company[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('companies')
+    .select('*')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false })
+  return (data as Company[]) ?? []
 }
 
 export async function getInvoices(): Promise<(Invoice & { companyName: string | null; studentName: string | null })[]> {
