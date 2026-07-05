@@ -30,6 +30,25 @@ module.exports = {
           muted: '#F0EDE8',
           subtle: '#7B8FA1',
         },
+        // Teenpreneurs sub-brand (pages under /teenpreneurs only)
+        tp: {
+          navy: '#101E3C',
+          'navy-soft': '#1B2F57',
+          sky: '#2EA6FF',
+          'sky-tint': '#DDF0FF',
+          coral: '#FF5A48',
+          'coral-deep': '#E8402E',
+          cream: '#FBF6EE',
+          sand: '#F3EBDD',
+          sun: '#FFC94D',
+          mint: '#35C596',
+          lilac: '#9D8CFF',
+          ink: '#22304A',
+        },
+      },
+      fontFamily: {
+        'tp-display': ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+        'tp-editorial': ['var(--font-lora)', 'Georgia', 'serif'],
       },
       boxShadow: {
         card: '0 1px 3px 0 rgb(28 43 74 / 0.08), 0 1px 2px -1px rgb(28 43 74 / 0.06)',

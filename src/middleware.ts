@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(req: NextRequest) {
+  // teenpreneur.academy → the Teenpreneurs sub-site. The domain can be
+  // attached to this Vercel project whenever ready; until then this is inert.
+  const host = req.headers.get('host')?.toLowerCase() ?? ''
+  if (host === 'teenpreneur.academy' || host === 'www.teenpreneur.academy') {
+    const path = req.nextUrl.pathname
+    if (!path.startsWith('/teenpreneurs') && !path.startsWith('/api') && !path.startsWith('/_next')) {
+      const url = req.nextUrl.clone()
+      url.pathname = `/teenpreneurs${path === '/' ? '' : path}`
+      return NextResponse.rewrite(url)
+    }
+  }
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next()
   }
