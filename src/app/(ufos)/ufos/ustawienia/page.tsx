@@ -37,15 +37,15 @@ export default async function UstawieniaPage() {
       </div>
 
       <div className="space-y-4">
-        {/* Integracje */}
-        <a href="/ufos/ustawienia/integracje" className="card flex items-center justify-between py-4 hover:bg-brand-muted/40 transition-colors">
+        {/* Bank / Open Banking */}
+        <a href="/ufos/ustawienia/bank" className="card flex items-center justify-between py-4 hover:bg-brand-muted/40 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-brand-muted flex items-center justify-center">
               <Plug className="w-4 h-4 text-navy-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-navy-500">Integracje</p>
-              <p className="text-xs text-brand-subtle">Źródła danych, mapowanie pól, konfiguracja API</p>
+              <p className="text-sm font-semibold text-navy-500">Połączenie z bankiem</p>
+              <p className="text-xs text-brand-subtle">Open Banking (GoCardless) i import wyciągów CSV</p>
             </div>
           </div>
           <span className="text-xs text-brand-subtle">→</span>

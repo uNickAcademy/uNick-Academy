@@ -4,8 +4,8 @@ import { sendLessonReminder, sendOverdueNotification, sendBulkMessage } from '@/
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
-// Endpoint wywoływany przez Vercel Cron co godzinę
-// vercel.json: { "crons": [{ "path": "/api/cron/reminders", "schedule": "0 * * * *" }] }
+// Endpoint wywoływany przez Vercel Cron raz dziennie o 8:00
+// vercel.json: { "crons": [{ "path": "/api/cron/reminders", "schedule": "0 8 * * *" }] }
 
 export async function GET(req: NextRequest) {
   // Zabezpieczenie – tylko Vercel Cron może wywołać
@@ -16,8 +16,10 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminClient()
   const now = new Date()
+  // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
+  // żeby każda lekcja dostała dokładnie jedno przypomnienie
   const in24h = addHours(now, 24)
-  const window = addHours(now, 25) // ±1h okno
+  const window = addHours(now, 48)
 
   // 1. Przypomnienia o lekcjach 24h wcześniej
   const { data: upcomingLessons } = await supabase
@@ -38,6 +40,7 @@ export async function GET(req: NextRequest) {
       date: format(startsAt, 'EEEE, d MMMM', { locale: pl }),
       time: format(startsAt, 'HH:mm'),
       type: lesson.type,
+      meetLink: lesson.meeting_url ?? undefined,
     })
   }
 

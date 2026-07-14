@@ -232,9 +232,9 @@ export default async function OpsDashboardPage() {
               <Users className="w-4 h-4" />
               Rentowność
             </Link>
-            <Link href="/ufos/import" className="btn-secondary justify-center text-xs py-4 flex-col gap-1.5 h-auto">
+            <Link href="/ufos/platnosci/import" className="btn-secondary justify-center text-xs py-4 flex-col gap-1.5 h-auto">
               <CheckSquare className="w-4 h-4" />
-              Import danych
+              Import wyciągu
             </Link>
           </div>
         </div>

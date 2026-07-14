@@ -49,5 +49,5 @@ Zapisz. Domyślny SMTP Supabase wysyła tylko do członków projektu i ma ostre 
 ---
 
 ### Uwagi
-- Do czasu pełnej konfiguracji rodzice i tak mają dostęp: konta z zapisów online dostają **hasło startowe `!uNickStart2026`** (pokazywane po zapisie), które zmieniają po zalogowaniu.
+- Konta z zapisów online dostają losowe hasło startowe — rodzic ustawia własne hasło przez „Zapomniane hasło" (link wysyłany mailem).
 - Te same dane SMTP (Resend) obsługują równolegle maile aplikacyjne i maile Auth — wystarczy jeden klucz.

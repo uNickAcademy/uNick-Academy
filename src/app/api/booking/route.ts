@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       if (!email || !fullName || !teacherId || !slot) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
       const startsAt = new Date(slot)
       const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000)
-      const { error } = await supabase.rpc('public_book_online', {
+      const { data: meetLink, error } = await supabase.rpc('public_book_online', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_teacher: teacherId, p_starts: startsAt.toISOString(), p_ends: endsAt.toISOString(),
         p_ongoing: !!ongoing, p_weeks: weeks ?? 12,
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         studentName: fullName, teacherName,
         date: format(startsAt, 'EEEE, d MMMM yyyy', { locale: pl }), time: format(startsAt, 'HH:mm'),
         topic: ongoing ? 'Lekcje cykliczne (online)' : 'Lekcja online',
-        type: 'online', meetLink: 'https://meet.google.com/unick-lesson',
+        type: 'online', meetLink: typeof meetLink === 'string' ? meetLink : undefined,
       }).catch(() => {})
       return NextResponse.json({ success: true })
     }

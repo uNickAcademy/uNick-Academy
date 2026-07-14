@@ -33,7 +33,7 @@ npm run dev   # http://localhost:3000
 
 ## Wdrożenie (Vercel + domena unick-academy.pl)
 1. **GitHub:** wypchnij repo (`git push`). `.env.local` jest w `.gitignore` — sekrety nie trafiają do repo.
-2. **Vercel:** [vercel.com/new](https://vercel.com/new) → Import repo → Deploy (framework Next.js wykrywany automatycznie; `vercel.json` dodaje godzinny cron przypomnień).
+2. **Vercel:** [vercel.com/new](https://vercel.com/new) → Import repo → Deploy (framework Next.js wykrywany automatycznie; `vercel.json` dodaje dzienny cron przypomnień o 8:00).
 3. **Zmienne środowiskowe** w Vercel → Settings → Environment Variables (scope: Production) — skopiuj z `.env.local`, ustaw `NEXT_PUBLIC_APP_URL=https://unick-academy.pl`, potem **Redeploy**.
 4. **Domena:** Vercel → Settings → Domains → dodaj `unick-academy.pl` i `www.unick-academy.pl`. U rejestratora ustaw rekordy DNS pokazane przez Vercel:
    - `A` `@` → `76.76.21.21`
@@ -41,10 +41,9 @@ npm run dev   # http://localhost:3000
 5. **Supabase Auth** → URL Configuration: Site URL `https://unick-academy.pl`, Redirect URLs `https://unick-academy.pl/**`.
 6. **Stripe (gdy włączasz płatności):** webhook `https://unick-academy.pl/api/stripe/webhook`, zdarzenia `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`; sekret → `STRIPE_WEBHOOK_SECRET`.
 
-## Konta startowe (zmień hasła po wdrożeniu!)
-- Admin: `admin@unick-academy.pl` / `UNickAdmin2026!`
-- Recepcja: `recepcja@unick-academy.pl` / `UNickRecepcja2026!`
-- Prowadzący: np. `nick@unick-academy.pl` / `UNickTemp2026!`
+## Konta startowe
+Hasła kont startowych nie są przechowywane w repo. Nowe konta i resety haseł:
+Supabase → Authentication → Users, albo „Zapomniane hasło" na stronie logowania.
 
 ## Integracje „gotowe-nieaktywne" (do włączenia kluczami)
 Stripe (płatności live), faktury PDF + Fakturownia/wFirma, SMS, Brevo (marketing), push (VAPID), piksele konwersji Google/Facebook.

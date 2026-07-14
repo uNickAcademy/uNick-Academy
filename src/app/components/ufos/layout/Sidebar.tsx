@@ -42,8 +42,8 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["accounting_ops", "payroll_operator"],
   },
   {
-    href: "/ufos/import",
-    label: "Import danych",
+    href: "/ufos/platnosci/import",
+    label: "Import wyciągu",
     icon: ArrowDownToLine,
     roles: ["owner_cfo", "accounting_ops"],
   },

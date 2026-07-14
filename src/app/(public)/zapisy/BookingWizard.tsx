@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle, ArrowLeft, Monitor, MapPin, User, Users, Star, Clock, CalendarDays } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
 
@@ -60,6 +60,12 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Kod polecenia z linku /zapisy?ref=KOD
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref')
+    if (ref) setReferralCode(ref.toUpperCase())
+  }, [])
+
   const go = (s: typeof screen) => { setHistory((h) => [...h, screen]); setScreen(s) }
   const back = () => { setHistory((h) => { const c = [...h]; const prev = c.pop(); if (prev) setScreen(prev as typeof screen); return c }) }
 
@@ -106,8 +112,10 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
         <div className="bg-[#EAF3FF] border border-blue-100 rounded-2xl p-5 text-left max-w-sm mx-auto">
           <p className="text-sm font-bold text-[#23479E] mb-2">Twoje konto w panelu</p>
           <p className="text-sm text-gray-700">Login: <strong>{email}</strong></p>
-          <p className="text-sm text-gray-700">Hasło startowe: <strong>!uNickStart2026</strong></p>
-          <p className="text-xs text-gray-500 mt-3">Zaloguj się na <strong>unick-academy.pl/login</strong> i zmień hasło w profilu. Jeśli masz już konto u nas, użyj swojego dotychczasowego hasła.</p>
+          <p className="text-xs text-gray-500 mt-3">
+            Aby ustawić hasło, wejdź na <strong>unick-academy.pl/zapomniane-haslo</strong> i podaj swój email —
+            wyślemy link do ustawienia hasła. Jeśli masz już konto u nas, użyj dotychczasowego hasła.
+          </p>
         </div>
       </div>
     )

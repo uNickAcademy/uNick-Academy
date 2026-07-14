@@ -70,7 +70,7 @@ export async function getStudentReferrals(studentId: string): Promise<Referral[]
   const supabase = await createClient()
   const { data } = await supabase
     .from('referrals')
-    .select(`*, referred:students!referred_id(profile:profiles(*))`)
+    .select(`*, referred:students!referred_id(id, full_name, profile:profiles(*))`)
     .eq('referrer_id', studentId)
     .order('created_at', { ascending: false })
   return (data as Referral[]) ?? []
@@ -267,6 +267,17 @@ export async function addCreditToStudent(studentId: string, amount: number, desc
 // ──────────────────────────────────────────
 // POLECENIA
 // ──────────────────────────────────────────
+
+export async function getAllReferrals(): Promise<Referral[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('referrals')
+    .select(`*,
+      referrer:students!referrer_id(id, full_name, referral_code, profile:profiles(full_name)),
+      referred:students!referred_id(id, full_name, profile:profiles(full_name))`)
+    .order('created_at', { ascending: false })
+  return (data as Referral[]) ?? []
+}
 
 export async function getStudentByReferralCode(code: string): Promise<Student | null> {
   const supabase = await createClient()
