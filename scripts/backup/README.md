@@ -34,6 +34,10 @@ export SUPABASE_DB_URL="postgresql://postgres:HASLO@db.xkydfgunafxfuzsggmca.supa
 export BACKUP_DIR="$HOME/UNickAcademyBackups"
 export BACKUP_PASSPHRASE="wybierz-silne-haslo-i-zapisz-je-w-menedzerze-hasel"
 export BACKUP_RETENTION_DAYS="60"
+# opcjonalnie: druga kopia wysyłana na osobną gałąź tego repo na GitHubie (patrz sekcja 5)
+export BACKUP_GIT_PUSH="true"
+export BACKUP_GIT_BRANCH="db-backups"
+export BACKUP_GIT_REMOTE="origin"
 ```
 
 **Windows** (`%USERPROFILE%\.unick-backup.env.ps1`):
@@ -42,6 +46,10 @@ $env:SUPABASE_DB_URL = "postgresql://postgres:HASLO@db.xkydfgunafxfuzsggmca.supa
 $env:BACKUP_DIR = "$env:USERPROFILE\UNickAcademyBackups"
 $env:BACKUP_PASSPHRASE = "wybierz-silne-haslo-i-zapisz-je-w-menedzerze-hasel"
 $env:BACKUP_RETENTION_DAYS = "60"
+# opcjonalnie: druga kopia wysyłana na osobną gałąź tego repo na GitHubie (patrz sekcja 5)
+$env:BACKUP_GIT_PUSH = "true"
+$env:BACKUP_GIT_BRANCH = "db-backups"
+$env:BACKUP_GIT_REMOTE = "origin"
 ```
 
 Connection string (z hasłem) znajdziesz w Supabase: **Project Settings → Database →
@@ -95,7 +103,42 @@ Załaduj: `launchctl load ~/Library/LaunchAgents/pl.unick.dbbackup.plist`
    pominiętym uruchomieniu zaplanowanym” — to nadrabia backup, jeśli komputer był
    wyłączony o zaplanowanej porze.
 
-## 5. Przywracanie kopii (na wypadek awarii)
+## 5. Druga kopia: wysyłka na GitHub (opcjonalnie)
+
+Jeśli chcesz mieć backup **poza dyskiem tego komputera** (np. na wypadek zniszczenia
+lub kradzieży laptopa), skrypt może dodatkowo wypychać **zaszyfrowaną** kopię na
+osobną gałąź `db-backups` w tym samym repozytorium (`unick-academy`) na GitHubie.
+Włącza się to ustawieniem `BACKUP_GIT_PUSH="true"` w pliku konfiguracyjnym (sekcja 2).
+
+**Jak to działa:**
+- Gałąź `db-backups` jest całkowicie odseparowana od `main` — nigdy nie jest z nią
+  mergowana i nie wpływa na wdrożenie produkcyjne (Vercel deployuje tylko `main`).
+- Skrypt trzyma osobny `git worktree` w `BACKUP_DIR/.git-backup-worktree`, więc **nie
+  rusza** Twojego bieżąco wybranego brancha ani niezacommitowanych zmian w głównym
+  folderze repo.
+- Każde uruchomienie commituje nowy plik `.dump.gpg`, usuwa z gałęzi pliki starsze niż
+  `BACKUP_RETENTION_DAYS` i wypycha (`git push`) na `BACKUP_GIT_REMOTE`.
+- `pg-backup.sh`/`.ps1` **odmówią wysyłki**, jeśli `BACKUP_PASSPHRASE` nie jest
+  ustawione — na GitHub nigdy nie trafia niezaszyfrowany zrzut.
+
+**Wymagania przed włączeniem:**
+1. **Repozytorium `unick-academy` musi być prywatne.** Nawet zaszyfrowane, kopie
+   danych uczniów i danych finansowych nie powinny być publicznie dostępne — sprawdź
+   to w ustawieniach repo na GitHubie (Settings → General → Danger Zone → Visibility)
+   zanim włączysz `BACKUP_GIT_PUSH`.
+2. Komputer, na którym uruchamiasz backup, musi mieć skonfigurowany dostęp `git push`
+   do tego repo (SSH klucz lub zapisany token/credential helper) — ten sam, którego
+   normalnie używasz do `git push` w tym repo z tej maszyny.
+3. Hasło z `BACKUP_PASSPHRASE` zapisz w menedżerze haseł — to jedyny sposób na
+   odszyfrowanie kopii z GitHuba w razie przywracania.
+
+Dostęp do gałęzi `db-backups` mają wszyscy, którzy mają dostęp do repo `unick-academy`
+(np. przyszli developerzy) — to inny poziom ryzyka niż kopia lokalna. Jeśli w
+przyszłości zechcesz ograniczyć dostęp do backupów tylko do wybranych osób,
+niezależnie od dostępu do kodu aplikacji, przenieś tę funkcję na osobne, prywatne
+repozytorium (zmieniając `BACKUP_GIT_REMOTE` na jego URL).
+
+## 6. Przywracanie kopii (na wypadek awarii)
 
 ```bash
 # jeśli plik jest zaszyfrowany:
