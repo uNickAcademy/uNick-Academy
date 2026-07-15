@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
+import { sendPaymentReceipt } from '@/lib/email/send'
+
+// Wysyła paragon na e-mail ucznia po zaksięgowaniu wpłaty (best-effort, nie blokuje)
+async function emailReceipt(
+  supabase: ReturnType<typeof createAdminClient>,
+  studentId: string, amount: number, method: string,
+) {
+  try {
+    const { data: student } = await supabase
+      .from('students')
+      .select('full_name, profile:profiles(full_name, email)')
+      .eq('id', studentId)
+      .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prof: any = Array.isArray((student as any)?.profile) ? (student as any).profile[0] : (student as any)?.profile
+    if (!prof?.email) return
+    const { data: txs } = await supabase.from('transactions').select('type, amount').eq('student_id', studentId)
+    const balanceAfter = (txs ?? []).reduce((acc, t) => t.type === 'charge' ? acc - Number(t.amount) : acc + Number(t.amount), 0)
+    await sendPaymentReceipt(prof.email, {
+      studentName: student?.full_name ?? prof.full_name ?? '',
+      amount, method, balanceAfter,
+    })
+  } catch (err) {
+    console.error('[Stripe] Nie udało się wysłać paragonu:', err)
+  }
+}
 
 // Leniwa inicjalizacja — klient powstaje dopiero w handlerze, gdy jest klucz.
 function getStripe(): Stripe | null {
@@ -40,14 +66,16 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
       const studentId = session.metadata?.studentId
       if (studentId && session.payment_status === 'paid') {
+        const amount = (session.amount_total ?? 0) / 100
         // Saldo przeliczy trigger trg_recalc_balance
         await supabase.from('transactions').insert({
           student_id: studentId,
           type: 'payment',
-          amount: (session.amount_total ?? 0) / 100,
+          amount,
           description: 'Wpłata online (Stripe)',
         })
         await supabase.from('students').update({ status: 'active' }).eq('id', studentId)
+        await emailReceipt(supabase, studentId, amount, 'Płatność online (BLIK / Przelewy24 / karta)')
       }
       break
     }
@@ -64,11 +92,12 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (student) {
+        const amount = (invoice.amount_paid ?? 0) / 100
         // Dodaj transakcję wpłaty
         await supabase.from('transactions').insert({
           student_id: student.id,
           type: 'payment',
-          amount: (invoice.amount_paid ?? 0) / 100,
+          amount,
           description: `Wpłata – faktura ${invoice.number}`,
         })
 
@@ -77,6 +106,7 @@ export async function POST(req: NextRequest) {
           .from('students')
           .update({ status: 'active' })
           .eq('id', student.id)
+        await emailReceipt(supabase, student.id, amount, `Faktura ${invoice.number}`)
       }
       break
     }

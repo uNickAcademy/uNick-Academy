@@ -211,6 +211,44 @@ export function overdueEmail(params: {
 }
 
 // ──────────────────────────────────────────
+// 7. Potwierdzenie wpłaty (paragon)
+// ──────────────────────────────────────────
+export function paymentReceiptEmail(params: {
+  studentName: string
+  amount: number
+  method: string
+  balanceAfter?: number
+}): { subject: string; html: string } {
+  const { studentName, amount, method, balanceAfter } = params
+  const balanceLine = typeof balanceAfter === 'number'
+    ? `<tr><td style="color:#94a3b8;font-size:13px;padding:6px 0;">Saldo po wpłacie</td><td style="font-weight:700;font-size:14px;text-align:right;">${balanceAfter >= 0 ? '+' : ''}${Math.round(balanceAfter)} zł</td></tr>`
+    : ''
+  return {
+    subject: `Potwierdzenie wpłaty ${amount} zł ✅`,
+    html: wrap(`
+      <h2 style="font-size:22px;font-weight:900;margin:0 0 8px;">Dziękujemy za wpłatę! ✅</h2>
+      <p style="color:#64748b;font-size:15px;margin:0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Zaksięgowaliśmy Twoją płatność.
+      </p>
+
+      <div style="background:#f0fdf4;border-radius:12px;padding:20px;margin-bottom:24px;border-left:4px solid #22c55e;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="color:#94a3b8;font-size:13px;padding:6px 0;">Kwota</td><td style="font-weight:900;font-size:20px;text-align:right;color:#15803d;">${amount} zł</td></tr>
+          <tr><td style="color:#94a3b8;font-size:13px;padding:6px 0;">Metoda</td><td style="font-weight:700;font-size:14px;text-align:right;">${method}</td></tr>
+          ${balanceLine}
+        </table>
+      </div>
+
+      ${btn('Zobacz rozliczenia →', `${process.env.NEXT_PUBLIC_APP_URL}/rozliczenia`)}
+
+      <p style="color:#94a3b8;font-size:13px;margin:24px 0 0;">
+        Potrzebujesz faktury? Napisz na <a href="mailto:hello@unick-academy.pl" style="color:#7c3aed;">hello@unick-academy.pl</a>
+      </p>
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
 // 6. Tygodniowe podsumowanie postępów (retencja)
 // ──────────────────────────────────────────
 export function progressDigestEmail(params: {

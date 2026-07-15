@@ -7,6 +7,7 @@ import {
   referralEmail,
   bulkMessageEmail,
   progressDigestEmail,
+  paymentReceiptEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -104,6 +105,16 @@ export async function sendReferralNotification(to: string, params: {
   creditAmount: number
 }) {
   const { subject, html } = referralEmail(params)
+  await send(to, subject, html)
+}
+
+export async function sendPaymentReceipt(to: string, params: {
+  studentName: string
+  amount: number
+  method: string
+  balanceAfter?: number
+}) {
+  const { subject, html } = paymentReceiptEmail(params)
   await send(to, subject, html)
 }
 
