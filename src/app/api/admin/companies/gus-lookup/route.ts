@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { isGusConfigured, lookupByNip } from '@/lib/gus/client'
+import { lookupCompanyByNip } from '@/lib/gus/lookup'
 
 export async function GET(req: Request) {
   const supabase = await createClient()
@@ -16,21 +16,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
   }
 
-  if (!isGusConfigured()) {
-    return NextResponse.json({ error: 'Wyszukiwanie GUS nie jest skonfigurowane' }, { status: 503 })
-  }
-
   const nip = new URL(req.url).searchParams.get('nip') ?? ''
   if (nip.replace(/[^0-9]/g, '').length !== 10) {
     return NextResponse.json({ error: 'Podaj poprawny NIP (10 cyfr)' }, { status: 400 })
   }
 
   try {
-    const company = await lookupByNip(nip)
+    const company = await lookupCompanyByNip(nip)
     return NextResponse.json(company)
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Błąd GUS' },
+      { error: e instanceof Error ? e.message : 'Nie udało się pobrać danych firmy' },
       { status: 500 }
     )
   }

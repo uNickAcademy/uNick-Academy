@@ -9,7 +9,8 @@ export async function GET() {
     stripeWebhook: !!process.env.STRIPE_WEBHOOK_SECRET,
     resend: !!process.env.RESEND_API_KEY,
     whatsapp: !!process.env.ZAPIER_WHATSAPP_WEBHOOK_URL,
-    gus: !!process.env.GUS_API_KEY,
+    nipLookup: true, // biała lista MF – działa bez klucza
+    gusEnrichment: !!process.env.GUS_API_KEY, // opcjonalne, bogatszy adres
     cron: !!process.env.CRON_SECRET,
     appUrl: !!process.env.NEXT_PUBLIC_APP_URL,
     aiCfo: !!process.env.ANTHROPIC_API_KEY,

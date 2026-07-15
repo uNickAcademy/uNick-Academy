@@ -145,12 +145,12 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       .then(async (res) => {
         const data = await res.json()
         if (cancelled) return
-        if (res.status === 503) { setStatus('not_configured'); setGusError(data.error ?? 'Wyszukiwanie GUS nie jest skonfigurowane'); return }
-        if (!res.ok) { setStatus('error'); setGusError(data.error ?? 'Błąd GUS'); return }
+        if (res.status === 503) { setStatus('not_configured'); setGusError(data.error ?? 'Wyszukiwanie nie jest dostępne'); return }
+        if (!res.ok) { setStatus('error'); setGusError(data.error ?? 'Nie znaleziono firmy'); return }
         setGusData(data as GusResult)
         setStatus('found')
       })
-      .catch(() => { if (!cancelled) { setStatus('error'); setGusError('Nie udało się połączyć z GUS') } })
+      .catch(() => { if (!cancelled) { setStatus('error'); setGusError('Nie udało się pobrać danych firmy') } })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nipDigits, attempt])
@@ -162,7 +162,7 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
   async function save() {
     setError(null)
-    const useManual = status === 'not_configured'
+    const useManual = status === 'not_configured' || status === 'error'
     const name = useManual ? manualName.trim() : gusData?.name.trim()
     if (!name) { setError('Podaj nazwę firmy.'); return }
     if (nipDigits.length !== 10) { setError('Podaj poprawny NIP (10 cyfr).'); return }
@@ -177,7 +177,7 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
     onSaved()
   }
 
-  const canSave = (status === 'found' && !!gusData) || (status === 'not_configured' && manualName.trim().length > 0)
+  const canSave = (status === 'found' && !!gusData) || ((status === 'not_configured' || status === 'error') && manualName.trim().length > 0)
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -196,25 +196,29 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
                 <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 animate-pulse" />
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Wpisz 10-cyfrowy NIP — nazwa i adres firmy zostaną pobrane automatycznie z rejestru GUS.</p>
+            <p className="text-xs text-gray-400 mt-1">Wpisz 10-cyfrowy NIP — nazwa i adres firmy zostaną pobrane automatycznie z rejestru (biała lista MF / GUS).</p>
           </div>
 
           {status === 'loading' && (
-            <p className="text-sm text-gray-500">Szukam danych w GUS...</p>
+            <p className="text-sm text-gray-500">Szukam danych firmy...</p>
           )}
 
           {status === 'found' && gusData && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-1">
               <p className="text-sm font-bold text-gray-900">{gusData.name}</p>
-              <p className="text-xs text-gray-600">{formatGusAddress(gusData.address) || 'Brak adresu w GUS'}</p>
+              <p className="text-xs text-gray-600">{formatGusAddress(gusData.address) || 'Brak adresu w rejestrze'}</p>
               {gusData.regon && <p className="text-xs text-gray-400">REGON: {gusData.regon}</p>}
             </div>
           )}
 
           {status === 'error' && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-              <p className="text-xs text-red-600 mb-2">{gusError}</p>
-              <button onClick={retry} className="text-xs font-medium text-[#23479E] hover:underline">Spróbuj ponownie</button>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-amber-700">{gusError} — możesz dodać dane ręcznie.</p>
+              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Nazwa firmy"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+              <input type="text" value={manualAddress} onChange={(e) => setManualAddress(e.target.value)} placeholder="Adres"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+              <button onClick={retry} className="text-xs font-medium text-[#23479E] hover:underline">Spróbuj wyszukać ponownie</button>
             </div>
           )}
 
