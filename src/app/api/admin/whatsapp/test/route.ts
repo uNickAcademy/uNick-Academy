@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isWhatsAppConfigured()) {
-    return NextResponse.json({ error: 'WhatsApp nie jest skonfigurowany (brak ZAPIER_WHATSAPP_WEBHOOK_URL)' }, { status: 503 })
+    return NextResponse.json({ error: 'WhatsApp nie jest skonfigurowany (brak WHATSAPP_WEBHOOK_URL)' }, { status: 503 })
   }
 
   const { phone } = await req.json()

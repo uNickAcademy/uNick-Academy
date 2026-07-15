@@ -1,20 +1,24 @@
-// Wysyłka WhatsApp przez Zapier: nasza aplikacja woła webhook ("Webhooks by Zapier: Catch Hook"),
-// który w Zapie jest podłączony do akcji "WhatsApp Business: Send Message". Zapier nie udostępnia
-// tworzenia/zarządzania grupami WhatsApp (to ograniczenie samego Meta Business API, nie Zapiera),
-// więc "lekcja grupowa" = wiadomość wysłana indywidualnie do każdego uczestnika + prowadzącego.
-
-const WEBHOOK_URL_ENV = 'ZAPIER_WHATSAPP_WEBHOOK_URL'
+// Wysyłka WhatsApp przez webhook: aplikacja woła skonfigurowany URL żądaniem POST
+// z ciałem JSON { to, message }. Po drugiej stronie może stać dowolny mostek
+// (Make.com, Pipedream, Zapier, n8n…) podłączony do akcji "WhatsApp: Send Message".
+// WhatsApp Business API nie obsługuje wątków grupowych (ograniczenie Meta), więc
+// "lekcja grupowa" = osobna wiadomość 1:1 do każdego uczestnika + prowadzącego.
+//
+// Akceptujemy obie nazwy zmiennej (nowa, neutralna + starsza zapierowa) dla zgodności.
+function getWebhookUrl(): string | undefined {
+  return process.env.WHATSAPP_WEBHOOK_URL || process.env.ZAPIER_WHATSAPP_WEBHOOK_URL
+}
 
 export function isWhatsAppConfigured() {
-  return !!process.env[WEBHOOK_URL_ENV]
+  return !!getWebhookUrl()
 }
 
 export type WhatsAppRecipient = { phone: string; name: string }
 
 async function sendOne(phone: string, message: string): Promise<boolean> {
-  const url = process.env[WEBHOOK_URL_ENV]
+  const url = getWebhookUrl()
   if (!url) {
-    console.warn('[WhatsApp] Brak ZAPIER_WHATSAPP_WEBHOOK_URL — pomijam wysyłkę.')
+    console.warn('[WhatsApp] Brak WHATSAPP_WEBHOOK_URL — pomijam wysyłkę.')
     return false
   }
   try {
