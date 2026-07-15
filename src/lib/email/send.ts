@@ -6,6 +6,7 @@ import {
   overdueEmail,
   referralEmail,
   bulkMessageEmail,
+  progressDigestEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -103,5 +104,18 @@ export async function sendReferralNotification(to: string, params: {
   creditAmount: number
 }) {
   const { subject, html } = referralEmail(params)
+  await send(to, subject, html)
+}
+
+export async function sendProgressDigest(to: string, params: {
+  studentName: string
+  weekLabel: string
+  lessonsCount: number
+  hours: number
+  topics: string[]
+  homework: string[]
+  nextLesson?: { date: string; time: string } | null
+}) {
+  const { subject, html } = progressDigestEmail(params)
   await send(to, subject, html)
 }

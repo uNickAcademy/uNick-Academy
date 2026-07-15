@@ -211,6 +211,63 @@ export function overdueEmail(params: {
 }
 
 // ──────────────────────────────────────────
+// 6. Tygodniowe podsumowanie postępów (retencja)
+// ──────────────────────────────────────────
+export function progressDigestEmail(params: {
+  studentName: string
+  weekLabel: string
+  lessonsCount: number
+  hours: number
+  topics: string[]
+  homework: string[]
+  nextLesson?: { date: string; time: string } | null
+}): { subject: string; html: string } {
+  const { studentName, weekLabel, lessonsCount, hours, topics, homework, nextLesson } = params
+  const topicsHtml = topics.length
+    ? topics.map((t) => `<li style="margin-bottom:4px;">${t}</li>`).join('')
+    : '<li style="color:#94a3b8;">—</li>'
+  const hwHtml = homework.length
+    ? `<div style="background:#fffbeb;border-radius:12px;padding:16px 20px;margin-bottom:24px;border-left:4px solid #f59e0b;">
+         <p style="margin:0 0 8px;font-size:13px;color:#92400e;font-weight:700;">PRACA DOMOWA</p>
+         <ul style="margin:0;padding-left:18px;font-size:14px;color:#78350f;">${homework.map((h) => `<li style="margin-bottom:4px;">${h}</li>`).join('')}</ul>
+       </div>`
+    : ''
+  return {
+    subject: `Twoje postępy w tym tygodniu 🦄 (${lessonsCount} ${lessonsCount === 1 ? 'lekcja' : 'lekcje'})`,
+    html: wrap(`
+      <h2 style="font-size:22px;font-weight:900;margin:0 0 8px;">Cześć ${studentName.split(' ')[0]}! 👋</h2>
+      <p style="color:#64748b;font-size:15px;line-height:1.7;margin:0 0 24px;">
+        Oto podsumowanie Twojej nauki (${weekLabel}). Świetna robota — tak trzymaj!
+      </p>
+
+      <div style="display:flex;gap:12px;margin-bottom:24px;">
+        <div style="flex:1;background:#f5f3ff;border-radius:12px;padding:16px;text-align:center;">
+          <p style="margin:0;font-size:28px;font-weight:900;color:#5b21b6;">${lessonsCount}</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#6d28d9;">${lessonsCount === 1 ? 'lekcja' : 'lekcje'}</p>
+        </div>
+        <div style="flex:1;background:#eff6ff;border-radius:12px;padding:16px;text-align:center;">
+          <p style="margin:0;font-size:28px;font-weight:900;color:#1d4ed8;">${hours}h</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#2563eb;">nauki</p>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:13px;color:#475569;font-weight:700;">CO PRZEROBILIŚCIE</p>
+        <ul style="margin:0;padding-left:18px;font-size:14px;color:#334155;">${topicsHtml}</ul>
+      </div>
+
+      ${hwHtml}
+
+      ${nextLesson ? `<p style="color:#475569;font-size:14px;margin:0 0 20px;">📅 Następna lekcja: <strong>${nextLesson.date} o ${nextLesson.time}</strong></p>` : ''}
+
+      ${btn('Zobacz swoje postępy →', `${process.env.NEXT_PUBLIC_APP_URL}/postepy`)}
+
+      <p style="color:#94a3b8;font-size:13px;margin:24px 0 0;">Do zobaczenia na kolejnej lekcji! 🦄</p>
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
 // 5. Powiadomienie o poleceniu
 // ──────────────────────────────────────────
 export function referralEmail(params: {
