@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Availability } from '@/types'
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
 
 // 30-minute slots from 8:00 to 21:30
 const SLOTS = Array.from({ length: 28 }, (_, i) => ({
@@ -110,7 +110,7 @@ export function AvailabilityGrid({
     }
 
     setSaving(false)
-    setSavedMsg('Saved!')
+    setSavedMsg('Zapisano!')
   }
 
   return (
@@ -153,7 +153,7 @@ export function AvailabilityGrid({
           disabled={saving}
           className="px-5 py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
         >
-          {saving ? 'Saving...' : 'Save availability'}
+          {saving ? 'Zapisywanie...' : 'Zapisz dostępność'}
         </button>
         {savedMsg && <span className="text-sm text-gray-500">{savedMsg}</span>}
       </div>

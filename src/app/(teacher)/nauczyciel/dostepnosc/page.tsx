@@ -16,9 +16,9 @@ export default async function TeacherAvailabilityPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Availability</h1>
+        <h1 className="text-2xl font-black text-gray-900">Dostępność</h1>
         <p className="text-gray-500 mt-1">
-          Mark the hours when you are available for lessons. This schedule is visible to students.
+          Zaznacz godziny, w których możesz prowadzić lekcje. Ten grafik widzą uczniowie przy zapisie.
         </p>
       </div>
 

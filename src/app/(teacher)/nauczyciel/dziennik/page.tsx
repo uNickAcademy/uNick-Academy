@@ -33,8 +33,8 @@ export default async function TeacherRegisterPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Register</h1>
-        <p className="text-gray-500 mt-1">Mark attendance, lesson topics, homework and share materials.</p>
+        <h1 className="text-2xl font-black text-gray-900">Dziennik</h1>
+        <p className="text-gray-500 mt-1">Zaznaczaj obecność, temat lekcji, pracę domową i udostępniaj materiały.</p>
       </div>
       <RegisterView rows={rows} teacherId={teacher.id} />
     </div>

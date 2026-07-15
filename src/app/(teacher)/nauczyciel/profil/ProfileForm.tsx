@@ -42,7 +42,7 @@ export function ProfileForm({
       .eq('id', teacherId)
 
     setSaving(false)
-    setSavedMsg(error ? 'Failed to save.' : 'Saved!')
+    setSavedMsg(error ? 'Nie udało się zapisać.' : 'Zapisano!')
   }
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -64,11 +64,11 @@ export function ProfileForm({
     setPasswordSaving(false)
 
     if (error) {
-      setPasswordMsg('Failed to change password.')
+      setPasswordMsg('Nie udało się zmienić hasła.')
       return
     }
 
-    setPasswordMsg('Password changed!')
+    setPasswordMsg('Hasło zmienione!')
     setNewPassword('')
     setConfirmPassword('')
   }
@@ -77,7 +77,7 @@ export function ProfileForm({
     <div className="space-y-6">
       <form onSubmit={handleSaveProfile} className="bg-white rounded-2xl p-6 border border-gray-100 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Imię i nazwisko</label>
           <input
             type="text"
             value={fullName}
@@ -87,7 +87,7 @@ export function ProfileForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contact email (visible to students)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">E-mail kontaktowy (widoczny dla uczniów)</label>
           <input
             type="email"
             value={contactEmail}
@@ -98,7 +98,7 @@ export function ProfileForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Numer WhatsApp</label>
           <input
             type="tel"
             value={whatsappPhone}
@@ -106,11 +106,11 @@ export function ProfileForm({
             placeholder="+48 600 100 200"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
           />
-          <p className="text-xs text-gray-400 mt-1">Used so the school can message you and your students on WhatsApp.</p>
+          <p className="text-xs text-gray-400 mt-1">Dzięki temu szkoła może kontaktować się z Tobą i uczniami przez WhatsApp.</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Intro video (YouTube link)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Film „poznaj mnie” (link YouTube)</label>
           <input
             type="url"
             value={videoUrl}
@@ -119,7 +119,7 @@ export function ProfileForm({
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors"
           />
           <p className="text-xs text-gray-400 mt-1">
-            If set, students see a video tile instead of your photo on the &quot;Meet Us&quot; page — clicking it plays the video.
+            Jeśli ustawisz, uczniowie zobaczą kafelek z filmem zamiast zdjęcia na stronie „Poznaj nas” — kliknięcie odtwarza film.
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export function ProfileForm({
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={5}
-            placeholder="Tell students about yourself..."
+            placeholder="Napisz kilka słów o sobie..."
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#23479E] text-sm transition-colors resize-none"
           />
         </div>
@@ -140,16 +140,16 @@ export function ProfileForm({
             disabled={saving}
             className="px-5 py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
           >
-            {saving ? 'Saving...' : 'Save changes'}
+            {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
           </button>
           {savedMsg && <span className="text-sm text-gray-500">{savedMsg}</span>}
         </div>
       </form>
 
       <form onSubmit={handleChangePassword} className="bg-white rounded-2xl p-6 border border-gray-100 space-y-4">
-        <h3 className="font-bold text-gray-900">Change password</h3>
+        <h3 className="font-bold text-gray-900">Zmiana hasła</h3>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nowe hasło</label>
           <input
             type="password"
             value={newPassword}
@@ -159,7 +159,7 @@ export function ProfileForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm new password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Powtórz nowe hasło</label>
           <input
             type="password"
             value={confirmPassword}
@@ -174,7 +174,7 @@ export function ProfileForm({
             disabled={passwordSaving}
             className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60"
           >
-            {passwordSaving ? 'Saving...' : 'Change password'}
+            {passwordSaving ? 'Zapisywanie...' : 'Zmień hasło'}
           </button>
           {passwordMsg && <span className="text-sm text-gray-500">{passwordMsg}</span>}
         </div>

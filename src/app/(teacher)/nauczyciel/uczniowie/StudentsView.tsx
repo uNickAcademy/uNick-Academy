@@ -20,10 +20,10 @@ const LEVEL_COLORS: Record<string, string> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  active: 'Active',
-  trial: 'Trial',
-  overdue: 'Overdue',
-  paused: 'Paused',
+  active: 'Aktywny',
+  trial: 'Próbny',
+  overdue: 'Zaległość',
+  paused: 'Wstrzymany',
 }
 
 export function StudentsView({ students, lessons }: { students: Student[]; lessons: Lesson[] }) {
@@ -58,7 +58,7 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
           }`}
         >
           <List size={15} />
-          List
+          Lista
         </button>
         <button
           onClick={() => setView('calendar')}
@@ -67,14 +67,14 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
           }`}
         >
           <CalendarIcon size={15} />
-          Calendar
+          Kalendarz
         </button>
       </div>
 
       {view === 'list' ? (
         students.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center text-gray-400 text-sm">
-            You don&apos;t have any assigned students yet.
+            Nie masz jeszcze przypisanych uczniów.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,15 +105,15 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
                       {nextLesson.type === 'online' ? <Video size={16} className="text-[#23479E]" /> : <MapPin size={16} className="text-[#23479E]" />}
                       <div>
                         <p className="text-xs font-semibold text-gray-900">
-                          {new Date(nextLesson.starts_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          {new Date(nextLesson.starts_at).toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })}
                           {' · '}
-                          {new Date(nextLesson.starts_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(nextLesson.starts_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p className="text-xs text-gray-500">{nextLesson.topic || 'Lesson'}</p>
+                        <p className="text-xs text-gray-500">{nextLesson.topic || 'Lekcja'}</p>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-400">No lessons scheduled in the next 14 days.</p>
+                    <p className="text-xs text-gray-400">Brak lekcji w najbliższych 14 dniach.</p>
                   )}
                 </div>
               )
@@ -126,7 +126,7 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
             <div className="border-b border-gray-100" />
             {days.map((d) => (
               <div key={d.toISOString()} className="border-b border-gray-100 border-l border-gray-50 px-3 py-2 text-center">
-                <p className="text-xs font-medium text-gray-400">{d.toLocaleDateString('en-GB', { weekday: 'short' })}</p>
+                <p className="text-xs font-medium text-gray-400">{d.toLocaleDateString('pl-PL', { weekday: 'short' })}</p>
                 <p className="text-sm font-bold text-gray-900">{d.getDate()}</p>
               </div>
             ))}
@@ -144,10 +144,10 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
                         <div
                           key={l.id}
                           className="absolute inset-0.5 rounded-lg px-2 py-1 bg-[#23479E] overflow-hidden"
-                          title={l.topic || 'Lesson'}
+                          title={l.topic || 'Lekcja'}
                         >
                           <p className="text-white text-xs font-bold leading-tight truncate">{l.student?.full_name ?? l.student?.profile?.full_name}</p>
-                          <p className="text-white/75 text-xs truncate">{l.topic || 'Lesson'}</p>
+                          <p className="text-white/75 text-xs truncate">{l.topic || 'Lekcja'}</p>
                         </div>
                       ))}
                     </div>

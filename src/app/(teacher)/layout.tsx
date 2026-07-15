@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, User, Calendar, Users, BookOpen, LogOut } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/nauczyciel/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/nauczyciel/dziennik', label: 'Register', icon: BookOpen },
-  { href: '/nauczyciel/profil', label: 'Profile', icon: User },
-  { href: '/nauczyciel/dostepnosc', label: 'Availability', icon: Calendar },
-  { href: '/nauczyciel/uczniowie', label: 'Students', icon: Users },
+  { href: '/nauczyciel/dashboard', label: 'Panel', icon: LayoutDashboard },
+  { href: '/nauczyciel/dziennik', label: 'Dziennik', icon: BookOpen },
+  { href: '/nauczyciel/profil', label: 'Profil', icon: User },
+  { href: '/nauczyciel/dostepnosc', label: 'Dostępność', icon: Calendar },
+  { href: '/nauczyciel/uczniowie', label: 'Uczniowie', icon: Users },
 ]
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +48,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         <form action="/api/auth/logout" method="post">
           <button type="submit" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all w-full">
             <LogOut size={18} />
-            Log out
+            Wyloguj się
           </button>
         </form>
       </aside>

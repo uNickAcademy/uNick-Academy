@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Video, MapPin, X, Plus, Trash2, BookOpen, Check, Calendar } from 'lucide-react'
+import { Video, MapPin, X, Plus, Trash2, BookOpen, Check, Calendar, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { AttendanceStatus, LanguageLevel, LessonType } from '@/types'
 
@@ -22,14 +22,14 @@ type Row = {
 }
 
 const ATT_CONFIG: Record<AttendanceStatus, { label: string; color: string }> = {
-  scheduled: { label: 'Scheduled', color: 'bg-gray-100 text-gray-600' },
-  present: { label: 'Present', color: 'bg-green-100 text-green-700' },
-  absent: { label: 'Absent', color: 'bg-red-100 text-red-700' },
-  excused: { label: 'Excused', color: 'bg-amber-100 text-amber-700' },
+  scheduled: { label: 'Do wpisania', color: 'bg-gray-100 text-gray-600' },
+  present: { label: 'Obecny', color: 'bg-green-100 text-green-700' },
+  absent: { label: 'Nieobecny', color: 'bg-red-100 text-red-700' },
+  excused: { label: 'Usprawiedliwiony', color: 'bg-amber-100 text-amber-700' },
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 function toLocalInput(iso: string) {
   const d = new Date(iso); const off = d.getTimezoneOffset() * 60000
@@ -41,23 +41,47 @@ export function RegisterView({ rows, teacherId }: { rows: Row[]; teacherId: stri
   const [editing, setEditing] = useState<Row | null>(null)
   const [reschedule, setReschedule] = useState<Row | null>(null)
   const [substitute, setSubstitute] = useState<Row | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
 
   const past = rows.filter((r) => new Date(r.startsAt).getTime() < Date.now())
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
   const upcoming = rows.filter((r) => new Date(r.startsAt).getTime() >= Date.now())
+  const unmarked = past.filter((r) => r.attendance === 'scheduled').length
 
   async function cancelLesson(id: string) {
-    if (!confirm('Cancel this lesson? This cannot be undone.')) return
+    if (!confirm('Odwołać tę lekcję? Tej operacji nie można cofnąć.')) return
     const supabase = createClient()
     const { error } = await supabase.from('lessons').delete().eq('id', id)
-    if (error) { alert('Could not cancel: ' + error.message); return }
+    if (error) { alert('Nie udało się odwołać: ' + error.message); return }
+    router.refresh()
+  }
+
+  // Wpisanie obecności jednym kliknięciem
+  async function quickMark(id: string, attendance: AttendanceStatus) {
+    setSavingId(id)
+    const supabase = createClient()
+    const { error } = await supabase.from('lessons').update({ attendance }).eq('id', id)
+    setSavingId(null)
+    if (error) { alert('Nie udało się zapisać: ' + error.message); return }
     router.refresh()
   }
 
   return (
     <div className="space-y-8">
-      <Section title="Upcoming" rows={upcoming} onOpen={setEditing} onReschedule={setReschedule} onCancel={cancelLesson} onSubstitute={setSubstitute} emptyText="No upcoming lessons." />
-      <Section title="Past lessons" rows={past} onOpen={setEditing} emptyText="No past lessons." />
+      {unmarked > 0 && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <AlertCircle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-amber-800">
+              {unmarked} {unmarked === 1 ? 'lekcja bez wpisanej obecności' : unmarked < 5 ? 'lekcje bez wpisanej obecności' : 'lekcji bez wpisanej obecności'}
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">Zaznacz obecność jednym kliknięciem przy lekcjach poniżej — dzięki temu rozliczenia i postępy uczniów są aktualne.</p>
+          </div>
+        </div>
+      )}
+
+      <Section title="Nadchodzące" rows={upcoming} onOpen={setEditing} onReschedule={setReschedule} onCancel={cancelLesson} onSubstitute={setSubstitute} emptyText="Brak nadchodzących lekcji." />
+      <Section title="Minione lekcje" rows={past} onOpen={setEditing} onQuickMark={quickMark} savingId={savingId} emptyText="Brak minionych lekcji." />
 
       {editing && (
         <LessonEditor row={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh() }} />
@@ -72,9 +96,10 @@ export function RegisterView({ rows, teacherId }: { rows: Row[]; teacherId: stri
   )
 }
 
-function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, emptyText }: {
+function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, onQuickMark, savingId, emptyText }: {
   title: string; rows: Row[]; onOpen: (r: Row) => void
-  onReschedule?: (r: Row) => void; onCancel?: (id: string) => void; onSubstitute?: (r: Row) => void; emptyText: string
+  onReschedule?: (r: Row) => void; onCancel?: (id: string) => void; onSubstitute?: (r: Row) => void
+  onQuickMark?: (id: string, a: AttendanceStatus) => void; savingId?: string | null; emptyText: string
 }) {
   return (
     <div>
@@ -85,6 +110,7 @@ function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, em
         <div className="space-y-2">
           {rows.map((r) => {
             const att = ATT_CONFIG[r.attendance]
+            const showQuick = onQuickMark && r.attendance === 'scheduled'
             return (
               <div key={r.id} className="bg-white rounded-2xl p-4 border border-gray-100 hover:border-[#23479E] transition-colors flex items-center gap-4">
                 <button onClick={() => onOpen(r)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
@@ -93,18 +119,32 @@ function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, em
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900">{r.student}</p>
-                    <p className="text-xs text-gray-500">{fmt(r.startsAt)} · {r.topic || 'No topic yet'}</p>
+                    <p className="text-xs text-gray-500">{fmt(r.startsAt)} · {r.topic || 'Brak tematu'}</p>
                   </div>
                   {r.materials.length > 0 && (
                     <span className="flex items-center gap-1 text-xs text-gray-400"><BookOpen size={13} />{r.materials.length}</span>
                   )}
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${att.color}`}>{att.label}</span>
+                  {!showQuick && <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${att.color}`}>{att.label}</span>}
                 </button>
+
+                {showQuick && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => onQuickMark!(r.id, 'present')} disabled={savingId === r.id}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 text-xs font-semibold transition-colors disabled:opacity-50">
+                      <CheckCircle2 size={14} />Obecny
+                    </button>
+                    <button onClick={() => onQuickMark!(r.id, 'absent')} disabled={savingId === r.id}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold transition-colors disabled:opacity-50">
+                      <XCircle size={14} />Nieobecny
+                    </button>
+                  </div>
+                )}
+
                 {onReschedule && onCancel && (
                   <div className="flex items-center gap-2 flex-shrink-0 border-l border-gray-100 pl-3">
-                    <button onClick={() => onReschedule(r)} className="text-xs text-[#23479E] hover:underline font-medium">Reschedule</button>
-                    {onSubstitute && <button onClick={() => onSubstitute(r)} className="text-xs text-gray-500 hover:text-[#23479E]">Substitute</button>}
-                    <button onClick={() => onCancel(r.id)} className="text-xs text-gray-400 hover:text-red-500">Cancel</button>
+                    <button onClick={() => onReschedule(r)} className="text-xs text-[#23479E] hover:underline font-medium">Przełóż</button>
+                    {onSubstitute && <button onClick={() => onSubstitute(r)} className="text-xs text-gray-500 hover:text-[#23479E]">Zastępstwo</button>}
+                    <button onClick={() => onCancel(r.id)} className="text-xs text-gray-400 hover:text-red-500">Odwołaj</button>
                   </div>
                 )}
               </div>
@@ -131,11 +171,11 @@ function RescheduleModal({ row, teacherId, onClose, onSaved }: { row: Row; teach
       .from('lessons').select('id, starts_at, ends_at')
       .eq('teacher_id', teacherId).neq('id', row.id)
       .lt('starts_at', newEnd.toISOString()).gt('ends_at', newStart.toISOString())
-    if (conflicts && conflicts.length > 0) { setSaving(false); setError('You already have a lesson at this time.'); return }
+    if (conflicts && conflicts.length > 0) { setSaving(false); setError('Masz już lekcję o tej porze.'); return }
     const { error } = await supabase.from('lessons')
       .update({ starts_at: newStart.toISOString(), ends_at: newEnd.toISOString() }).eq('id', row.id)
     setSaving(false)
-    if (error) { setError('Could not save: ' + error.message); return }
+    if (error) { setError('Nie udało się zapisać: ' + error.message); return }
     onSaved()
   }
 
@@ -144,19 +184,19 @@ function RescheduleModal({ row, teacherId, onClose, onSaved }: { row: Row; teach
       <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-black text-gray-900 flex items-center gap-2"><Calendar size={18} />Reschedule lesson</h2>
+            <h2 className="text-lg font-black text-gray-900 flex items-center gap-2"><Calendar size={18} />Przełóż lekcję</h2>
             <p className="text-xs text-gray-400">{row.student}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">New date & time</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Nowa data i godzina</label>
         <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)}
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-6">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
           <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60">
-            {saving ? 'Saving...' : 'Save new time'}
+            {saving ? 'Zapisywanie...' : 'Zapisz nowy termin'}
           </button>
         </div>
       </div>
@@ -176,7 +216,7 @@ function SubstitutionModal({ row, teacherId, onClose, onSaved }: { row: Row; tea
       lesson_id: row.id, original_teacher_id: teacherId, reason: reason || null, status: 'requested',
     })
     setSaving(false)
-    if (error) { setError('Could not request: ' + error.message); return }
+    if (error) { setError('Nie udało się wysłać: ' + error.message); return }
     onSaved()
   }
 
@@ -185,20 +225,20 @@ function SubstitutionModal({ row, teacherId, onClose, onSaved }: { row: Row; tea
       <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-black text-gray-900">Request substitution</h2>
+            <h2 className="text-lg font-black text-gray-900">Poproś o zastępstwo</h2>
             <p className="text-xs text-gray-400">{row.student} · {fmt(row.startsAt)}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="e.g. sick leave"
+        <label className="block text-sm font-medium text-gray-700 mb-1">Powód (opcjonalnie)</label>
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="np. zwolnienie lekarskie"
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
-        <p className="text-xs text-gray-400 mt-2">The office will assign a substitute teacher.</p>
+        <p className="text-xs text-gray-400 mt-2">Biuro przydzieli zastępstwo.</p>
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
           <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60">
-            {saving ? 'Sending...' : 'Request substitution'}
+            {saving ? 'Wysyłanie...' : 'Poproś o zastępstwo'}
           </button>
         </div>
       </div>
@@ -233,7 +273,7 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
     const supabase = createClient()
     const path = `${row.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`
     const { error: upErr } = await supabase.storage.from('lesson-files').upload(path, file)
-    if (upErr) { setUploading(false); setError('Upload failed: ' + upErr.message); return }
+    if (upErr) { setUploading(false); setError('Nie udało się wgrać pliku: ' + upErr.message); return }
     const { data } = supabase.storage.from('lesson-files').getPublicUrl(path)
     setMaterials((m) => [...m, { id: `tmp-${Date.now()}`, title: file.name, url: data.publicUrl }])
     setUploading(false)
@@ -253,7 +293,7 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
       .update({ attendance, topic: topic || null, homework: homework || null, meeting_url: meetingUrl || null })
       .eq('id', row.id)
 
-    if (lessonErr) { setSaving(false); setError('Could not save: ' + lessonErr.message); return }
+    if (lessonErr) { setSaving(false); setError('Nie udało się zapisać: ' + lessonErr.message); return }
 
     // Synchronizuj materiały: usuń istniejące, dodaj aktualne (proste replace-all)
     await supabase.from('lesson_materials').delete().eq('lesson_id', row.id)
@@ -280,7 +320,7 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Attendance</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Obecność</label>
             <div className="flex flex-wrap gap-2">
               {ATT_OPTIONS.map((a) => (
                 <button key={a} type="button" onClick={() => setAttendance(a)}
@@ -292,25 +332,25 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lesson topic</label>
-            <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Present Perfect"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Temat lekcji</label>
+            <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="np. Present Perfect"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Homework</label>
-            <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} placeholder="What should the student prepare?"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Praca domowa</label>
+            <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} placeholder="Co uczeń ma przygotować?"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Online lesson link (Zoom / Meet)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Link do lekcji online (Zoom / Meet)</label>
             <input type="url" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://zoom.us/j/..."
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Materials (Quizlet, Canva, PDF, recordings...)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Materiały (Quizlet, Canva, PDF, nagrania...)</label>
             <div className="space-y-2 mb-2">
               {materials.map((m) => (
                 <div key={m.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
@@ -322,17 +362,17 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
               ))}
             </div>
             <div className="flex gap-2">
-              <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Title"
+              <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Nazwa"
                 className="w-1/3 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
               <input type="url" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://..."
                 className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
               <button type="button" onClick={addMaterial}
                 className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-medium flex items-center gap-1">
-                <Plus size={14} />Add
+                <Plus size={14} />Dodaj
               </button>
             </div>
             <label className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#23479E] font-medium cursor-pointer hover:underline">
-              <Plus size={13} />{uploading ? 'Uploading…' : 'Upload a file (PDF, image…)'}
+              <Plus size={13} />{uploading ? 'Wgrywanie…' : 'Wgraj plik (PDF, obraz…)'}
               <input type="file" className="hidden" onChange={uploadFile} disabled={uploading} />
             </label>
           </div>
@@ -343,9 +383,9 @@ function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void
         <div className="flex items-center gap-3 mt-6">
           <button onClick={handleSave} disabled={saving}
             className="px-5 py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2">
-            <Check size={16} />{saving ? 'Saving...' : 'Save'}
+            <Check size={16} />{saving ? 'Zapisywanie...' : 'Zapisz'}
           </button>
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50">Anuluj</button>
         </div>
       </div>
     </div>
