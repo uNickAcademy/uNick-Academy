@@ -59,6 +59,8 @@ export interface Invoice {
   issued_at: string
 }
 
+export type TeacherContractType = 'b2b' | 'zlecenie' | 'zlecenie_student'
+
 export interface Teacher {
   id: string
   profile_id: string
@@ -76,6 +78,7 @@ export interface Teacher {
   rate_group?: number
   location?: string
   whatsapp_phone?: string
+  contract_type?: TeacherContractType
   profile?: Profile
 }
 

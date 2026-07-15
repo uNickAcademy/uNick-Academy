@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, User, Calendar, Users, BookOpen, LogOut } from 'lucide-react'
+import { LayoutDashboard, User, Calendar, Users, BookOpen, LogOut, Wallet } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/nauczyciel/dashboard', label: 'Panel', icon: LayoutDashboard },
   { href: '/nauczyciel/dziennik', label: 'Dziennik', icon: BookOpen },
+  { href: '/nauczyciel/zarobki', label: 'Zarobki', icon: Wallet },
   { href: '/nauczyciel/profil', label: 'Profil', icon: User },
   { href: '/nauczyciel/dostepnosc', label: 'Dostępność', icon: Calendar },
   { href: '/nauczyciel/uczniowie', label: 'Uczniowie', icon: Users },

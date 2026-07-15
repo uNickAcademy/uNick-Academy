@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star, Users, BookOpen, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { CONTRACT_TYPE_LABELS } from '@/lib/payroll/pl-zlecenie'
+import type { TeacherContractType } from '@/types'
 
 type Card = {
   id: string
@@ -15,6 +17,7 @@ type Card = {
   hourlyRate: number | null
   rateGroup: number | null
   location: string
+  contractType: TeacherContractType
   students: number
   lessonsWeek: number
   lessonsTotal: number
@@ -65,6 +68,7 @@ function TeacherCard({ t, onEdit }: { t: Card; onEdit: () => void }) {
               {t.hourlyRate != null ? `${t.hourlyRate} zł/h` : 'brak stawki'}
               {t.location ? ` · ${t.location}` : ''}
             </p>
+            <p className="text-xs text-gray-400 mt-0.5">{CONTRACT_TYPE_LABELS[t.contractType]}</p>
           </div>
           <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
             <Star size={14} className="fill-amber-400" />
@@ -102,6 +106,7 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
   const [rateGroup, setRateGroup] = useState(t.rateGroup != null ? String(t.rateGroup) : '')
   const [location, setLocation] = useState(t.location)
   const [isActive, setIsActive] = useState(t.isActive)
+  const [contractType, setContractType] = useState<TeacherContractType>(t.contractType)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -116,6 +121,7 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
         rate_group: rateGroup === '' ? null : Number(rateGroup),
         location: location || null,
         is_active: isActive,
+        contract_type: contractType,
       })
       .eq('id', t.id)
     setSaving(false)
@@ -151,6 +157,16 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
             <label className="block text-sm font-medium text-gray-700 mb-1">Lokalizacja</label>
             <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="np. Tarnowo Podgórne / Online"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Typ umowy</label>
+            <select value={contractType} onChange={(e) => setContractType(e.target.value as TeacherContractType)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] bg-white">
+              <option value="b2b">B2B (faktura) — wypłata 100%</option>
+              <option value="zlecenie">Umowa zlecenie — potrącenie ZUS i podatku</option>
+              <option value="zlecenie_student">Zlecenie — uczeń/student do 26 rż — wypłata 100%</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Decyduje o wyliczeniu wypłaty netto w Kadrach i na koncie lektora.</p>
           </div>
           <label className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)}

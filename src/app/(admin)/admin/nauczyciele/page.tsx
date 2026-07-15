@@ -21,6 +21,7 @@ export default async function NauczycieleAdminPage() {
       hourlyRate: t.hourly_rate ?? null,
       rateGroup: t.rate_group ?? null,
       location: t.location ?? '',
+      contractType: t.contract_type ?? 'b2b',
       students: s.students,
       lessonsWeek: s.lessonsWeek,
       lessonsTotal: s.lessonsTotal,

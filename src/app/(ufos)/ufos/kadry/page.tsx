@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Users, Clock, TrendingUp, AlertTriangle } from "lucide-react"
 import { formatPLN, formatPercent, formatMonth } from "@/lib/ufos/formatters"
+import { calculateNetPayout, CONTRACT_TYPE_LABELS } from "@/lib/payroll/pl-zlecenie"
+import type { TeacherContractType } from "@/types"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "Kadry i Płace" }
@@ -19,7 +21,7 @@ export default async function KadryPage() {
   prevMonth.setMonth(prevMonth.getMonth() - 1)
   const prevMonthStr = prevMonth.toISOString().slice(0, 10)
 
-  const [{ data: teachers }, { data: prevTeachers }, { data: monthStats }] = await Promise.all([
+  const [{ data: teachers }, { data: prevTeachers }, { data: monthStats }, { data: contractRows }] = await Promise.all([
     supabase.schema("ufos").from("teacher_profitability")
       .select("*")
       .eq("period", currentMonthStr)
@@ -31,11 +33,17 @@ export default async function KadryPage() {
       .select("active_teachers, total_teacher_cost, completed_lessons")
       .eq("period", currentMonthStr)
       .single(),
+    supabase.from("teachers").select("id, contract_type"),
   ])
 
+  const contractByTeacher = new Map((contractRows ?? []).map(t => [t.id, t.contract_type as TeacherContractType]))
   const prevMap = new Map((prevTeachers ?? []).map(t => [t.teacher_name, t]))
   const totalCost = (teachers ?? []).reduce((s, t) => s + Number(t.total_cost || 0), 0)
   const totalHours = (teachers ?? []).reduce((s, t) => s + Number(t.hours_worked || 0), 0)
+  const totalNet = (teachers ?? []).reduce((s, t) => {
+    const ct = contractByTeacher.get(t.teacher_id) ?? 'b2b'
+    return s + calculateNetPayout(Number(t.total_cost || 0), ct).net
+  }, 0)
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -67,18 +75,16 @@ export default async function KadryPage() {
         <div className="card py-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-3.5 h-3.5 text-brand-red" />
-            <p className="text-xs text-brand-subtle">Koszt nauczycieli</p>
+            <p className="text-xs text-brand-subtle">Koszt brutto</p>
           </div>
           <p className="text-xl font-bold text-brand-red">{formatPLN(totalCost)}</p>
         </div>
         <div className="card py-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-3.5 h-3.5 text-brand-green" />
-            <p className="text-xs text-brand-subtle">Śr. koszt/godz.</p>
+            <p className="text-xs text-brand-subtle">Do wypłaty (netto, szac.)</p>
           </div>
-          <p className="text-xl font-bold text-navy-500">
-            {totalHours > 0 ? formatPLN(totalCost / totalHours) : "—"}
-          </p>
+          <p className="text-xl font-bold text-navy-500">{formatPLN(totalNet)}</p>
         </div>
       </div>
 
@@ -97,10 +103,12 @@ export default async function KadryPage() {
               <thead>
                 <tr className="border-b border-[#E8EBF0]">
                   <th className="text-left py-2 text-xs font-medium text-brand-subtle">Nauczyciel</th>
+                  <th className="text-left py-2 text-xs font-medium text-brand-subtle">Umowa</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Lekcje</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Godziny</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Przychód</th>
-                  <th className="text-right py-2 text-xs font-medium text-brand-subtle">Koszt</th>
+                  <th className="text-right py-2 text-xs font-medium text-brand-subtle">Koszt brutto</th>
+                  <th className="text-right py-2 text-xs font-medium text-brand-subtle">Do wypłaty (netto)</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Marża</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Marża %</th>
                   <th className="text-right py-2 text-xs font-medium text-brand-subtle">Δ koszt</th>
@@ -111,9 +119,12 @@ export default async function KadryPage() {
                   const prev = prevMap.get(t.teacher_name)
                   const costDelta = prev ? Number(t.total_cost || 0) - Number(prev.total_cost || 0) : null
                   const margin = Number(t.margin_pct || 0)
+                  const contractType = contractByTeacher.get(t.teacher_id) ?? 'b2b'
+                  const payout = calculateNetPayout(Number(t.total_cost || 0), contractType)
                   return (
                     <tr key={t.teacher_id} className="border-b border-[#E8EBF0] last:border-0 hover:bg-brand-muted/40">
                       <td className="py-3 font-medium text-navy-500">{t.teacher_name}</td>
+                      <td className="py-3 text-brand-subtle text-xs">{CONTRACT_TYPE_LABELS[contractType]}</td>
                       <td className="py-3 text-right text-brand-subtle">
                         {t.completed_lessons}
                         {Number(t.cancelled_lessons || 0) > 0 && (
@@ -125,6 +136,7 @@ export default async function KadryPage() {
                       <td className="py-3 text-right text-brand-subtle">{Number(t.hours_worked || 0).toFixed(1)}h</td>
                       <td className="py-3 text-right text-brand-subtle">{formatPLN(Number(t.revenue_generated || 0))}</td>
                       <td className="py-3 text-right font-medium text-navy-500">{formatPLN(Number(t.total_cost || 0))}</td>
+                      <td className="py-3 text-right font-semibold text-brand-green">{formatPLN(payout.net)}</td>
                       <td className="py-3 text-right font-medium text-brand-green">{formatPLN(Number(t.total_margin || 0))}</td>
                       <td className="py-3 text-right">
                         <span className={margin >= 40 ? "text-brand-green" : margin >= 20 ? "text-brand-amber" : "text-brand-red"}>
@@ -153,8 +165,10 @@ export default async function KadryPage() {
       <div className="mt-4 flex items-start gap-2 text-xs text-brand-subtle">
         <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand-amber" />
         <p>
-          Dane kalkulowane automatycznie z realizacji lekcji. Stawki nauczycieli pobierane z systemu uNick Academy.
-          Moduł umów i dokumentów kadrowych — w przygotowaniu.
+          Dane kalkulowane automatycznie z realizacji lekcji (obecność + późne odwołania + no-show liczone jako odbyte).
+          Kwota „Do wypłaty (netto)” to szacunek wg standardowej umowy zlecenia (bez PIT-2, 20% KUP, zlecenie jako jedyny
+          tytuł ubezpieczenia) — nie zastępuje wyliczenia księgowej. Typ umowy ustawisz w Admin → Nauczyciele.
+          Moduł dokumentów kadrowych — w przygotowaniu.
         </p>
       </div>
     </div>

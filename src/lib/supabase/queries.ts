@@ -149,15 +149,19 @@ export async function updateStudent(id: string, updates: Partial<Student>): Prom
 // ADMIN – NAUCZYCIELE
 // ──────────────────────────────────────────
 
+// Kolumny bezpieczne do publicznego odczytu (strony /nauczyciele i /zapisy,
+// dostępne bez logowania). Nie dołączaj tu hourly_rate/rate_group/
+// whatsapp_phone/location/contract_type — rola `anon` nie ma do nich GRANT-u
+// (migracja 104), więc select('*') zwróciłby błąd uprawnień dla gościa.
 export async function getAllTeachers(): Promise<Teacher[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('teachers')
-    .select(`*, profile:profiles(*)`)
+    .select(`id, profile_id, bio, levels, rating, review_count, video_url, color, is_active, created_at, contact_email, sort_order, photo_url, profile:profiles(id, full_name)`)
     .eq('is_active', true)
     .order('sort_order')
     .order('created_at')
-  return (data as Teacher[]) ?? []
+  return (data as unknown as Teacher[]) ?? []
 }
 
 // Admin: wszyscy nauczyciele (również nieaktywni)

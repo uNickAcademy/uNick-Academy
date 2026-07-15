@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Users, Calendar, Clock, User as UserIcon, AlertCircle, BookOpen } from 'lucide-react'
+import { Users, Calendar, Clock, User as UserIcon, AlertCircle, BookOpen, Wallet } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getTeacherByProfileId, getTeacherStudents, getTeacherLessons } from '@/lib/supabase/queries'
 
@@ -90,6 +90,10 @@ export default async function TeacherDashboard() {
             <Link href="/nauczyciel/dziennik" className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#EAF3FF] transition-colors">
               <BookOpen size={18} className="text-[#23479E]" />
               <span className="text-sm font-medium text-gray-700">Dziennik i obecności</span>
+            </Link>
+            <Link href="/nauczyciel/zarobki" className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#EAF3FF] transition-colors">
+              <Wallet size={18} className="text-[#23479E]" />
+              <span className="text-sm font-medium text-gray-700">Moje zarobki</span>
             </Link>
             <Link href="/nauczyciel/profil" className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#EAF3FF] transition-colors">
               <UserIcon size={18} className="text-[#23479E]" />
