@@ -8,11 +8,13 @@ import { t, type Lang } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
-const ATT: Record<AttendanceStatus, { key: 'att_present' | 'att_absent' | 'att_excused'; className: string; icon: typeof CheckCircle } | null> = {
+const ATT: Record<AttendanceStatus, { key: 'att_present' | 'att_absent' | 'att_excused' | 'att_late_cancellation' | 'att_no_show'; className: string; icon: typeof CheckCircle } | null> = {
   scheduled: null,
   present: { key: 'att_present', className: 'text-green-600', icon: CheckCircle },
   absent: { key: 'att_absent', className: 'text-red-500', icon: XCircle },
   excused: { key: 'att_excused', className: 'text-amber-600', icon: CheckCircle },
+  late_cancellation: { key: 'att_late_cancellation', className: 'text-orange-600', icon: XCircle },
+  no_show: { key: 'att_no_show', className: 'text-red-500', icon: XCircle },
 }
 
 export default async function LekcjePage() {
@@ -97,19 +99,25 @@ function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: bool
         )}
       </div>
 
-      {upcoming && lesson.student_id && lesson.attendance !== 'excused' && (
+      {upcoming && lesson.student_id && (lesson.attendance === 'scheduled' || !lesson.attendance) && (
         <MakeupActions
           lessonId={lesson.id}
           studentId={lesson.student_id}
           teacherId={lesson.teacher_id}
           level={lesson.level}
           originalDate={date}
+          startsAt={lesson.starts_at}
           lang={lang}
         />
       )}
       {upcoming && lesson.attendance === 'excused' && (
         <div className="mt-3 pt-3 border-t border-gray-50">
           <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5"><XCircle size={13} />{t(lang, 'absence_reported')}</p>
+        </div>
+      )}
+      {upcoming && lesson.attendance === 'late_cancellation' && (
+        <div className="mt-3 pt-3 border-t border-gray-50">
+          <p className="text-xs text-orange-600 font-medium flex items-center gap-1.5"><XCircle size={13} />{t(lang, 'late_cancel_badge')}</p>
         </div>
       )}
 

@@ -24,6 +24,16 @@ export async function GET(req: NextRequest) {
   const now = new Date()
   const isMonday = now.getDay() === 1
 
+  // ── 0. Auto-obecność ────────────────────────────────────────────────────
+  // Zakończone lekcje, których nikt nie oznaczył, domyślnie liczymy jako obecność.
+  const { data: autoPresent } = await supabase
+    .from('lessons')
+    .update({ attendance: 'present' })
+    .eq('attendance', 'scheduled')
+    .lt('ends_at', now.toISOString())
+    .select('id')
+  const autoPresentCount = autoPresent?.length ?? 0
+
   // ── 1. Przypomnienia o lekcjach (codziennie) ────────────────────────────
   // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
   // żeby każda lekcja dostała dokładnie jedno przypomnienie
@@ -135,7 +145,8 @@ export async function GET(req: NextRequest) {
       const st: any = Array.isArray((l as any).student) ? (l as any).student[0] : (l as any).student
       if (!st || st.deleted_at || st.billing_type === 'b2b') continue
       if (!['active', 'trial', 'overdue'].includes(st.status)) continue
-      if (l.attendance === 'absent' || l.attendance === 'excused') continue
+      // Do „nauki” liczymy tylko faktycznie odbyte lekcje
+      if (!['present', 'scheduled'].includes(l.attendance)) continue
       const prof = Array.isArray(st.profile) ? st.profile[0] : st.profile
       if (!prof?.email) continue
       const cur = byStudent.get(st.id) ?? { email: prof.email, name: st.full_name ?? prof.full_name ?? '', hoursMs: 0, count: 0, topics: [] as string[], homework: [] as string[] }
@@ -172,6 +183,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
+    autoPresent: autoPresentCount,
     reminders: upcomingLessons?.length ?? 0,
     makeupReminders,
     overdueNotifications,

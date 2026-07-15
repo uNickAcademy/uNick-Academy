@@ -4,7 +4,7 @@ import { sendBulkMessage, isEmailConfigured } from '@/lib/email/send'
 
 // Powiadamia prowadzącego o zgłoszonej nieobecności lub zapisie na odrabianie
 export async function POST(req: NextRequest) {
-  const { lessonId, kind } = await req.json() as { lessonId: string; kind: 'absence' | 'booked' }
+  const { lessonId, kind } = await req.json() as { lessonId: string; kind: 'absence' | 'booked' | 'late_cancel' }
   if (!lessonId || !kind) return NextResponse.json({ error: 'Brak danych' }, { status: 400 })
 
   const admin = createAdminClient()
@@ -33,9 +33,13 @@ export async function POST(req: NextRequest) {
 
   const subject = kind === 'absence'
     ? `Zgłoszona nieobecność – ${studentName}`
+    : kind === 'late_cancel'
+    ? `Późne odwołanie – ${studentName}`
     : `Zapis na odrabianie – ${studentName}`
   const body = kind === 'absence'
     ? `${studentName} zgłosił/a nieobecność na lekcji (${when}).\nUczeń może zapisać się na odrabianie z Twojej dostępności.`
+    : kind === 'late_cancel'
+    ? `${studentName} odwołał/a lekcję (${when}) na mniej niż 24h przed terminem.\nLekcja przepada — liczona jako odbyta, bez odrabiania.`
     : `${studentName} zapisał/a się na odrabianie: ${when}.\nNowa lekcja jest już w Twoim kalendarzu i dzienniku.`
 
   await sendBulkMessage([{ email: teacherEmail, name: teacherName }], subject, body)

@@ -17,8 +17,8 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
 
   const now = Date.now()
   const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now)
-  const present = past.filter((l) => l.attendance === 'present').length
-  const absent = past.filter((l) => l.attendance === 'absent').length
+  const present = past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
+  const absent = past.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
   const totalHours = past.reduce((acc, l) => acc + (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000, 0)
   const customFields = student.custom_fields ?? {}
 
@@ -78,9 +78,10 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
                 <div key={l.id} className="flex items-center gap-3 text-sm">
                   <span className="text-xs text-gray-400 w-28 flex-shrink-0">{new Date(l.starts_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: '2-digit' })} {new Date(l.starts_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</span>
                   <span className="flex-1 truncate text-gray-700">{l.topic || 'Lekcja'}</span>
-                  {l.attendance === 'present' && <CheckCircle size={14} className="text-green-600" />}
-                  {l.attendance === 'absent' && <XCircle size={14} className="text-red-500" />}
-                  {l.attendance === 'excused' && <span className="text-xs text-amber-600">usp.</span>}
+                  {(l.attendance === 'present' || l.attendance === 'scheduled') && <CheckCircle size={14} className="text-green-600" />}
+                  {(l.attendance === 'absent' || l.attendance === 'no_show') && <XCircle size={14} className="text-red-500" />}
+                  {l.attendance === 'late_cancellation' && <span className="text-xs text-orange-600">późne odwoł.</span>}
+                  {l.attendance === 'excused' && <span className="text-xs text-amber-600">do odrob.</span>}
                 </div>
               ))}
             </div>

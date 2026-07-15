@@ -16,12 +16,6 @@ export default async function HrEmployeesPage() {
     const theirLessons = lessons.filter((l) => l.student_id === e.id)
     const active = theirLessons.filter((l) => !(l as unknown as LessonExtra).cancelled_at)
     const past = active.filter((l) => new Date(l.starts_at).getTime() < now)
-    const cancelled = theirLessons.filter((l) => (l as unknown as LessonExtra).cancelled_at)
-    const lateCancelled = cancelled.filter((l) => {
-      const ca = (l as unknown as LessonExtra).cancelled_at
-      if (!ca) return false
-      return new Date(ca).getTime() > new Date(l.starts_at).getTime() - 24 * 3600 * 1000
-    })
     return {
       id: e.id,
       name: e.profile?.full_name ?? '—',
@@ -30,10 +24,11 @@ export default async function HrEmployeesPage() {
       balance: e.credit_balance,
       teacherName: e.teacher?.profile?.full_name ?? '—',
       teacherId: e.teacher_id ?? '',
-      present: past.filter((l) => l.attendance === 'present').length,
-      absent: past.filter((l) => l.attendance === 'absent').length,
+      // Odbyte = obecność (zakończone bez oznaczenia liczą się jako obecność)
+      present: past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length,
+      absent: past.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show').length,
       rescheduled: past.filter((l) => ((l as unknown as LessonExtra).reschedule_count ?? 0) > 0).length,
-      lateCancelled: lateCancelled.length,
+      lateCancelled: past.filter((l) => l.attendance === 'late_cancellation').length,
       upcoming: active
         .filter((l) => new Date(l.starts_at).getTime() >= now)
         .map((l) => ({

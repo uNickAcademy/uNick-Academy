@@ -14,8 +14,8 @@ export default async function HrDashboard() {
 
   const owed = employees.reduce((acc, e) => acc + (e.credit_balance < 0 ? -e.credit_balance : 0), 0)
   const pastMonth = await getHrLessons(new Date(Date.now() - 30 * 86400000).toISOString(), new Date().toISOString())
-  const present = pastMonth.filter((l) => l.attendance === 'present').length
-  const absent = pastMonth.filter((l) => l.attendance === 'absent').length
+  const present = pastMonth.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
+  const absent = pastMonth.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

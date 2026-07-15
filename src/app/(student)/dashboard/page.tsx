@@ -30,7 +30,7 @@ export default async function StudentDashboard() {
   const upcoming = lessons.filter((l) => new Date(l.starts_at).getTime() >= now)
   const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now)
   const hoursDone = past
-    .filter((l) => l.attendance !== 'absent' && l.attendance !== 'excused')
+    .filter((l) => l.attendance === 'present' || l.attendance === 'scheduled')
     .reduce((sum, l) => sum + (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000, 0)
   const next = upcoming[0]
   const balance = Number(student.credit_balance ?? 0)

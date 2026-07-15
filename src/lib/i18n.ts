@@ -41,6 +41,8 @@ const DICT: Dict = {
   att_present: { pl: 'Obecność', en: 'Present' },
   att_absent: { pl: 'Nieobecność', en: 'Absent' },
   att_excused: { pl: 'Usprawiedliwiona', en: 'Excused' },
+  att_late_cancellation: { pl: 'Późne odwołanie', en: 'Late cancellation' },
+  att_no_show: { pl: 'Nieobecność bez zgłoszenia', en: 'No-show' },
   report_absence: { pl: 'Zgłoś nieobecność', en: 'Report absence' },
   absence_reported: { pl: 'Zgłoszono nieobecność', en: 'Absence reported' },
   book_makeup: { pl: 'Zapisz się na odrabianie', en: 'Book a make-up lesson' },
@@ -48,6 +50,12 @@ const DICT: Dict = {
   finding_slots: { pl: 'Szukam wolnych terminów...', en: 'Looking for available slots...' },
   no_slots: { pl: 'Brak wolnych terminów w najbliższych 14 dniach. Skontaktuj się z lektorem.', en: 'No slots in the next 14 days. Please contact your teacher.' },
   makeup_booked: { pl: 'Zapisano na odrabianie!', en: 'Make-up lesson booked!' },
+  // Zgłaszanie nieobecności – reguła 24h
+  cancel_lesson_q: { pl: 'Zgłosić nieobecność na tej lekcji?', en: 'Report absence for this lesson?' },
+  cancel_ge24_info: { pl: 'Zgłaszasz z wyprzedzeniem — lekcja trafi do puli „do odrobienia" i będziesz mógł/mogła zapisać się na inny termin.', en: 'You are cancelling in advance — the lesson goes to the make-up pool and you can book another slot.' },
+  cancel_lt24_confirm: { pl: 'Do lekcji zostało mniej niż 24h. Jeśli teraz zgłosisz nieobecność, lekcja przepada (liczona jako odbyta, bez odrabiania). Kontynuować?', en: 'Less than 24h to the lesson. If you cancel now the lesson is forfeited (counted as held, no make-up). Continue?' },
+  late_cancel_done: { pl: 'Zgłoszono późne odwołanie — lekcja przepada (bez odrabiania).', en: 'Late cancellation recorded — the lesson is forfeited (no make-up).' },
+  late_cancel_badge: { pl: 'Późne odwołanie', en: 'Late cancellation' },
 
   // Dashboard
   welcome: { pl: 'Witaj', en: 'Welcome' },

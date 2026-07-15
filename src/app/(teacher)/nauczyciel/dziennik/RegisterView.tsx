@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Video, MapPin, X, Plus, Trash2, BookOpen, Check, Calendar, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { Video, MapPin, X, Plus, Trash2, BookOpen, Check, Calendar, AlertCircle, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { AttendanceStatus, LanguageLevel, LessonType } from '@/types'
 
@@ -25,7 +26,9 @@ const ATT_CONFIG: Record<AttendanceStatus, { label: string; color: string }> = {
   scheduled: { label: 'Do wpisania', color: 'bg-gray-100 text-gray-600' },
   present: { label: 'Obecny', color: 'bg-green-100 text-green-700' },
   absent: { label: 'Nieobecny', color: 'bg-red-100 text-red-700' },
-  excused: { label: 'Usprawiedliwiony', color: 'bg-amber-100 text-amber-700' },
+  excused: { label: 'Odwołana (do odrobienia)', color: 'bg-amber-100 text-amber-700' },
+  late_cancellation: { label: 'Późne odwołanie', color: 'bg-orange-100 text-orange-700' },
+  no_show: { label: 'No-show', color: 'bg-red-100 text-red-700' },
 }
 
 function fmt(iso: string) {
@@ -69,13 +72,13 @@ export function RegisterView({ rows, teacherId }: { rows: Row[]; teacherId: stri
   return (
     <div className="space-y-8">
       {unmarked > 0 && (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-          <AlertCircle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 bg-[#EAF3FF] border border-blue-200 rounded-2xl p-4">
+          <AlertCircle size={20} className="text-[#23479E] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-amber-800">
-              {unmarked} {unmarked === 1 ? 'lekcja bez wpisanej obecności' : unmarked < 5 ? 'lekcje bez wpisanej obecności' : 'lekcji bez wpisanej obecności'}
+            <p className="text-sm font-bold text-[#23479E]">
+              {unmarked} {unmarked === 1 ? 'lekcja do przejrzenia' : unmarked < 5 ? 'lekcje do przejrzenia' : 'lekcji do przejrzenia'}
             </p>
-            <p className="text-xs text-amber-700 mt-0.5">Zaznacz obecność jednym kliknięciem przy lekcjach poniżej — dzięki temu rozliczenia i postępy uczniów są aktualne.</p>
+            <p className="text-xs text-[#23479E]/80 mt-0.5">Każda zakończona lekcja jest domyślnie zaliczana jako obecność. Oznacz tylko wyjątki — późne odwołanie lub no-show — przy lekcjach poniżej.</p>
           </div>
         </div>
       )}
@@ -96,6 +99,17 @@ export function RegisterView({ rows, teacherId }: { rows: Row[]; teacherId: stri
   )
 }
 
+function QuickBtn({ active, disabled, onClick, icon: Icon, label, base, activeCls }: {
+  active: boolean; disabled: boolean; onClick: () => void; icon: LucideIcon; label: string; base: string; activeCls: string
+}) {
+  return (
+    <button onClick={onClick} disabled={disabled}
+      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${active ? activeCls : base}`}>
+      <Icon size={14} />{label}
+    </button>
+  )
+}
+
 function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, onQuickMark, savingId, emptyText }: {
   title: string; rows: Row[]; onOpen: (r: Row) => void
   onReschedule?: (r: Row) => void; onCancel?: (id: string) => void; onSubstitute?: (r: Row) => void
@@ -110,7 +124,9 @@ function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, on
         <div className="space-y-2">
           {rows.map((r) => {
             const att = ATT_CONFIG[r.attendance]
-            const showQuick = onQuickMark && r.attendance === 'scheduled'
+            // Szybkie oznaczanie na minionych lekcjach (sekcja przekazuje onQuickMark);
+            // lekcje odwołane w terminie (excused) zostają jako badge – są zastępowane odrabianiem.
+            const showQuick = !!onQuickMark && r.attendance !== 'excused'
             return (
               <div key={r.id} className="bg-white rounded-2xl p-4 border border-gray-100 hover:border-[#23479E] transition-colors flex items-center gap-4">
                 <button onClick={() => onOpen(r)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
@@ -128,15 +144,16 @@ function Section({ title, rows, onOpen, onReschedule, onCancel, onSubstitute, on
                 </button>
 
                 {showQuick && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button onClick={() => onQuickMark!(r.id, 'present')} disabled={savingId === r.id}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 text-xs font-semibold transition-colors disabled:opacity-50">
-                      <CheckCircle2 size={14} />Obecny
-                    </button>
-                    <button onClick={() => onQuickMark!(r.id, 'absent')} disabled={savingId === r.id}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold transition-colors disabled:opacity-50">
-                      <XCircle size={14} />Nieobecny
-                    </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <QuickBtn active={r.attendance === 'present' || r.attendance === 'scheduled'} disabled={savingId === r.id}
+                      onClick={() => onQuickMark!(r.id, 'present')} icon={CheckCircle2} label="Obecny"
+                      base="bg-green-50 text-green-700 hover:bg-green-100" activeCls="bg-green-600 text-white" />
+                    <QuickBtn active={r.attendance === 'late_cancellation'} disabled={savingId === r.id}
+                      onClick={() => onQuickMark!(r.id, 'late_cancellation')} icon={Clock} label="Późne odwoł."
+                      base="bg-orange-50 text-orange-600 hover:bg-orange-100" activeCls="bg-orange-500 text-white" />
+                    <QuickBtn active={r.attendance === 'no_show'} disabled={savingId === r.id}
+                      onClick={() => onQuickMark!(r.id, 'no_show')} icon={XCircle} label="No-show"
+                      base="bg-red-50 text-red-600 hover:bg-red-100" activeCls="bg-red-600 text-white" />
                   </div>
                 )}
 
@@ -246,7 +263,7 @@ function SubstitutionModal({ row, teacherId, onClose, onSaved }: { row: Row; tea
   )
 }
 
-const ATT_OPTIONS: AttendanceStatus[] = ['scheduled', 'present', 'absent', 'excused']
+const ATT_OPTIONS: AttendanceStatus[] = ['present', 'late_cancellation', 'no_show', 'excused']
 
 function LessonEditor({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
   const [attendance, setAttendance] = useState<AttendanceStatus>(row.attendance)

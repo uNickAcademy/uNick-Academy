@@ -5,7 +5,7 @@ export type LessonFormat = 'individual' | 'group'
 export type LanguageLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 export type StudentStatus = 'active' | 'trial' | 'overdue' | 'paused'
 export type TransactionType = 'charge' | 'payment' | 'credit'
-export type AttendanceStatus = 'scheduled' | 'present' | 'absent' | 'excused'
+export type AttendanceStatus = 'scheduled' | 'present' | 'absent' | 'excused' | 'late_cancellation' | 'no_show'
 export type PaymentStatus = 'paid' | 'overdue' | 'trial' | 'paused'
 
 export interface Profile {

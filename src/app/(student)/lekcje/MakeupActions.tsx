@@ -20,6 +20,7 @@ export function MakeupActions({
   teacherId,
   level,
   originalDate,
+  startsAt,
   lang,
 }: {
   lessonId: string
@@ -27,24 +28,40 @@ export function MakeupActions({
   teacherId: string
   level: LanguageLevel
   originalDate: string
+  startsAt: string
   lang: Lang
 }) {
   const router = useRouter()
-  const [phase, setPhase] = useState<'idle' | 'reported' | 'finding'>('idle')
+  const [phase, setPhase] = useState<'idle' | 'reported' | 'finding' | 'late_cancelled'>('idle')
   const [slots, setSlots] = useState<Slot[]>([])
   const [busyMsg, setBusyMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
   async function reportAbsence() {
-    if (!confirm(lang === 'en' ? 'Report absence for this lesson? You will be able to book a make-up lesson.' : 'Zgłosić nieobecność na tej lekcji? Będziesz mógł/mogła zapisać się na odrabianie.')) return
+    const hoursUntil = (new Date(startsAt).getTime() - Date.now()) / 3_600_000
+    const inTime = hoursUntil >= 24
+    // Potwierdzenie zależne od tego, czy mieści się w 24h
+    const msg = inTime
+      ? `${t(lang, 'cancel_lesson_q')} ${t(lang, 'cancel_ge24_info')}`
+      : t(lang, 'cancel_lt24_confirm')
+    if (!confirm(msg)) return
     setError(null)
     const supabase = createClient()
-    const { error } = await supabase.from('lessons').update({ attendance: 'excused' }).eq('id', lessonId)
+    const status = inTime ? 'excused' : 'late_cancellation'
+    const { error } = await supabase.from('lessons').update({ attendance: status }).eq('id', lessonId)
     if (error) { setError('Nie udało się zgłosić: ' + error.message); return }
     // powiadom prowadzącego (nie blokuje UI)
-    fetch('/api/notify/makeup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lessonId, kind: 'absence' }) }).catch(() => {})
-    setPhase('reported')
+    fetch('/api/notify/makeup', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lessonId, kind: inTime ? 'absence' : 'late_cancel' }),
+    }).catch(() => {})
+    if (inTime) {
+      setPhase('reported')
+    } else {
+      setPhase('late_cancelled')
+      setTimeout(() => router.refresh(), 2000)
+    }
   }
 
   async function findSlots() {
@@ -117,6 +134,14 @@ export function MakeupActions({
     return (
       <div className="mt-3 pt-3 border-t border-gray-50">
         <p className="text-xs text-green-600 font-medium flex items-center gap-1.5"><Check size={13} />{t(lang, 'makeup_booked')}</p>
+      </div>
+    )
+  }
+
+  if (phase === 'late_cancelled') {
+    return (
+      <div className="mt-3 pt-3 border-t border-gray-50">
+        <p className="text-xs text-orange-600 font-medium flex items-center gap-1.5"><X size={13} />{t(lang, 'late_cancel_done')}</p>
       </div>
     )
   }

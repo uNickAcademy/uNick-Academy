@@ -132,8 +132,20 @@ export default async function OpsDashboardPage() {
                     </p>
                   </div>
                   <StatusPill
-                    label={l.lesson_status === "present" ? "Zrealizowana" : l.lesson_status === "absent" ? "Nieobecność" : "Zaplanowana"}
-                    variant={l.lesson_status === "present" ? "green" : l.lesson_status === "absent" ? "red" : "subtle"}
+                    label={
+                      l.lesson_status === "present" ? "Zrealizowana"
+                      : l.lesson_status === "late_cancellation" ? "Późne odwołanie"
+                      : l.lesson_status === "no_show" ? "No-show"
+                      : l.lesson_status === "absent" ? "Nieobecność"
+                      : l.lesson_status === "excused" ? "Do odrobienia"
+                      : "Zaplanowana"
+                    }
+                    variant={
+                      l.lesson_status === "present" ? "green"
+                      : l.lesson_status === "late_cancellation" ? "amber"
+                      : (l.lesson_status === "no_show" || l.lesson_status === "absent") ? "red"
+                      : "subtle"
+                    }
                   />
                 </li>
               ))}

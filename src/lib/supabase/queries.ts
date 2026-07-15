@@ -438,7 +438,9 @@ export async function getAdminStats() {
   }
 }
 
-// Raport zagrożonych rezygnacją: uczniowie z 3+ nieobecnościami z rzędu (ostatnie lekcje)
+// Raport zagrożonych rezygnacją: uczniowie z 3+ nieodbytymi lekcjami z rzędu
+// (nieobecność, no-show, późne odwołanie lub odwołanie w terminie) w ostatnich lekcjach
+const MISSED: string[] = ['absent', 'no_show', 'late_cancellation', 'excused']
 export async function getChurnRisk(): Promise<{ id: string; name: string; consecutiveAbsences: number }[]> {
   const supabase = await createClient()
   const { data } = await supabase
@@ -461,7 +463,7 @@ export async function getChurnRisk(): Promise<{ id: string; name: string; consec
   for (const [id, s] of Object.entries(byStudent)) {
     let streak = 0
     for (const a of s.atts) {
-      if (a === 'absent') streak++
+      if (MISSED.includes(a)) streak++
       else break
     }
     if (streak >= 3) risk.push({ id, name: s.name, consecutiveAbsences: streak })
