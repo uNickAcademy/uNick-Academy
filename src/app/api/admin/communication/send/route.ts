@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendBulkMessage, isEmailConfigured } from '@/lib/email/send'
 import { sendBulkWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/send'
+import { sendBulkSms, isSmsConfigured } from '@/lib/sms/send'
 
 type Recipient = { email: string; name: string; phone: string }
 
@@ -15,7 +16,9 @@ export async function POST(req: NextRequest) {
 
   const { channel, segment, subject, body, groupId, dateFrom, dateTo, preview } = await req.json()
   const isWhatsApp = channel === 'whatsapp'
-  if (!preview && (!isWhatsApp && !subject?.trim())) {
+  const isSms = channel === 'sms'
+  const isPhoneChannel = isWhatsApp || isSms
+  if (!preview && (!isPhoneChannel && !subject?.trim())) {
     return NextResponse.json({ error: 'Podaj temat.' }, { status: 400 })
   }
   if (!preview && !body?.trim()) {
@@ -71,7 +74,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Nieprawidłowy segment.' }, { status: 400 })
   }
 
-  recipients = isWhatsApp ? recipients.filter((r) => r.phone) : recipients.filter((r) => r.email)
+  recipients = isPhoneChannel ? recipients.filter((r) => r.phone) : recipients.filter((r) => r.email)
 
   // Tryb podglądu — tylko liczba odbiorców, bez wysyłki
   if (preview) {
@@ -83,6 +86,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sent: 0, recipients: recipients.length, channelConfigured: false })
     }
     const { sent, failed } = await sendBulkWhatsApp(recipients, body.trim())
+    return NextResponse.json({ sent, failed, recipients: recipients.length, channelConfigured: true })
+  }
+
+  if (isSms) {
+    if (!isSmsConfigured()) {
+      return NextResponse.json({ sent: 0, recipients: recipients.length, channelConfigured: false })
+    }
+    const { sent, failed } = await sendBulkSms(recipients, body.trim())
     return NextResponse.json({ sent, failed, recipients: recipients.length, channelConfigured: true })
   }
 

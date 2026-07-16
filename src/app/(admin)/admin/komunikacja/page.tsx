@@ -1,6 +1,7 @@
 import { getAllGroups } from '@/lib/supabase/queries'
 import { isEmailConfigured } from '@/lib/email/send'
 import { isWhatsAppConfigured } from '@/lib/whatsapp/send'
+import { isSmsConfigured } from '@/lib/sms/send'
 import { CommunicationView } from './CommunicationView'
 
 export const dynamic = 'force-dynamic'
@@ -13,7 +14,7 @@ export default async function KomunikacjaPage() {
       groupOptions={groupOptions}
       emailConfigured={isEmailConfigured()}
       whatsappConfigured={isWhatsAppConfigured()}
-      smsConfigured={false}
+      smsConfigured={isSmsConfigured()}
     />
   )
 }

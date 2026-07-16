@@ -43,7 +43,7 @@ export function CommunicationView({
   }
 
   async function handleSend() {
-    if (channel !== 'whatsapp' && !subject.trim()) { setResult('Podaj temat.'); return }
+    if (channel === 'email' && !subject.trim()) { setResult('Podaj temat.'); return }
     if (!body.trim()) { setResult('Podaj treść.'); return }
     if (!confirm(`Wysłać wiadomość${previewCount != null ? ` do ${previewCount} odbiorców` : ''}? Tej operacji nie można cofnąć.`)) return
     setSending(true); setResult(null)
@@ -55,11 +55,11 @@ export function CommunicationView({
     setSending(false)
     if (!res.ok) { setResult('Błąd: ' + (data.error ?? 'nie udało się')); return }
     if (data.channelConfigured) {
-      const failedNote = data.failed ? ` (${data.failed} nieudanych — np. poza 24h oknem WhatsApp)` : ''
+      const failedNote = data.failed ? ` (${data.failed} nieudanych${channel === 'whatsapp' ? ' — np. poza 24h oknem WhatsApp' : ''})` : ''
       setResult(`✅ Wysłano do ${data.sent} odbiorców.${failedNote}`)
     } else {
-      const provider = channel === 'whatsapp' ? 'WhatsApp (Zapier)' : 'E-mail (Resend)'
-      const envVar = channel === 'whatsapp' ? 'ZAPIER_WHATSAPP_WEBHOOK_URL' : 'RESEND_API_KEY'
+      const provider = channel === 'whatsapp' ? 'WhatsApp (Zapier)' : channel === 'sms' ? 'SMS (SMSAPI)' : 'E-mail (Resend)'
+      const envVar = channel === 'whatsapp' ? 'ZAPIER_WHATSAPP_WEBHOOK_URL' : channel === 'sms' ? 'SMSAPI_TOKEN' : 'RESEND_API_KEY'
       setResult(`📋 Segment obejmuje ${data.recipients} odbiorców. ${provider} jest nieaktywny — skonfiguruj ${envVar}, aby wysyłać.`)
     }
   }
@@ -80,16 +80,11 @@ export function CommunicationView({
         </button>
         <button onClick={() => setChannel('sms')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${channel === 'sms' ? 'bg-[#23479E] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-          <MessageSquare size={16} />SMS {!smsConfigured && <span className="text-xs opacity-70">(wkrótce)</span>}
+          <MessageSquare size={16} />SMS {!smsConfigured && <span className="text-xs opacity-70">(nieaktywny)</span>}
         </button>
       </div>
 
-      {channel === 'sms' ? (
-        <div className="bg-amber-50 rounded-2xl p-6 text-sm text-amber-700">
-          Kanał SMS jest przygotowany, ale wymaga podłączenia dostawcy (np. SMSAPI / Twilio). Po dodaniu klucza API wysyłka SMS do segmentów zadziała tak samo jak e-mail.
-        </div>
-      ) : (
-        <div className="space-y-6">
+      <div className="space-y-6">
           {/* Segment */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">Do kogo?</label>
@@ -138,7 +133,7 @@ export function CommunicationView({
           )}
 
           {/* Treść */}
-          {channel !== 'whatsapp' && (
+          {channel === 'email' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Temat</label>
               <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="np. Zmiana planu na ten tydzień"
@@ -149,12 +144,18 @@ export function CommunicationView({
             <label className="block text-sm font-medium text-gray-700 mb-1">Treść wiadomości</label>
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} placeholder="Cześć! Chcieliśmy poinformować, że..."
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
-            <p className="text-xs text-gray-400 mt-1">Każdy odbiorca dostanie spersonalizowane „Cześć [imię]!" na początku.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {channel === 'sms'
+                ? 'Każdy odbiorca dostanie spersonalizowane „Cześć [imię]!" na początku. Dłuższe wiadomości SMSAPI dzieli automatycznie na kilka części.'
+                : 'Każdy odbiorca dostanie spersonalizowane „Cześć [imię]!" na początku.'}
+            </p>
           </div>
 
-          {channel === 'whatsapp' && segment === 'group' && (
+          {(channel === 'whatsapp' || channel === 'sms') && segment === 'group' && (
             <p className="text-xs text-gray-400">
-              WhatsApp nie obsługuje grupowych wątków — każdy uczestnik i prowadzący dostaną tę wiadomość jako osobną wiadomość 1:1.
+              {channel === 'whatsapp'
+                ? 'WhatsApp nie obsługuje grupowych wątków — każdy uczestnik i prowadzący dostaną tę wiadomość jako osobną wiadomość 1:1.'
+                : 'Każdy uczestnik i prowadzący dostaną tę wiadomość jako osobny SMS.'}
             </p>
           )}
 
@@ -175,10 +176,11 @@ export function CommunicationView({
           <p className="text-xs text-gray-400 text-center">
             {channel === 'whatsapp'
               ? 'Wiadomości WhatsApp idą przez Zapier. Odbiorca musi napisać do nas na WhatsApp w ciągu ostatnich 24h, inaczej wysyłka do niego się nie powiedzie.'
+              : channel === 'sms'
+              ? 'Wiadomości SMS idą przez SMSAPI.pl i są płatne — każda wysyłka obciąża limit/saldo na koncie SMSAPI.'
               : 'Wiadomości operacyjne idą przez Resend. Newslettery i kampanie marketingowe planujemy osobnym torem (Brevo/Zapier) — Faza 5.'}
           </p>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
