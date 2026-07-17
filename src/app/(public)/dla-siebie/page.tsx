@@ -1,42 +1,6 @@
 import Link from 'next/link'
-import { Star, CheckCircle, ChevronDown } from 'lucide-react'
-import type { LanguageLevel } from '@/types'
-
-const TEACHERS = [
-  {
-    id: '1',
-    name: 'Milly',
-    role: 'Co-founder & Teacher',
-    bio: 'Pasjonatka języka angielskiego z 8-letnim doświadczeniem. Specjalizuje się w konwersacjach biznesowych i przygotowaniu do egzaminów.',
-    rating: 4.9,
-    reviews: 124,
-    levels: ['B1', 'B2', 'C1', 'C2'] as LanguageLevel[],
-    image: '/teachers/milly.jpg',
-    gradient: 'from-[#23479E] to-[#1C387D]',
-  },
-  {
-    id: '2',
-    name: 'Nick',
-    role: 'Co-founder & Teacher',
-    bio: 'Native speaker z Irlandii. Uczy angielskiego z humorem i pasją. Specjalizuje się w wymowie i codziennym angielskim.',
-    rating: 4.9,
-    reviews: 98,
-    levels: ['A1', 'A2', 'B1', 'B2'] as LanguageLevel[],
-    image: '/teachers/nick.jpg',
-    gradient: 'from-[#4EC9B0] to-[#23479E]',
-  },
-  {
-    id: '3',
-    name: 'Anna',
-    role: 'Teacher',
-    bio: 'Certyfikowana nauczycielka z tytułem Cambridge DELTA. Ekspertka od angielskiego akademickiego i pracy dyplomowej.',
-    rating: 4.8,
-    reviews: 67,
-    levels: ['B2', 'C1', 'C2'] as LanguageLevel[],
-    image: '/teachers/anna.jpg',
-    gradient: 'from-rose-400 to-pink-600',
-  },
-]
+import { Star } from 'lucide-react'
+import { getAllTeachers } from '@/lib/supabase/queries'
 
 const STEPS = [
   { n: '01', title: 'Wybierz nauczyciela', desc: 'Przejrzyj profile i wybierz osobę, z którą chcesz się uczyć.' },
@@ -44,15 +8,13 @@ const STEPS = [
   { n: '03', title: 'Zacznij mówić', desc: 'Dołącz do lekcji online lub offline i zacznij swoją przygodę z angielskim.' },
 ]
 
-const REVIEWS = [
-  { name: 'Kasia W.', text: 'Po 3 miesiącach z Milly wreszcie przestałam bać się mówić po angielsku w pracy. Polecam z całego serca!', rating: 5, level: 'B2' },
-  { name: 'Marek T.', text: 'Nick to najlepszy nauczyciel jakiego miałem. Lekcje są super fun i naprawdę widać postępy.', rating: 5, level: 'B1' },
-  { name: 'Ola K.', text: 'Zdałam IELTS 7.5 dzięki Annie. Niesamowite przygotowanie, bardzo polecam!', rating: 5, level: 'C1' },
-]
+const TEACHER_PREVIEW_COUNT = 6
 
-const LEVELS: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+export default async function DlaSiebiePage() {
+  const allTeachers = await getAllTeachers()
+  const teachers = allTeachers.slice(0, TEACHER_PREVIEW_COUNT)
+  const hasMoreTeachers = allTeachers.length > TEACHER_PREVIEW_COUNT
 
-export default function DlaSiebiePage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
@@ -111,48 +73,44 @@ export default function DlaSiebiePage() {
       <section id="nauczyciele" className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-black text-center text-gray-900 mb-4">Nasi nauczyciele</h2>
-          <p className="text-center text-gray-500 mb-6">Wszyscy nauczyciele są certyfikowani i z pasją do nauczania</p>
-
-          {/* Filtr poziomów */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            <button className="px-4 py-2 rounded-full bg-[#23479E] text-white text-sm font-medium">Wszyscy</button>
-            {LEVELS.map((lvl) => (
-              <button
-                key={lvl}
-                className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium text-gray-600 hover:border-[#23479E] hover:text-[#23479E] transition-colors"
-              >
-                {lvl}
-              </button>
-            ))}
-          </div>
+          <p className="text-center text-gray-500 mb-10">Wszyscy nauczyciele są certyfikowani i z pasją do nauczania</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TEACHERS.map((teacher) => (
+            {teachers.map((teacher) => (
               <div key={teacher.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                {/* Avatar placeholder */}
-                <div className={`h-48 bg-gradient-to-br ${teacher.gradient} flex items-center justify-center`}>
-                  <span className="text-6xl font-black text-white/80">{teacher.name[0]}</span>
+                <div className="h-48 flex items-center justify-center overflow-hidden" style={{ backgroundColor: teacher.color }}>
+                  {teacher.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={teacher.photo_url} alt={teacher.profile?.full_name ?? 'Lektor'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-6xl font-black text-white/80">{teacher.profile?.full_name?.[0] ?? '?'}</span>
+                  )}
                 </div>
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">{teacher.name}</h3>
-                      <p className="text-sm text-gray-500">{teacher.role}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{teacher.profile?.full_name}</h3>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Star size={14} className="text-amber-400 fill-amber-400" />
-                      <span className="text-sm font-bold text-gray-700">{teacher.rating}</span>
-                      <span className="text-xs text-gray-400">({teacher.reviews})</span>
+                    {teacher.review_count > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star size={14} className="text-amber-400 fill-amber-400" />
+                        <span className="text-sm font-bold text-gray-700">{teacher.rating}</span>
+                        <span className="text-xs text-gray-400">({teacher.review_count})</span>
+                      </div>
+                    )}
+                  </div>
+                  {teacher.bio && (
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-4">{teacher.bio}</p>
+                  )}
+                  {teacher.levels?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {teacher.levels.map((lvl) => (
+                        <span key={lvl} className="px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#23479E] text-xs font-semibold">
+                          {lvl}
+                        </span>
+                      ))}
                     </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">{teacher.bio}</p>
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {teacher.levels.map((lvl) => (
-                      <span key={lvl} className="px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#23479E] text-xs font-semibold">
-                        {lvl}
-                      </span>
-                    ))}
-                  </div>
+                  )}
                   <Link
                     href="/zapisy"
                     className="block w-full py-2 rounded-xl gradient-primary text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity"
@@ -163,29 +121,14 @@ export default function DlaSiebiePage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Opinie */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-black text-center text-gray-900 mb-12">Co mówią nasi uczniowie</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {REVIEWS.map((review, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex mb-3">
-                  {[...Array(review.rating)].map((_, j) => (
-                    <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">"{review.text}"</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-900 text-sm">{review.name}</span>
-                  <span className="text-xs bg-[#EAF3FF] text-[#23479E] px-2 py-0.5 rounded-full font-semibold">{review.level}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          {hasMoreTeachers && (
+            <div className="text-center mt-8">
+              <Link href="/nauczyciele" className="text-[#23479E] font-semibold hover:underline">
+                Zobacz wszystkich nauczycieli →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
