@@ -72,3 +72,17 @@ export async function sendBulkSms(
 export async function sendSms(phone: string, message: string): Promise<boolean> {
   return sendOne(phone, message)
 }
+
+// Numer szkoły do powiadomień wewnętrznych (nowa konsultacja, nowy zapis).
+// Nadpisywalny przez env, żeby zmiana numeru nie wymagała deploya.
+const SCHOOL_NOTIFY_PHONE = process.env.SCHOOL_NOTIFY_PHONE || '+48666661750'
+
+// Powiadomienie SMS do szkoły — fire-and-forget, nigdy nie blokuje odpowiedzi
+// dla użytkownika (błąd wysyłki tylko loguje).
+export async function notifySchoolSms(message: string): Promise<void> {
+  try {
+    await sendOne(SCHOOL_NOTIFY_PHONE, message)
+  } catch (err) {
+    console.error('[SMS] Powiadomienie szkoły nie wyszło:', err)
+  }
+}

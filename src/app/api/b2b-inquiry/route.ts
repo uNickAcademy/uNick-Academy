@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { notifySchoolSms } from '@/lib/sms/send'
 
 // Publiczny formularz zapytań B2B → tworzy leada w pipeline (etap 'approach')
 export async function POST(req: NextRequest) {
@@ -21,5 +22,6 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  await notifySchoolSms(`Nowe zapytanie B2B: ${companyName.trim()}${contactName ? `, ${contactName}` : ''}${phone ? `, tel. ${phone}` : ''}, ${email.trim()}`)
   return NextResponse.json({ success: true })
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendLessonConfirmation } from '@/lib/email/send'
+import { notifySchoolSms } from '@/lib/sms/send'
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
         const msg = /miejsc/i.test(error.message) ? 'Brak wolnych miejsc w tej grupie.' : 'Nie udało się zapisać do grupy.'
         return NextResponse.json({ error: msg }, { status: 400 })
       }
+      await notifySchoolSms(`Nowy zapis do grupy: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
       return NextResponse.json({ success: true })
     }
 
@@ -48,6 +50,9 @@ export async function POST(req: NextRequest) {
         topic: ongoing ? 'Lekcje cykliczne (online)' : 'Lekcja online',
         type: 'online', meetLink: typeof meetLink === 'string' ? meetLink : undefined,
       }).catch(() => {})
+      await notifySchoolSms(
+        `Nowy zapis online: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`
+      )
       return NextResponse.json({ success: true })
     }
 
@@ -63,6 +68,7 @@ export async function POST(req: NextRequest) {
         console.error('[Booking stationary] RPC error:', error)
         return NextResponse.json({ error: 'Nie udało się wysłać prośby.' }, { status: 500 })
       }
+      await notifySchoolSms(`Nowa prośba o zajęcia stacjonarne: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
       return NextResponse.json({ success: true })
     }
 
