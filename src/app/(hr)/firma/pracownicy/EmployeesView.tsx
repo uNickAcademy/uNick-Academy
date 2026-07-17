@@ -100,10 +100,13 @@ function CancelModal({ lesson, onClose, onSaved }: { lesson: UpcomingLesson; onC
   async function confirmCancel() {
     setSaving(true); setError(null)
     const supabase = createClient()
-    const { error } = await supabase.from('lessons').update({
-      cancelled_reason: reason.trim() || null,
-      cancelled_at: new Date().toISOString(),
-    }).eq('id', lesson.id)
+    // <24h przed startem: lekcja przepada jako late_cancellation — zostaje w
+    // statystykach jako odbyta/płatna (bez cancelled_at, inaczej zniknęłaby z
+    // rozliczeń i nauczyciel straciłby należność). >=24h: zwykłe miękkie odwołanie.
+    const update = isLate
+      ? { attendance: 'late_cancellation', cancelled_reason: reason.trim() || null }
+      : { cancelled_reason: reason.trim() || null, cancelled_at: new Date().toISOString() }
+    const { error } = await supabase.from('lessons').update(update).eq('id', lesson.id)
     setSaving(false)
     if (error) { setError('Nie udało się odwołać: ' + error.message); return }
     onSaved()

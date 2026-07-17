@@ -23,6 +23,7 @@ export default async function TeacherDashboard() {
   ])
 
   const nextLessons = upcomingLessons.slice(0, 5)
+  const upcomingCount = upcomingLessons.length
   const unmarked = recentLessons.filter((l) => (l.attendance ?? 'scheduled') === 'scheduled').length
   const firstName = teacher.profile?.full_name?.split(' ')[0] ?? 'Lektorze'
 
@@ -32,7 +33,7 @@ export default async function TeacherDashboard() {
         <h1 className="text-2xl font-black text-gray-900">
           Cześć, {firstName}! 👋
         </h1>
-        <p className="text-gray-500 mt-1">Masz {nextLessons.length} {nextLessons.length === 1 ? 'nadchodzącą lekcję' : 'nadchodzących lekcji'}</p>
+        <p className="text-gray-500 mt-1">Masz {upcomingCount} {upcomingCount === 1 ? 'nadchodzącą lekcję' : 'nadchodzących lekcji'}</p>
       </div>
 
       {unmarked > 0 && (
@@ -49,7 +50,7 @@ export default async function TeacherDashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <StatCard icon={Users} label="Uczniowie" value={`${students.length}`} />
-        <StatCard icon={Calendar} label="Nadchodzące lekcje" value={`${nextLessons.length}`} />
+        <StatCard icon={Calendar} label="Nadchodzące lekcje" value={`${upcomingCount}`} />
         <StatCard icon={Clock} label="Lekcje (30 dni)" value={`${recentLessons.length}`} />
       </div>
 

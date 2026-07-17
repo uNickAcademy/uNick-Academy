@@ -37,11 +37,12 @@ export default async function PostepyPage() {
   const totalHours = months.reduce((s, m) => s + m.hours, 0)
   const maxHours = Math.max(...months.map((m) => m.hours), 1)
 
-  // Frekwencja
+  // Frekwencja — nieobecność zgłoszona (absent) i bez zgłoszenia (no_show) osobno
   const present = past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
   const excused = past.filter((l) => l.attendance === 'excused').length
   const lateCancel = past.filter((l) => l.attendance === 'late_cancellation').length
-  const noShow = past.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show').length
+  const absent = past.filter((l) => l.attendance === 'absent').length
+  const noShow = past.filter((l) => l.attendance === 'no_show').length
 
   // Tematy i notatki
   const recentTopics = past
@@ -53,7 +54,7 @@ export default async function PostepyPage() {
     .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
     .slice(0, 6)
 
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Warsaw' })
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -88,10 +89,11 @@ export default async function PostepyPage() {
           {/* Frekwencja */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
             <h2 className="font-bold text-gray-900 mb-4">{t(lang, 'attendance_title')}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <AttStat icon={CheckCircle} tone="text-green-600 bg-green-50" label={t(lang, 'att_present')} value={present} />
               <AttStat icon={MinusCircle} tone="text-amber-600 bg-amber-50" label={t(lang, 'att_excused')} value={excused} />
               <AttStat icon={Clock} tone="text-orange-600 bg-orange-50" label={t(lang, 'att_late_cancellation')} value={lateCancel} />
+              <AttStat icon={XCircle} tone="text-red-400 bg-red-50" label={t(lang, 'att_absent')} value={absent} />
               <AttStat icon={XCircle} tone="text-red-500 bg-red-50" label={t(lang, 'att_no_show')} value={noShow} />
             </div>
           </div>

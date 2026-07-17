@@ -9,8 +9,6 @@ import type { Invoice } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-const WEEKS_PER_MONTH = 4.33
-
 export default async function PlatnosciPage({ searchParams }: {
   searchParams: Promise<{ success?: string; cancelled?: string }>
 }) {
@@ -25,22 +23,16 @@ export default async function PlatnosciPage({ searchParams }: {
 
   const params = await searchParams
 
-  // Miesięczna stawka: indywidualna cena albo najtańszy aktywny plan
-  let monthly = student.custom_monthly_price != null ? Number(student.custom_monthly_price) : 0
-  if (!monthly) {
-    const { data: plans } = await supabase
-      .from('pricing_plans')
-      .select('lessons_per_week, price_per_lesson')
-      .eq('is_active', true)
-      .order('lessons_per_week')
-    const base = plans?.[0]
-    monthly = base ? Math.round(Number(base.price_per_lesson) * base.lessons_per_week * WEEKS_PER_MONTH) : 0
-  }
+  // Miesięczna stawka wyłącznie z indywidualnej ceny ucznia. Bez niej NIE
+  // zgadujemy z cennika (wcześniejszy fallback brał najtańszy plan i pokazywał
+  // zaniżoną kwotę każdemu bez ceny indywidualnej) — pokazujemy tylko
+  // ewentualną zaległość i informację, że stawkę ustala biuro.
+  const monthly = student.custom_monthly_price != null ? Number(student.custom_monthly_price) : null
 
   const balance = Number(student.credit_balance ?? 0)
   const creditApplied = Math.max(balance, 0)
   const arrears = Math.abs(Math.min(balance, 0))
-  const toPay = Math.max(Math.round(monthly - creditApplied + arrears), 0)
+  const toPay = Math.max(Math.round((monthly ?? 0) - creditApplied + arrears), 0)
   const stripeReady = !!process.env.STRIPE_SECRET_KEY
 
   const { data: invoicesData } = await supabase
@@ -51,7 +43,7 @@ export default async function PlatnosciPage({ searchParams }: {
   const invoices = (invoicesData as Invoice[]) ?? []
 
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Warsaw' })
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -72,11 +64,18 @@ export default async function PlatnosciPage({ searchParams }: {
 
       {/* Następna płatność */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
-        <h2 className="font-bold text-gray-900 mb-4">{t(lang, 'next_payment')}</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-gray-900">{t(lang, 'next_payment')}</h2>
+          <a href="/rozliczenia" className="text-xs text-[#23479E] font-medium hover:underline">{t(lang, 'tx_history')} →</a>
+        </div>
         <div className="space-y-3 mb-5">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">{t(lang, 'monthly_rate')}</span>
-            <span className="font-medium text-gray-900">{Math.round(monthly)} zł</span>
+            <span className="font-medium text-gray-900">
+              {monthly != null
+                ? `${Math.round(monthly)} zł`
+                : (lang === 'en' ? 'set individually — contact the office' : 'ustalana indywidualnie — skontaktuj się z biurem')}
+            </span>
           </div>
           {creditApplied > 0 && (
             <div className="flex justify-between text-sm">

@@ -52,9 +52,13 @@ export function RegisterView({ rows, teacherId }: { rows: Row[]; teacherId: stri
   const unmarked = past.filter((r) => r.attendance === 'scheduled').length
 
   async function cancelLesson(id: string) {
-    if (!confirm('Odwołać tę lekcję? Tej operacji nie można cofnąć.')) return
+    if (!confirm('Odwołać tę lekcję?')) return
     const supabase = createClient()
-    const { error } = await supabase.from('lessons').delete().eq('id', id)
+    // Miękkie odwołanie (jak w panelu HR) — rekord zostaje w historii,
+    // znika tylko z aktywnych widoków. Nigdy nie kasujemy lekcji z bazy.
+    const { error } = await supabase.from('lessons')
+      .update({ cancelled_at: new Date().toISOString(), cancelled_reason: 'Odwołana przez nauczyciela' })
+      .eq('id', id)
     if (error) { alert('Nie udało się odwołać: ' + error.message); return }
     router.refresh()
   }

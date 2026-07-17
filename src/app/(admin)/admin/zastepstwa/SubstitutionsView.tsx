@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 
 type Sub = {
   id: string; lessonId: string; reason: string; status: string; createdAt: string
-  startsAt: string; student: string; topic: string; originalTeacher: string; substituteTeacher: string | null
+  startsAt: string; student: string; topic: string; originalTeacherId: string; originalTeacher: string; substituteTeacher: string | null
 }
 
 export function SubstitutionsView({ subs, teacherOptions }: { subs: Sub[]; teacherOptions: { id: string; name: string }[] }) {
@@ -59,7 +59,7 @@ export function SubstitutionsView({ subs, teacherOptions }: { subs: Sub[]; teach
                     <select value={picks[s.id] ?? ''} onChange={(e) => setPicks((p) => ({ ...p, [s.id]: e.target.value }))}
                       className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
                       <option value="">Wybierz zastępcę...</option>
-                      {teacherOptions.filter((t) => t.name !== s.originalTeacher).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      {teacherOptions.filter((t) => t.id !== s.originalTeacherId).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                     <button onClick={() => assign(s)} disabled={busy === s.id}
                       className="px-4 py-2 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60 flex items-center gap-1.5">

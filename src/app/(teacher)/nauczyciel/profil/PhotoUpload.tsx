@@ -19,13 +19,13 @@ function cropToSquare(file: File): Promise<Blob> {
       canvas.width = OUTPUT_SIZE
       canvas.height = OUTPUT_SIZE
       const ctx = canvas.getContext('2d')
-      if (!ctx) return reject(new Error('Canvas not supported'))
+      if (!ctx) return reject(new Error('Przeglądarka nie wspiera canvas'))
       ctx.drawImage(img, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
 
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Crop failed'))), 'image/png')
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Nie udało się przyciąć zdjęcia'))), 'image/png')
       URL.revokeObjectURL(img.src)
     }
-    img.onerror = () => reject(new Error('Could not read image'))
+    img.onerror = () => reject(new Error('Nie udało się odczytać zdjęcia'))
     img.src = URL.createObjectURL(file)
   })
 }
@@ -77,7 +77,7 @@ export function PhotoUpload({ teacherId, photoUrl }: { teacherId: string; photoU
       setStatus('idle')
     } catch (err) {
       setStatus('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Upload failed.')
+      setErrorMsg(err instanceof Error ? err.message : 'Nie udało się wgrać zdjęcia.')
     }
   }
 
@@ -86,10 +86,10 @@ export function PhotoUpload({ teacherId, photoUrl }: { teacherId: string; photoU
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-4">
       <div>
-        <h3 className="font-bold text-gray-900">Profile photo</h3>
+        <h3 className="font-bold text-gray-900">Zdjęcie profilowe</h3>
         <p className="text-sm text-gray-500 mt-1">
-          Shown on the public teachers pages. Upload a clear photo of yourself — it&apos;s automatically
-          cropped to a square and the background is removed to match the site.
+          Widoczne na publicznych stronach nauczycieli. Wgraj wyraźne zdjęcie — automatycznie
+          przytniemy je do kwadratu i usuniemy tło, żeby pasowało do strony.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export function PhotoUpload({ teacherId, photoUrl }: { teacherId: string; photoU
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#E7ECF4] flex items-center justify-center shrink-0">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Profile" className="w-full h-full object-cover" />
+            <img src={preview} alt="Zdjęcie profilowe" className="w-full h-full object-cover" />
           ) : (
             <span className="text-3xl font-black text-[#23479E]/30">?</span>
           )}
@@ -117,7 +117,7 @@ export function PhotoUpload({ teacherId, photoUrl }: { teacherId: string; photoU
             htmlFor="photo-upload-input"
             className={`inline-flex px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer ${busy ? 'opacity-60 pointer-events-none' : ''}`}
           >
-            {status === 'processing' ? 'Removing background…' : status === 'uploading' ? 'Uploading…' : 'Change photo'}
+            {status === 'processing' ? 'Usuwanie tła…' : status === 'uploading' ? 'Wgrywanie…' : 'Zmień zdjęcie'}
           </label>
           {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
         </div>

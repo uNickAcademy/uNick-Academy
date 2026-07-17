@@ -15,7 +15,10 @@ export default async function HrDashboard() {
   const owed = employees.reduce((acc, e) => acc + (e.credit_balance < 0 ? -e.credit_balance : 0), 0)
   const pastMonth = await getHrLessons(new Date(Date.now() - 30 * 86400000).toISOString(), new Date().toISOString())
   const present = pastMonth.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
-  const absent = pastMonth.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
+  const absent = pastMonth.filter((l) => l.attendance === 'absent').length
+  // No-show i późne odwołania to lekcje odbyte i fakturowane (przepadły z winy
+  // pracownika) — pokazywane osobno, żeby nie mylić z nieobecnością zgłoszoną.
+  const forfeited = pastMonth.filter((l) => l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -37,6 +40,7 @@ export default async function HrDashboard() {
           <div className="flex gap-6">
             <div className="flex items-center gap-2"><CheckCircle size={18} className="text-green-600" /><div><p className="text-xl font-black text-gray-900">{present}</p><p className="text-xs text-gray-500">obecności</p></div></div>
             <div className="flex items-center gap-2"><XCircle size={18} className="text-red-500" /><div><p className="text-xl font-black text-gray-900">{absent}</p><p className="text-xs text-gray-500">nieobecności</p></div></div>
+            <div className="flex items-center gap-2"><XCircle size={18} className="text-orange-500" /><div><p className="text-xl font-black text-gray-900">{forfeited}</p><p className="text-xs text-gray-500">przepadłe (płatne)</p></div></div>
           </div>
           <Link href="/firma/pracownicy" className="inline-block mt-4 text-sm text-[#23479E] font-medium hover:underline">Zobacz pracowników →</Link>
         </div>

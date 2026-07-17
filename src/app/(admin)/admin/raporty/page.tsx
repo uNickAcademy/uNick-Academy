@@ -1,5 +1,7 @@
 import { BarChart3, Clock, BookOpen, Wallet, UserMinus } from 'lucide-react'
 import { getAllLessons, getAllTeachersAdmin, getDropouts } from '@/lib/supabase/queries'
+import { calculateNetPayout, CONTRACT_TYPE_LABELS } from '@/lib/payroll/pl-zlecenie'
+import type { TeacherContractType } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,8 +26,14 @@ export default async function RaportyPage({ searchParams }: { searchParams: Prom
     getDropouts(),
   ])
 
-  // zrealizowane = lekcje, które już się odbyły w zakresie
-  const realized = lessons.filter((l) => new Date(l.starts_at).getTime() <= Date.now())
+  // Zrealizowane i płatne = minione lekcje z obecnością wg modelu:
+  // present + late_cancellation + no_show, a nieoznaczone (scheduled) liczą się
+  // jak obecność ("domyślnie obecny"). Excused (do odrobienia) i absent nie są
+  // rozliczane; lekcje odwołane (cancelled_at) już odfiltrowane w getAllLessons.
+  const BILLABLE = new Set(['present', 'late_cancellation', 'no_show', 'scheduled'])
+  const realized = lessons.filter((l) =>
+    new Date(l.starts_at).getTime() <= Date.now() && BILLABLE.has(l.attendance ?? 'scheduled')
+  )
   const hoursOf = (l: { starts_at: string; ends_at: string }) => (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000
 
   const totalHours = realized.reduce((a, l) => a + hoursOf(l), 0)
@@ -33,18 +41,21 @@ export default async function RaportyPage({ searchParams }: { searchParams: Prom
   const byFormat = { individual: realized.filter((l) => l.format === 'individual'), group: realized.filter((l) => l.format === 'group') }
 
   const teacherMap = new Map(teachers.map((t) => [t.id, t]))
-  const perTeacher: Record<string, { name: string; lessons: number; hours: number; rateInd: number | null; rateGrp: number | null; salary: number }> = {}
+  const perTeacher: Record<string, { name: string; contract: TeacherContractType; lessons: number; hours: number; rateInd: number | null; rateGrp: number | null; gross: number }> = {}
   for (const l of realized) {
     const t = teacherMap.get(l.teacher_id)
-    perTeacher[l.teacher_id] ??= { name: t?.profile?.full_name ?? '—', lessons: 0, hours: 0, rateInd: t?.hourly_rate ?? null, rateGrp: t?.rate_group ?? null, salary: 0 }
+    perTeacher[l.teacher_id] ??= { name: t?.profile?.full_name ?? '—', contract: (t?.contract_type ?? 'b2b') as TeacherContractType, lessons: 0, hours: 0, rateInd: t?.hourly_rate ?? null, rateGrp: t?.rate_group ?? null, gross: 0 }
     const row = perTeacher[l.teacher_id]
     const h = hoursOf(l)
     // stawka zależna od formatu: grupowa (jeśli ustawiona) vs indywidualna
     const rate = l.format === 'group' ? (t?.rate_group ?? t?.hourly_rate ?? 0) : (t?.hourly_rate ?? 0)
-    row.lessons++; row.hours += h; row.salary += rate * h
+    row.lessons++; row.hours += h; row.gross += rate * h
   }
-  const teacherRows = Object.values(perTeacher).sort((a, b) => b.hours - a.hours)
-  const totalPayroll = teacherRows.reduce((a, r) => a + r.salary, 0)
+  // Netto wg typu umowy — spójnie z uFOS Kadry (b2b i student <26 = 100%, zlecenie z potrąceniami)
+  const teacherRows = Object.values(perTeacher)
+    .map((r) => ({ ...r, net: calculateNetPayout(r.gross, r.contract).net }))
+    .sort((a, b) => b.hours - a.hours)
+  const totalPayroll = teacherRows.reduce((a, r) => a + r.net, 0)
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -82,30 +93,34 @@ export default async function RaportyPage({ searchParams }: { searchParams: Prom
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-bold text-gray-900 flex items-center gap-2"><Wallet size={18} />Rozliczenie prowadzących</h2>
-          <span className="text-sm text-gray-500">Pensje wg godzin × stawka</span>
+          <span className="text-sm text-gray-500">Netto wg typu umowy (jak w uFOS Kadry)</span>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-50 bg-gray-50">
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Prowadzący</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Umowa</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Lekcje</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Godziny</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Stawka</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Brutto</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Do wypłaty</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {teacherRows.length === 0 ? (
-              <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-sm">Brak zrealizowanych lekcji w tym okresie.</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-gray-400 text-sm">Brak zrealizowanych lekcji w tym okresie.</td></tr>
             ) : teacherRows.map((r) => (
               <tr key={r.name} className="hover:bg-gray-50">
                 <td className="px-5 py-3 font-medium text-gray-900">{r.name}</td>
+                <td className="px-5 py-3 text-gray-500 text-xs">{CONTRACT_TYPE_LABELS[r.contract]}</td>
                 <td className="px-5 py-3 text-gray-700">{r.lessons}</td>
                 <td className="px-5 py-3 text-gray-700">{Math.round(r.hours * 10) / 10}h</td>
                 <td className="px-5 py-3 text-gray-500 text-xs">
                   {r.rateInd != null ? `${r.rateInd} zł/h ind.` : 'brak'}{r.rateGrp != null ? ` · ${r.rateGrp} zł/h gr.` : ''}
                 </td>
-                <td className="px-5 py-3 font-bold text-gray-900">{r.salary > 0 ? `${Math.round(r.salary).toLocaleString('pl-PL')} zł` : '—'}</td>
+                <td className="px-5 py-3 text-gray-500">{r.gross > 0 ? `${Math.round(r.gross).toLocaleString('pl-PL')} zł` : '—'}</td>
+                <td className="px-5 py-3 font-bold text-gray-900">{r.net > 0 ? `${Math.round(r.net).toLocaleString('pl-PL')} zł` : '—'}</td>
               </tr>
             ))}
           </tbody>

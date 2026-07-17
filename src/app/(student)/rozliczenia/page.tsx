@@ -30,7 +30,7 @@ export default async function RozliczeniaPage() {
   const stripeReady = !!process.env.STRIPE_SECRET_KEY
 
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Warsaw' })
 
   return (
     <div className="p-6 max-w-2xl mx-auto">

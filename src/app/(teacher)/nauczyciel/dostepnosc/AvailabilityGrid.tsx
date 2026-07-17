@@ -6,15 +6,16 @@ import type { Availability } from '@/types'
 
 const DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
 
-// 30-minute slots from 8:00 to 21:30
-const SLOTS = Array.from({ length: 28 }, (_, i) => ({
-  hour: 8 + Math.floor(i / 2),
+// Sloty 30-minutowe 7:00–22:00 (wcześniej 8:00–21:30 — lekcje poza zakresem
+// były niewidoczne, a dostępności nie dało się ustawić)
+const SLOTS = Array.from({ length: 30 }, (_, i) => ({
+  hour: 7 + Math.floor(i / 2),
   minute: (i % 2) * 30,
 }))
 
 function timeToSlotIndex(time: string) {
   const [h, m] = time.split(':').map(Number)
-  return (h - 8) * 2 + (m >= 30 ? 1 : 0)
+  return (h - 7) * 2 + (m >= 30 ? 1 : 0)
 }
 
 function slotIndexToTime(index: number) {

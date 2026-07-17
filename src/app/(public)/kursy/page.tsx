@@ -54,7 +54,6 @@ export default async function KursyPage() {
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-8">Tę tabelę kursów można osadzić na własnej stronie www (link do /kursy).</p>
       </div>
     </div>
   )

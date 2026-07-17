@@ -19,7 +19,16 @@ export default async function StudentDashboard() {
   if (!student) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <p className="text-gray-500">{t(lang, 'no_next_lesson')}</p>
+        <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center">
+          <p className="font-bold text-gray-900 mb-1">
+            {lang === 'en' ? 'No student profile linked to this account yet' : 'Do tego konta nie jest jeszcze podpięty profil ucznia'}
+          </p>
+          <p className="text-sm text-gray-500">
+            {lang === 'en'
+              ? 'Contact us at hello@unick-academy.pl and we will set it up.'
+              : 'Napisz do nas na hello@unick-academy.pl — skonfigurujemy go dla Ciebie.'}
+          </p>
+        </div>
       </div>
     )
   }
@@ -37,9 +46,11 @@ export default async function StudentDashboard() {
 
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
   const firstName = (student.full_name ?? student.profile?.full_name ?? '').split(' ')[0] || '👋'
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
-  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
-  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  // timeZone jawnie: render server-side na Vercel działa w UTC — bez tego godziny
+  // lekcji przesuwają się o 1-2h względem czasu polskiego.
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Warsaw' })
+  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Warsaw' })
+  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' })
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

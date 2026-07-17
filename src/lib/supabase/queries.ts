@@ -1,4 +1,6 @@
+import { cookies } from 'next/headers'
 import { createClient } from './server'
+import { REFERRAL_BONUS_PLN } from '@/lib/referral'
 import type { Student, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
 
 // ──────────────────────────────────────────
@@ -21,10 +23,14 @@ export async function getStudentsByProfileId(profileId: string): Promise<Student
   return (data as Student[]) ?? []
 }
 
-// Pierwsze podkonto (zachowuje zgodność tam, gdzie pokazujemy jednego ucznia).
+// Aktywne podkonto: rodzic z kilkorgiem dzieci wybiera dziecko przełącznikiem
+// w panelu (cookie active_student); pojedynczy uczeń dostaje swoje jedyne konto.
+// Cookie spoza listy dzieci danego profilu jest ignorowane.
 export async function getStudentByProfileId(profileId: string): Promise<Student | null> {
   const students = await getStudentsByProfileId(profileId)
-  return students[0] ?? null
+  if (students.length === 0) return null
+  const activeId = (await cookies()).get('active_student')?.value
+  return students.find((s) => s.id === activeId) ?? students[0]
 }
 
 // Łączne saldo rodziny = suma sald wszystkich podkont danego rodzica.
@@ -46,6 +52,7 @@ export async function getStudentLessons(studentId: string): Promise<Lesson[]> {
   let query = supabase
     .from('lessons')
     .select(`*, teacher:teachers(*, profile:profiles(*)), materials:lesson_materials(*), group:groups(*)`)
+    .is('cancelled_at', null)
     .order('starts_at', { ascending: true })
 
   query = groupIds.length > 0
@@ -219,6 +226,7 @@ export async function getAllLessons(from?: string, to?: string): Promise<Lesson[
       teacher:teachers(*, profile:profiles(*)),
       group:groups(*)
     `)
+    .is('cancelled_at', null)
     .order('starts_at', { ascending: true })
 
   if (from) query = query.gte('starts_at', from)
@@ -301,15 +309,15 @@ export async function applyReferral(referrerId: string, referredId: string, code
     referrer_id: referrerId,
     referred_id: referredId,
     code,
-    referrer_credit: 50,
-    referred_discount: 50,
+    referrer_credit: REFERRAL_BONUS_PLN,
+    referred_discount: REFERRAL_BONUS_PLN,
   })
 
   // Dodaj kredyt polecającemu
-  await addCreditToStudent(referrerId, 50, `Kredyt z polecenia`)
+  await addCreditToStudent(referrerId, REFERRAL_BONUS_PLN, `Kredyt z polecenia`)
 
   // Obniż pierwszą płatność poleconego (zapisz jako kredyt)
-  await addCreditToStudent(referredId, 50, `Zniżka z kodu polecenia ${code}`)
+  await addCreditToStudent(referredId, REFERRAL_BONUS_PLN, `Zniżka z kodu polecenia ${code}`)
 }
 
 // ──────────────────────────────────────────
@@ -407,6 +415,7 @@ export async function getTeacherLessons(teacherId: string, from?: string, to?: s
     .from('lessons')
     .select(`*, student:students(*, profile:profiles(*)), materials:lesson_materials(*), group:groups(*)`)
     .eq('teacher_id', teacherId)
+    .is('cancelled_at', null)
     .order('starts_at', { ascending: true })
 
   if (from) query = query.gte('starts_at', from)
@@ -425,7 +434,10 @@ export async function getAdminStats() {
 
   const [studentsRes, lessonsRes, transactionsRes] = await Promise.all([
     supabase.from('students').select('id, status').eq('status', 'active'),
-    supabase.from('lessons').select('id').gte('starts_at', new Date(Date.now() - 7 * 86400000).toISOString()),
+    supabase.from('lessons').select('id')
+      .is('cancelled_at', null)
+      .gte('starts_at', new Date(Date.now() - 7 * 86400000).toISOString())
+      .lte('starts_at', new Date().toISOString()),
     supabase.from('transactions')
       .select('amount, type')
       .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
@@ -443,13 +455,15 @@ export async function getAdminStats() {
 }
 
 // Raport zagrożonych rezygnacją: uczniowie z 3+ nieodbytymi lekcjami z rzędu
-// (nieobecność, no-show, późne odwołanie lub odwołanie w terminie) w ostatnich lekcjach
-const MISSED: string[] = ['absent', 'no_show', 'late_cancellation', 'excused']
+// (nieobecność, no-show lub późne odwołanie). Odwołanie w terminie (excused)
+// to legalne przełożenie z odrabianiem — nie sygnalizuje rezygnacji.
+const MISSED: string[] = ['absent', 'no_show', 'late_cancellation']
 export async function getChurnRisk(): Promise<{ id: string; name: string; consecutiveAbsences: number }[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('lessons')
     .select('student_id, starts_at, attendance, student:students(profile:profiles(full_name))')
+    .is('cancelled_at', null)
     .lte('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: false })
 
@@ -634,12 +648,12 @@ export async function getConsentAcceptances() {
 // ── Zastępstwa ──
 export async function getSubstitutions(): Promise<{
   id: string; lessonId: string; reason: string; status: string; createdAt: string
-  startsAt: string; student: string; topic: string; originalTeacher: string; substituteTeacher: string | null
+  startsAt: string; student: string; topic: string; originalTeacherId: string; originalTeacher: string; substituteTeacher: string | null
 }[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('substitutions')
-    .select(`id, lesson_id, reason, status, created_at,
+    .select(`id, lesson_id, reason, status, created_at, original_teacher_id,
       lesson:lessons(starts_at, topic, student:students(profile:profiles(full_name)), group:groups(name)),
       original:teachers!substitutions_original_teacher_id_fkey(profile:profiles(full_name)),
       substitute:teachers!substitutions_substitute_teacher_id_fkey(profile:profiles(full_name))`)
@@ -657,6 +671,7 @@ export async function getSubstitutions(): Promise<{
       startsAt: (lesson?.starts_at as string) ?? '',
       student: lg?.name ? `${lg.name} (grupa)` : (ls?.profile?.full_name ?? '—'),
       topic: (lesson?.topic as string) ?? '',
+      originalTeacherId: (rec.original_teacher_id as string) ?? '',
       originalTeacher: orig?.profile?.full_name ?? '—',
       substituteTeacher: sub?.profile?.full_name ?? null,
     }
@@ -679,9 +694,14 @@ export async function getHrCompany(): Promise<Company | null> {
 
 export async function getHrEmployees(): Promise<Student[]> {
   const supabase = await createClient()
+  // RLS zawęża do firmy HR (polityka "HR widzi pracowników firmy" na students);
+  // dodatkowy filtr po company_id to obrona w głąb na wypadek zmiany polityk.
+  const company = await getHrCompany()
+  if (!company) return []
   const { data } = await supabase
     .from('students')
     .select('*, profile:profiles(*), teacher:teachers(*, profile:profiles(*))')
+    .eq('company_id', company.id)
     .order('joined_at', { ascending: false })
   return (data as Student[]) ?? []
 }

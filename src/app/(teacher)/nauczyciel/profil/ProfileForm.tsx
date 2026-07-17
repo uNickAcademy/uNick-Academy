@@ -50,11 +50,11 @@ export function ProfileForm({
     setPasswordMsg(null)
 
     if (newPassword.length < 8) {
-      setPasswordMsg('Password must be at least 8 characters.')
+      setPasswordMsg('Hasło musi mieć co najmniej 8 znaków.')
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMsg('Passwords do not match.')
+      setPasswordMsg('Hasła nie są takie same.')
       return
     }
 
@@ -84,6 +84,7 @@ export function ProfileForm({
             disabled
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500"
           />
+          <p className="text-xs text-gray-400 mt-1">Imię i nazwisko zmienia biuro — napisz do nas, jeśli wymaga poprawki.</p>
         </div>
 
         <div>

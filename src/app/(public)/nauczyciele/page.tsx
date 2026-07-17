@@ -1,5 +1,6 @@
+import Link from 'next/link'
 import { Star, Mail } from 'lucide-react'
-import { getAllTeachers, getTeacherAvailability } from '@/lib/supabase/queries'
+import { getAllTeachers, getPublicAvailability } from '@/lib/supabase/queries'
 
 const DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Niedz']
 
@@ -8,10 +9,9 @@ function formatTime(time: string) {
 }
 
 export default async function NauczycielePage() {
-  const teachers = await getAllTeachers()
-  const availabilityByTeacher = await Promise.all(
-    teachers.map((t) => getTeacherAvailability(t.id))
-  )
+  // Jedno zapytanie o całą dostępność zamiast osobnego per nauczyciel (N+1)
+  const [teachers, availabilityMap] = await Promise.all([getAllTeachers(), getPublicAvailability()])
+  const availabilityByTeacher = teachers.map((t) => availabilityMap[t.id] ?? [])
 
   return (
     <div className="py-16 px-4 bg-[#FFF8F0]">
@@ -72,7 +72,7 @@ export default async function NauczycielePage() {
                   )}
 
                   {availability.length > 0 && (
-                    <div>
+                    <div className="mb-4">
                       <p className="text-xs font-semibold text-gray-500 mb-2">Dostępność</p>
                       <div className="space-y-1">
                         {availability.map((slot) => (
@@ -83,6 +83,13 @@ export default async function NauczycielePage() {
                       </div>
                     </div>
                   )}
+
+                  <Link
+                    href="/zapisy"
+                    className="block w-full py-2 rounded-xl gradient-primary text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity"
+                  >
+                    Zarezerwuj
+                  </Link>
                 </div>
               </div>
             )

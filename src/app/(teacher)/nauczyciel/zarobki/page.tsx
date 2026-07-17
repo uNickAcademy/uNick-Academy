@@ -22,9 +22,15 @@ export default async function TeacherEarningsPage() {
   const from = new Date()
   from.setMonth(from.getMonth() - 5, 1)
   from.setHours(0, 0, 0, 0)
-  const lessons = await getTeacherLessons(teacher.id, from.toISOString())
+  const lessons = await getTeacherLessons(teacher.id, from.toISOString(), new Date().toISOString())
 
-  const billable = lessons.filter((l) => BILLABLE.includes(l.attendance ?? 'scheduled'))
+  // Model "domyślnie obecny": miniona lekcja bez oznaczenia (scheduled) liczy się
+  // jak obecność — cron dopiero z opóźnieniem przestawia ją na present, a zarobki
+  // muszą być spójne z dziennikiem od razu.
+  const billable = lessons.filter((l) => {
+    const att = l.attendance ?? 'scheduled'
+    return BILLABLE.includes(att) || att === 'scheduled'
+  })
 
   const now = new Date()
   const months: { key: string; label: string; gross: number; hours: number; count: number }[] = []

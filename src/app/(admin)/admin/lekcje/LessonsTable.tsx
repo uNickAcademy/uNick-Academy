@@ -48,9 +48,13 @@ export function LessonsTable({ rows, teacherOptions }: { rows: Row[]; teacherOpt
   })
 
   async function cancelLesson(id: string) {
-    if (!confirm('Odwołać tę lekcję? Tej operacji nie można cofnąć.')) return
+    if (!confirm('Odwołać tę lekcję?')) return
     const supabase = createClient()
-    const { error } = await supabase.from('lessons').delete().eq('id', id)
+    // Miękkie odwołanie — rekord zostaje w historii (spójnie z kalendarzem i HR),
+    // znika z aktywnych widoków przez filtr cancelled_at. Nigdy nie kasujemy lekcji.
+    const { error } = await supabase.from('lessons')
+      .update({ cancelled_at: new Date().toISOString(), cancelled_reason: 'Odwołana przez biuro' })
+      .eq('id', id)
     if (error) { alert('Nie udało się odwołać: ' + error.message); return }
     router.refresh()
   }

@@ -10,18 +10,23 @@ import type { Metadata } from "next"
 export const metadata: Metadata = { title: "Lekcje" }
 
 const attendanceLabel: Record<string, string> = {
-  scheduled: "Zaplanowana",
-  present:   "Zrealizowana",
-  absent:    "Nieobecność",
-  excused:   "Usprawiedliwiona",
+  scheduled:         "Zaplanowana",
+  present:           "Zrealizowana",
+  absent:            "Nieobecność",
+  excused:           "Usprawiedliwiona",
+  late_cancellation: "Późne odwołanie",
+  no_show:           "No-show",
 }
 
 const attendanceVariant = (status: string): "green" | "amber" | "red" | "subtle" => {
   if (status === "present")  return "green"
-  if (status === "absent")   return "red"
-  if (status === "excused")  return "amber"
+  if (status === "absent" || status === "no_show") return "red"
+  if (status === "excused" || status === "late_cancellation") return "amber"
   return "subtle"
 }
+
+// Odbyte i płatne wg modelu obecności — dla nich pokazujemy marżę
+const BILLABLE = new Set(["present", "late_cancellation", "no_show"])
 
 export default async function LekcjePage() {
   const supabase = await createClient()
@@ -135,7 +140,7 @@ export default async function LekcjePage() {
                     />
                   </td>
                   <td className="py-2.5 px-4 text-right">
-                    {l.lesson_status === "present" ? (
+                    {BILLABLE.has(l.lesson_status) ? (
                       <span className={`font-medium text-sm ${Number(l.gross_margin ?? 0) >= 0 ? "text-brand-green" : "text-brand-red"}`}>
                         {formatPLN(Number(l.gross_margin ?? 0))}
                       </span>

@@ -28,9 +28,9 @@ export default async function HrEmployeesPage() {
       present: past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length,
       absent: past.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show').length,
       rescheduled: past.filter((l) => ((l as unknown as LessonExtra).reschedule_count ?? 0) > 0).length,
-      lateCancelled: past.filter((l) => l.attendance === 'late_cancellation').length,
+      lateCancelled: theirLessons.filter((l) => l.attendance === 'late_cancellation' && !(l as unknown as LessonExtra).cancelled_at).length,
       upcoming: active
-        .filter((l) => new Date(l.starts_at).getTime() >= now)
+        .filter((l) => new Date(l.starts_at).getTime() >= now && l.attendance !== 'late_cancellation')
         .map((l) => ({
           id: l.id, startsAt: l.starts_at, endsAt: l.ends_at,
           topic: l.topic ?? '', teacherId: l.teacher_id,

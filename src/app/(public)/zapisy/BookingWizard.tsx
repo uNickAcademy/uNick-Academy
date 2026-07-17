@@ -129,8 +129,9 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
           <p className="text-sm font-bold text-[#23479E] mb-2">Twoje konto w panelu</p>
           <p className="text-sm text-gray-700">Login: <strong>{email}</strong></p>
           <p className="text-xs text-gray-500 mt-3">
-            Aby ustawić hasło, wejdź na <strong>unick-academy.pl/zapomniane-haslo</strong> i podaj swój email —
-            wyślemy link do ustawienia hasła. Jeśli masz już konto u nas, użyj dotychczasowego hasła.
+            Aby ustawić hasło, wejdź na{' '}
+            <a href="/zapomniane-haslo" className="font-bold text-[#23479E] underline">unick-academy.pl/zapomniane-haslo</a>{' '}
+            i podaj swój email — wyślemy link do ustawienia hasła. Jeśli masz już konto u nas, użyj dotychczasowego hasła.
           </p>
         </div>
       </div>

@@ -18,8 +18,14 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
   const now = Date.now()
   const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now)
   const present = past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
-  const absent = past.filter((l) => l.attendance === 'absent' || l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
-  const totalHours = past.reduce((acc, l) => acc + (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000, 0)
+  // Nieobecności sensu stricto; no_show i late_cancellation to lekcje odbyte i
+  // płatne (przepadły z winy ucznia) — pokazywane osobno, nie jako "nieobecność".
+  const absent = past.filter((l) => l.attendance === 'absent').length
+  const forfeited = past.filter((l) => l.attendance === 'no_show' || l.attendance === 'late_cancellation').length
+  // Godziny = tylko lekcje odbyte/płatne (bez excused "do odrobienia" i absent)
+  const totalHours = past
+    .filter((l) => ['present', 'scheduled', 'no_show', 'late_cancellation'].includes(l.attendance ?? 'scheduled'))
+    .reduce((acc, l) => acc + (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000, 0)
   const customFields = student.custom_fields ?? {}
 
   return (
@@ -51,10 +57,11 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Stat icon={CheckCircle} label="Obecności" value={String(present)} color="text-green-600" />
         <Stat icon={XCircle} label="Nieobecności" value={String(absent)} color="text-red-500" />
-        <Stat icon={Clock} label="Godziny lekcji" value={`${Math.round(totalHours * 10) / 10}h`} color="text-[#23479E]" />
+        <Stat icon={XCircle} label="Przepadłe (płatne)" value={String(forfeited)} color="text-orange-500" />
+        <Stat icon={Clock} label="Godziny (płatne)" value={`${Math.round(totalHours * 10) / 10}h`} color="text-[#23479E]" />
         <Stat icon={BookOpen} label="Lekcje łącznie" value={String(lessons.length)} color="text-gray-900" />
       </div>
 
@@ -76,7 +83,7 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {lessons.slice().reverse().map((l) => (
                 <div key={l.id} className="flex items-center gap-3 text-sm">
-                  <span className="text-xs text-gray-400 w-28 flex-shrink-0">{new Date(l.starts_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: '2-digit' })} {new Date(l.starts_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-xs text-gray-400 w-28 flex-shrink-0">{new Date(l.starts_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'Europe/Warsaw' })} {new Date(l.starts_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' })}</span>
                   <span className="flex-1 truncate text-gray-700">{l.topic || 'Lekcja'}</span>
                   {(l.attendance === 'present' || l.attendance === 'scheduled') && <CheckCircle size={14} className="text-green-600" />}
                   {(l.attendance === 'absent' || l.attendance === 'no_show') && <XCircle size={14} className="text-red-500" />}
@@ -94,7 +101,7 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {transactions.map((tx) => (
                 <div key={tx.id} className="flex items-center gap-3 text-sm">
-                  <span className="text-xs text-gray-400 w-20 flex-shrink-0">{new Date(tx.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
+                  <span className="text-xs text-gray-400 w-20 flex-shrink-0">{new Date(tx.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', timeZone: 'Europe/Warsaw' })}</span>
                   <span className="flex-1 truncate text-gray-700">{tx.description}</span>
                   <span className={`font-bold ${tx.type === 'charge' ? 'text-red-500' : 'text-gray-900'}`}>
                     {tx.type === 'charge' ? '−' : '+'}{Number(tx.amount).toLocaleString('pl-PL')} zł

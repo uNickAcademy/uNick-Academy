@@ -18,13 +18,6 @@ const PROCESS = [
   { n: '04', title: 'Start lekcji', desc: 'Zaczynamy szkolenia. Raporty miesięczne trafiają automatycznie do HR.' },
 ]
 
-const STATS = [
-  { value: '200+', label: 'przeszkolonych pracowników' },
-  { value: '4.9★', label: 'średnia ocena szkoleń' },
-  { value: '35+', label: 'firm zaufało nam' },
-  { value: '98%', label: 'firm przedłuża umowę' },
-]
-
 export default function DlaFirmPage() {
   return (
     <div className="flex flex-col">
@@ -42,19 +35,9 @@ export default function DlaFirmPage() {
             Profesjonalne szkolenia językowe dla firm. Program dostosowany do branży, raportowanie dla HR, faktura VAT.
           </p>
 
-          {/* Statystyki */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="bg-white/10 rounded-xl p-4 border border-white/10">
-                <div className="text-2xl font-black text-[#4EC9B0]">{stat.value}</div>
-                <div className="text-xs text-gray-400 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/kontakt"
+              href="#formularz"
               className="px-8 py-4 bg-[#4EC9B0] text-gray-900 font-bold rounded-full text-lg hover:bg-[#3DB89C] transition-colors shadow-lg"
             >
               Umów bezpłatną konsultację
@@ -95,7 +78,7 @@ export default function DlaFirmPage() {
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-black text-center text-gray-900 mb-4">Jak wygląda współpraca?</h2>
-          <p className="text-center text-gray-500 mb-12">Od pierwszego kontaktu do regularnych szkoleń w 5 dni</p>
+          <p className="text-center text-gray-500 mb-12">Od pierwszego kontaktu do regularnych szkoleń w kilku prostych krokach</p>
           <div className="space-y-6">
             {PROCESS.map((step, i) => (
               <div key={step.n} className="flex gap-6 items-start">
@@ -113,7 +96,7 @@ export default function DlaFirmPage() {
       </section>
 
       {/* Formularz kontaktowy B2B */}
-      <section className="py-20 px-4">
+      <section id="formularz" className="py-20 px-4">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-black text-center text-gray-900 mb-4">Porozmawiajmy</h2>
           <p className="text-center text-gray-500 mb-10">Wypełnij formularz, oddzwonimy w ciągu 24h</p>

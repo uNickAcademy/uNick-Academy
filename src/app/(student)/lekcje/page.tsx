@@ -59,8 +59,8 @@ export default async function LekcjePage() {
 
 function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: boolean; lang: Lang }) {
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
-  const date = new Date(lesson.starts_at).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-  const time = new Date(lesson.starts_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const date = new Date(lesson.starts_at).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Warsaw' })
+  const time = new Date(lesson.starts_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' })
   const teacher = lesson.teacher?.profile?.full_name ?? '—'
   const att = lesson.attendance ? ATT[lesson.attendance] : null
   const materials = lesson.materials ?? []

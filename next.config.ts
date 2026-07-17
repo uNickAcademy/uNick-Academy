@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "unickacademy.pl", pathname: "/wp-content/uploads/**" },
     ],
   },
+  // Polskie aliasy tras prawnych/kontaktu — stopka i CTA linkowały do /kontakt,
+  // /polityka-prywatnosci i /regulamin, które nie istniały (404). Właściwe strony
+  // żyją pod [locale]; przekierowujemy zamiast utrzymywać duplikaty treści.
+  async redirects() {
+    return [
+      { source: "/kontakt", destination: "/pl/contact", permanent: false },
+      { source: "/polityka-prywatnosci", destination: "/pl/privacy-policy", permanent: false },
+      { source: "/regulamin", destination: "/pl/terms-of-service", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

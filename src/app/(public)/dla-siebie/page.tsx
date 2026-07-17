@@ -140,7 +140,7 @@ export default async function DlaSiebiePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
               { name: 'Milly', role: 'Co-founder', desc: 'Polska dusza szkoły. Tłumaczy angielski tak, żeby miał sens w polskiej głowie. Uwielbia kawy i lingwistykę.', gradient: 'from-[#23479E] to-[#1C387D]' },
-              { name: 'Nick', role: 'Co-founder', desc: 'Irlandzki charakter szkoły. Przynosi do klasy prawdziwy angielski ze świata. Fan footbaLlu i dobrej herbaty.', gradient: 'from-[#4EC9B0] to-[#23479E]' },
+              { name: 'Nick', role: 'Co-founder', desc: 'Irlandzki charakter szkoły. Przynosi do klasy prawdziwy angielski ze świata. Fan footballu i dobrej herbaty.', gradient: 'from-[#4EC9B0] to-[#23479E]' },
             ].map((person) => (
               <div key={person.name} className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col sm:flex-row">
                 <div className={`w-full sm:w-32 h-32 bg-gradient-to-br ${person.gradient} flex items-center justify-center flex-shrink-0`}>

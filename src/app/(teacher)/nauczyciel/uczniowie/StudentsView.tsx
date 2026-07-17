@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { List, Calendar as CalendarIcon, Video, MapPin } from 'lucide-react'
 import type { Student, Lesson } from '@/types'
 
-// 30-minute slots from 8:00 to 21:30
-const SLOTS = Array.from({ length: 28 }, (_, i) => ({
-  hour: 8 + Math.floor(i / 2),
+// Sloty 30-minutowe 7:00–22:00 (wcześniej 8:00–21:30 — lekcje poza zakresem
+// były niewidoczne, a dostępności nie dało się ustawić)
+const SLOTS = Array.from({ length: 30 }, (_, i) => ({
+  hour: 7 + Math.floor(i / 2),
   minute: (i % 2) * 30,
 }))
 
@@ -146,7 +147,7 @@ export function StudentsView({ students, lessons }: { students: Student[]; lesso
                           className="absolute inset-0.5 rounded-lg px-2 py-1 bg-[#23479E] overflow-hidden"
                           title={l.topic || 'Lekcja'}
                         >
-                          <p className="text-white text-xs font-bold leading-tight truncate">{l.student?.full_name ?? l.student?.profile?.full_name}</p>
+                          <p className="text-white text-xs font-bold leading-tight truncate">{l.group ? `${l.group.name} (grupa)` : (l.student?.full_name ?? l.student?.profile?.full_name ?? 'Lekcja')}</p>
                           <p className="text-white/75 text-xs truncate">{l.topic || 'Lekcja'}</p>
                         </div>
                       ))}
