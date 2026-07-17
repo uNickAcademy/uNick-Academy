@@ -16,8 +16,16 @@ export default async function GrupyPage() {
     level: g.level,
     color: g.color,
     isActive: g.is_active,
+    teacherId: g.teacher_id ?? '',
     teacherName: g.teacher?.profile?.full_name ?? '—',
     members: (g.members ?? []).map((m) => ({ id: m.id, name: m.full_name ?? m.profile?.full_name ?? '—' })),
+    capacity: g.capacity ?? 0,
+    scheduleText: g.schedule_text ?? '',
+    ageRange: g.age_range ?? '',
+    description: g.description ?? '',
+    format: g.format ?? null,
+    pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
+    dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
   }))
 
   const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))

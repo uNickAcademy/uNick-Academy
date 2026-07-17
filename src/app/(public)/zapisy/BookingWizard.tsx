@@ -72,6 +72,22 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
   const requiredOk = consents.filter((c) => c.required).every((c) => checked[c.id])
   const teacher = teachers.find((t) => t.id === teacherId)
 
+  // Filtry listy grup
+  const [filterTeacher, setFilterTeacher] = useState('')
+  const [filterDay, setFilterDay] = useState('')
+  const [filterFormat, setFilterFormat] = useState('')
+  const [filterAge, setFilterAge] = useState('')
+  const groupTeacherOptions = Array.from(
+    new Map(groups.filter((g) => g.teacherId).map((g) => [g.teacherId, g.teacherName])).entries()
+  )
+  const groupAgeOptions = Array.from(new Set(groups.map((g) => g.age_range).filter(Boolean)))
+  const filteredGroups = groups.filter((g) =>
+    (!filterTeacher || g.teacherId === filterTeacher) &&
+    (filterDay === '' || g.dayOfWeek === Number(filterDay)) &&
+    (!filterFormat || g.format === filterFormat) &&
+    (!filterAge || g.age_range === filterAge)
+  )
+
   async function handleSubmit() {
     setError(null)
     if (!studentName || !email) { setError('Podaj imię i e-mail.'); return }
@@ -144,10 +160,40 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
         {screen === 'groupPick' && (
           <div>
             <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wybierz grupę</h2>
-            <p className="text-gray-500 text-center mb-6">Dostępne grupy z wolnymi miejscami</p>
+            <p className="text-gray-500 text-center mb-4">Dostępne grupy z wolnymi miejscami</p>
+
+            {groups.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <select value={filterTeacher} onChange={(e) => setFilterTeacher(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
+                  <option value="">Nauczyciel: wszyscy</option>
+                  {groupTeacherOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                </select>
+                <select value={filterDay} onChange={(e) => setFilterDay(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
+                  <option value="">Dzień: wszystkie</option>
+                  {DAYS_PL.map((d, i) => <option key={d} value={i}>{d}</option>)}
+                </select>
+                <select value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
+                  <option value="">Forma: wszystkie</option>
+                  <option value="offline">Stacjonarnie</option>
+                  <option value="online">Online</option>
+                </select>
+                <select value={filterAge} onChange={(e) => setFilterAge(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
+                  <option value="">Wiek: wszystkie</option>
+                  {groupAgeOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-3 max-h-[26rem] overflow-y-auto">
               {groups.length === 0 && <p className="text-center text-sm text-gray-400 py-8">Brak otwartych grup. Wybierz lekcje indywidualne.</p>}
-              {groups.map((g) => {
+              {groups.length > 0 && filteredGroups.length === 0 && (
+                <p className="text-center text-sm text-gray-400 py-8">Brak grup pasujących do filtrów. Spróbuj zmienić kryteria.</p>
+              )}
+              {filteredGroups.map((g) => {
                 const full = g.spots <= 0
                 return (
                   <button key={g.id} disabled={full} onClick={() => { setGroupId(g.id); go('form') }}
@@ -161,10 +207,19 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
                     <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
                       <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium">{g.level}</span>
                       {g.age_range && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{g.age_range}</span>}
+                      {g.format && (
+                        <span className="flex items-center gap-1">
+                          {g.format === 'online' ? <Monitor size={11} /> : <MapPin size={11} />}
+                          {g.format === 'online' ? 'Online' : 'Stacjonarnie'}
+                        </span>
+                      )}
                       {g.schedule_text && <span className="flex items-center gap-1"><Clock size={11} />{g.schedule_text}</span>}
                       <span>· {g.teacherName}</span>
                     </div>
                     {g.description && <p className="text-xs text-gray-400 mt-1">{g.description}</p>}
+                    {g.pricePerMonth != null && (
+                      <p className="text-sm font-bold text-[#23479E] mt-2">{g.pricePerMonth} zł / mies.</p>
+                    )}
                   </button>
                 )
               })}

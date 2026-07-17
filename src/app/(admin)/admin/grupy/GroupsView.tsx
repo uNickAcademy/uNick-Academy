@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { LanguageLevel } from '@/types'
+import type { LanguageLevel, LessonType } from '@/types'
 
 const LEVELS: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const COLORS = ['#23479E', '#7c3aed', '#0891b2', '#db2777', '#16a34a', '#ea580c', '#9333ea', '#e11d48']
+const DAYS_PL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+const AGE_BUCKETS = ['2-5', '6-9', '10-13', '14-18', '18+']
 
 type Member = { id: string; name: string }
 type GroupCard = {
@@ -16,8 +18,16 @@ type GroupCard = {
   level: LanguageLevel
   color: string
   isActive: boolean
+  teacherId: string
   teacherName: string
   members: Member[]
+  capacity: number
+  scheduleText: string
+  ageRange: string
+  description: string
+  format: LessonType | null
+  pricePerMonth: number | null
+  dayOfWeek: number | null
 }
 
 export function GroupsView({
@@ -31,6 +41,7 @@ export function GroupsView({
 }) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<GroupCard | null>(null)
   const [managingMembers, setManagingMembers] = useState<GroupCard | null>(null)
 
   return (
@@ -51,17 +62,38 @@ export function GroupsView({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {groups.map((g) => (
             <div key={g.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="h-16 flex items-center px-5" style={{ backgroundColor: g.color }}>
-                <h3 className="text-lg font-black text-white">{g.name}</h3>
+              <div className="h-16 flex items-center justify-between px-5" style={{ backgroundColor: g.color }}>
+                <h3 className="text-lg font-black text-white truncate">{g.name}</h3>
+                <button onClick={() => setEditing(g)} className="text-white/80 hover:text-white flex-shrink-0 ml-2">
+                  <Pencil size={16} />
+                </button>
               </div>
               <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#EAF3FF] text-[#23479E]">{g.level}</span>
+                  {g.ageRange && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{g.ageRange}</span>}
                   <span className="text-xs text-gray-500">{g.teacherName}</span>
                 </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
+                  {g.format && (
+                    <span className="flex items-center gap-1">
+                      {g.format === 'online' ? <Monitor size={12} /> : <MapPin size={12} />}
+                      {g.format === 'online' ? 'Online' : 'Stacjonarnie'}
+                    </span>
+                  )}
+                  {(g.dayOfWeek != null || g.scheduleText) && (
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} />
+                      {g.dayOfWeek != null ? DAYS_PL[g.dayOfWeek] : ''}{g.dayOfWeek != null && g.scheduleText ? ' · ' : ''}{g.scheduleText}
+                    </span>
+                  )}
+                </div>
+                {g.pricePerMonth != null && (
+                  <p className="text-sm font-bold text-[#23479E] mb-3">{g.pricePerMonth} zł / mies.</p>
+                )}
                 <div className="flex items-center gap-1.5 text-sm text-gray-700 mb-3">
                   <UsersRound size={14} className="text-gray-400" />
-                  {g.members.length} {g.members.length === 1 ? 'uczeń' : 'uczniów'}
+                  {g.members.length} / {g.capacity} {g.members.length === 1 ? 'uczeń' : 'uczniów'}
                 </div>
                 {g.members.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
@@ -81,8 +113,12 @@ export function GroupsView({
       )}
 
       {creating && (
-        <CreateGroupModal teacherOptions={teacherOptions} onClose={() => setCreating(false)}
+        <GroupFormModal teacherOptions={teacherOptions} onClose={() => setCreating(false)}
           onSaved={() => { setCreating(false); router.refresh() }} />
+      )}
+      {editing && (
+        <GroupFormModal teacherOptions={teacherOptions} group={editing} onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); router.refresh() }} />
       )}
       {managingMembers && (
         <MembersModal group={managingMembers} studentOptions={studentOptions}
@@ -92,19 +128,24 @@ export function GroupsView({
   )
 }
 
-function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
+function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
   teacherOptions: { id: string; name: string }[]
+  group?: GroupCard
   onClose: () => void
   onSaved: () => void
 }) {
-  const [name, setName] = useState('')
-  const [teacherId, setTeacherId] = useState(teacherOptions[0]?.id ?? '')
-  const [level, setLevel] = useState<LanguageLevel>('A1')
-  const [color, setColor] = useState(COLORS[0])
-  const [capacity, setCapacity] = useState(6)
-  const [scheduleText, setScheduleText] = useState('')
-  const [ageRange, setAgeRange] = useState('')
-  const [description, setDescription] = useState('')
+  const isEdit = !!group
+  const [name, setName] = useState(group?.name ?? '')
+  const [teacherId, setTeacherId] = useState(group?.teacherId || teacherOptions[0]?.id || '')
+  const [level, setLevel] = useState<LanguageLevel>(group?.level ?? 'A1')
+  const [color, setColor] = useState(group?.color ?? COLORS[0])
+  const [capacity, setCapacity] = useState(group?.capacity ?? 6)
+  const [format, setFormat] = useState<LessonType | ''>(group?.format ?? '')
+  const [pricePerMonth, setPricePerMonth] = useState(group?.pricePerMonth != null ? String(group.pricePerMonth) : '')
+  const [dayOfWeek, setDayOfWeek] = useState(group?.dayOfWeek != null ? String(group.dayOfWeek) : '')
+  const [scheduleText, setScheduleText] = useState(group?.scheduleText ?? '')
+  const [ageRange, setAgeRange] = useState(group?.ageRange ?? '')
+  const [description, setDescription] = useState(group?.description ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -112,21 +153,27 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
     if (!name.trim()) { setError('Podaj nazwę grupy.'); return }
     setSaving(true); setError(null)
     const supabase = createClient()
-    const { error } = await supabase.from('groups').insert({
+    const payload = {
       name: name.trim(), teacher_id: teacherId || null, level, color,
       capacity, schedule_text: scheduleText.trim() || null,
-      age_range: ageRange.trim() || null, description: description.trim() || null,
-    })
+      age_range: ageRange || null, description: description.trim() || null,
+      format: format || null,
+      price_per_month: pricePerMonth === '' ? null : Number(pricePerMonth),
+      day_of_week: dayOfWeek === '' ? null : Number(dayOfWeek),
+    }
+    const { error } = isEdit
+      ? await supabase.from('groups').update(payload).eq('id', group!.id)
+      : await supabase.from('groups').insert(payload)
     setSaving(false)
-    if (error) { setError('Nie udało się utworzyć: ' + error.message); return }
+    if (error) { setError(`Nie udało się ${isEdit ? 'zapisać' : 'utworzyć'}: ` + error.message); return }
     onSaved()
   }
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-black text-gray-900">Nowa grupa</h2>
+          <h2 className="text-lg font-black text-gray-900">{isEdit ? 'Edytuj grupę' : 'Nowa grupa'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <div className="space-y-3">
@@ -153,20 +200,49 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Forma zajęć</label>
+              <select value={format} onChange={(e) => setFormat(e.target.value as LessonType | '')}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                <option value="">— wybierz —</option>
+                <option value="offline">Stacjonarnie</option>
+                <option value="online">Online</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Grupa wiekowa</label>
+              <select value={ageRange} onChange={(e) => setAgeRange(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                <option value="">— wybierz —</option>
+                {AGE_BUCKETS.map((a) => <option key={a} value={a}>{a} lat</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Limit miejsc</label>
               <input type="number" min={1} max={30} value={capacity} onChange={(e) => setCapacity(Math.max(1, Number(e.target.value) || 1))}
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Wiek (opc.)</label>
-              <input type="text" value={ageRange} onChange={(e) => setAgeRange(e.target.value)} placeholder="np. 10–13 lat"
+              <label className="block text-xs font-medium text-gray-600 mb-1">Cena (zł/mies., opc.)</label>
+              <input type="number" min={0} step="1" value={pricePerMonth} onChange={(e) => setPricePerMonth(e.target.value)} placeholder="np. 320"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Harmonogram (opc.)</label>
-            <input type="text" value={scheduleText} onChange={(e) => setScheduleText(e.target.value)} placeholder="np. Śr 18:20"
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Dzień tygodnia (do filtrów)</label>
+              <select value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+                <option value="">— wybierz —</option>
+                {DAYS_PL.map((d, i) => <option key={d} value={i}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Godzina / opis terminu</label>
+              <input type="text" value={scheduleText} onChange={(e) => setScheduleText(e.target.value)} placeholder="np. 18:00"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Opis (opc.)</label>
@@ -189,7 +265,7 @@ function CreateGroupModal({ teacherOptions, onClose, onSaved }: {
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
           <button onClick={save} disabled={saving}
             className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60">
-            {saving ? 'Tworzenie...' : 'Utwórz grupę'}
+            {saving ? 'Zapisywanie...' : isEdit ? 'Zapisz zmiany' : 'Utwórz grupę'}
           </button>
         </div>
       </div>

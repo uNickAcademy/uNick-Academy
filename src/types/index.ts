@@ -187,6 +187,9 @@ export interface Group {
   schedule_text?: string
   description?: string
   age_range?: string
+  format?: LessonType
+  price_per_month?: number
+  day_of_week?: number
   teacher?: Teacher
   members?: Student[]
 }
