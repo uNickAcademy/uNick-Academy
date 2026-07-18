@@ -754,8 +754,9 @@ export async function getAllGroups(): Promise<Group[]> {
 // ──────────────────────────────────────────
 
 export type PublicGroup = {
-  id: string; name: string; level: string; schedule_text: string; description: string
-  age_range: string; color: string; capacity: number; taken: number; spots: number
+  id: string; name: string; level: string; levels: string[]; schedule_text: string; description: string
+  age_range: string; ageMin: number | null; ageMax: number | null
+  color: string; capacity: number; taken: number; spots: number
   teacherName: string; teacherId: string; format: 'online' | 'offline' | null
   pricePerMonth: number | null; dayOfWeek: number | null
 }
@@ -765,7 +766,7 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('groups')
-    .select(`id, name, level, color, capacity, schedule_text, description, age_range, format, price_per_month, day_of_week,
+    .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week,
              teacher:teachers(id, profile:profiles(full_name)),
              members:group_members(student_id)`)
     .eq('is_active', true)
@@ -774,10 +775,15 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
     const capacity = (g.capacity as number) ?? 0
     const taken = ((g.members as unknown[]) ?? []).length
     const teacher = g.teacher as { id?: string; profile?: { full_name?: string } } | null
+    const levels = Array.isArray(g.levels) ? (g.levels as string[]) : []
     return {
       id: g.id as string, name: g.name as string, level: g.level as string,
+      levels: levels.length > 0 ? levels : [g.level as string],
       schedule_text: (g.schedule_text as string) ?? '', description: (g.description as string) ?? '',
-      age_range: (g.age_range as string) ?? '', color: (g.color as string) ?? '#23479E',
+      age_range: (g.age_range as string) ?? '',
+      ageMin: g.age_min != null ? Number(g.age_min) : null,
+      ageMax: g.age_max != null ? Number(g.age_max) : null,
+      color: (g.color as string) ?? '#23479E',
       capacity, taken, spots: Math.max(capacity - taken, 0),
       teacherName: teacher?.profile?.full_name ?? '—', teacherId: teacher?.id ?? '',
       format: (g.format as 'online' | 'offline' | null) ?? null,

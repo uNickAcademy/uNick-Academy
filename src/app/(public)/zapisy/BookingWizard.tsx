@@ -80,12 +80,13 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
   const groupTeacherOptions = Array.from(
     new Map(groups.filter((g) => g.teacherId).map((g) => [g.teacherId, g.teacherName])).entries()
   )
-  const groupAgeOptions = Array.from(new Set(groups.map((g) => g.age_range).filter(Boolean)))
+  const ageNum = filterAge === '' ? null : Number(filterAge)
   const filteredGroups = groups.filter((g) =>
     (!filterTeacher || g.teacherId === filterTeacher) &&
     (filterDay === '' || g.dayOfWeek === Number(filterDay)) &&
     (!filterFormat || g.format === filterFormat) &&
-    (!filterAge || g.age_range === filterAge)
+    (ageNum == null || Number.isNaN(ageNum) ||
+      ((g.ageMin == null || ageNum >= g.ageMin) && (g.ageMax == null || ageNum <= g.ageMax)))
   )
 
   async function handleSubmit() {
@@ -181,11 +182,9 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
                   <option value="offline">Stacjonarnie</option>
                   <option value="online">Online</option>
                 </select>
-                <select value={filterAge} onChange={(e) => setFilterAge(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
-                  <option value="">Wiek: wszystkie</option>
-                  {groupAgeOptions.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
+                <input type="number" min={1} max={99} value={filterAge} onChange={(e) => setFilterAge(e.target.value)}
+                  placeholder="Wiek dziecka"
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400" />
               </div>
             )}
 
@@ -206,7 +205,9 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
-                      <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium">{g.level}</span>
+                      {(g.levels?.length ? g.levels : [g.level]).map((lv) => (
+                        <span key={lv} className="bg-gray-100 px-1.5 py-0.5 rounded font-medium">{lv}</span>
+                      ))}
                       {g.age_range && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{g.age_range}</span>}
                       {g.format && (
                         <span className="flex items-center gap-1">

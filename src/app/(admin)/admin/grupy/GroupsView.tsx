@@ -2,20 +2,35 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
 const LEVELS: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const COLORS = ['#23479E', '#7c3aed', '#0891b2', '#db2777', '#16a34a', '#ea580c', '#9333ea', '#e11d48']
 const DAYS_PL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
-const AGE_BUCKETS = ['2-5', '6-9', '10-13', '14-18', '18+']
+
+// Etykieta wieku z zakresu od/do (null = otwarta granica)
+function ageLabel(min: number | null, max: number | null): string {
+  if (min != null && max != null) return `${min}–${max} lat`
+  if (min != null) return `${min}+`
+  if (max != null) return `do ${max} lat`
+  return ''
+}
+// Pole "od"/"do": liczba lub "-"/pusto → null
+function parseAge(v: string): number | null {
+  const t = v.trim()
+  if (t === '' || t === '-') return null
+  const n = Number(t)
+  return Number.isFinite(n) ? Math.trunc(n) : null
+}
 
 type Member = { id: string; name: string }
 type GroupCard = {
   id: string
   name: string
   level: LanguageLevel
+  levels: LanguageLevel[]
   color: string
   isActive: boolean
   teacherId: string
@@ -24,6 +39,8 @@ type GroupCard = {
   capacity: number
   scheduleText: string
   ageRange: string
+  ageMin: number | null
+  ageMax: number | null
   description: string
   format: LessonType | null
   pricePerMonth: number | null
@@ -43,6 +60,35 @@ export function GroupsView({
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<GroupCard | null>(null)
   const [managingMembers, setManagingMembers] = useState<GroupCard | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  // Zakończ kurs = ustaw grupę jako nieaktywną (znika z zapisów, uczniowie tego
+  // kursu trafiają do "Nieaktywnych" w panelu Studenci). Historia zostaje.
+  async function setActive(g: GroupCard, active: boolean) {
+    if (!active && !confirm(`Zakończyć kurs „${g.name}”? Zniknie z publicznych zapisów, ale historia i lekcje zostaną. Można go później wznowić.`)) return
+    setBusyId(g.id)
+    const supabase = createClient()
+    const { error } = await supabase.from('groups').update({ is_active: active }).eq('id', g.id)
+    setBusyId(null)
+    if (error) { alert('Nie udało się zmienić statusu: ' + error.message); return }
+    router.refresh()
+  }
+
+  // Trwałe usunięcie — nieodwracalne. Najpierw czyścimy członków; jeśli grupa ma
+  // historię lekcji, baza zablokuje usunięcie i proponujemy zakończenie kursu.
+  async function deleteGroup(g: GroupCard) {
+    if (!confirm(`Usunąć grupę „${g.name}” NA STAŁE? Tej operacji NIE MOŻNA cofnąć.\n\nJeśli chcesz tylko przestać przyjmować zapisy, użyj „Zakończ kurs”.`)) return
+    setBusyId(g.id)
+    const supabase = createClient()
+    await supabase.from('group_members').delete().eq('group_id', g.id)
+    const { error } = await supabase.from('groups').delete().eq('id', g.id)
+    setBusyId(null)
+    if (error) {
+      alert('Nie udało się usunąć grupy (prawdopodobnie ma powiązane lekcje). Zamiast usuwać, użyj „Zakończ kurs”.\n\nSzczegóły: ' + error.message)
+      return
+    }
+    router.refresh()
+  }
 
   return (
     <div className="p-8">
@@ -61,17 +107,22 @@ export function GroupsView({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {groups.map((g) => (
-            <div key={g.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div key={g.id} className={`bg-white rounded-2xl border border-gray-100 overflow-hidden ${!g.isActive ? 'opacity-70' : ''}`}>
               <div className="h-16 flex items-center justify-between px-5" style={{ backgroundColor: g.color }}>
-                <h3 className="text-lg font-black text-white truncate">{g.name}</h3>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-black text-white truncate">{g.name}</h3>
+                  {!g.isActive && <span className="text-[10px] font-bold uppercase tracking-wide text-white/80">Kurs zakończony</span>}
+                </div>
                 <button onClick={() => setEditing(g)} className="text-white/80 hover:text-white flex-shrink-0 ml-2">
                   <Pencil size={16} />
                 </button>
               </div>
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#EAF3FF] text-[#23479E]">{g.level}</span>
-                  {g.ageRange && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{g.ageRange}</span>}
+                  {(g.levels?.length ? g.levels : [g.level]).map((lv) => (
+                    <span key={lv} className="text-xs font-bold px-2 py-0.5 rounded bg-[#EAF3FF] text-[#23479E]">{lv}</span>
+                  ))}
+                  {ageLabel(g.ageMin, g.ageMax) && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{ageLabel(g.ageMin, g.ageMax)}</span>}
                   <span className="text-xs text-gray-500">{g.teacherName}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
@@ -106,6 +157,23 @@ export function GroupsView({
                   className="w-full py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
                   Zarządzaj członkami
                 </button>
+                <div className="flex items-center gap-2 mt-2">
+                  {g.isActive ? (
+                    <button onClick={() => setActive(g, false)} disabled={busyId === g.id}
+                      className="flex-1 py-2 rounded-xl border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                      <Flag size={13} />Zakończ kurs
+                    </button>
+                  ) : (
+                    <button onClick={() => setActive(g, true)} disabled={busyId === g.id}
+                      className="flex-1 py-2 rounded-xl border border-green-200 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                      <RotateCcw size={13} />Wznów kurs
+                    </button>
+                  )}
+                  <button onClick={() => deleteGroup(g)} disabled={busyId === g.id} title="Usuń grupę na stałe"
+                    className="py-2 px-3 rounded-xl border border-red-200 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    <Trash2 size={13} />Usuń
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -137,26 +205,38 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
   const isEdit = !!group
   const [name, setName] = useState(group?.name ?? '')
   const [teacherId, setTeacherId] = useState(group?.teacherId || teacherOptions[0]?.id || '')
-  const [level, setLevel] = useState<LanguageLevel>(group?.level ?? 'A1')
+  const [levels, setLevels] = useState<LanguageLevel[]>(group?.levels?.length ? group.levels : (group?.level ? [group.level] : ['A1']))
   const [color, setColor] = useState(group?.color ?? COLORS[0])
   const [capacity, setCapacity] = useState(group?.capacity ?? 6)
   const [format, setFormat] = useState<LessonType | ''>(group?.format ?? '')
   const [pricePerMonth, setPricePerMonth] = useState(group?.pricePerMonth != null ? String(group.pricePerMonth) : '')
   const [dayOfWeek, setDayOfWeek] = useState(group?.dayOfWeek != null ? String(group.dayOfWeek) : '')
   const [scheduleText, setScheduleText] = useState(group?.scheduleText ?? '')
-  const [ageRange, setAgeRange] = useState(group?.ageRange ?? '')
+  const [ageFrom, setAgeFrom] = useState(group?.ageMin != null ? String(group.ageMin) : '')
+  const [ageTo, setAgeTo] = useState(group?.ageMax != null ? String(group.ageMax) : '')
   const [description, setDescription] = useState(group?.description ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  function toggleLevel(l: LanguageLevel) {
+    setLevels((prev) => prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l])
+  }
+
   async function save() {
     if (!name.trim()) { setError('Podaj nazwę grupy.'); return }
+    if (levels.length === 0) { setError('Wybierz przynajmniej jeden poziom.'); return }
     setSaving(true); setError(null)
     const supabase = createClient()
+    // Poziomy w kolejności A1→C2; level (pojedynczy, NOT NULL) = pierwszy z nich
+    const orderedLevels = LEVELS.filter((l) => levels.includes(l))
+    const ageMin = parseAge(ageFrom)
+    const ageMax = parseAge(ageTo)
     const payload = {
-      name: name.trim(), teacher_id: teacherId || null, level, color,
+      name: name.trim(), teacher_id: teacherId || null,
+      level: orderedLevels[0], levels: orderedLevels, color,
       capacity, schedule_text: scheduleText.trim() || null,
-      age_range: ageRange || null, description: description.trim() || null,
+      age_min: ageMin, age_max: ageMax, age_range: ageLabel(ageMin, ageMax) || null,
+      description: description.trim() || null,
       format: format || null,
       price_per_month: pricePerMonth === '' ? null : Number(pricePerMonth),
       day_of_week: dayOfWeek === '' ? null : Number(dayOfWeek),
@@ -182,20 +262,22 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="np. B1 wtorki 18:00"
               className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Nauczyciel</label>
-              <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
-                {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Poziom</label>
-              <select value={level} onChange={(e) => setLevel(e.target.value as LanguageLevel)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
-                {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Nauczyciel</label>
+            <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+              {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Poziom (możesz wybrać kilka)</label>
+            <div className="flex flex-wrap gap-1.5">
+              {LEVELS.map((l) => (
+                <button key={l} type="button" onClick={() => toggleLevel(l)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors ${levels.includes(l) ? 'bg-[#23479E] text-white border-[#23479E]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#23479E]'}`}>
+                  {l}
+                </button>
+              ))}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -209,12 +291,14 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Grupa wiekowa</label>
-              <select value={ageRange} onChange={(e) => setAgeRange(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
-                <option value="">— wybierz —</option>
-                {AGE_BUCKETS.map((a) => <option key={a} value={a}>{a} lat</option>)}
-              </select>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Wiek (od – do, „-” = bez granicy)</label>
+              <div className="flex items-center gap-2">
+                <input type="text" inputMode="numeric" value={ageFrom} onChange={(e) => setAgeFrom(e.target.value)} placeholder="od"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-center focus:outline-none focus:border-[#23479E]" />
+                <span className="text-gray-400">–</span>
+                <input type="text" inputMode="numeric" value={ageTo} onChange={(e) => setAgeTo(e.target.value)} placeholder="do"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-center focus:outline-none focus:border-[#23479E]" />
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

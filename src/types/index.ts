@@ -181,12 +181,15 @@ export interface Group {
   name: string
   teacher_id?: string
   level: LanguageLevel
+  levels?: LanguageLevel[]
   color: string
   is_active: boolean
   capacity?: number
   schedule_text?: string
   description?: string
   age_range?: string
+  age_min?: number | null
+  age_max?: number | null
   format?: LessonType
   price_per_month?: number
   day_of_week?: number
