@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Clock, RotateCcw } from 'lucide-react'
+import { Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Clock, RotateCcw, Send, MessageSquare, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { StudentStatus, LanguageLevel } from '@/types'
+
+const DAYS_PL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
 
 const AGE_GROUPS = [
   { id: '', label: '— wiek —' },
@@ -48,6 +50,8 @@ type Row = {
   ageGroup: string
   customFields: Record<string, string>
   legalEntityId: string
+  lessonDays: number[]
+  lessonTypes: string[]
 }
 
 type EntityOption = { id: string; short_name: string; name: string; vat_payer: boolean }
@@ -70,6 +74,13 @@ export function StudentsTable({
   const [editing, setEditing] = useState<Row | null>(null)
   const [adding, setAdding] = useState(false)
   const [showTrash, setShowTrash] = useState(false)
+  // Filtry
+  const [filterTeacher, setFilterTeacher] = useState('')
+  const [filterDay, setFilterDay] = useState('')
+  const [filterType, setFilterType] = useState('')
+  // Zaznaczenie + akcje masowe
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulk, setBulk] = useState<'email' | 'sms' | null>(null)
 
   async function restore(id: string) {
     const supabase = createClient()
@@ -79,12 +90,34 @@ export function StudentsTable({
 
   const q = search.toLowerCase()
   const filtered = rows.filter((s) =>
-    s.name.toLowerCase().includes(q) ||
-    s.teacherName.toLowerCase().includes(q) ||
-    s.code.toLowerCase().includes(q) ||
-    s.email.toLowerCase().includes(q) ||
-    s.phone.toLowerCase().includes(q)
+    (s.name.toLowerCase().includes(q) ||
+      s.teacherName.toLowerCase().includes(q) ||
+      s.code.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      s.phone.toLowerCase().includes(q)) &&
+    (!filterTeacher || s.teacherId === filterTeacher) &&
+    (filterDay === '' || s.lessonDays.includes(Number(filterDay))) &&
+    (!filterType || s.lessonTypes.includes(filterType))
   )
+
+  const filteredIds = filtered.map((s) => s.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id))
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAll() {
+    setSelected((prev) => {
+      if (filteredIds.every((id) => prev.has(id))) {
+        const next = new Set(prev); filteredIds.forEach((id) => next.delete(id)); return next
+      }
+      return new Set([...prev, ...filteredIds])
+    })
+  }
+  const selectedRows = rows.filter((r) => selected.has(r.id))
 
   return (
     <div className="p-8">
@@ -118,7 +151,7 @@ export function StudentsTable({
         </div>
       )}
 
-      <div className="relative mb-6">
+      <div className="relative mb-3">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
@@ -129,11 +162,55 @@ export function StudentsTable({
         />
       </div>
 
+      {/* Filtry: nauczyciel · dzień zajęć · typ zajęć */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <select value={filterTeacher} onChange={(e) => setFilterTeacher(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+          <option value="">Nauczyciel: wszyscy</option>
+          {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={filterDay} onChange={(e) => setFilterDay(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+          <option value="">Dzień zajęć: wszystkie</option>
+          {DAYS_PL.map((d, i) => <option key={d} value={i}>{d}</option>)}
+        </select>
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#23479E]">
+          <option value="">Typ zajęć: wszystkie</option>
+          <option value="offline">Stacjonarnie</option>
+          <option value="online">Online</option>
+        </select>
+        {(filterTeacher || filterDay || filterType) && (
+          <button onClick={() => { setFilterTeacher(''); setFilterDay(''); setFilterType('') }}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50">Wyczyść filtry</button>
+        )}
+      </div>
+
+      {/* Pasek akcji masowych — widoczny gdy ktoś zaznaczony */}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 bg-[#EAF3FF] border border-blue-100 rounded-2xl px-4 py-3">
+          <span className="text-sm font-semibold text-[#23479E]">Zaznaczono {selected.size}</span>
+          <button onClick={() => setBulk('email')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <Mail size={14} />Wyślij email
+          </button>
+          <button onClick={() => setBulk('sms')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <MessageSquare size={14} />Wyślij SMS
+          </button>
+          <button onClick={() => setSelected(new Set())} className="ml-auto text-sm text-gray-500 hover:text-gray-700">Odznacz</button>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                    aria-label="Zaznacz wszystkich" className="w-4 h-4 rounded border-gray-300 accent-[#23479E] cursor-pointer" />
+                </th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Kontakt</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Poziom</th>
@@ -150,14 +227,20 @@ export function StudentsTable({
                 const cfg = STATUS_CONFIG[student.status]
                 const Icon = cfg.icon
                 return (
-                  <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={student.id}
+                    onClick={() => router.push(`/admin/studenci/${student.id}`)}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer">
+                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" checked={selected.has(student.id)} onChange={() => toggle(student.id)}
+                        aria-label={`Zaznacz ${student.name}`} className="w-4 h-4 rounded border-gray-300 accent-[#23479E] cursor-pointer" />
+                    </td>
                     <td className="px-5 py-4">
                       <div>
                         <p className="font-semibold text-gray-900">{student.name}</p>
                         <p className="text-xs text-gray-400 font-mono">{student.code}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="space-y-0.5">
                         {student.email ? (
                           <a href={`mailto:${student.email}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#23479E]">
@@ -190,20 +273,21 @@ export function StudentsTable({
                       </span>
                     </td>
                     <td className="px-5 py-4 text-gray-400 text-xs">{student.joined}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => setEditing(student)}
                         className="text-xs text-[#23479E] hover:underline font-medium"
                       >
                         Edytuj
                       </button>
+                      <ChevronRight size={14} className="inline ml-2 text-gray-300" />
                     </td>
                   </tr>
                 )
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-5 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={10} className="px-5 py-10 text-center text-gray-400 text-sm">
                     Brak studentów spełniających kryteria.
                   </td>
                 </tr>
@@ -236,6 +320,114 @@ export function StudentsTable({
           onSaved={() => { setAdding(false); router.refresh() }}
         />
       )}
+
+      {bulk && (
+        <BulkMessageModal
+          channel={bulk}
+          recipients={selectedRows}
+          onClose={() => setBulk(null)}
+          onSent={() => { setBulk(null); setSelected(new Set()) }}
+        />
+      )}
+    </div>
+  )
+}
+
+function BulkMessageModal({ channel, recipients, onClose, onSent }: {
+  channel: 'email' | 'sms'
+  recipients: Row[]
+  onClose: () => void
+  onSent: () => void
+}) {
+  const isSms = channel === 'sms'
+  const withContact = recipients.filter((r) => (isSms ? r.phone : r.email))
+  const missing = recipients.length - withContact.length
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<{ sent: number; recipients: number; channelConfigured: boolean } | null>(null)
+
+  async function send() {
+    setError(null)
+    if (!isSms && !subject.trim()) { setError('Podaj temat wiadomości.'); return }
+    if (!body.trim()) { setError('Podaj treść wiadomości.'); return }
+    setSending(true)
+    const res = await fetch('/api/admin/communication/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        channel: isSms ? 'sms' : 'email',
+        segment: 'student_ids',
+        studentIds: withContact.map((r) => r.id),
+        subject: subject.trim(),
+        body: body.trim(),
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setSending(false)
+    if (!res.ok) { setError(data.error ?? 'Nie udało się wysłać.'); return }
+    setResult({ sent: data.sent ?? 0, recipients: data.recipients ?? withContact.length, channelConfigured: data.channelConfigured ?? false })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
+            {isSms ? <MessageSquare size={18} /> : <Mail size={18} />}
+            {isSms ? 'Wyślij SMS' : 'Wyślij email'}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+
+        {result ? (
+          <div className="space-y-4">
+            {result.channelConfigured ? (
+              <div className="bg-green-50 rounded-xl p-4 text-sm text-green-700">
+                Wysłano do {result.sent} z {result.recipients} odbiorców.
+              </div>
+            ) : (
+              <div className="bg-amber-50 rounded-xl p-4 text-sm text-amber-700">
+                Kanał {isSms ? 'SMS' : 'email'} nie jest jeszcze skonfigurowany — wiadomość nie została wysłana.
+                {isSms ? ' Ustaw SMSAPI_TOKEN w środowisku.' : ' Ustaw klucz Resend w środowisku.'}
+              </div>
+            )}
+            <button onClick={onSent} className="w-full py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90">Gotowe</button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-500 mb-4">
+              Odbiorcy: <strong className="text-gray-700">{withContact.length}</strong>
+              {missing > 0 && <span className="text-amber-600"> · {missing} bez {isSms ? 'numeru telefonu' : 'adresu email'} (pominięci)</span>}
+            </p>
+            <div className="space-y-3">
+              {!isSms && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Temat</label>
+                  <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Treść</label>
+                <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={isSms ? 4 : 6}
+                  placeholder={isSms ? 'Krótka wiadomość SMS…' : 'Treść wiadomości…'}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
+                {isSms && <p className="text-xs text-gray-400 mt-1">SMS rozliczany jest za każde 160 znaków. Do każdego odbiorcy trafia osobna wiadomość.</p>}
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+            <div className="flex gap-2 mt-6">
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
+              <button onClick={send} disabled={sending || withContact.length === 0}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5">
+                <Send size={14} />{sending ? 'Wysyłanie...' : `Wyślij do ${withContact.length}`}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

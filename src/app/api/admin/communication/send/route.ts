@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const { data: prof } = await auth.from('profiles').select('role').eq('id', user.id).single()
   if (!['admin', 'reception'].includes(prof?.role ?? '')) return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
 
-  const { channel, segment, subject, body, groupId, dateFrom, dateTo, preview } = await req.json()
+  const { channel, segment, subject, body, groupId, dateFrom, dateTo, studentIds, preview } = await req.json()
   const isWhatsApp = channel === 'whatsapp'
   const isSms = channel === 'sms'
   const isPhoneChannel = isWhatsApp || isSms
@@ -59,6 +59,13 @@ export async function POST(req: NextRequest) {
       const p = profOf(teacher.profile)
       recipients.push({ email: p?.email ?? '', name: p?.full_name ?? '', phone: teacher.whatsapp_phone || p?.phone || '' })
     }
+  } else if (segment === 'student_ids' && Array.isArray(studentIds) && studentIds.length > 0) {
+    // Akcje masowe z listy studentów — wybrani konkretni uczniowie po id
+    const { data } = await admin.from('students')
+      .select('profile:profiles(email, full_name, phone)').in('id', studentIds)
+    recipients = (data ?? []).map((s: { profile?: unknown }) => {
+      const p = profOf(s.profile); return { email: p?.email ?? '', name: p?.full_name ?? '', phone: p?.phone ?? '' }
+    })
   } else if (segment === 'lessons_range' && dateFrom && dateTo) {
     const { data } = await admin.from('lessons')
       .select('student:students(profile:profiles(email, full_name, phone))')
