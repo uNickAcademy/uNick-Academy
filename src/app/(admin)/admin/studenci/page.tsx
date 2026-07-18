@@ -13,24 +13,39 @@ function warsawDow(iso: string): number {
 
 export default async function StudenciPage() {
   const supabase = await createClient()
-  const [students, hoursMap, teachers, deleted, { data: entityData }, { data: lessonRows }] = await Promise.all([
+  const nowIso = new Date().toISOString()
+  const [students, hoursMap, teachers, deleted, { data: entityData }, { data: lessonRows }, { data: memberRows }] = await Promise.all([
     getAllStudents(),
     getStudentHoursMap(),
     getAllTeachers(),
     getDeletedStudents(),
     supabase.rpc('list_billing_entities'),
     supabase.from('lessons').select('student_id, starts_at, type').is('cancelled_at', null).not('student_id', 'is', null),
+    supabase.from('group_members').select('student_id, group:groups(is_active)'),
   ])
 
   const entityOptions = (entityData ?? []) as { id: string; short_name: string; name: string; vat_payer: boolean }[]
 
-  // Mapa uczeń → dni zajęć i typy zajęć (do filtrów), liczona z jego lekcji
+  // Mapa uczeń → dni zajęć i typy zajęć (do filtrów) + nadchodzące lekcje (do statusu)
   const daysByStudent: Record<string, Set<number>> = {}
   const typesByStudent: Record<string, Set<string>> = {}
+  const hasUpcomingLesson = new Set<string>()
   for (const l of (lessonRows ?? []) as { student_id: string; starts_at: string; type: string }[]) {
     ;(daysByStudent[l.student_id] ??= new Set()).add(warsawDow(l.starts_at))
     ;(typesByStudent[l.student_id] ??= new Set()).add(l.type)
+    if (l.starts_at >= nowIso) hasUpcomingLesson.add(l.student_id)
   }
+
+  // Uczniowie będący członkami AKTYWNEGO kursu (grupa is_active = true)
+  const inActiveGroup = new Set<string>()
+  for (const m of (memberRows ?? []) as { student_id: string; group?: { is_active?: boolean } | { is_active?: boolean }[] }[]) {
+    const g = Array.isArray(m.group) ? m.group[0] : m.group
+    if (g?.is_active) inActiveGroup.add(m.student_id)
+  }
+  // Aktywny = ma nadchodzące zajęcia (indywidualne) LUB należy do trwającego kursu.
+  // Nieaktywny = brak przypisania do zajęć oraz brak aktywnego kursu (w tym uczniowie
+  // wyłącznie w kursie, który się już zakończył).
+  const isStudentActive = (id: string) => hasUpcomingLesson.has(id) || inActiveGroup.has(id)
 
   // Panel Studenci pokazuje TYLKO klientów indywidualnych. Pracownicy firm B2B
   // (np. Democo, Airpress) są widoczni wyłącznie w panelu B2B (Firmy) — kryterium:
@@ -64,6 +79,7 @@ export default async function StudenciPage() {
     legalEntityId: ((s as unknown) as Record<string, unknown>).legal_entity_id as string ?? '',
     lessonDays: Array.from(daysByStudent[s.id] ?? []),
     lessonTypes: Array.from(typesByStudent[s.id] ?? []),
+    active: isStudentActive(s.id),
   }))
 
   const teacherOptions = teachers.map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))

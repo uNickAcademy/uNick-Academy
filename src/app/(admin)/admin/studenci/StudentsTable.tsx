@@ -52,6 +52,7 @@ type Row = {
   legalEntityId: string
   lessonDays: number[]
   lessonTypes: string[]
+  active: boolean
 }
 
 type EntityOption = { id: string; short_name: string; name: string; vat_payer: boolean }
@@ -74,6 +75,8 @@ export function StudentsTable({
   const [editing, setEditing] = useState<Row | null>(null)
   const [adding, setAdding] = useState(false)
   const [showTrash, setShowTrash] = useState(false)
+  // Zakładka: aktywni (przypisani do zajęć / trwającego kursu) vs nieaktywni
+  const [tab, setTab] = useState<'active' | 'inactive'>('active')
   // Filtry
   const [filterTeacher, setFilterTeacher] = useState('')
   const [filterDay, setFilterDay] = useState('')
@@ -88,8 +91,12 @@ export function StudentsTable({
     router.refresh()
   }
 
+  const activeCount = rows.filter((s) => s.active).length
+  const inactiveCount = rows.length - activeCount
+
   const q = search.toLowerCase()
   const filtered = rows.filter((s) =>
+    (tab === 'active' ? s.active : !s.active) &&
     (s.name.toLowerCase().includes(q) ||
       s.teacherName.toLowerCase().includes(q) ||
       s.code.toLowerCase().includes(q) ||
@@ -150,6 +157,17 @@ export function StudentsTable({
           </div>
         </div>
       )}
+
+      {/* Zakładki: aktywni / nieaktywni */}
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
+        {([['active', 'Aktywni', activeCount], ['inactive', 'Nieaktywni', inactiveCount]] as const).map(([key, label, count]) => (
+          <button key={key}
+            onClick={() => { setTab(key); setSelected(new Set()) }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === key ? 'bg-white text-[#23479E] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            {label} <span className={`ml-1 ${tab === key ? 'text-[#23479E]/60' : 'text-gray-400'}`}>{count}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="relative mb-3">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -296,7 +314,7 @@ export function StudentsTable({
           </table>
         </div>
         <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400">
-          {filtered.length} z {rows.length} studentów
+          {filtered.length} z {tab === 'active' ? activeCount : inactiveCount} {tab === 'active' ? 'aktywnych' : 'nieaktywnych'}
         </div>
       </div>
 
