@@ -54,10 +54,10 @@ const pl = {
       close: "Zamknij",
     },
     audienceOptions: {
-      child: "Moje dziecko",
-      teen: "Ja — jestem nastolatkiem/nastolatką",
-      adult: "Ja — jestem osobą dorosłą",
-      company: "Moja firma / zespół",
+      child: "Mojego dziecka",
+      teen: "Mnie — jestem nastolatkiem/nastolatką",
+      adult: "Mnie — jestem osobą dorosłą",
+      company: "Mojej firmy / zespołu",
       unsure: "Jeszcze nie wiem",
     },
     formFields: {
