@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell
+  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X
 } from 'lucide-react'
 
 // adminOnly: pozycje konfiguracyjne niedostępne dla recepcji
@@ -35,6 +35,7 @@ export function AdminSidebar({ role, pendingRequests = 0, unreadNotifications = 
   const items = NAV.filter((i) => isAdmin || !i.adminOnly)
   const [pending, setPending] = useState(pendingRequests)
   const [unread, setUnread] = useState(unreadNotifications)
+  const [open, setOpen] = useState(false) // drawer mobilny
 
   useEffect(() => {
     setPending(pendingRequests)
@@ -43,8 +44,9 @@ export function AdminSidebar({ role, pendingRequests = 0, unreadNotifications = 
     setUnread(unreadNotifications)
   }, [unreadNotifications])
 
-  // Wyzeruj licznik dzwonka po wejściu na stronę powiadomień (oznacza przeczytane)
+  // Zamknij menu mobilne i wyzeruj licznik dzwonka przy zmianie trasy
   useEffect(() => {
+    setOpen(false)
     if (pathname === '/admin/powiadomienia') setUnread(0)
   }, [pathname])
 
@@ -65,19 +67,41 @@ export function AdminSidebar({ role, pendingRequests = 0, unreadNotifications = 
     return () => clearInterval(interval)
   }, [pathname])
 
+  const bell = (
+    <Link href="/admin/powiadomienia" title="Powiadomienia"
+      className={`relative p-2 rounded-lg transition-colors ${pathname === '/admin/powiadomienia' ? 'bg-[#23479E] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+      <Bell size={18} />
+      {unread > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+          {unread > 99 ? '99+' : unread}
+        </span>
+      )}
+    </Link>
+  )
+
   return (
-    <aside className="w-60 bg-gray-900 text-white flex flex-col py-6 px-3 fixed h-full z-10">
+    <>
+      {/* Górny pasek mobilny z hamburgerem (menu chowa się pod nim) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-3 z-30">
+        <button onClick={() => setOpen(true)} aria-label="Otwórz menu" className="p-2 rounded-lg text-gray-300 hover:bg-gray-800">
+          <Menu size={22} />
+        </button>
+        <span className="text-base font-black text-[#23479E]">{isAdmin ? 'uNick Admin' : 'uNick Recepcja'}</span>
+        {bell}
+      </div>
+
+      {/* Przyciemnienie tła gdy menu otwarte (tylko mobile) */}
+      {open && <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setOpen(false)} />}
+
+      <aside className={`w-60 bg-gray-900 text-white flex flex-col py-6 px-3 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="px-3 mb-8 flex items-center justify-between">
         <span className="text-lg font-black text-[#23479E]">{isAdmin ? 'uNick Admin' : 'uNick Recepcja'}</span>
-        <Link href="/admin/powiadomienia" title="Powiadomienia"
-          className={`relative p-2 rounded-lg transition-colors ${pathname === '/admin/powiadomienia' ? 'bg-[#23479E] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-          <Bell size={18} />
-          {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
-              {unread > 99 ? '99+' : unread}
-            </span>
-          )}
-        </Link>
+        <div className="flex items-center gap-1">
+          {bell}
+          <button onClick={() => setOpen(false)} aria-label="Zamknij menu" className="md:hidden p-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto">
@@ -104,6 +128,7 @@ export function AdminSidebar({ role, pendingRequests = 0, unreadNotifications = 
           <LogOut size={17} />Wyloguj
         </button>
       </form>
-    </aside>
+      </aside>
+    </>
   )
 }

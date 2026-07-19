@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar role={role} pendingRequests={pendingRequests} unreadNotifications={unreadNotifications} />
-      <main className="flex-1 ml-60">{children}</main>
+      <main className="flex-1 md:ml-60 pt-14 md:pt-0 min-w-0">{children}</main>
     </div>
   )
 }
