@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CheckCircle, XCircle, Clock, User, CreditCard, BookOpen, Tag } from 'lucide-react'
-import { getStudentById, getStudentLessons, getStudentTransactions } from '@/lib/supabase/queries'
+import { ArrowLeft, CheckCircle, XCircle, Clock, User, CreditCard, BookOpen, Tag, UsersRound, Monitor, MapPin } from 'lucide-react'
+import { getStudentById, getStudentLessons, getStudentTransactions, getStudentGroups } from '@/lib/supabase/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,9 +10,10 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
   const student = await getStudentById(id)
   if (!student) notFound()
 
-  const [lessons, transactions] = await Promise.all([
+  const [lessons, transactions, groups] = await Promise.all([
     getStudentLessons(student.id),
     getStudentTransactions(student.id),
+    getStudentGroups(student.id),
   ])
 
   const now = Date.now()
@@ -63,6 +64,31 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
         <Stat icon={XCircle} label="Przepadłe (płatne)" value={String(forfeited)} color="text-orange-500" />
         <Stat icon={Clock} label="Godziny (płatne)" value={`${Math.round(totalHours * 10) / 10}h`} color="text-[#23479E]" />
         <Stat icon={BookOpen} label="Lekcje łącznie" value={String(lessons.length)} color="text-gray-900" />
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
+        <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><UsersRound size={16} />Kursy / grupy</h2>
+        {groups.length === 0 ? (
+          <p className="text-sm text-gray-400">Uczeń nie jest zapisany do żadnej grupy.</p>
+        ) : (
+          <div className="space-y-2">
+            {groups.map((g) => (
+              <div key={g.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-gray-100 px-4 py-3">
+                <span className="font-semibold text-gray-900">{g.name}</span>
+                {!g.isActive && <span className="text-[11px] font-bold uppercase text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Kurs zakończony</span>}
+                {g.format && (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    {g.format === 'online' ? <Monitor size={12} /> : <MapPin size={12} />}
+                    {g.format === 'online' ? 'Online' : 'Stacjonarnie'}
+                  </span>
+                )}
+                {g.scheduleText && <span className="flex items-center gap-1 text-xs text-gray-500"><Clock size={12} />{g.scheduleText}</span>}
+                <span className="text-xs text-gray-500">{g.teacherName}</span>
+                {g.pricePerMonth != null && <span className="ml-auto text-sm font-bold text-[#23479E]">{g.pricePerMonth} zł / mies.</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {Object.keys(customFields).length > 0 && (

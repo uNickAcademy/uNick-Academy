@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendLessonConfirmation } from '@/lib/email/send'
 import { notifySchoolSms } from '@/lib/sms/send'
+import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
+
+// Powiadomienie do panelu admina (dzwonek). Best-effort — nie blokuje zapisu.
+async function notifyAdmin(admin: SupabaseClient, kind: string, title: string, body: string, studentId?: string | null) {
+  try {
+    await admin.from('admin_notifications').insert({ kind, title, body, student_id: studentId ?? null })
+  } catch (err) {
+    console.error('[Booking] notifyAdmin error:', err)
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,8 +33,45 @@ export async function POST(req: NextRequest) {
         const msg = /miejsc/i.test(error.message) ? 'Brak wolnych miejsc w tej grupie.' : 'Nie udało się zapisać do grupy.'
         return NextResponse.json({ error: msg }, { status: 400 })
       }
+
+      // Dane grupy + odszukanie właśnie zapisanego ucznia (po e-mailu wśród członków)
+      const { data: group } = await supabase.from('groups')
+        .select('name, price_per_month').eq('id', groupId).single()
+      const { data: members } = await supabase.from('group_members')
+        .select('student_id, student:students(id, profile:profiles(email))').eq('group_id', groupId)
+      const enrolled = (members ?? []).find((m: { student?: unknown }) => {
+        const st = Array.isArray(m.student) ? m.student[0] : (m.student as { profile?: { email?: string } | { email?: string }[] } | undefined)
+        const p = Array.isArray(st?.profile) ? st?.profile[0] : st?.profile
+        return p?.email === email
+      })
+      const enrolledId = (() => {
+        const st = enrolled ? (Array.isArray(enrolled.student) ? enrolled.student[0] : enrolled.student) : null
+        return (st as { id?: string } | null)?.id ?? enrolled?.student_id ?? null
+      })()
+      const groupName = (group?.name as string) ?? 'grupa'
+      const price = group?.price_per_month != null ? Number(group.price_per_month) : null
+
+      await notifyAdmin(supabase, 'group', `Nowy zapis do grupy: ${groupName}`,
+        `${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
       await notifySchoolSms(`Nowy zapis do grupy: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
-      return NextResponse.json({ success: true })
+
+      // Opłata za pierwszy miesiąc — Stripe Checkout (BLIK/P24/karta), jeśli grupa
+      // ma cenę i płatności są skonfigurowane. Bez tego zapis działa jak dotąd.
+      let checkoutUrl: string | null = null
+      if (price && price > 0 && enrolledId) {
+        try {
+          const base = process.env.NEXT_PUBLIC_APP_URL || ''
+          checkoutUrl = await createCheckoutSession({
+            amount: price, studentId: enrolledId, email,
+            description: `Zajęcia grupowe: ${groupName} — pierwszy miesiąc`,
+            successUrl: `${base}/platnosci?success=true`,
+            cancelUrl: `${base}/zapisy?paid=cancel`,
+          })
+        } catch (err) {
+          console.error('[Booking group] checkout error:', err)
+        }
+      }
+      return NextResponse.json({ success: true, checkoutUrl })
     }
 
     if (kind === 'online') {
@@ -50,6 +98,8 @@ export async function POST(req: NextRequest) {
         topic: ongoing ? 'Lekcje cykliczne (online)' : 'Lekcja online',
         type: 'online', meetLink: typeof meetLink === 'string' ? meetLink : undefined,
       }).catch(() => {})
+      await notifyAdmin(supabase, 'online', `Nowy zapis online: ${fullName}`,
+        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`)
       await notifySchoolSms(
         `Nowy zapis online: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`
       )
@@ -68,6 +118,8 @@ export async function POST(req: NextRequest) {
         console.error('[Booking stationary] RPC error:', error)
         return NextResponse.json({ error: 'Nie udało się wysłać prośby.' }, { status: 500 })
       }
+      await notifyAdmin(supabase, 'stationary', `Nowa prośba o zajęcia stacjonarne: ${fullName}`,
+        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email}`)
       await notifySchoolSms(`Nowa prośba o zajęcia stacjonarne: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
       return NextResponse.json({ success: true })
     }

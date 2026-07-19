@@ -23,6 +23,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nie udało się wysłać zgłoszenia. Spróbuj ponownie.' }, { status: 500 })
     }
 
+    await admin.from('admin_notifications').insert({
+      kind: 'consultation',
+      title: `Nowa konsultacja: ${name.trim()}`,
+      body: `${phone ? `tel. ${phone.trim()}, ` : ''}${email.trim()}${audience ? ` · dla: ${audience}` : ''}${message ? ` — ${message.trim()}` : ''}`,
+    }).then(undefined, (e: unknown) => console.error('[Consultation] notify error:', e))
+
     await notifySchoolSms(
       `Nowa konsultacja: ${name.trim()}${phone ? `, tel. ${phone.trim()}` : ''}, ${email.trim()}${audience ? ` (${audience})` : ''}`
     )

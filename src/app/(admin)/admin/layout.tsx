@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getPendingBookingRequestsCount } from '@/lib/supabase/queries'
+import { getPendingBookingRequestsCount, getUnreadNotificationCount } from '@/lib/supabase/queries'
 import { AdminSidebar } from './AdminSidebar'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -10,11 +10,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     role = profile?.role ?? 'admin'
   }
-  const pendingRequests = await getPendingBookingRequestsCount()
+  const [pendingRequests, unreadNotifications] = await Promise.all([
+    getPendingBookingRequestsCount(),
+    getUnreadNotificationCount(),
+  ])
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar role={role} pendingRequests={pendingRequests} />
+      <AdminSidebar role={role} pendingRequests={pendingRequests} unreadNotifications={unreadNotifications} />
       <main className="flex-1 ml-60">{children}</main>
     </div>
   )

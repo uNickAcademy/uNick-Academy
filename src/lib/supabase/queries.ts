@@ -828,3 +828,54 @@ export async function getPendingBookingRequestsCount(): Promise<number> {
     .eq('status', 'pending')
   return count ?? 0
 }
+
+// Kursy/grupy, do których należy uczeń (do profilu Klient 360°)
+export type StudentGroup = {
+  id: string; name: string; isActive: boolean; scheduleText: string
+  teacherName: string; pricePerMonth: number | null; format: string | null
+}
+export async function getStudentGroups(studentId: string): Promise<StudentGroup[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('group_members')
+    .select('group:groups(id, name, is_active, schedule_text, price_per_month, format, teacher:teachers(profile:profiles(full_name)))')
+    .eq('student_id', studentId)
+  return (data ?? []).map((m) => {
+    const g = (Array.isArray(m.group) ? m.group[0] : m.group) as Record<string, unknown> | null
+    const teacherRaw = g?.teacher as { profile?: { full_name?: string } | { full_name?: string }[] } | undefined
+    const tp = Array.isArray(teacherRaw?.profile) ? teacherRaw?.profile[0] : teacherRaw?.profile
+    return {
+      id: (g?.id as string) ?? '',
+      name: (g?.name as string) ?? '—',
+      isActive: (g?.is_active as boolean) ?? false,
+      scheduleText: (g?.schedule_text as string) ?? '',
+      teacherName: tp?.full_name ?? '—',
+      pricePerMonth: g?.price_per_month != null ? Number(g.price_per_month) : null,
+      format: (g?.format as string) ?? null,
+    }
+  }).filter((g) => g.id)
+}
+
+export type AdminNotification = {
+  id: string; created_at: string; kind: string; title: string; body: string | null
+  student_id: string | null; read_at: string | null
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('admin_notifications')
+    .select('id', { count: 'exact', head: true })
+    .is('read_at', null)
+  return count ?? 0
+}
+
+export async function getRecentNotifications(limit = 50): Promise<AdminNotification[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('admin_notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return (data as AdminNotification[]) ?? []
+}

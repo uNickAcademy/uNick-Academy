@@ -110,8 +110,10 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
     }
     const res = await fetch('/api/booking', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     const data = await res.json().catch(() => ({}))
+    if (!res.ok) { setSubmitting(false); setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
+    // Zapis do grupy z ceną → od razu przekierowanie do płatności (Stripe: BLIK/P24/karta)
+    if (data.checkoutUrl) { window.location.href = data.checkoutUrl as string; return }
     setSubmitting(false)
-    if (!res.ok) { setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
     setSubmitted(true)
   }
 
