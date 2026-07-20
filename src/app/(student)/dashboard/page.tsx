@@ -45,7 +45,7 @@ export default async function StudentDashboard() {
   const balance = Number(student.credit_balance ?? 0)
 
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
-  const firstName = (student.full_name ?? student.profile?.full_name ?? '').split(' ')[0] || '👋'
+  const firstName = (student.full_name ?? student.profile?.full_name ?? '').split(' ')[0]
   // timeZone jawnie: render server-side na Vercel działa w UTC — bez tego godziny
   // lekcji przesuwają się o 1-2h względem czasu polskiego.
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Warsaw' })
@@ -55,7 +55,7 @@ export default async function StudentDashboard() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-black text-gray-900">{t(lang, 'welcome')}, {firstName}! 👋</h1>
+        <h1 className="text-2xl font-black text-gray-900">{t(lang, 'welcome')}{firstName ? `, ${firstName}` : ''}! 👋</h1>
         <p className="text-gray-500 mt-1">{t(lang, 'upcoming_count').replace('{n}', String(upcoming.length))}</p>
       </div>
 

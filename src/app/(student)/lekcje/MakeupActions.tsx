@@ -14,6 +14,15 @@ function jsToDow(d: Date) {
   return (d.getDay() + 6) % 7
 }
 
+// Świeży pokój Jitsi dla lekcji odrabianej — ta sama konwencja nazw co przy
+// zapisie online (public_book_online), żeby uczeń miał w co kliknąć.
+function makeMeetingUrl() {
+  const bytes = new Uint8Array(5)
+  crypto.getRandomValues(bytes)
+  const slug = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+  return `https://meet.jit.si/uNick-${slug}`
+}
+
 export function MakeupActions({
   lessonId,
   studentId,
@@ -120,6 +129,7 @@ export function MakeupActions({
       topic: lang === 'en' ? `Make-up (for ${originalDate})` : `Odrabianie (za ${originalDate})`,
       starts_at: slot.start.toISOString(),
       ends_at: slot.end.toISOString(),
+      meeting_url: makeMeetingUrl(),
     }).select('id').single()
     if (error) { setError('Nie udało się zapisać: ' + error.message); return }
     // powiadom prowadzącego o zapisie na odrabianie

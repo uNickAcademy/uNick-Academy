@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Copy, Check, Share2, Gift } from 'lucide-react'
 import { t, type Lang } from '@/lib/i18n'
 
@@ -12,7 +12,11 @@ export function PoleceniaView({ lang, code, referrals }: {
   referrals: ReferralItem[]
 }) {
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
-  const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/zapisy?ref=${code}`
+  // origin ustalamy dopiero po zamontowaniu — inaczej SSR renderuje względny
+  // link, a klient absolutny, co daje ostrzeżenie o niezgodności hydracji.
+  const [origin, setOrigin] = useState('')
+  useEffect(() => { setOrigin(window.location.origin) }, [])
+  const link = `${origin}/zapisy?ref=${code}`
   const totalEarned = referrals.reduce((s, r) => s + r.credit, 0)
   const locale = lang === 'en' ? 'en-GB' : 'pl-PL'
 
