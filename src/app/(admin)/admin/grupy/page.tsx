@@ -29,6 +29,8 @@ export default async function GrupyPage() {
     format: g.format ?? null,
     pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
     dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
+    startDate: g.start_date ?? '',
+    endDate: g.end_date ?? '',
   }))
 
   const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))

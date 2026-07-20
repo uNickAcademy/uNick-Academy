@@ -193,6 +193,8 @@ export interface Group {
   format?: LessonType
   price_per_month?: number
   day_of_week?: number
+  start_date?: string | null
+  end_date?: string | null
   teacher?: Teacher
   members?: Student[]
 }

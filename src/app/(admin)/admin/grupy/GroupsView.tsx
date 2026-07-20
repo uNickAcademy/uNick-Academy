@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
@@ -16,6 +16,13 @@ function ageLabel(min: number | null, max: number | null): string {
   if (min != null) return `${min}+`
   if (max != null) return `do ${max} lat`
   return ''
+}
+// Data YYYY-MM-DD → "1.09.2026" (bez przesunięć stref — data bez czasu)
+function fmtDate(iso: string): string {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  if (!y || !m || !d) return iso
+  return `${Number(d)}.${m}.${y}`
 }
 // Pole "od"/"do": liczba lub "-"/pusto → null
 function parseAge(v: string): number | null {
@@ -45,6 +52,8 @@ type GroupCard = {
   format: LessonType | null
   pricePerMonth: number | null
   dayOfWeek: number | null
+  startDate: string
+  endDate: string
 }
 
 export function GroupsView({
@@ -138,6 +147,12 @@ export function GroupsView({
                       {g.dayOfWeek != null ? DAYS_PL[g.dayOfWeek] : ''}{g.dayOfWeek != null && g.scheduleText ? ' · ' : ''}{g.scheduleText}
                     </span>
                   )}
+                  {(g.startDate || g.endDate) && (
+                    <span className="flex items-center gap-1">
+                      <CalendarDays size={12} />
+                      {fmtDate(g.startDate)}{g.startDate && g.endDate ? ' – ' : ''}{g.endDate ? fmtDate(g.endDate) : (g.startDate ? '' : '')}
+                    </span>
+                  )}
                 </div>
                 {g.pricePerMonth != null && (
                   <p className="text-sm font-bold text-[#23479E] mb-3">{g.pricePerMonth} zł / mies.</p>
@@ -212,6 +227,8 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
   const [pricePerMonth, setPricePerMonth] = useState(group?.pricePerMonth != null ? String(group.pricePerMonth) : '')
   const [dayOfWeek, setDayOfWeek] = useState(group?.dayOfWeek != null ? String(group.dayOfWeek) : '')
   const [scheduleText, setScheduleText] = useState(group?.scheduleText ?? '')
+  const [startDate, setStartDate] = useState(group?.startDate ?? '')
+  const [endDate, setEndDate] = useState(group?.endDate ?? '')
   const [ageFrom, setAgeFrom] = useState(group?.ageMin != null ? String(group.ageMin) : '')
   const [ageTo, setAgeTo] = useState(group?.ageMax != null ? String(group.ageMax) : '')
   const [description, setDescription] = useState(group?.description ?? '')
@@ -235,6 +252,7 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
       name: name.trim(), teacher_id: teacherId || null,
       level: orderedLevels[0], levels: orderedLevels, color,
       capacity, schedule_text: scheduleText.trim() || null,
+      start_date: startDate || null, end_date: endDate || null,
       age_min: ageMin, age_max: ageMax, age_range: ageLabel(ageMin, ageMax) || null,
       description: description.trim() || null,
       format: format || null,
@@ -323,8 +341,20 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Godzina / opis terminu</label>
-              <input type="text" value={scheduleText} onChange={(e) => setScheduleText(e.target.value)} placeholder="np. 18:00"
+              <label className="block text-xs font-medium text-gray-600 mb-1">Godzina</label>
+              <input type="text" value={scheduleText} onChange={(e) => setScheduleText(e.target.value)} placeholder="np. 17:40"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Data rozpoczęcia kursu</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Data zakończenia kursu</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
             </div>
           </div>
