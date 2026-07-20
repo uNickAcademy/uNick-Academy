@@ -38,7 +38,7 @@ export default async function AdultsPage({ params }) {
           </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia kind="video" tone="cream" ratio="4:3" caption={t.hero.mediaCaption} />
+          <PlaceholderMedia tone="cream" ratio="4:3" caption={t.hero.mediaCaption} src="/photos/lekcje/dorosli.jpg" />
         </Reveal>
       </div>
 

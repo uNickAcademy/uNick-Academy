@@ -38,7 +38,7 @@ export default async function ChildrenPage({ params }) {
           </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia kind="video" tone="red" ratio="4:3" caption={t.hero.mediaCaption} />
+          <PlaceholderMedia tone="red" ratio="4:3" caption={t.hero.mediaCaption} src="/photos/lekcje/dzieci.jpg" />
           <UNickorn variant="trophy" size={84} className={styles.unicornCorner} float />
         </Reveal>
       </div>

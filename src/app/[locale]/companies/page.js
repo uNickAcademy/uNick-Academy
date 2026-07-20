@@ -38,7 +38,7 @@ export default async function CompaniesPage({ params }) {
           </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia kind="video" tone="sand" ratio="4:3" caption={t.hero.mediaCaption} />
+          <PlaceholderMedia tone="sand" ratio="4:3" caption={t.hero.mediaCaption} src="/photos/lekcje/firmy.jpg" />
         </Reveal>
       </div>
 

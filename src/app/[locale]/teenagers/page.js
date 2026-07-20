@@ -42,7 +42,7 @@ export default async function TeenagersPage({ params }) {
           </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia kind="video" tone="blue" ratio="4:3" caption={t.hero.mediaCaption} />
+          <PlaceholderMedia tone="blue" ratio="4:3" caption={t.hero.mediaCaption} src="/photos/lekcje/mlodziez.jpg" />
         </Reveal>
       </div>
 
