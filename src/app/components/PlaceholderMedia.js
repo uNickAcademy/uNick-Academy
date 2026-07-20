@@ -30,6 +30,7 @@ export default function PlaceholderMedia({
   tone = "blue",
   ratio = "4:3",
   className = "",
+  src = null,
 }) {
   const { a, b } = TONES[tone] || TONES.blue;
   return (
@@ -39,7 +40,11 @@ export default function PlaceholderMedia({
       role="img"
       aria-label={caption}
     >
-      {kind === "video" && (
+      {src && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={caption || ""} className={styles.photo} loading="lazy" />
+      )}
+      {kind === "video" && !src && (
         <span className={styles.icon} aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />

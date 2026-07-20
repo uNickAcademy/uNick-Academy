@@ -68,7 +68,13 @@ export default async function HowWeTeachPage({ params }) {
         <div className={`container ${styles.split}`}>
           <Reveal as="div" className={styles.gallery}>
             {t.inPractice.galleryCaptions.map((caption, i) => (
-              <PlaceholderMedia key={caption} tone={["red", "cream", "sand", "blue"][i]} ratio="1:1" caption={caption} />
+              <PlaceholderMedia
+                key={caption}
+                tone={["red", "cream", "sand", "blue"][i]}
+                ratio="1:1"
+                caption={caption}
+                src={["/photos/lekcje/dzieci.jpg", "/photos/lekcje/mlodziez.jpg", "/photos/lekcje/firmy.jpg", "/photos/lekcje/dorosli.jpg"][i]}
+              />
             ))}
           </Reveal>
           <Reveal as="div" delay={100} className={styles.copy}>
