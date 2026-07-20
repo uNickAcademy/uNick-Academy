@@ -47,7 +47,13 @@ export default async function ChildrenPage({ params }) {
         <div className={`container ${styles.split}`}>
           <Reveal as="div" className={styles.gallery}>
             {t.intro.galleryCaptions.map((caption, i) => (
-              <PlaceholderMedia key={caption} tone={["blue", "cream", "sand", "red"][i]} ratio="1:1" caption={caption} />
+              <PlaceholderMedia
+                key={caption}
+                tone={["blue", "cream", "sand", "red"][i]}
+                ratio="1:1"
+                caption={caption}
+                src={["/photos/lekcje/dzieci-galeria-1.jpg", "/photos/lekcje/dzieci-galeria-2.jpg", "/photos/lekcje/dzieci-galeria-3.jpg", "/photos/lekcje/dzieci-galeria-4.jpg"][i]}
+              />
             ))}
           </Reveal>
           <Reveal as="div" delay={100} className={styles.copy}>
