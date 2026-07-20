@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
+import VideoEmbed from "../../components/VideoEmbed";
 import ConsultationButton from "../../components/ConsultationButton";
 import CTASection from "../../components/CTASection";
 import PrincipleCard from "../../components/cards/PrincipleCard";
@@ -36,7 +37,7 @@ export default async function HowWeTeachPage({ params }) {
           </div>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <PlaceholderMedia kind="video" tone="blue" ratio="4:3" caption={t.hero.mediaCaption} />
+          <VideoEmbed id="3X5nm93gqzE" title={t.hero.mediaCaption} caption={t.hero.mediaCaption} />
         </Reveal>
       </div>
 
