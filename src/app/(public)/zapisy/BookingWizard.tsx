@@ -60,10 +60,23 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Kod polecenia z linku /zapisy?ref=KOD
+  // Kod polecenia z linku /zapisy?ref=KOD oraz deep-link z przycisków „Zapisz się”
+  // (?tryb=grupa&forma=offline/online lub ?tryb=indywidualnie)
   useEffect(() => {
-    const ref = new URLSearchParams(window.location.search).get('ref')
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get('ref')
     if (ref) setReferralCode(ref.toUpperCase())
+    const tryb = params.get('tryb')
+    const forma = params.get('forma')
+    if (tryb === 'grupa') {
+      setKind('group')
+      if (forma === 'offline' || forma === 'online') setFilterFormat(forma)
+      setScreen('groupPick')
+    } else if (tryb === 'indywidualnie') {
+      setKind(null)
+      setScreen('mode')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const go = (s: typeof screen) => { setHistory((h) => [...h, screen]); setScreen(s) }

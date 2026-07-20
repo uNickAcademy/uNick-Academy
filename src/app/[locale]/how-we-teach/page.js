@@ -2,11 +2,17 @@ import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
 import VideoEmbed from "../../components/VideoEmbed";
+import ClassesShowcase from "../../components/ClassesShowcase";
 import ConsultationButton from "../../components/ConsultationButton";
 import CTASection from "../../components/CTASection";
 import PrincipleCard from "../../components/cards/PrincipleCard";
 import { getDictionary } from "../../lib/dictionaries";
+import { getPublicGroups } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
+
+// Sekcja z zajęciami pobiera aktywne grupy z bazy — musi być dynamiczna,
+// żeby zmiany z panelu admina były widoczne od razu.
+export const dynamic = "force-dynamic";
 
 const ICONS = ["chat", "mic", "book", "spark", "globe", "target", "compass", "heart", "smile"];
 
@@ -20,6 +26,10 @@ export default async function HowWeTeachPage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.howWeTeach;
+
+  const allGroups = await getPublicGroups();
+  const stationary = allGroups.filter((g) => g.format === "offline");
+  const online = allGroups.filter((g) => g.format === "online");
 
   return (
     <>
@@ -69,6 +79,8 @@ export default async function HowWeTeachPage({ params }) {
           </Reveal>
         </div>
       </section>
+
+      <ClassesShowcase t={t.classes} locale={locale} stationary={stationary} online={online} />
 
       <CTASection
         title={t.finalCta.title}
