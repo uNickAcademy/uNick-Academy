@@ -12,6 +12,8 @@ export const siteConfig = {
   social: {
     instagram: "https://instagram.com/unickacademy",
     facebook: "https://facebook.com/unickacademy",
+    youtube: "https://youtube.com/@unickacademy",
+    linkedin: "", // uzupełnić linkiem do profilu firmy na LinkedIn
   },
 };
 

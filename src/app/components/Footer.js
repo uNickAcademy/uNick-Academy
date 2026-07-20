@@ -47,6 +47,32 @@ export default function Footer({ locale, dict }) {
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                 </svg>
               </a>
+              {siteConfig.social.youtube && (
+                <a
+                  href={siteConfig.social.youtube}
+                  className={styles.socialLink}
+                  aria-label="uNick Academy on YouTube"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z" />
+                  </svg>
+                </a>
+              )}
+              {siteConfig.social.linkedin && (
+                <a
+                  href={siteConfig.social.linkedin}
+                  className={styles.socialLink}
+                  aria-label="uNick Academy on LinkedIn"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.4c0-1.3-.02-2.96-1.8-2.96-1.8 0-2.08 1.4-2.08 2.86V21H9z" />
+                  </svg>
+                </a>
+              )}
               <a
                 href={`mailto:${siteConfig.email}`}
                 className={styles.socialLink}
