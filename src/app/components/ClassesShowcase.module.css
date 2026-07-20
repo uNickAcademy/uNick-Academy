@@ -55,14 +55,45 @@
   flex: 1;
 }
 .item {
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(28, 43, 74, 0.06);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.itemOpen {
+  border-color: rgba(35, 71, 158, 0.35);
+  box-shadow: 0 4px 14px rgba(28, 43, 74, 0.08);
+}
+.itemBtn {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid rgba(28, 43, 74, 0.06);
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.chevron {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--color-blue);
+  font-weight: 900;
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}
+.chevronOpen { transform: rotate(-90deg); }
+.desc {
+  margin: 0;
+  padding: 0 14px 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-ink-soft, #5b5f66);
 }
 .itemMain { min-width: 0; }
 .itemName {

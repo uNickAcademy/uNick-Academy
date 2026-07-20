@@ -1,49 +1,13 @@
 import Link from "next/link";
+import ClassGroupItem from "./ClassGroupItem";
 import styles from "./ClassesShowcase.module.css";
 
-const DAYS = {
-  pl: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
-  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-};
-
-function ageText(min, max) {
-  if (min != null && max != null) return `${min}–${max} lat`;
-  if (min != null) return `${min}+`;
-  if (max != null) return `do ${max} lat`;
-  return "";
-}
-
 function GroupList({ groups, locale, t }) {
-  const days = DAYS[locale] || DAYS.pl;
   return (
     <ul className={styles.list}>
-      {groups.map((g) => {
-        const full = g.spots <= 0;
-        const levels = g.levels && g.levels.length ? g.levels : (g.level ? [g.level] : []);
-        const day = g.dayOfWeek != null ? days[g.dayOfWeek] : "";
-        return (
-          <li key={g.id} className={styles.item}>
-            <div className={styles.itemMain}>
-              <span className={styles.itemName}>{g.name}</span>
-              <span className={styles.meta}>
-                {[day, g.schedule_text].filter(Boolean).join(" · ")}
-                {ageText(g.ageMin, g.ageMax) ? ` · ${ageText(g.ageMin, g.ageMax)}` : ""}
-              </span>
-              {levels.length > 0 && (
-                <span className={styles.levels}>
-                  {levels.map((lv) => <span key={lv} className={styles.level}>{lv}</span>)}
-                </span>
-              )}
-            </div>
-            <div className={styles.itemSide}>
-              {g.pricePerMonth != null && <span className={styles.price}>{g.pricePerMonth} {t.perMonth}</span>}
-              <span className={full ? styles.spotsFull : styles.spots}>
-                {full ? t.full : `${g.spots} ${t.spots}`}
-              </span>
-            </div>
-          </li>
-        );
-      })}
+      {groups.map((g) => (
+        <ClassGroupItem key={g.id} group={g} locale={locale} t={t} />
+      ))}
     </ul>
   );
 }

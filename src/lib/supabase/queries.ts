@@ -736,17 +736,25 @@ export async function getDiscountCodes(): Promise<DiscountCode[]> {
   return (data as DiscountCode[]) ?? []
 }
 
+// Klucz do sortowania grafiku: dzień tygodnia (0=pon), potem godzina z
+// schedule_text (np. "16:30"). Brak dnia/godziny → na koniec.
+function chronoKey(dayOfWeek: number | null | undefined, scheduleText: string | null | undefined): number {
+  const day = dayOfWeek == null ? 9 : dayOfWeek
+  const m = (scheduleText ?? '').match(/(\d{1,2}):(\d{2})/)
+  const minutes = m ? Number(m[1]) * 60 + Number(m[2]) : 9999
+  return day * 10000 + minutes
+}
+
 export async function getAllGroups(): Promise<Group[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('groups')
     .select(`*, teacher:teachers(*, profile:profiles(*)), members:group_members(student:students(*, profile:profiles(*)))`)
-    .order('created_at', { ascending: false })
   return (data ?? []).map((g) => ({
     ...g,
     // spłaszcz members z zagnieżdżenia group_members → student
     members: (g.members ?? []).map((m: { student: Student }) => m.student),
-  })) as Group[]
+  })).sort((a, b) => chronoKey(a.day_of_week, a.schedule_text) - chronoKey(b.day_of_week, b.schedule_text)) as Group[]
 }
 
 // ──────────────────────────────────────────
@@ -770,7 +778,6 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
              teacher:teachers(id, profile:profiles(full_name)),
              members:group_members(student_id)`)
     .eq('is_active', true)
-    .order('name', { ascending: true })
   return (data ?? []).map((g) => {
     const capacity = (g.capacity as number) ?? 0
     const taken = ((g.members as unknown[]) ?? []).length
@@ -790,7 +797,7 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
       pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
       dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
     }
-  })
+  }).sort((a, b) => chronoKey(a.dayOfWeek, a.schedule_text) - chronoKey(b.dayOfWeek, b.schedule_text))
 }
 
 // Tygodniowa dostępność wszystkich nauczycieli (mapowanie teacherId → sloty)
