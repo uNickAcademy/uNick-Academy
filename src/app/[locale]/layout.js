@@ -2,6 +2,7 @@ import "./marketing.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import CookieBanner from "../components/CookieBanner";
+import GoogleAnalytics from "../components/GoogleAnalytics";
 import { ConsultationProvider } from "../components/ConsultationProvider";
 import { SetHtmlLang } from "../components/SetHtmlLang";
 import { siteConfig } from "../lib/site-config";
@@ -62,6 +63,7 @@ export default async function LocaleLayout({ children, params }) {
       <main id="main-content">{children}</main>
       <Footer locale={locale} dict={dict} />
       <CookieBanner locale={locale} dict={dict} />
+      <GoogleAnalytics />
     </ConsultationProvider>
   );
 }

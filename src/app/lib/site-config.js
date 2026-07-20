@@ -15,6 +15,9 @@ export const siteConfig = {
     youtube: "https://youtube.com/@unickacademy",
     linkedin: "https://www.linkedin.com/company/unick-academy/",
   },
+  // Measurement ID nie jest sekretem (widoczny w kliencie każdej strony z GA),
+  // więc trzymamy go tu jak resztę publicznej konfiguracji.
+  googleAnalyticsId: "G-RZZD2NLW6F",
 };
 
 // ------------------------------------------------------------
