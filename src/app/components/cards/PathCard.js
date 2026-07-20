@@ -3,10 +3,10 @@ import PlaceholderMedia from "../PlaceholderMedia";
 import Icon from "../Icon";
 import styles from "./PathCard.module.css";
 
-export default function PathCard({ kicker, title, text, href, mediaCaption, tone, exploreLabel }) {
+export default function PathCard({ kicker, title, text, href, mediaCaption, tone, src, exploreLabel }) {
   return (
     <Link href={href} className={styles.card}>
-      <PlaceholderMedia caption={mediaCaption} tone={tone} ratio="3:2" />
+      <PlaceholderMedia caption={mediaCaption} tone={tone} ratio="3:2" src={src} />
       <div className={styles.body}>
         <span className={styles.kicker}>{kicker}</span>
         <h3 className={styles.title}>{title}</h3>
