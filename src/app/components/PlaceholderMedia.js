@@ -51,7 +51,9 @@ export default function PlaceholderMedia({
           </svg>
         </span>
       )}
-      <span className={styles.caption}>{caption}</span>
+      {/* Podpis pokazujemy tylko na placeholderze (bez zdjęcia). Przy zdjęciu
+          tekst zostaje jedynie jako alt / aria-label dla dostępności. */}
+      {!src && <span className={styles.caption}>{caption}</span>}
     </div>
   );
 }
