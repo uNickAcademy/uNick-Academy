@@ -4,6 +4,15 @@
   gap: 14px;
 }
 
+.link {
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.link:hover {
+  transform: scale(1.06);
+}
+
 .mark {
   flex-shrink: 0;
   display: block;

@@ -18,7 +18,7 @@ export default function CTASection({
     <Reveal as="div" className="section container">
       <div className={styles.section}>
         <div className={styles.inner}>
-          {showUnicorn && <UNickorn variant="wave" size={64} className={styles.unicorn} float />}
+          {showUnicorn && <UNickorn variant="wave" size={64} className={styles.unicorn} float href="/" ariaLabel="Wróć na stronę główną" />}
           <h2 className={styles.title}>{title}</h2>
           <p className={styles.subtitle}>{subtitle}</p>
           <div className={styles.actions}>

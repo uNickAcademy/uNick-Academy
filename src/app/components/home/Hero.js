@@ -38,7 +38,7 @@ export default function Hero({ dict, locale }) {
             className={styles.heroImg}
           />
         </div>
-        <UNickorn variant="wave" size={88} className={styles.unicorn} float />
+        <UNickorn variant="wave" size={88} className={styles.unicorn} float href={`/${locale}`} ariaLabel="Wróć na stronę główną" />
       </Reveal>
     </div>
   );

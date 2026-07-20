@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./UNickorn.module.css";
 
 const ASSETS = {
@@ -14,7 +15,7 @@ const ASSETS = {
  *  - "mark" / "wave" / "trophy"  the mascot peeking in, for hellos and small wins
  *  - "sign"                      the mascot holding a sign board (pass `signText`)
  */
-export default function UNickorn({ variant = "mark", signText, size = 96, className = "", float = false }) {
+export default function UNickorn({ variant = "mark", signText, size = 96, className = "", float = false, href = null, ariaLabel }) {
   const asset = variant === "sign" ? ASSETS.sign : ASSETS.peek;
   const height = Math.round((size * asset.height) / asset.width);
 
@@ -29,14 +30,29 @@ export default function UNickorn({ variant = "mark", signText, size = 96, classN
     />
   );
 
+  const inner = variant === "sign" && signText ? (
+    <>
+      {image}
+      <span className={styles.board}>{signText}</span>
+    </>
+  ) : image;
+
+  // Klikalna maskotka (np. powrót na stronę główną)
+  if (href) {
+    return (
+      <Link href={href} aria-label={ariaLabel || "uNick Academy"} className={`${styles.link} ${variant === "sign" && signText ? styles.wrap : ""} ${className}`.trim()}>
+        {inner}
+      </Link>
+    );
+  }
+
   if (variant === "sign" && signText) {
     return (
       <span className={`${styles.wrap} ${className}`.trim()}>
-        {image}
-        <span className={styles.board}>{signText}</span>
+        {inner}
       </span>
     );
   }
 
-  return <span className={className}>{image}</span>;
+  return <span className={className}>{inner}</span>;
 }

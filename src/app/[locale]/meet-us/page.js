@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
+import VideoEmbed from "../../components/VideoEmbed";
 import Image from "next/image";
 import CTASection from "../../components/CTASection";
 import TeacherGrid from "../../components/cards/TeacherGrid";
@@ -47,14 +48,7 @@ export default async function MeetUsPage({ params }) {
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
         </Reveal>
         <Reveal as="div" delay={120} className={styles.media}>
-          <div className={styles.videoWrap}>
-            <iframe
-              src="https://www.youtube.com/embed/W3c0GcLv8Ag"
-              title={t.hero.mediaCaption}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
+          <VideoEmbed id="W3c0GcLv8Ag" title={t.hero.mediaCaption} />
         </Reveal>
       </div>
 
