@@ -887,7 +887,7 @@ const en = {
       title: "Privacy Policy",
       lastUpdated: "Last updated: 23 June 2026",
       controller: "Data Controller",
-      controllerText: "uNick Academy, Milena Rudd, NIP: to be provided, hello@unick-academy.pl. The data controller within the meaning of Regulation (EU) 2016/679 (GDPR/RODO) is Milena Rudd conducting business as uNick Academy.",
+      controllerText: "uNick Academy, Milena Rudd, NIP: 7812067015, hello@unick-academy.pl. The data controller within the meaning of Regulation (EU) 2016/679 (GDPR/RODO) is Milena Rudd conducting business as uNick Academy.",
       whatWeCollect: "What data we collect",
       whatWeCollectText: "When you use our forms or create an account, we may collect: name, email address, phone number (optional), information about the audience type (child, teen, adult, company), messages you send us, account login credentials (email and password, stored securely via Supabase Auth).",
       whyWeCollect: "Why we collect your data",

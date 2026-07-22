@@ -11,7 +11,7 @@ widocznych placeholderów na stronie.
 | Telefon `+48 666 661 750` | ✅ potwierdzone przez właściciela | `site-config.js`, kontakt, JSON-LD, llms.txt |
 | Adres: Nowa 23, Rumianek, 62-080 Tarnowo Podgórne | ✅ z briefu | NAP wszędzie |
 | E-mail `hello@unick-academy.pl` | ✅ z `site-config` | kontakt, JSON-LD |
-| **NIP / dane rejestrowe** | ❌ brak (w polityce prywatności widnieje „NIP: do uzupełnienia”) | stopka prawna, faktury |
+| NIP `7812067015` | ✅ uzupełnione (polityka prywatności PL/EN + JSON-LD `taxID`/`vatID`) | stopka prawna, faktury |
 | **Godziny otwarcia / kontaktu** | ❌ brak potwierdzenia | JSON-LD `openingHoursSpecification`, kontakt |
 | **Współrzędne geo (lat/lng)** | ❌ nie zgadujemy | JSON-LD `geo`, precyzyjny pin mapy |
 | **Google Business Profile Place ID / link do profilu** | ❌ brak | embed mapy z pinem, `sameAs` |

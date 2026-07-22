@@ -35,6 +35,8 @@ export function organizationNode() {
     url: siteConfig.url,
     email: siteConfig.email,
     telephone: siteConfig.phone.e164,
+    taxID: "7812067015",
+    vatID: "PL7812067015",
     image: `${siteConfig.url}/brand/logo-horizontal.jpeg`,
     logo: `${siteConfig.url}/brand/shield.png`,
     description:

@@ -887,7 +887,7 @@ const pl = {
       title: "Polityka Prywatności",
       lastUpdated: "Ostatnia aktualizacja: 23 czerwca 2026",
       controller: "Administrator danych",
-      controllerText: "uNick Academy, Milena Rudd, NIP: do uzupełnienia, hello@unick-academy.pl. Administratorem danych osobowych w rozumieniu Rozporządzenia (UE) 2016/679 (RODO) jest Milena Rudd prowadząca działalność jako uNick Academy.",
+      controllerText: "uNick Academy, Milena Rudd, NIP: 7812067015, hello@unick-academy.pl. Administratorem danych osobowych w rozumieniu Rozporządzenia (UE) 2016/679 (RODO) jest Milena Rudd prowadząca działalność jako uNick Academy.",
       whatWeCollect: "Jakie dane zbieramy",
       whatWeCollectText: "Korzystając z naszych formularzy lub tworząc konto, możemy zbierać: imię i nazwisko, adres e-mail, numer telefonu (opcjonalnie), informację o typie odbiorcy (dziecko, nastolatek, dorosły, firma), wiadomości, które do nas wysyłasz, dane logowania (e-mail i hasło, przechowywane bezpiecznie przez Supabase Auth).",
       whyWeCollect: "Dlaczego zbieramy Twoje dane",
