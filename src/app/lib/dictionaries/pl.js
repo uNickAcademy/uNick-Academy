@@ -3,9 +3,9 @@
 
 const pl = {
   meta: {
-    title: "uNick Academy — Angielski to ludzie. Nie perfekcja.",
+    title: "Szkoła języka angielskiego Rumianek i Tarnowo Podgórne | uNick Academy",
     description:
-      "uNick Academy to rodzinna, międzynarodowa szkoła językowa, w której dzieci, młodzież, dorośli i firmy uczą się komunikacji poprzez rozmowę, ciekawość i prawdziwą relację z drugim człowiekiem.",
+      "Angielski dla dzieci, młodzieży i dorosłych w Rumianku, gmina Tarnowo Podgórne. Małe grupy, międzynarodowi lektorzy, konwersacje i nauka bez szkolnej presji. Zajęcia stacjonarne i online.",
   },
 
   common: {
@@ -21,6 +21,7 @@ const pl = {
       meetUs: "Poznaj nas",
       contact: "Kontakt",
       teachersZone: "Strefa nauczyciela",
+      localSchool: "Szkoła w Tarnowie Podgórnem",
       login: "Zaloguj się",
     },
     footer: {
@@ -74,6 +75,20 @@ const pl = {
       en: "English",
       pl: "Polski",
     },
+    nap: {
+      call: "Zadzwoń",
+      write: "Napisz",
+      directions: "Wyznacz trasę",
+      addressHeading: "Adres szkoły",
+    },
+    location: {
+      eyebrow: "Zajęcia stacjonarne w Rumianku",
+      title: "Uczymy w Rumianku, w gminie Tarnowo Podgórne",
+      body: "Nasza sala mieści się w Rumianku koło Tarnowa Podgórnego, na zachód od Poznania. Prowadzimy tu zajęcia dla dzieci, młodzieży i dorosłych — indywidualnie i w małych grupach, z native speakerami i międzynarodowymi lektorami. Nie możesz dojechać? Te same zajęcia prowadzimy online.",
+      commuting: "Do uNick Academy dojeżdżają uczniowie między innymi z Tarnowa Podgórnego, Lusówka, Lusowa, Baranowa, Przeźmierowa, Sadów, Swadzimia, Jankowic i zachodniej części Poznania.",
+      mapAria: "Mapa lokalizacji uNick Academy w Rumianku",
+      localPageLink: "Zobacz szkołę języka angielskiego w Tarnowie Podgórnem",
+    },
   },
 
   home: {
@@ -87,7 +102,7 @@ const pl = {
       titleLine1: "Angielski to ludzie.",
       titleAccent: "Nie perfekcja.",
       subtitle:
-        "W uNick Academy dzieci, młodzież i dorośli uczą się komunikacji poprzez rozmowę, ciekawość i prawdziwą relację z drugim człowiekiem.",
+        "Konwersacyjny angielski dla dzieci, młodzieży i dorosłych — z native speakerami i międzynarodowymi lektorami. Zajęcia stacjonarne w Rumianku, w gminie Tarnowo Podgórne, oraz online.",
       mediaCaption:
         "Materiał dokumentalny — prawdziwa lekcja, w trakcie rozmowy, spontanicznie i bez scenariusza",
     },
@@ -219,9 +234,9 @@ const pl = {
 
   children: {
     meta: {
-      title: "Dzieci",
+      title: "Angielski dla dzieci Tarnowo Podgórne i online",
       description:
-        "Lekcje angielskiego dla dzieci, które uczą się inaczej — w tym dzieci z ADHD, dzieci z lękiem i ciekawych świata, którzy nigdy nie wpasowali się w tradycyjną klasę.",
+        "Angielski dla dzieci w Rumianku koło Tarnowa Podgórnego i online. Małe grupy i zajęcia indywidualne przez rozmowę, ruch i gry — także dla dzieci z ADHD, nieśmiałych i ciekawych świata.",
     },
     hero: {
       eyebrow: "Dla dzieci",
@@ -275,9 +290,9 @@ const pl = {
 
   teenagers: {
     meta: {
-      title: "Młodzież",
+      title: "Angielski dla młodzieży Tarnowo Podgórne i online",
       description:
-        "Angielski dla nastolatków, którzy mają dużo do powiedzenia — tylko jeszcze nie zawsze po angielsku. Prawdziwe rozmowy o prawdziwych tematach, bez strachu przed błędem.",
+        "Konwersacyjny angielski dla młodzieży w Rumianku koło Tarnowa Podgórnego i online. Prawdziwe rozmowy o prawdziwych tematach, więcej pewności siebie i mówienie bez strachu przed błędem.",
     },
     hero: {
       eyebrow: "Dla młodzieży",
@@ -335,9 +350,9 @@ const pl = {
 
   adults: {
     meta: {
-      title: "Dorośli",
+      title: "Konwersacje z angielskiego Tarnowo Podgórne i online",
       description:
-        "Angielski dla dorosłych, którzy „już to studiowali” przez wiele lat. Prawdziwa rozmowa, elastyczne formy zajęć i miejsce, gdzie błędy są po prostu częścią mówienia.",
+        "Praktyczne konwersacje z angielskiego dla dorosłych w Rumianku koło Tarnowa Podgórnego i online. Zajęcia z native speakerami i międzynarodowymi lektorami — mów, zamiast tłumaczyć w głowie.",
     },
     hero: {
       eyebrow: "Dla dorosłych",
@@ -399,9 +414,9 @@ const pl = {
 
   companies: {
     meta: {
-      title: "Firmy",
+      title: "Angielski dla firm w Poznaniu i online",
       description:
-        "Szkolenia komunikacyjne dla zespołów i firm — zbudowane wokół tego, jak naprawdę pracują twoi ludzie, a nie generyczne kursy angielskiego korporacyjnego.",
+        "Angielski dla firm i zespołów w Poznaniu, gminie Tarnowo Podgórne i online. Szkolenia z native speakerami zbudowane wokół tego, jak naprawdę pracują twoi ludzie — nie generyczny kurs korporacyjny.",
     },
     hero: {
       eyebrow: "Dla firm",
@@ -462,9 +477,9 @@ const pl = {
 
   howWeTeach: {
     meta: {
-      title: "Jak uczymy",
+      title: "Konwersacyjna metoda nauki angielskiego",
       description:
-        "Nasza filozofia nauczania: komunikacja ważniejsza niż perfekcja, prawdziwe rozmowy, ciekawość, kultura, indywidualne podejście, immersja, ciepło i humor.",
+        "Nasza konwersacyjna metoda nauki angielskiego: komunikacja ważniejsza niż perfekcja, prawdziwe rozmowy z native speakerami, ciekawość, kultura, immersja, indywidualne podejście, ciepło i humor.",
     },
     hero: {
       eyebrow: "Jak uczymy",
@@ -530,9 +545,9 @@ const pl = {
 
   meetUs: {
     meta: {
-      title: "Poznaj nas",
+      title: "Międzynarodowa szkoła językowa z Rumianka",
       description:
-        "Poznaj uNick Academy — szkołę z Rumianka, gdzie uczą nauczyciele z całego świata. Ponad 10 lat nauki angielskiego w nieszkolny sposób.",
+        "Poznaj uNick Academy — międzynarodową szkołę języka angielskiego z Rumianka w gminie Tarnowo Podgórne, gdzie uczą native speakerzy i nauczyciele z całego świata. Ponad 10 lat nauki w nieszkolny sposób.",
     },
     hero: {
       eyebrow: "Poznaj nas",
@@ -692,9 +707,9 @@ const pl = {
 
   contact: {
     meta: {
-      title: "Kontakt",
+      title: "Szkoła językowa Rumianek – kontakt i dojazd",
       description:
-        "Skontaktuj się z uNick Academy. Powiedz nam, kim jesteś, a pomożemy ci znaleźć odpowiedni program — dla ciebie, twojego dziecka lub zespołu.",
+        "Kontakt do uNick Academy: Nowa 23, Rumianek, 62-080 Tarnowo Podgórne, tel. +48 666 661 750. Zajęcia stacjonarne i online. Sprawdź dojazd i umów bezpłatną konsultację.",
     },
     hero: {
       eyebrow: "Kontakt",
@@ -718,7 +733,7 @@ const pl = {
       facebook: "Facebooku",
       loginPrefix: "Jesteś już częścią akademii? ",
       loginSuffix: " działa dokładnie tak jak wcześniej.",
-      mapCaption: "Lokalizacja — mapa / placeholder studia",
+      mapCaption: "Nasza lokalizacja w Rumianku, gmina Tarnowo Podgórne",
     },
     faq: {
       eyebrow: "Warto wiedzieć",
@@ -731,6 +746,79 @@ const pl = {
         { title: "Ile to kosztuje?", text: "Zależy od programu i formy zajęć. Podczas bezpłatnej konsultacji porozmawiamy o opcjach dopasowanych do twoich celów i budżetu." },
         { title: "Jestem już uczniem — gdzie się zalogować?", text: "Skorzystaj z linku „Logowanie ucznia” w menu lub stopce, by uzyskać dostęp do swojego konta. Nic się tam nie zmieniło." },
       ],
+    },
+  },
+
+  localTarnowo: {
+    meta: {
+      title: "Szkoła języka angielskiego Tarnowo Podgórne",
+      description:
+        "Konwersacyjny angielski dla dzieci, młodzieży i dorosłych w Rumianku koło Tarnowa Podgórnego. Małe grupy, zajęcia indywidualne, native speakerzy i międzynarodowi nauczyciele. Stacjonarnie i online.",
+    },
+    hero: {
+      eyebrow: "Tarnowo Podgórne · Rumianek",
+      title: "Szkoła języka angielskiego w Rumianku koło Tarnowa Podgórnego",
+      subtitle:
+        "Uczymy angielskiego przez rozmowę — dzieci, młodzież i dorosłych, indywidualnie i w małych grupach, z native speakerami i międzynarodowymi lektorami. Zajęcia stacjonarne w Rumianku oraz online.",
+    },
+    intro: {
+      title: "Dla kogo są nasze zajęcia",
+      body: "Do uNick Academy przychodzą osoby w każdym wieku — od dzieci stawiających pierwsze kroki, przez nastolatków przełamujących barierę mówienia, po dorosłych, którzy rozumieją angielski, ale chcą wreszcie zacząć mówić. Uczymy tych, którzy nie odnaleźli się w tradycyjnej szkole, oraz osób neuroatypowych, w tym uczniów z ADHD.",
+    },
+    offer: {
+      eyebrow: "Nasza oferta w Rumianku",
+      title: "Angielski dopasowany do Ciebie",
+      items: [
+        {
+          title: "Angielski dla dzieci",
+          text: "Zajęcia przez rozmowę, ruch, gry i autentyczne sytuacje. Dzieci mówią po angielsku, bo mają realny powód — nie dlatego, że każe podręcznik.",
+        },
+        {
+          title: "Angielski dla młodzieży",
+          text: "Konwersacje dla nastolatków, którzy chcą swobodniej mówić, rozwijać pewność siebie i używać języka w prawdziwych projektach.",
+        },
+        {
+          title: "Angielski dla dorosłych",
+          text: "Praktyczne konwersacje dla osób, które rozumieją angielski, ale chcą zacząć mówić bez tłumaczenia w głowie i strachu przed błędem.",
+        },
+        {
+          title: "Zajęcia indywidualne",
+          text: "Jeden na jeden z nauczycielem, w tempie i wokół tematów, które są dla Ciebie ważne. Elastyczne terminy, stacjonarnie lub online.",
+        },
+        {
+          title: "Małe grupy",
+          text: "Kameralne grupy, w których każdy ma czas mówić. Dobieramy uczestników według wieku i poziomu.",
+        },
+        {
+          title: "Native speakerzy i międzynarodowi nauczyciele",
+          text: "Uczą Cię ludzie z różnych krajów i kultur. Twój mózg widzi naturalną potrzebę mówienia po angielsku — i dlatego nauka jest skuteczniejsza.",
+        },
+      ],
+    },
+    method: {
+      eyebrow: "Metoda uNick Academy",
+      title: "Komunikacja ważniejsza niż perfekcja",
+      body: "Nie odtwarzamy reguł z podręcznika. Uczymy prawdziwej komunikacji — poprzez rozmowę, immersję, projekty, gry i współpracę. Błędy są naturalną częścią nauki, a nie powodem do wstydu. To filozofia, nie sztywna metoda: najpierw jesteś osobą, potem uczniem.",
+    },
+    faq: {
+      eyebrow: "FAQ",
+      title: "Najczęstsze pytania o zajęcia w Tarnowie Podgórnem",
+      items: [
+        { title: "Gdzie odbywają się zajęcia?", text: "Stacjonarnie w naszej sali przy ul. Nowa 23 w Rumianku, 62-080 Tarnowo Podgórne (gmina Tarnowo Podgórne, powiat poznański). Prowadzimy też zajęcia online." },
+        { title: "Czy prowadzicie angielski dla dzieci?", text: "Tak. Uczymy dzieci, młodzież i dorosłych — indywidualnie i w małych grupach." },
+        { title: "Czy zajęcia prowadzą native speakerzy i międzynarodowi nauczyciele?", text: "Tak. Nasi lektorzy pochodzą z różnych krajów, dzięki czemu nauka opiera się na naturalnej potrzebie komunikacji po angielsku." },
+        { title: "Czy można zapisać się na zajęcia indywidualne?", text: "Tak, oferujemy lekcje jeden na jeden — stacjonarnie w Rumianku lub online, w elastycznych terminach." },
+        { title: "Jak duże są grupy?", text: "Uczymy w małych, kameralnych grupach, tak aby każdy uczestnik miał czas mówić. Dokładny rozmiar ustalamy przy zapisie." },
+        { title: "Czy prowadzicie zajęcia dla początkujących?", text: "Tak. Dobieramy zajęcia do poziomu — od zupełnie początkującego po zaawansowany." },
+        { title: "Czy zajęcia są odpowiednie dla osób z ADHD?", text: "Tak. Wielu naszych uczniów jest neuroatypowych. Małe grupy, cierpliwi nauczyciele i brak oceniania sprawiają, że każdy jest przyjmowany tam, gdzie jest." },
+        { title: "Czy można uczyć się online?", text: "Tak. Te same zajęcia prowadzimy online — samodzielnie lub jako uzupełnienie zajęć stacjonarnych." },
+        { title: "Jak zapisać się na konsultację lub lekcję próbną?", text: "Umów bezpłatną konsultację przez formularz na stronie kontaktu lub zadzwoń pod +48 666 661 750. Porozmawiamy o Twoich celach i zaproponujemy najlepsze rozwiązanie." },
+        { title: "Z jakich miejscowości dojeżdżają uczniowie?", text: "Między innymi z Tarnowa Podgórnego, Lusówka, Lusowa, Baranowa, Przeźmierowa, Sadów, Swadzimia, Jankowic i zachodniej części Poznania." },
+      ],
+    },
+    cta: {
+      title: "Umów bezpłatną konsultację",
+      subtitle: "Porozmawiajmy o Tobie, Twoim dziecku lub zespole — i znajdźmy odpowiednie zajęcia. Bez presji.",
     },
   },
 

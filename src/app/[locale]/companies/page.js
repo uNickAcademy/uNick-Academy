@@ -6,12 +6,13 @@ import Button from "../../components/Button";
 import CTASection from "../../components/CTASection";
 import StoryCard from "../../components/cards/StoryCard";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.companies.meta;
+  return buildMetadata({ locale, path: "/companies", title: dict.companies.meta.title, description: dict.companies.meta.description });
 }
 
 export default async function CompaniesPage({ params }) {
