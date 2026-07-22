@@ -18,6 +18,7 @@ export default function Hero({ dict, locale }) {
           <span className={styles.accent}>{t.titleAccent}</span>
         </h1>
         <p className={styles.subtitle}>{t.subtitle}</p>
+        {t.subtitleSmall && <p className={styles.subtitleSmall}>{t.subtitleSmall}</p>}
         <div className={styles.actions}>
           <ConsultationButton>{dict.common.buttons.bookConsultation}</ConsultationButton>
           <Button href={`/${locale}/how-we-teach`} variant="secondary">

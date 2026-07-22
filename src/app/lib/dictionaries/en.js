@@ -101,8 +101,9 @@ const en = {
       eyebrow: "uNick Academy",
       titleLine1: "English is about people.",
       titleAccent: "Not perfection.",
-      subtitle:
-        "Conversational English for children, teenagers and adults — with native speakers and international teachers. In-person lessons in Rumianek, in the Tarnowo Podgórne municipality, and online.",
+      subtitle: "Conversational English for children, teenagers and adults with native speakers",
+      subtitleSmall:
+        "In-person lessons in Rumianek, with easy reach from the municipalities of Tarnowo Podgórne, Kaźmierz, Rokietnica, Dopiewo, Puszczykowo, Buk, Duszniki, Komorniki, the city of Poznań, and online.",
       mediaCaption:
         "Documentary footage — a real lesson, mid-conversation, candid and unscripted",
     },
