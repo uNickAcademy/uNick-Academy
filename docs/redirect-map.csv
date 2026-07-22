@@ -1,0 +1,20 @@
+old_url,new_url,redirect_type,reason,implementation_status
+https://unickacademy.pl/,https://unick-academy.pl/pl,301,Stara domena WordPress → nowa domena kanoniczna (strona główna),TODO_hosting
+https://www.unick-academy.pl/,https://unick-academy.pl/,301,Kanonizacja www → bez www,TODO_hosting
+http://unick-academy.pl/,https://unick-academy.pl/,301,Wymuszenie HTTPS,TODO_hosting
+https://unickacademy.pl/dla-firm,https://unick-academy.pl/pl/companies,301,Stara oferta dla firm,done_next_config
+https://unickacademy.pl/o-nas,https://unick-academy.pl/pl/meet-us,301,Stara strona o nas,done_next_config
+https://unickacademy.pl/nauczyciele,https://unick-academy.pl/pl/meet-us,301,Stara strona nauczycieli,done_next_config
+https://unickacademy.pl/metoda,https://unick-academy.pl/pl/how-we-teach,301,Stara strona metody,done_next_config
+https://unickacademy.pl/jak-uczymy,https://unick-academy.pl/pl/how-we-teach,301,Stara strona metody (wariant),done_next_config
+https://unickacademy.pl/dzieci,https://unick-academy.pl/pl/children,301,Stara oferta dla dzieci,done_next_config
+https://unickacademy.pl/mlodziez,https://unick-academy.pl/pl/teenagers,301,Stara oferta dla młodzieży,done_next_config
+https://unickacademy.pl/dorosli,https://unick-academy.pl/pl/adults,301,Stara oferta dla dorosłych,done_next_config
+https://unickacademy.pl/angielski-dla-dzieci,https://unick-academy.pl/pl/children,301,Stary URL frazowy,done_next_config
+https://unickacademy.pl/angielski-dla-firm,https://unick-academy.pl/pl/companies,301,Stary URL frazowy,done_next_config
+https://unickacademy.pl/kontakt,https://unick-academy.pl/pl/contact,301,Stary kontakt,done_next_config
+https://unickacademy.pl/regulamin,https://unick-academy.pl/pl/terms-of-service,301,Stary regulamin,done_next_config
+https://unickacademy.pl/regulamin-serwisu,https://unick-academy.pl/pl/terms-of-service,301,Stary regulamin (wariant),done_next_config
+https://unickacademy.pl/polityka-prywatnosci,https://unick-academy.pl/pl/privacy-policy,301,Stara polityka prywatności,done_next_config
+https://unick-academy.pl/en/szkola-jezykowa-tarnowo-podgorne,https://unick-academy.pl/en/english-school-tarnowo-podgorne,301,Ujednolicenie slugów lokalnych per język,done_next_config
+https://unick-academy.pl/pl/english-school-tarnowo-podgorne,https://unick-academy.pl/pl/szkola-jezykowa-tarnowo-podgorne,301,Ujednolicenie slugów lokalnych per język,done_next_config

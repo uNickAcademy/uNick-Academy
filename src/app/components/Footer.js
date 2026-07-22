@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import AddressBlock from "./AddressBlock";
 import { getFooterNav, platformLinks, siteConfig } from "../lib/site-config";
 import styles from "./Footer.module.css";
 
@@ -22,6 +23,7 @@ export default function Footer({ locale, dict }) {
               </span>
             </Link>
             <p className={styles.tagline}>{dict.meta.description}</p>
+            <AddressBlock dict={dict} variant="compact" className={styles.tagline} />
             <div className={styles.social}>
               <a
                 href={siteConfig.social.instagram}

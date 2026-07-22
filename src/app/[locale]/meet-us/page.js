@@ -7,6 +7,7 @@ import CTASection from "../../components/CTASection";
 import TeacherGrid from "../../components/cards/TeacherGrid";
 import { getTeachers } from "../../lib/teachers";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import { getTeacherPublicProfiles } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
 
@@ -17,7 +18,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.meetUs.meta;
+  return buildMetadata({ locale, path: "/meet-us", title: dict.meetUs.meta.title, description: dict.meetUs.meta.description });
 }
 
 export default async function MeetUsPage({ params }) {

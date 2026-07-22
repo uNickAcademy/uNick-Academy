@@ -7,12 +7,13 @@ import CTASection from "../../components/CTASection";
 import TeacherCard from "../../components/cards/TeacherCard";
 import { getTeachers } from "../../lib/teachers";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.teenagers.meta;
+  return buildMetadata({ locale, path: "/teenagers", title: dict.teenagers.meta.title, description: dict.teenagers.meta.description });
 }
 
 export default async function TeenagersPage({ params }) {

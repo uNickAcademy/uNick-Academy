@@ -3,12 +3,13 @@ import SectionHeading from "../../components/SectionHeading";
 import UNickorn from "../../components/UNickorn";
 import CTASection from "../../components/CTASection";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.meetUnickorn.meta;
+  return buildMetadata({ locale, path: "/meet-unickorn", title: dict.meetUnickorn.meta.title, description: dict.meetUnickorn.meta.description });
 }
 
 export default async function MeetUnickornPage({ params }) {

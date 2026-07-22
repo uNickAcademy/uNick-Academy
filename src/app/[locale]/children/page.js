@@ -6,12 +6,13 @@ import ConsultationButton from "../../components/ConsultationButton";
 import Button from "../../components/Button";
 import CTASection from "../../components/CTASection";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.children.meta;
+  return buildMetadata({ locale, path: "/children", title: dict.children.meta.title, description: dict.children.meta.description });
 }
 
 export default async function ChildrenPage({ params }) {

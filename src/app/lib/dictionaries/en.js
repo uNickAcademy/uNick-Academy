@@ -3,9 +3,9 @@
 
 const en = {
   meta: {
-    title: "uNick Academy — English is about people. Not perfection.",
+    title: "English school in Rumianek near Tarnowo Podgórne | uNick Academy",
     description:
-      "uNick Academy is a family-founded international language academy where children, teenagers, adults and companies learn to communicate through conversation, curiosity and genuine human connection.",
+      "English for children, teenagers and adults in Rumianek, Tarnowo Podgórne municipality (near Poznań), and online. Small groups, native speakers and international teachers, conversation over perfection.",
   },
 
   common: {
@@ -21,6 +21,7 @@ const en = {
       meetUs: "Meet Us",
       contact: "Contact",
       teachersZone: "Teachers Zone",
+      localSchool: "School in Tarnowo Podgórne",
       login: "Log in",
     },
     footer: {
@@ -74,6 +75,20 @@ const en = {
       en: "English",
       pl: "Polski",
     },
+    nap: {
+      call: "Call us",
+      write: "Email us",
+      directions: "Get directions",
+      addressHeading: "School address",
+    },
+    location: {
+      eyebrow: "In-person lessons in Rumianek",
+      title: "We teach in Rumianek, in the Tarnowo Podgórne municipality",
+      body: "Our classroom is in Rumianek near Tarnowo Podgórne, just west of Poznań. We run lessons here for children, teenagers and adults — one-to-one and in small groups, with native speakers and international teachers. Can't make it in person? We run the same lessons online.",
+      commuting: "Students travel to uNick Academy from Tarnowo Podgórne, Lusówko, Lusowo, Baranowo, Przeźmierowo, Sady, Swadzim, Jankowice and the western part of Poznań, among others.",
+      mapAria: "Map showing uNick Academy's location in Rumianek",
+      localPageLink: "See our English school in Tarnowo Podgórne",
+    },
   },
 
   home: {
@@ -87,7 +102,7 @@ const en = {
       titleLine1: "English is about people.",
       titleAccent: "Not perfection.",
       subtitle:
-        "At uNick Academy, children, teenagers and adults learn to communicate through conversation, curiosity and genuine human connection.",
+        "Conversational English for children, teenagers and adults — with native speakers and international teachers. In-person lessons in Rumianek, in the Tarnowo Podgórne municipality, and online.",
       mediaCaption:
         "Documentary footage — a real lesson, mid-conversation, candid and unscripted",
     },
@@ -219,9 +234,9 @@ const en = {
 
   children: {
     meta: {
-      title: "Children",
+      title: "English for children in Tarnowo Podgórne & online",
       description:
-        "English lessons for children who learn differently — including kids with ADHD, anxious children and curious minds who never fitted the traditional classroom mould.",
+        "English for children in Rumianek near Tarnowo Podgórne and online. Small groups and one-to-one lessons with native speakers — through conversation, movement and games, also for kids with ADHD.",
     },
     hero: {
       eyebrow: "For children",
@@ -275,9 +290,9 @@ const en = {
 
   teenagers: {
     meta: {
-      title: "Teenagers",
+      title: "English for teenagers in Tarnowo Podgórne & online",
       description:
-        "English for teenagers who have plenty to say — just not always in English yet. Real conversations about real topics, without the fear of getting it wrong.",
+        "Conversational English for teenagers in Rumianek near Tarnowo Podgórne and online. Real conversations with native speakers, more confidence, and speaking without the fear of getting it wrong.",
     },
     hero: {
       eyebrow: "For teenagers",
@@ -335,9 +350,9 @@ const en = {
 
   adults: {
     meta: {
-      title: "Adults",
+      title: "English conversation for adults in Tarnowo Podgórne & online",
       description:
-        "English for adults who've 'already studied this' for years. Real conversation, flexible formats, and a space where mistakes are simply part of speaking.",
+        "Practical English conversation for adults in Rumianek near Tarnowo Podgórne and online. Lessons with native speakers and international teachers — speak instead of translating in your head.",
     },
     hero: {
       eyebrow: "For adults",
@@ -399,9 +414,9 @@ const en = {
 
   companies: {
     meta: {
-      title: "Companies",
+      title: "Business English in Poznań & online",
       description:
-        "Communication training for teams and companies — built around how your people actually work, not generic corporate English courses.",
+        "Business English for teams and companies in Poznań, Tarnowo Podgórne municipality and online. Native-speaker training built around how your people actually work — not a generic corporate course.",
     },
     hero: {
       eyebrow: "For companies",
@@ -462,9 +477,9 @@ const en = {
 
   howWeTeach: {
     meta: {
-      title: "How We Teach",
+      title: "Our conversational method of learning English",
       description:
-        "Our teaching philosophy: communication over perfection, real conversations, curiosity, culture, individual attention, immersion, warmth and humour.",
+        "Our conversational method: communication over perfection, real conversations with native speakers, curiosity, culture, immersion, individual attention, warmth and humour.",
     },
     hero: {
       eyebrow: "How we teach",
@@ -530,9 +545,9 @@ const en = {
 
   meetUs: {
     meta: {
-      title: "Meet Us",
+      title: "An international language school from Rumianek",
       description:
-        "Meet uNick Academy — a school from Rumianek where teachers from around the world have been teaching English the un-school way for over a decade.",
+        "Meet uNick Academy — an international English school from Rumianek in the Tarnowo Podgórne municipality, where native speakers and teachers from around the world have taught the un-school way for over a decade.",
     },
     hero: {
       eyebrow: "Meet us",
@@ -692,9 +707,9 @@ const en = {
 
   contact: {
     meta: {
-      title: "Contact",
+      title: "Rumianek language school – contact & directions",
       description:
-        "Get in touch with uNick Academy. Tell us who you are and we'll help you find the right programme — for you, your child, or your team.",
+        "Contact uNick Academy: Nowa 23, Rumianek, 62-080 Tarnowo Podgórne, phone +48 666 661 750. In-person and online lessons. Check directions and book a free consultation.",
     },
     hero: {
       eyebrow: "Contact",
@@ -718,7 +733,7 @@ const en = {
       facebook: "Facebook",
       loginPrefix: "Already part of the academy? ",
       loginSuffix: " keeps working exactly as before.",
-      mapCaption: "Location — map / studio placeholder",
+      mapCaption: "Our location in Rumianek, Tarnowo Podgórne municipality",
     },
     faq: {
       eyebrow: "Good to know",
@@ -731,6 +746,79 @@ const en = {
         { title: "How much does it cost?", text: "It depends on the programme and format. We'll talk through options that fit your goals and budget during your free consultation." },
         { title: "I'm already a student — where do I log in?", text: "Use the Student Login link in the menu or footer to access your existing account. Nothing has changed there." },
       ],
+    },
+  },
+
+  localTarnowo: {
+    meta: {
+      title: "English school in Tarnowo Podgórne",
+      description:
+        "Conversational English for children, teenagers and adults in Rumianek near Tarnowo Podgórne. Small groups, one-to-one lessons, native speakers and international teachers. In person and online.",
+    },
+    hero: {
+      eyebrow: "Tarnowo Podgórne · Rumianek",
+      title: "English school in Rumianek near Tarnowo Podgórne",
+      subtitle:
+        "We teach English through conversation — children, teenagers and adults, one-to-one and in small groups, with native speakers and international teachers. In-person lessons in Rumianek and online.",
+    },
+    intro: {
+      title: "Who our lessons are for",
+      body: "People of every age come to uNick Academy — from children taking their first steps, through teenagers breaking the speaking barrier, to adults who understand English but finally want to speak it. We teach those who never fitted traditional school, and neurodivergent learners, including students with ADHD.",
+    },
+    offer: {
+      eyebrow: "Our offer in Rumianek",
+      title: "English that fits you",
+      items: [
+        {
+          title: "English for children",
+          text: "Lessons through conversation, movement, games and real situations. Children speak English because they have a real reason to — not because a textbook says so.",
+        },
+        {
+          title: "English for teenagers",
+          text: "Conversation for teenagers who want to speak more freely, build confidence and use the language in real projects.",
+        },
+        {
+          title: "English for adults",
+          text: "Practical conversation for people who understand English but want to start speaking — without translating in their head or fearing mistakes.",
+        },
+        {
+          title: "One-to-one lessons",
+          text: "One-to-one with a teacher, at your pace and around the topics that matter to you. Flexible times, in person or online.",
+        },
+        {
+          title: "Small groups",
+          text: "Intimate groups where everyone gets time to speak. We match participants by age and level.",
+        },
+        {
+          title: "Native speakers & international teachers",
+          text: "You learn from people from different countries and cultures. Your brain sees a genuine need to speak English — which is why learning works better.",
+        },
+      ],
+    },
+    method: {
+      eyebrow: "The uNick Academy method",
+      title: "Communication over perfection",
+      body: "We don't recite textbook rules. We teach real communication — through conversation, immersion, projects, games and collaboration. Mistakes are a natural part of learning, not something to be ashamed of. It's a philosophy, not a rigid method: you're a person first, a student second.",
+    },
+    faq: {
+      eyebrow: "FAQ",
+      title: "Common questions about lessons in Tarnowo Podgórne",
+      items: [
+        { title: "Where do lessons take place?", text: "In person at our classroom at Nowa 23, Rumianek, 62-080 Tarnowo Podgórne (Tarnowo Podgórne municipality, Poznań county). We also run lessons online." },
+        { title: "Do you teach English for children?", text: "Yes. We teach children, teenagers and adults — one-to-one and in small groups." },
+        { title: "Are lessons taught by native speakers and international teachers?", text: "Yes. Our teachers come from different countries, so learning is built on a natural need to communicate in English." },
+        { title: "Can I sign up for one-to-one lessons?", text: "Yes, we offer one-to-one lessons — in person in Rumianek or online, at flexible times." },
+        { title: "How big are the groups?", text: "We teach in small, intimate groups so every participant gets time to speak. We confirm the exact size when you enrol." },
+        { title: "Do you teach beginners?", text: "Yes. We match lessons to your level — from complete beginner to advanced." },
+        { title: "Are lessons suitable for people with ADHD?", text: "Yes. Many of our students are neurodivergent. Small groups, patient teachers and no grading mean everyone is met where they are." },
+        { title: "Can I learn online?", text: "Yes. We run the same lessons online — on their own or alongside in-person lessons." },
+        { title: "How do I book a consultation or trial lesson?", text: "Book a free consultation through the contact form or call +48 666 661 750. We'll talk through your goals and suggest the best option." },
+        { title: "Which towns do students travel from?", text: "From Tarnowo Podgórne, Lusówko, Lusowo, Baranowo, Przeźmierowo, Sady, Swadzim, Jankowice and the western part of Poznań, among others." },
+      ],
+    },
+    cta: {
+      title: "Book a free consultation",
+      subtitle: "Let's talk about you, your child or your team — and find the right lessons. No pressure.",
     },
   },
 
@@ -799,7 +887,7 @@ const en = {
       title: "Privacy Policy",
       lastUpdated: "Last updated: 23 June 2026",
       controller: "Data Controller",
-      controllerText: "uNick Academy, Milena Rudd, NIP: to be provided, hello@unick-academy.pl. The data controller within the meaning of Regulation (EU) 2016/679 (GDPR/RODO) is Milena Rudd conducting business as uNick Academy.",
+      controllerText: "uNick Academy, Milena Rudd, NIP: 7812067015, hello@unick-academy.pl. The data controller within the meaning of Regulation (EU) 2016/679 (GDPR/RODO) is Milena Rudd conducting business as uNick Academy.",
       whatWeCollect: "What data we collect",
       whatWeCollectText: "When you use our forms or create an account, we may collect: name, email address, phone number (optional), information about the audience type (child, teen, adult, company), messages you send us, account login credentials (email and password, stored securely via Supabase Auth).",
       whyWeCollect: "Why we collect your data",
