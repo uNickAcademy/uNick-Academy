@@ -7,6 +7,8 @@ import { ConsultationProvider } from "../components/ConsultationProvider";
 import { SetHtmlLang } from "../components/SetHtmlLang";
 import { siteConfig } from "../lib/site-config";
 import { getDictionary, locales } from "../lib/dictionaries";
+import JsonLd from "../components/JsonLd";
+import { siteGraph } from "../lib/structured-data";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -28,22 +30,28 @@ export async function generateMetadata({ params }) {
     },
     description: dict.meta.description,
     openGraph: {
-      title: siteConfig.name,
+      title: dict.meta.title,
       description: dict.meta.description,
-      url: siteConfig.url,
+      url: `${siteConfig.url}/${locale}`,
       siteName: siteConfig.name,
       locale: locale === "pl" ? "pl_PL" : "en_GB",
       type: "website",
+      images: [{ url: "/brand/logo-horizontal.jpeg" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: siteConfig.name,
+      title: dict.meta.title,
       description: dict.meta.description,
+      images: ["/brand/logo-horizontal.jpeg"],
     },
+    // Kanoniczny adres wskazuje na tę samą wersję językową strony głównej;
+    // hreflang łączy /pl i /en wzajemnie, x-default → wersja polska.
     alternates: {
+      canonical: `/${locale}`,
       languages: {
-        en: "/en",
         pl: "/pl",
+        en: "/en",
+        "x-default": "/pl",
       },
     },
   };
@@ -55,6 +63,7 @@ export default async function LocaleLayout({ children, params }) {
 
   return (
     <ConsultationProvider locale={locale}>
+      <JsonLd data={siteGraph()} />
       <SetHtmlLang locale={locale} />
       <a href="#main-content" className="visually-hidden">
         {dict.common.skipToContent}

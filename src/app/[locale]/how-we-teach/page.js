@@ -7,6 +7,7 @@ import ConsultationButton from "../../components/ConsultationButton";
 import CTASection from "../../components/CTASection";
 import PrincipleCard from "../../components/cards/PrincipleCard";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import { getPublicGroups } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
 
@@ -19,7 +20,7 @@ const ICONS = ["chat", "mic", "book", "spark", "globe", "target", "compass", "he
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.howWeTeach.meta;
+  return buildMetadata({ locale, path: "/how-we-teach", title: dict.howWeTeach.meta.title, description: dict.howWeTeach.meta.description });
 }
 
 export default async function HowWeTeachPage({ params }) {

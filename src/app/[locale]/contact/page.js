@@ -3,14 +3,19 @@ import SectionHeading from "../../components/SectionHeading";
 import PlaceholderMedia from "../../components/PlaceholderMedia";
 import UNickorn from "../../components/UNickorn";
 import ContactForm from "../../components/ContactForm";
+import AddressBlock from "../../components/AddressBlock";
+import LocationSection from "../../components/LocationSection";
+import JsonLd from "../../components/JsonLd";
 import { siteConfig, platformLinks } from "../../lib/site-config";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
+import { breadcrumbNode, webPageNode, faqNode } from "../../lib/structured-data";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.contact.meta;
+  return buildMetadata({ locale, path: "/contact", title: dict.contact.meta.title, description: dict.contact.meta.description });
 }
 
 export default async function ContactPage({ params }) {
@@ -18,8 +23,18 @@ export default async function ContactPage({ params }) {
   const dict = getDictionary(locale);
   const t = dict.contact;
 
+  const jsonLd = [
+    webPageNode({ name: t.meta.title, description: t.meta.description, path: "/contact", locale }),
+    breadcrumbNode([
+      { name: siteConfig.name, path: `/${locale}` },
+      { name: dict.common.nav.contact, path: `/${locale}/contact` },
+    ]),
+    faqNode(t.faq.items.map((i) => ({ question: i.title, answer: i.text }))),
+  ];
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <div className={`container ${styles.hero}`}>
         <Reveal as="div">
           <span className="eyebrow">{t.hero.eyebrow}</span>
@@ -70,10 +85,13 @@ export default async function ContactPage({ params }) {
               </a>
               {t.otherWays.loginSuffix}
             </p>
-            <PlaceholderMedia tone="sand" ratio="3:2" caption={t.otherWays.mapCaption} />
+            <h3 style={{ marginTop: "1.5rem" }}>{dict.common.nap.addressHeading}</h3>
+            <AddressBlock dict={dict} variant="full" />
           </Reveal>
         </div>
       </section>
+
+      <LocationSection dict={dict} locale={locale} />
 
       <section className={`section ${styles.altSection}`}>
         <div className="container">

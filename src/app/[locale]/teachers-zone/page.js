@@ -5,12 +5,13 @@ import ConsultationButton from "../../components/ConsultationButton";
 import LessonPlanShop from "../../components/LessonPlanShop";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return dict.teachersZone.meta;
+  return buildMetadata({ locale, path: "/teachers-zone", title: dict.teachersZone.meta.title, description: dict.teachersZone.meta.description });
 }
 
 export default async function TeachersZonePage({ params, searchParams }) {

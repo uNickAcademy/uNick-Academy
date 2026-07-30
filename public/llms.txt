@@ -1,0 +1,42 @@
+# uNick Academy
+
+> Międzynarodowa szkoła języka angielskiego w Rumianku (gmina Tarnowo Podgórne,
+> powiat poznański, woj. wielkopolskie). Uczymy dzieci, młodzież, dorosłych i
+> firmy prawdziwej komunikacji — przez rozmowę, immersję, projekty i gry, z
+> native speakerami i międzynarodowymi lektorami. Zajęcia stacjonarne w Rumianku
+> oraz online. Błędy są naturalną częścią nauki.
+
+Adres: Nowa 23, Rumianek, 62-080 Tarnowo Podgórne, Polska
+Telefon: +48 666 661 750
+E-mail: hello@unick-academy.pl
+Obszar: Rumianek, Tarnowo Podgórne, Lusówko, Lusowo, Sady, Swadzim, Baranowo,
+Przeźmierowo, Jankowice, Ceradz Kościelny, zachodni Poznań, powiat poznański.
+
+## Najważniejsze strony (PL)
+
+- [Strona główna](https://unick-academy.pl/pl): kim jesteśmy i dla kogo uczymy.
+- [Szkoła języka angielskiego Tarnowo Podgórne](https://unick-academy.pl/pl/szkola-jezykowa-tarnowo-podgorne): lokalna oferta, dojazd, FAQ.
+- [Nasze lekcje / metoda](https://unick-academy.pl/pl/how-we-teach): konwersacyjna filozofia nauczania.
+- [Angielski dla dzieci](https://unick-academy.pl/pl/children): zajęcia dla dzieci, także z ADHD.
+- [Angielski dla młodzieży](https://unick-academy.pl/pl/teenagers): konwersacje i pewność siebie.
+- [Angielski dla dorosłych](https://unick-academy.pl/pl/adults): praktyczne konwersacje.
+- [Angielski dla firm](https://unick-academy.pl/pl/companies): szkolenia dla zespołów.
+- [Poznaj nas](https://unick-academy.pl/pl/meet-us): założyciele i nauczyciele.
+- [uNickorn — AI korepetytor](https://unick-academy.pl/pl/meet-unickorn): praktyka mówienia z AI.
+- [Kontakt i dojazd](https://unick-academy.pl/pl/contact): adres, telefon, mapa, formularz.
+
+## Key pages (EN)
+
+- [Home](https://unick-academy.pl/en): who we are and who we teach.
+- [English school in Tarnowo Podgórne](https://unick-academy.pl/en/english-school-tarnowo-podgorne): local offer, directions, FAQ.
+- [How we teach](https://unick-academy.pl/en/how-we-teach): our conversational method.
+- [English for children](https://unick-academy.pl/en/children)
+- [English for teenagers](https://unick-academy.pl/en/teenagers)
+- [English for adults](https://unick-academy.pl/en/adults)
+- [Business English](https://unick-academy.pl/en/companies)
+- [Meet us](https://unick-academy.pl/en/meet-us)
+- [Contact & directions](https://unick-academy.pl/en/contact)
+
+## Sitemap
+
+- https://unick-academy.pl/sitemap.xml

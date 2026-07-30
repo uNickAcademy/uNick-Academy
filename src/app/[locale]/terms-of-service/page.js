@@ -1,11 +1,18 @@
 import Reveal from "../../components/Reveal";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return { title: dict.legal.termsOfService.title };
+  const t = dict.legal.termsOfService;
+  return buildMetadata({
+    locale,
+    path: "/terms-of-service",
+    title: t.title,
+    description: `${t.title} — uNick Academy.`,
+  });
 }
 
 export default async function TermsOfServicePage({ params }) {

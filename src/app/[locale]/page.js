@@ -7,6 +7,7 @@ import MeetPeople from "../components/home/MeetPeople";
 import Stories from "../components/home/Stories";
 import Manifesto from "../components/home/Manifesto";
 import CTASection from "../components/CTASection";
+import LocationSection from "../components/LocationSection";
 import { getDictionary } from "../lib/dictionaries";
 
 export default async function HomePage({ params }) {
@@ -22,6 +23,7 @@ export default async function HomePage({ params }) {
       <HowWeTeachPreview dict={dict} locale={locale} />
       <MeetPeople dict={dict} locale={locale} />
       <Stories dict={dict} />
+      <LocationSection dict={dict} locale={locale} />
       <Manifesto dict={dict} />
       <CTASection
         title={dict.home.finalCta.title}

@@ -1,11 +1,18 @@
 import Reveal from "../../components/Reveal";
 import { getDictionary } from "../../lib/dictionaries";
+import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  return { title: dict.legal.privacyPolicy.title };
+  const t = dict.legal.privacyPolicy;
+  return buildMetadata({
+    locale,
+    path: "/privacy-policy",
+    title: t.title,
+    description: `${t.title} — uNick Academy.`,
+  });
 }
 
 export default async function PrivacyPolicyPage({ params }) {
