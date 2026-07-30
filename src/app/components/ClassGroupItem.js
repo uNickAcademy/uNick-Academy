@@ -49,8 +49,10 @@ export default function ClassGroupItem({ group, locale, t }) {
         </span>
         <span className={styles.itemSide}>
           {group.pricePerMonth != null && <span className={styles.price}>{group.pricePerMonth} {t.perMonth}</span>}
+          {/* Bez liczb — na zewnątrz pokazujemy tylko "wolne miejsca" albo
+              "lista rezerwowa", gdy komplet. */}
           <span className={full ? styles.spotsFull : styles.spots}>
-            {full ? t.full : `${group.spots} ${t.spots}`}
+            {full ? t.full : t.spots}
           </span>
         </span>
       </button>

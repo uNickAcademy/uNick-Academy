@@ -177,7 +177,7 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
         {screen === 'groupPick' && (
           <div>
             <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wybierz grupę</h2>
-            <p className="text-gray-500 text-center mb-4">Dostępne grupy z wolnymi miejscami</p>
+            <p className="text-gray-500 text-center mb-4">Sprawdź terminy i wybierz grupę</p>
 
             {groups.length > 0 && (
               <div className="grid grid-cols-2 gap-2 mb-4">
@@ -216,7 +216,7 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-900">{g.name}</span>
                       <span className={`text-xs font-bold px-2 py-1 rounded-lg ${full ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
-                        {full ? 'Brak miejsc' : `${g.spots} z ${g.capacity} wolne`}
+                        {full ? 'Lista rezerwowa' : 'Wolne miejsca'}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">

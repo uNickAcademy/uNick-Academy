@@ -37,11 +37,12 @@ export default async function KursyPage() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-gray-700 mb-4">
                       <Users size={15} className="text-gray-400" />
-                      {full ? <span className="text-red-500 font-semibold">Brak wolnych miejsc</span> :
-                        <span><span className="font-bold text-green-600">{c.free}</span> wolnych miejsc (z {c.capacity})</span>}
+                      {/* Bez liczb — tylko "wolne miejsca" albo "lista rezerwowa". */}
+                      {full ? <span className="text-red-500 font-semibold">Lista rezerwowa</span> :
+                        <span className="font-semibold text-green-600">Wolne miejsca</span>}
                     </div>
                     {full ? (
-                      <button disabled className="w-full py-2.5 rounded-xl bg-gray-100 text-gray-400 text-sm font-semibold cursor-not-allowed">Lista zapełniona</button>
+                      <button disabled className="w-full py-2.5 rounded-xl bg-gray-100 text-gray-400 text-sm font-semibold cursor-not-allowed">Lista rezerwowa</button>
                     ) : (
                       <Link href="/zapisy" className="w-full py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                         Zapisz się <ArrowRight size={15} />
