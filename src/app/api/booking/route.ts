@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendBookingReceived } from '@/lib/email/send'
+import { sendBookingReceived, notifySchoolEmail } from '@/lib/email/send'
 import { notifySchoolSms } from '@/lib/sms/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { SupabaseClient } from '@supabase/supabase-js'
@@ -54,6 +54,19 @@ export async function POST(req: NextRequest) {
       await notifyAdmin(supabase, 'group', `Nowy zapis do grupy: ${groupName}`,
         `${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
       await notifySchoolSms(`Nowy zapis do grupy: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
+      await notifySchoolEmail({
+        title: `Nowy zapis do grupy: ${groupName}`,
+        lines: [
+          `Osoba zapisująca: ${fullName}`,
+          childName ? `Dziecko: ${childName}` : '',
+          phone ? `Telefon: ${phone}` : '',
+          `E-mail: ${email}`,
+          `Grupa: ${groupName}`,
+          price ? `Cena: ${price} zł / mies.` : '',
+        ],
+        actionLabel: 'Zobacz uczniów →',
+        actionPath: '/admin/studenci',
+      })
 
       // Opłata za pierwszy miesiąc — Stripe Checkout (BLIK/P24/karta), jeśli grupa
       // ma cenę i płatności są skonfigurowane. Bez tego zapis działa jak dotąd.
@@ -111,6 +124,20 @@ export async function POST(req: NextRequest) {
       await notifySchoolSms(
         `Nowy zapis online: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`
       )
+      await notifySchoolEmail({
+        title: `Nowy zapis online do zatwierdzenia: ${fullName}`,
+        lines: [
+          `Osoba zapisująca: ${fullName}`,
+          childName ? `Dziecko: ${childName}` : '',
+          phone ? `Telefon: ${phone}` : '',
+          `E-mail: ${email}`,
+          `Nauczyciel: ${teacherName}`,
+          `Termin: ${format(startsAt, 'EEEE, d MMMM yyyy, HH:mm', { locale: pl })}`,
+          ongoing ? `Zajęcia cykliczne — ${weeks ?? 12} tyg.` : 'Pojedyncza lekcja',
+        ],
+        actionLabel: 'Zatwierdź zapis →',
+        actionPath: '/admin/zapisy#online',
+      })
       return NextResponse.json({ success: true })
     }
 
@@ -129,6 +156,21 @@ export async function POST(req: NextRequest) {
       await notifyAdmin(supabase, 'stationary', `Nowa prośba o zajęcia stacjonarne: ${fullName}`,
         `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email}`)
       await notifySchoolSms(`Nowa prośba o zajęcia stacjonarne: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
+      await notifySchoolEmail({
+        title: `Nowa prośba o zajęcia stacjonarne: ${fullName}`,
+        lines: [
+          `Osoba zapisująca: ${fullName}`,
+          childName ? `Dziecko: ${childName}` : '',
+          age ? `Wiek: ${age}` : '',
+          phone ? `Telefon: ${phone}` : '',
+          `E-mail: ${email}`,
+          `Poziom: ${level || 'A1'}`,
+          `Adres zajęć: ${address}`,
+          notes ? `Uwagi: ${notes}` : '',
+        ],
+        actionLabel: 'Zatwierdź prośbę →',
+        actionPath: '/admin/zapisy#stacjonarne',
+      })
       return NextResponse.json({ success: true })
     }
 

@@ -11,6 +11,7 @@ import {
   bookingReceivedEmail,
   bookingApprovedEmail,
   monthlyPaymentEmail,
+  internalNotificationEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -42,6 +43,28 @@ async function send(to: string, subject: string, html: string) {
 // Czy Resend jest skonfigurowany (klucz API)
 export function isEmailConfigured() {
   return !!process.env.RESEND_API_KEY
+}
+
+// Adres szkoły do powiadomień wewnętrznych. Nadpisywalny przez env (można
+// podać kilka adresów po przecinku), żeby zmiana nie wymagała deploya.
+const SCHOOL_NOTIFY_EMAIL = process.env.SCHOOL_NOTIFY_EMAIL || 'hello@unick-academy.pl'
+
+// Powiadomienie e-mail do szkoły o nowym zapisie/zapytaniu — fire-and-forget,
+// nigdy nie blokuje odpowiedzi dla klienta (błąd wysyłki tylko logujemy).
+// Odpowiednik notifySchoolSms, ale mailem — SMS wymaga osobnego tokenu.
+export async function notifySchoolEmail(params: {
+  title: string
+  lines: string[]
+  actionLabel?: string
+  actionPath?: string
+}): Promise<void> {
+  try {
+    const { subject, html } = internalNotificationEmail(params)
+    const recipients = SCHOOL_NOTIFY_EMAIL.split(',').map((e) => e.trim()).filter(Boolean)
+    for (const to of recipients) await send(to, subject, html)
+  } catch (err) {
+    console.error('[Email] Powiadomienie szkoły nie wyszło:', err)
+  }
 }
 
 // Wysyłka masowa do listy odbiorców {email, name}. Zwraca liczbę wysłanych.

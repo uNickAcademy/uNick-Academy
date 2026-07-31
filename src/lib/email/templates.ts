@@ -64,6 +64,35 @@ export function bulkMessageEmail(name: string, subject: string, body: string): {
 }
 
 // ──────────────────────────────────────────
+// 0a. Powiadomienie wewnętrzne do szkoły (nowy zapis, konsultacja, zapytanie)
+// ──────────────────────────────────────────
+export function internalNotificationEmail(params: {
+  title: string
+  lines: string[]
+  actionLabel?: string
+  actionPath?: string
+}): { subject: string; html: string } {
+  const { title, lines, actionLabel, actionPath } = params
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const rows = lines.filter(Boolean).map((l) =>
+    `<p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 6px;">${esc(l)}</p>`
+  ).join('')
+  return {
+    subject: title,
+    html: wrap(`
+      <h2 style="font-size: 20px; font-weight: 900; margin: 0 0 16px;">${esc(title)}</h2>
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+        ${rows}
+      </div>
+      ${actionPath ? btn(actionLabel || 'Otwórz w panelu →', `${process.env.NEXT_PUBLIC_APP_URL}${actionPath}`) : ''}
+      <p style="color: #94a3b8; font-size: 12px; margin: 24px 0 0;">
+        Powiadomienie wewnętrzne uNick Academy.
+      </p>
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
 // 1. Email powitalny
 // ──────────────────────────────────────────
 export function welcomeEmail(name: string, referralCode: string): { subject: string; html: string } {

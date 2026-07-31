@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { notifySchoolSms } from '@/lib/sms/send'
+import { notifySchoolEmail } from '@/lib/email/send'
 
 // Publiczny formularz "Bezpłatna konsultacja" (modal na stronach publicznych).
 export async function POST(req: NextRequest) {
@@ -32,6 +33,18 @@ export async function POST(req: NextRequest) {
     await notifySchoolSms(
       `Nowa konsultacja: ${name.trim()}${phone ? `, tel. ${phone.trim()}` : ''}, ${email.trim()}${audience ? ` (${audience})` : ''}`
     )
+    await notifySchoolEmail({
+      title: `Nowa prośba o konsultację: ${name.trim()}`,
+      lines: [
+        `Imię i nazwisko: ${name.trim()}`,
+        phone ? `Telefon: ${phone.trim()}` : '',
+        `E-mail: ${email.trim()}`,
+        audience ? `Konsultacja dla: ${audience}` : '',
+        message ? `Wiadomość: ${message.trim()}` : '',
+      ],
+      actionLabel: 'Otwórz pipeline →',
+      actionPath: '/admin/pipeline',
+    })
 
     return NextResponse.json({ success: true })
   } catch (err) {
