@@ -36,6 +36,7 @@ const DICT: Dict = {
   online: { pl: 'Online', en: 'Online' },
   offline: { pl: 'Stacjonarnie', en: 'In person' },
   join: { pl: 'Dołącz', en: 'Join' },
+  awaiting_confirmation: { pl: 'Czeka na potwierdzenie', en: 'Awaiting confirmation' },
   homework: { pl: 'Praca domowa', en: 'Homework' },
   group: { pl: 'Grupa', en: 'Group' },
   att_present: { pl: 'Obecność', en: 'Present' },

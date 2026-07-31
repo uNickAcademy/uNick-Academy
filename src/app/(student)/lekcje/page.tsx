@@ -76,6 +76,11 @@ function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: bool
             <span className="font-bold text-gray-900 text-sm">{lesson.topic || (lesson.group ? lesson.group.name : t(lang, 'lesson'))}</span>
             <span className="text-xs bg-[#EAF3FF] text-[#23479E] px-1.5 py-0.5 rounded font-semibold">{lesson.level}</span>
             {lesson.group && <span className="text-xs bg-violet-50 text-violet-600 px-1.5 py-0.5 rounded font-semibold">{t(lang, 'group')}: {lesson.group.name}</span>}
+            {/* Zapis czeka na akceptację szkoły — bez linku do zajęć i bez
+                zgłaszania nieobecności, dopóki termin nie jest potwierdzony. */}
+            {upcoming && lesson.is_confirmed === false && (
+              <span className="text-xs bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-semibold">{t(lang, 'awaiting_confirmation')}</span>
+            )}
             {att && (
               <span className={`flex items-center gap-1 text-xs font-semibold ${att.className}`}>
                 <att.icon size={12} />{t(lang, att.key)}
@@ -91,7 +96,7 @@ function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: bool
             </span>
           </div>
         </div>
-        {upcoming && lesson.type === 'online' && lesson.meeting_url && (
+        {upcoming && lesson.is_confirmed !== false && lesson.type === 'online' && lesson.meeting_url && (
           <a href={lesson.meeting_url} target="_blank" rel="noreferrer"
             className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#23479E] text-white text-xs font-semibold hover:opacity-90 transition-opacity flex items-center gap-1">
             <Video size={12} />{t(lang, 'join')}
@@ -99,7 +104,7 @@ function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: bool
         )}
       </div>
 
-      {upcoming && lesson.student_id && (lesson.attendance === 'scheduled' || !lesson.attendance) && (
+      {upcoming && lesson.is_confirmed !== false && lesson.student_id && (lesson.attendance === 'scheduled' || !lesson.attendance) && (
         <MakeupActions
           lessonId={lesson.id}
           studentId={lesson.student_id}

@@ -69,8 +69,11 @@ export default async function StudentDashboard() {
               <p className="text-white/80 mt-1">
                 {fmtTime(next.starts_at)} · {next.teacher?.profile?.full_name ?? '—'} · {next.type === 'online' ? t(lang, 'online') : t(lang, 'offline')}
               </p>
+              {next.is_confirmed === false && (
+                <p className="text-white/70 text-xs mt-1.5">{t(lang, 'awaiting_confirmation')}</p>
+              )}
             </div>
-            {next.type === 'online' && next.meeting_url && (
+            {next.is_confirmed !== false && next.type === 'online' && next.meeting_url && (
               <a
                 href={next.meeting_url}
                 target="_blank"

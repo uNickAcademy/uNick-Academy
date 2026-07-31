@@ -15,13 +15,8 @@ export function RequestsView({ rows, teacherOptions }: { rows: Row[]; teacherOpt
   const handled = rows.filter((r) => r.status !== 'pending')
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Prośby o zapis (stacjonarne)</h1>
-        <p className="text-gray-500 mt-1">Zaakceptuj termin i stawkę lub odrzuć</p>
-      </div>
-
-      {pending.length === 0 && <p className="text-sm text-gray-400 py-8 text-center">Brak oczekujących próśb.</p>}
+    <div>
+      {pending.length === 0 && <p className="text-sm text-gray-400 py-6 text-center">Brak oczekujących próśb.</p>}
       <div className="space-y-4">
         {pending.map((r) => <RequestCard key={r.id} r={r} teacherOptions={teacherOptions} />)}
       </div>

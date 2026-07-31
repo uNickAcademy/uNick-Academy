@@ -141,6 +141,128 @@ export function lessonConfirmationEmail(params: {
 }
 
 // ──────────────────────────────────────────
+// 2a. Zapis przyjęty — czeka na potwierdzenie terminu przez szkołę
+// ──────────────────────────────────────────
+export function bookingReceivedEmail(params: {
+  studentName: string
+  teacherName: string
+  date: string
+  time: string
+}): { subject: string; html: string } {
+  const { studentName, teacherName, date, time } = params
+  return {
+    subject: 'Dziękujemy za zapis! Potwierdzimy termin wkrótce ⏳',
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Mamy Twój zapis! 🎉</h2>
+      <p style="color: #64748b; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Dziękujemy za zapis na lekcje w uNick Academy.
+        Sprawdzamy jeszcze dostępność nauczyciela — gdy tylko potwierdzimy termin,
+        wyślemy Ci maila z linkiem do zajęć i płatnością za pierwszą lekcję.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+        <p style="color: #94a3b8; font-size: 12px; font-weight: 600; margin: 0 0 12px;">WSTĘPNIE WYBRANY TERMIN</p>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Nauczyciel</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${teacherName}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Data</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${date}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Godzina</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${time}</td></tr>
+        </table>
+      </div>
+
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+        To jeszcze nie jest potwierdzenie — nic nie musisz teraz robić. Odezwiemy się najszybciej, jak to możliwe.
+      </p>
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
+// 2b. Zapis zatwierdzony przez szkołę + płatność za pierwszą lekcję
+// ──────────────────────────────────────────
+export function bookingApprovedEmail(params: {
+  studentName: string
+  teacherName: string
+  date: string
+  time: string
+  meetLink?: string
+  amount?: number | null
+  paymentUrl?: string | null
+  recurring?: boolean
+}): { subject: string; html: string } {
+  const { studentName, teacherName, date, time, meetLink, amount, paymentUrl, recurring } = params
+  return {
+    subject: `Termin potwierdzony: ${date} o ${time} ✅`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Termin potwierdzony! ✅</h2>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Wszystko gotowe — poniżej szczegóły Twoich zajęć.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Nauczyciel</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${teacherName}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Pierwsza lekcja</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${date}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Godzina</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${time}</td></tr>
+          ${recurring ? `<tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Cykl</td><td style="font-weight: 700; font-size: 14px; text-align: right;">co tydzień o tej porze</td></tr>` : ''}
+        </table>
+      </div>
+
+      ${meetLink ? `
+        <p style="color: #475569; font-size: 14px; margin: 0 0 8px;">Link do zajęć (ten sam na każdą lekcję):</p>
+        <p style="margin: 0 0 24px;"><a href="${meetLink}" style="color: #7c3aed; font-size: 14px;">${meetLink}</a></p>
+      ` : ''}
+
+      ${paymentUrl && amount ? `
+        <div style="background: #f5f3ff; border-radius: 12px; padding: 20px; margin-bottom: 8px; text-align: center;">
+          <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">DO ZAPŁATY ZA PIERWSZĄ LEKCJĘ</p>
+          <p style="font-size: 28px; font-weight: 900; color: #5b21b6; margin: 0 0 12px;">${amount} zł</p>
+          ${btn('Zapłać teraz →', paymentUrl)}
+          <p style="color: #8b5cf6; font-size: 12px; margin: 12px 0 0;">BLIK, Przelewy24 lub karta</p>
+        </div>
+        <p style="color: #94a3b8; font-size: 13px; margin: 16px 0 0;">
+          Kolejne płatności będziemy przypominać e-mailem 1. dnia każdego miesiąca, z góry za dany miesiąc.
+        </p>
+      ` : `
+        <p style="color: #94a3b8; font-size: 13px; margin: 0;">Szczegóły płatności prześlemy osobno.</p>
+      `}
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
+// 2c. Miesięczna płatność z góry (1. dnia miesiąca)
+// ──────────────────────────────────────────
+export function monthlyPaymentEmail(params: {
+  studentName: string
+  monthLabel: string
+  amount: number
+  paymentUrl?: string | null
+}): { subject: string; html: string } {
+  const { studentName, monthLabel, amount, paymentUrl } = params
+  return {
+    subject: `Płatność za ${monthLabel} — ${amount} zł`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Płatność za ${monthLabel}</h2>
+      <p style="color: #64748b; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! To przypomnienie o opłacie za zajęcia w miesiącu ${monthLabel} — płatnej z góry.
+      </p>
+
+      <div style="background: #f5f3ff; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">DO ZAPŁATY</p>
+        <p style="font-size: 28px; font-weight: 900; color: #5b21b6; margin: 0 0 12px;">${amount} zł</p>
+        ${paymentUrl ? btn('Zapłać teraz →', paymentUrl) : ''}
+        ${paymentUrl ? `<p style="color: #8b5cf6; font-size: 12px; margin: 12px 0 0;">BLIK, Przelewy24 lub karta</p>` : ''}
+      </div>
+
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+        Saldo i historię płatności zobaczysz w
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/platnosci" style="color: #7c3aed;">panelu ucznia</a>.
+      </p>
+    `),
+  }
+}
+
+// ──────────────────────────────────────────
 // 3. Przypomnienie 24h przed lekcją
 // ──────────────────────────────────────────
 export function lessonReminderEmail(params: {

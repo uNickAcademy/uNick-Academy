@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendLessonConfirmation } from '@/lib/email/send'
+import { sendBookingReceived } from '@/lib/email/send'
 import { notifySchoolSms } from '@/lib/sms/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { SupabaseClient } from '@supabase/supabase-js'
@@ -92,14 +92,22 @@ export async function POST(req: NextRequest) {
       }
       const { data: teacher } = await supabase.from('teachers').select('profile:profiles(full_name)').eq('id', teacherId).single()
       const teacherName: string = (teacher?.profile as { full_name?: string } | null)?.full_name ?? 'Nauczyciel'
-      await sendLessonConfirmation(email, {
+
+      // Zapis czeka na akceptację admina, więc nie potwierdzamy jeszcze lekcji —
+      // uczeń dostaje informację, że termin potwierdzimy osobnym mailem.
+      await sendBookingReceived(email, {
         studentName: fullName, teacherName,
         date: format(startsAt, 'EEEE, d MMMM yyyy', { locale: pl }), time: format(startsAt, 'HH:mm'),
-        topic: ongoing ? 'Lekcje cykliczne (online)' : 'Lekcja online',
-        type: 'online', meetLink: typeof meetLink === 'string' ? meetLink : undefined,
       }).catch(() => {})
+
+      // Powiadomienie z powiązanym uczniem — dzięki temu admin klika i ląduje
+      // od razu na liście zapisów do zatwierdzenia.
+      const { data: bookedStudent } = await supabase
+        .from('students').select('id, profile:profiles!inner(email)')
+        .eq('profile.email', email).order('joined_at', { ascending: false }).limit(1).maybeSingle()
       await notifyAdmin(supabase, 'online', `Nowy zapis online: ${fullName}`,
-        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`)
+        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''} — do zatwierdzenia`,
+        (bookedStudent?.id as string) ?? null)
       await notifySchoolSms(
         `Nowy zapis online: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`
       )

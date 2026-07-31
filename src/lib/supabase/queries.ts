@@ -836,6 +836,77 @@ export async function getPendingBookingRequestsCount(): Promise<number> {
   return count ?? 0
 }
 
+// Zapisy online czekające na akceptację admina. Lekcje z jednego zapisu tworzą
+// serię (ten sam uczeń + nauczyciel + link), więc zwijamy je do jednej pozycji
+// opisanej pierwszą lekcją i liczbą lekcji w serii.
+export type PendingOnlineBooking = {
+  studentId: string
+  studentName: string
+  email: string
+  phone: string
+  teacherId: string
+  teacherName: string
+  firstStartsAt: string
+  durationMinutes: number
+  lessonCount: number
+  meetingUrl: string
+  monthlyPrice: number | null
+  createdAt: string
+}
+export async function getPendingOnlineBookings(): Promise<PendingOnlineBooking[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('lessons')
+    .select(`id, student_id, teacher_id, starts_at, ends_at, meeting_url, created_at,
+             student:students(id, full_name, phone, custom_monthly_price, profile:profiles(full_name, email, phone)),
+             teacher:teachers(id, profile:profiles(full_name))`)
+    .eq('is_confirmed', false)
+    .eq('type', 'online')
+    .order('starts_at', { ascending: true })
+
+  const bySeries = new Map<string, PendingOnlineBooking>()
+  for (const l of data ?? []) {
+    const student = (Array.isArray(l.student) ? l.student[0] : l.student) as Record<string, unknown> | null
+    const teacher = (Array.isArray(l.teacher) ? l.teacher[0] : l.teacher) as Record<string, unknown> | null
+    if (!student) continue
+    const sp = student.profile as { full_name?: string; email?: string; phone?: string } | { full_name?: string; email?: string; phone?: string }[] | undefined
+    const profile = Array.isArray(sp) ? sp[0] : sp
+    const teacherRaw = teacher?.profile as { full_name?: string } | { full_name?: string }[] | undefined
+    const tp = Array.isArray(teacherRaw) ? teacherRaw[0] : teacherRaw
+
+    // Jedna pozycja na parę uczeń+nauczyciel — tyle powstaje z jednego zapisu.
+    const key = `${l.student_id}|${l.teacher_id}`
+    const existing = bySeries.get(key)
+    if (existing) {
+      existing.lessonCount += 1
+      continue
+    }
+    bySeries.set(key, {
+      studentId: l.student_id as string,
+      studentName: (student.full_name as string) || profile?.full_name || '—',
+      email: profile?.email ?? '',
+      phone: (student.phone as string) || profile?.phone || '',
+      teacherId: l.teacher_id as string,
+      teacherName: tp?.full_name ?? '—',
+      firstStartsAt: l.starts_at as string,
+      durationMinutes: Math.max(
+        1,
+        Math.round((new Date(l.ends_at as string).getTime() - new Date(l.starts_at as string).getTime()) / 60000)
+      ),
+      lessonCount: 1,
+      meetingUrl: (l.meeting_url as string) ?? '',
+      monthlyPrice: student.custom_monthly_price != null ? Number(student.custom_monthly_price) : null,
+      createdAt: l.created_at as string,
+    })
+  }
+  return [...bySeries.values()]
+}
+
+// Liczba oczekujących zapisów online (do odznaki w panelu admina)
+export async function getPendingOnlineBookingsCount(): Promise<number> {
+  return (await getPendingOnlineBookings()).length
+}
+
 // Kursy/grupy, do których należy uczeń (do profilu Klient 360°)
 export type StudentGroup = {
   id: string; name: string; isActive: boolean; scheduleText: string

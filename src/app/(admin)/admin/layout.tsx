@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getPendingBookingRequestsCount, getUnreadNotificationCount } from '@/lib/supabase/queries'
+import { getPendingBookingRequestsCount, getPendingOnlineBookingsCount, getUnreadNotificationCount } from '@/lib/supabase/queries'
 import { AdminSidebar } from './AdminSidebar'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -10,10 +10,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     role = profile?.role ?? 'admin'
   }
-  const [pendingRequests, unreadNotifications] = await Promise.all([
+  // Odznaka przy „Zapisy” obejmuje oba źródła: prośby stacjonarne i zapisy
+  // online czekające na zatwierdzenie.
+  const [stationaryRequests, onlineBookings, unreadNotifications] = await Promise.all([
     getPendingBookingRequestsCount(),
+    getPendingOnlineBookingsCount(),
     getUnreadNotificationCount(),
   ])
+  const pendingRequests = stationaryRequests + onlineBookings
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

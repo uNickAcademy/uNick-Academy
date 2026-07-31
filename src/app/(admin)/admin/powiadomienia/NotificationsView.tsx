@@ -35,8 +35,14 @@ export function NotificationsView({ items }: { items: Item[] }) {
           {items.map((n) => {
             const meta = KIND_META[n.kind] ?? { icon: Bell, color: 'text-gray-600 bg-gray-100', label: n.kind }
             const Icon = meta.icon
+            // Zapisy wymagające decyzji prowadzą do panelu zatwierdzania,
+            // reszta — do profilu ucznia, jeśli jest z czym go powiązać.
+            const href = n.kind === 'online' ? '/admin/zapisy#online'
+              : n.kind === 'stationary' ? '/admin/zapisy#stacjonarne'
+              : n.studentId ? `/admin/studenci/${n.studentId}`
+              : null
             const card = (
-              <div className={`flex items-start gap-3 bg-white rounded-2xl border p-4 transition-colors ${n.wasUnread ? 'border-[#23479E]/30 bg-[#EAF3FF]/40' : 'border-gray-100'} ${n.studentId ? 'hover:bg-gray-50' : ''}`}>
+              <div className={`flex items-start gap-3 bg-white rounded-2xl border p-4 transition-colors ${n.wasUnread ? 'border-[#23479E]/30 bg-[#EAF3FF]/40' : 'border-gray-100'} ${href ? 'hover:bg-gray-50' : ''}`}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.color}`}>
                   <Icon size={17} />
                 </div>
@@ -50,8 +56,8 @@ export function NotificationsView({ items }: { items: Item[] }) {
                 </div>
               </div>
             )
-            return n.studentId
-              ? <Link key={n.id} href={`/admin/studenci/${n.studentId}`}>{card}</Link>
+            return href
+              ? <Link key={n.id} href={href}>{card}</Link>
               : <div key={n.id}>{card}</div>
           })}
         </div>

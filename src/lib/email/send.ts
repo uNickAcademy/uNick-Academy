@@ -8,6 +8,9 @@ import {
   bulkMessageEmail,
   progressDigestEmail,
   paymentReceiptEmail,
+  bookingReceivedEmail,
+  bookingApprovedEmail,
+  monthlyPaymentEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -75,6 +78,43 @@ export async function sendLessonConfirmation(to: string, params: {
   meetLink?: string
 }) {
   const { subject, html } = lessonConfirmationEmail(params)
+  await send(to, subject, html)
+}
+
+// Zapis online przyjęty — czeka na potwierdzenie terminu przez szkołę.
+export async function sendBookingReceived(to: string, params: {
+  studentName: string
+  teacherName: string
+  date: string
+  time: string
+}) {
+  const { subject, html } = bookingReceivedEmail(params)
+  await send(to, subject, html)
+}
+
+// Admin zatwierdził termin — potwierdzenie + link do płatności za 1. lekcję.
+export async function sendBookingApproved(to: string, params: {
+  studentName: string
+  teacherName: string
+  date: string
+  time: string
+  meetLink?: string
+  amount?: number | null
+  paymentUrl?: string | null
+  recurring?: boolean
+}) {
+  const { subject, html } = bookingApprovedEmail(params)
+  await send(to, subject, html)
+}
+
+// Miesięczna opłata z góry — wysyłana 1. dnia miesiąca.
+export async function sendMonthlyPayment(to: string, params: {
+  studentName: string
+  monthLabel: string
+  amount: number
+  paymentUrl?: string | null
+}) {
+  const { subject, html } = monthlyPaymentEmail(params)
   await send(to, subject, html)
 }
 
