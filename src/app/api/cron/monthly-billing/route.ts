@@ -28,9 +28,18 @@ export async function GET(req: NextRequest) {
 
   const { data: students } = await supabase
     .from('students')
-    .select('id, full_name, custom_monthly_price, billing_type, profile:profiles(full_name, email)')
+    .select('id, full_name, custom_monthly_price, billing_type, dunning_paused_until, profile:profiles(full_name, email)')
     .in('status', ['active', 'trial'])
     .is('deleted_at', null)
+
+  // Uczeń bez ANI JEDNEJ lekcji w systemie nie ma za co płacić abonamentu.
+  // 1.08.2026 taki brak zabezpieczenia obciążył 91 kont bez zajęć na 31 486 zł
+  // i uruchomił wobec nich windykację — patrz billing_incident_snapshot.
+  const { data: lessonOwners } = await supabase
+    .from('lessons')
+    .select('student_id')
+    .not('student_id', 'is', null)
+  const withLessons = new Set((lessonOwners ?? []).map((l) => l.student_id as string))
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -39,10 +48,24 @@ export async function GET(req: NextRequest) {
   let charged = 0
   let emailed = 0
   let total = 0
+  let skippedNoLessons = 0
+  let skippedPaused = 0
   const skipped: string[] = []
 
   for (const s of students ?? []) {
     if (s.billing_type === 'b2b') continue
+
+    // Brak historii zajęć → brak podstawy do naliczenia.
+    if (!withLessons.has(s.id as string)) {
+      skippedNoLessons++
+      continue
+    }
+
+    // Konto z wstrzymanym rozliczaniem (np. sporne obciążenie w wyjaśnianiu).
+    if (s.dunning_paused_until && new Date(s.dunning_paused_until as string) > now) {
+      skippedPaused++
+      continue
+    }
 
     const price = s.custom_monthly_price != null ? Number(s.custom_monthly_price) : defaultMonthly
     if (!(price > 0)) continue
@@ -90,5 +113,8 @@ export async function GET(req: NextRequest) {
     emailed++
   }
 
-  return NextResponse.json({ success: true, monthLabel, charged, emailed, total, skipped: skipped.length })
+  return NextResponse.json({
+    success: true, monthLabel, charged, emailed, total,
+    skipped: skipped.length, skippedNoLessons, skippedPaused,
+  })
 }

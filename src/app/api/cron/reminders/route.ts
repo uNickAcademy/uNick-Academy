@@ -95,12 +95,17 @@ export async function GET(req: NextRequest) {
     // Studenci indywidualni (B2B rozlicza firma) – aktywni/próbni/zalegli
     const { data: students } = await supabase
       .from('students')
-      .select(`id, status, billing_type, full_name, profile:profiles(full_name, email)`)
+      .select(`id, status, billing_type, full_name, dunning_paused_until, profile:profiles(full_name, email)`)
       .is('deleted_at', null)
       .neq('billing_type', 'b2b')
       .in('status', ['active', 'trial', 'overdue'])
 
     for (const s of students ?? []) {
+      // Windykacja wstrzymana — sporne obciążenie w trakcie wyjaśniania.
+      // Bez tej bramki uczeń dostaje wezwanie co poniedziałek, także wtedy
+      // gdy to my pomyliliśmy się przy naliczeniu.
+      if (s.dunning_paused_until && new Date(s.dunning_paused_until as string) > now) continue
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const prof: any = Array.isArray((s as any).profile) ? (s as any).profile[0] : (s as any).profile
       const email = prof?.email
