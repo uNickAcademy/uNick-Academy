@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendBookingReceived, notifySchoolEmail } from '@/lib/email/send'
+import {
+  sendBookingReceived, notifySchoolEmail, sendGroupReservation, sendAdviceReceived,
+} from '@/lib/email/send'
 import { notifySchoolSms } from '@/lib/sms/send'
-import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { createPasswordSetupLink } from '@/lib/auth/password-link'
+import { createLead, type LeadLocation, type LeadStudentType } from '@/lib/leads/create'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
+
+const DAYS_PL_FULL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
 // Powiadomienie do panelu admina (dzwonek). Best-effort — nie blokuje zapisu.
 async function notifyAdmin(admin: SupabaseClient, kind: string, title: string, body: string, studentId?: string | null) {
@@ -16,27 +21,63 @@ async function notifyAdmin(admin: SupabaseClient, kind: string, title: string, b
   }
 }
 
+// Pierwsze wystąpienie dnia zajęć od daty startu semestru. `start_date` to
+// początek semestru, niekoniecznie dzień tygodnia, w którym grupa się spotyka.
+function firstLessonDate(startDate: string | null, dayOfWeek: number | null): Date | null {
+  if (!startDate || dayOfWeek == null) return null
+  const d = new Date(`${startDate}T00:00:00`)
+  const targetDow = dayOfWeek === 6 ? 0 : dayOfWeek + 1 // JS: 0 = niedziela
+  const diff = (targetDow - d.getDay() + 7) % 7
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+function scheduleLabel(dayOfWeek: number | null, scheduleText: string | null): string {
+  const day = dayOfWeek != null ? DAYS_PL_FULL[dayOfWeek] : null
+  return [day, scheduleText].filter(Boolean).join(', ') || 'termin do potwierdzenia'
+}
+
+// Wiek → typ ucznia w lejku. Granice zgodne z podziałem grup.
+function studentTypeFromAge(age: number | null | undefined): LeadStudentType | null {
+  if (age == null) return null
+  if (age < 13) return 'child'
+  if (age < 18) return 'teen'
+  return 'adult'
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { kind } = body
     const supabase = createAdminClient()
 
+    // ── Rezerwacja miejsca w grupie ───────────────────────────────────────
+    // Bez płatności online: model jest abonamentowy, płatny z góry do 5. dnia
+    // miesiąca, więc rachunek idzie osobnym mailem po potwierdzeniu miejsca.
     if (kind === 'group') {
-      const { email, fullName, phone, childName, groupId, termsVersion, consents } = body
+      const {
+        email, fullName, phone, childName, groupId, termsVersion, consents,
+        studentAge, location, consentMarketing, consentClause, campaign,
+      } = body
       if (!email || !fullName || !groupId) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
+
+      const { data: group } = await supabase.from('groups')
+        .select('name, price_per_month, format, schedule_text, day_of_week, start_date')
+        .eq('id', groupId).single()
+      if (!group) return NextResponse.json({ error: 'Nie znaleźliśmy tej grupy.' }, { status: 400 })
+
       const { error } = await supabase.rpc('public_enroll_group', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_group_id: groupId, p_terms_version: termsVersion ?? null, p_consents: consents ?? {},
       })
       if (error) {
-        const msg = /miejsc/i.test(error.message) ? 'Brak wolnych miejsc w tej grupie.' : 'Nie udało się zapisać do grupy.'
+        const msg = /miejsc/i.test(error.message)
+          ? 'Ktoś właśnie zajął ostatnie miejsce w tej grupie. Wybierz inny termin albo zostaw kontakt — znajdziemy coś dla Ciebie.'
+          : 'Nie udało się zapisać do grupy.'
         return NextResponse.json({ error: msg }, { status: 400 })
       }
 
-      // Dane grupy + odszukanie właśnie zapisanego ucznia (po e-mailu wśród członków)
-      const { data: group } = await supabase.from('groups')
-        .select('name, price_per_month').eq('id', groupId).single()
+      // Odszukanie właśnie zapisanego ucznia (po e-mailu wśród członków grupy).
       const { data: members } = await supabase.from('group_members')
         .select('student_id, student:students(id, profile:profiles(email))').eq('group_id', groupId)
       const enrolled = (members ?? []).find((m: { student?: unknown }) => {
@@ -48,51 +89,145 @@ export async function POST(req: NextRequest) {
         const st = enrolled ? (Array.isArray(enrolled.student) ? enrolled.student[0] : enrolled.student) : null
         return (st as { id?: string } | null)?.id ?? enrolled?.student_id ?? null
       })()
-      const groupName = (group?.name as string) ?? 'grupa'
-      const price = group?.price_per_month != null ? Number(group.price_per_month) : null
 
-      await notifyAdmin(supabase, 'group', `Nowy zapis do grupy: ${groupName}`,
-        `${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
-      await notifySchoolSms(`Nowy zapis do grupy: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
+      const groupName = (group.name as string) ?? 'grupa'
+      const price = group.price_per_month != null ? Number(group.price_per_month) : null
+      const groupFormat = (group.format as 'online' | 'offline' | null) ?? null
+      const schedule = scheduleLabel(group.day_of_week as number | null, group.schedule_text as string | null)
+      const firstLesson = firstLessonDate(group.start_date as string | null, group.day_of_week as number | null)
+      const firstLessonLabel = firstLesson ? format(firstLesson, 'EEEE, d MMMM yyyy', { locale: pl }) : null
+
+      // Lead z pełnym kontekstem zebranym po drodze — wspólna skrzynka zespołu.
+      await createLead(supabase, {
+        entryPoint: 'zapisy_wizard',
+        firstName: childName || fullName,
+        parentName: childName ? fullName : null,
+        email, phone,
+        studentType: studentTypeFromAge(studentAge),
+        studentAge: studentAge ?? null,
+        location: (location as LeadLocation) ?? (groupFormat === 'online' ? 'online' : 'rumianek'),
+        interestedGroupId: groupId,
+        goal: `Rezerwacja miejsca: ${groupName} (${schedule})`,
+        status: 'booked',
+        bookedSlotAt: firstLesson ? firstLesson.toISOString() : null,
+        consentMarketing: !!consentMarketing,
+        consentClause: consentClause ?? null,
+        campaign: campaign ?? null,
+      }).catch((err) => console.error('[Booking group] createLead error:', err))
+
+      const passwordLink = await createPasswordSetupLink(supabase, email)
+      await sendGroupReservation(email, {
+        studentName: childName || fullName,
+        groupName, schedule, firstLessonDate: firstLessonLabel,
+        format: groupFormat, pricePerMonth: price, passwordLink,
+      }).catch(() => {})
+
+      await notifyAdmin(supabase, 'group', `Nowa rezerwacja miejsca: ${groupName}`,
+        `${fullName}${childName ? ` (uczeń: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
+      await notifySchoolSms(`Nowa rezerwacja: ${groupName} — ${fullName}${childName ? ` (${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
       await notifySchoolEmail({
-        title: `Nowy zapis do grupy: ${groupName}`,
+        title: `Nowa rezerwacja miejsca: ${groupName}`,
         lines: [
           `Osoba zapisująca: ${fullName}`,
-          childName ? `Dziecko: ${childName}` : '',
+          childName ? `Uczeń: ${childName}` : '',
+          studentAge ? `Wiek: ${studentAge}` : '',
           phone ? `Telefon: ${phone}` : '',
           `E-mail: ${email}`,
-          `Grupa: ${groupName}`,
+          `Grupa: ${groupName} — ${schedule}`,
+          firstLessonLabel ? `Pierwsze zajęcia: ${firstLessonLabel}` : '',
           price ? `Cena: ${price} zł / mies.` : '',
         ],
         actionLabel: 'Zobacz uczniów →',
         actionPath: '/admin/studenci',
       })
 
-      // Opłata za pierwszy miesiąc — Stripe Checkout (BLIK/P24/karta), jeśli grupa
-      // ma cenę i płatności są skonfigurowane. Bez tego zapis działa jak dotąd.
-      let checkoutUrl: string | null = null
-      if (price && price > 0 && enrolledId) {
-        try {
-          const base = process.env.NEXT_PUBLIC_APP_URL || ''
-          checkoutUrl = await createCheckoutSession({
-            amount: price, studentId: enrolledId, email,
-            description: `Zajęcia grupowe: ${groupName} — pierwszy miesiąc`,
-            successUrl: `${base}/platnosci?success=true`,
-            cancelUrl: `${base}/zapisy?paid=cancel`,
-          })
-        } catch (err) {
-          console.error('[Booking group] checkout error:', err)
-        }
-      }
-      return NextResponse.json({ success: true, checkoutUrl })
+      return NextResponse.json({ success: true, groupName, schedule, firstLessonDate: firstLessonLabel })
     }
 
+    // ── „Jeszcze nie wiem" i zajęcia indywidualne ─────────────────────────
+    // Obie ścieżki kończą się rozmową diagnostyczną, nie automatycznym
+    // przypisaniem do terminu — dopasowanie nauczyciela ma się dziać w rozmowie.
+    if (kind === 'advice' || kind === 'individual') {
+      const {
+        email, fullName, phone, childName, studentAge, location, audience, message,
+        preferredTimes, consentMarketing, consentClause, campaign, undecided,
+      } = body
+      if (!fullName || (!email && !phone)) {
+        return NextResponse.json({ error: 'Podaj imię oraz e-mail lub telefon.' }, { status: 400 })
+      }
+
+      const individual = kind === 'individual'
+      const studentType: LeadStudentType | null =
+        audience === 'company' ? 'corporate'
+        : audience === 'child' ? (studentTypeFromAge(studentAge) ?? 'child')
+        : audience === 'self' ? 'adult'
+        : studentTypeFromAge(studentAge)
+
+      await createLead(supabase, {
+        entryPoint: individual ? 'zapisy_wizard' : 'advice',
+        firstName: childName || fullName,
+        parentName: childName ? fullName : null,
+        email: email || null,
+        phone: phone || null,
+        studentType,
+        studentAge: studentAge ?? null,
+        location: (location as LeadLocation) ?? null,
+        goal: message || (individual ? 'Prośba o zajęcia indywidualne' : 'Prośba o dobranie oferty'),
+        preferredStart: preferredTimes || null,
+        status: 'new',
+        consentMarketing: !!consentMarketing,
+        consentClause: consentClause ?? null,
+        campaign: campaign ?? null,
+      })
+
+      // Konto powstaje od razu, żeby klient nie musiał zakładać go osobno.
+      // Bez e-maila nie ma czego założyć — wtedy zostaje sam lead.
+      let passwordLink: string | null = null
+      if (email) {
+        await supabase.rpc('_booking_ensure_account', {
+          p_email: email, p_full_name: fullName, p_phone: phone || '',
+        }).then(undefined, (e: unknown) => console.error('[Booking advice] ensure account:', e))
+        passwordLink = await createPasswordSetupLink(supabase, email)
+        await sendAdviceReceived(email, { name: fullName, individual, passwordLink }).catch(() => {})
+      }
+
+      const label = individual
+        ? 'zajęcia indywidualne'
+        : undecided ? 'nie wie, czego szuka' : 'prośba o doradztwo'
+      await notifyAdmin(supabase, 'advice', `Nowe zgłoszenie (${label}): ${fullName}`,
+        `${childName ? `uczeń: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email || 'bez e-maila'}${message ? ` — ${message}` : ''}`)
+      await notifySchoolSms(`Nowe zgłoszenie (${label}): ${fullName}${phone ? `, tel. ${phone}` : ''}${email ? `, ${email}` : ''}`)
+      await notifySchoolEmail({
+        title: `Nowe zgłoszenie — ${label}: ${fullName}`,
+        lines: [
+          `Osoba zgłaszająca: ${fullName}`,
+          childName ? `Uczeń: ${childName}` : '',
+          studentAge ? `Wiek: ${studentAge}` : '',
+          phone ? `Telefon: ${phone}` : '',
+          email ? `E-mail: ${email}` : 'E-mail: nie podano',
+          location ? `Forma: ${location === 'online' ? 'online' : 'Rumianek'}` : '',
+          preferredTimes ? `Preferowane pory: ${preferredTimes}` : '',
+          message ? `Opis: ${message}` : '',
+          'Obiecany czas odpowiedzi: 2 dni robocze.',
+        ],
+        actionLabel: 'Otwórz pipeline →',
+        actionPath: '/admin/pipeline',
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
+    // ── Ścieżki historyczne ───────────────────────────────────────────────
+    // `online` i `stationary` nie są już osiągalne z kreatora (zajęcia
+    // indywidualne idą przez `individual` do rozmowy diagnostycznej), ale
+    // panel administracyjny nadal obsługuje rekordy utworzone wcześniej.
+    // Zostawione do czasu rozliczenia zaległych zapisów.
     if (kind === 'online') {
       const { email, fullName, phone, childName, teacherId, slot, ongoing, weeks, referralCode, discountCode, termsVersion, consents } = body
       if (!email || !fullName || !teacherId || !slot) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
       const startsAt = new Date(slot)
       const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000)
-      const { data: meetLink, error } = await supabase.rpc('public_book_online', {
+      const { error } = await supabase.rpc('public_book_online', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_teacher: teacherId, p_starts: startsAt.toISOString(), p_ends: endsAt.toISOString(),
         p_ongoing: !!ongoing, p_weeks: weeks ?? 12,
@@ -105,39 +240,12 @@ export async function POST(req: NextRequest) {
       }
       const { data: teacher } = await supabase.from('teachers').select('profile:profiles(full_name)').eq('id', teacherId).single()
       const teacherName: string = (teacher?.profile as { full_name?: string } | null)?.full_name ?? 'Nauczyciel'
-
-      // Zapis czeka na akceptację admina, więc nie potwierdzamy jeszcze lekcji —
-      // uczeń dostaje informację, że termin potwierdzimy osobnym mailem.
       await sendBookingReceived(email, {
         studentName: fullName, teacherName,
         date: format(startsAt, 'EEEE, d MMMM yyyy', { locale: pl }), time: format(startsAt, 'HH:mm'),
       }).catch(() => {})
-
-      // Powiadomienie z powiązanym uczniem — dzięki temu admin klika i ląduje
-      // od razu na liście zapisów do zatwierdzenia.
-      const { data: bookedStudent } = await supabase
-        .from('students').select('id, profile:profiles!inner(email)')
-        .eq('profile.email', email).order('joined_at', { ascending: false }).limit(1).maybeSingle()
       await notifyAdmin(supabase, 'online', `Nowy zapis online: ${fullName}`,
-        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''} — do zatwierdzenia`,
-        (bookedStudent?.id as string) ?? null)
-      await notifySchoolSms(
-        `Nowy zapis online: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')}${ongoing ? ' (cykliczne)' : ''}`
-      )
-      await notifySchoolEmail({
-        title: `Nowy zapis online do zatwierdzenia: ${fullName}`,
-        lines: [
-          `Osoba zapisująca: ${fullName}`,
-          childName ? `Dziecko: ${childName}` : '',
-          phone ? `Telefon: ${phone}` : '',
-          `E-mail: ${email}`,
-          `Nauczyciel: ${teacherName}`,
-          `Termin: ${format(startsAt, 'EEEE, d MMMM yyyy, HH:mm', { locale: pl })}`,
-          ongoing ? `Zajęcia cykliczne — ${weeks ?? 12} tyg.` : 'Pojedyncza lekcja',
-        ],
-        actionLabel: 'Zatwierdź zapis →',
-        actionPath: '/admin/zapisy#online',
-      })
+        `${phone ? `tel. ${phone}, ` : ''}${email} — ${teacherName}, ${format(startsAt, 'd.MM HH:mm')} — do zatwierdzenia`)
       return NextResponse.json({ success: true })
     }
 
@@ -154,23 +262,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Nie udało się wysłać prośby.' }, { status: 500 })
       }
       await notifyAdmin(supabase, 'stationary', `Nowa prośba o zajęcia stacjonarne: ${fullName}`,
-        `${childName ? `dziecko: ${childName}, ` : ''}${phone ? `tel. ${phone}, ` : ''}${email}`)
-      await notifySchoolSms(`Nowa prośba o zajęcia stacjonarne: ${fullName}${childName ? ` (dziecko: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`)
-      await notifySchoolEmail({
-        title: `Nowa prośba o zajęcia stacjonarne: ${fullName}`,
-        lines: [
-          `Osoba zapisująca: ${fullName}`,
-          childName ? `Dziecko: ${childName}` : '',
-          age ? `Wiek: ${age}` : '',
-          phone ? `Telefon: ${phone}` : '',
-          `E-mail: ${email}`,
-          `Poziom: ${level || 'A1'}`,
-          `Adres zajęć: ${address}`,
-          notes ? `Uwagi: ${notes}` : '',
-        ],
-        actionLabel: 'Zatwierdź prośbę →',
-        actionPath: '/admin/zapisy#stacjonarne',
-      })
+        `${phone ? `tel. ${phone}, ` : ''}${email}`)
       return NextResponse.json({ success: true })
     }
 

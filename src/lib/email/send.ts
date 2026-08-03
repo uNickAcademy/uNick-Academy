@@ -12,6 +12,10 @@ import {
   bookingApprovedEmail,
   monthlyPaymentEmail,
   internalNotificationEmail,
+  groupReservationEmail,
+  adviceReceivedEmail,
+  groupPrepEmail,
+  groupStartReminderEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -191,5 +195,56 @@ export async function sendProgressDigest(to: string, params: {
   nextLesson?: { date: string; time: string } | null
 }) {
   const { subject, html } = progressDigestEmail(params)
+  await send(to, subject, html)
+}
+
+// ──────────────────────────────────────────
+// Zapisy przez kreator /zapisy
+// ──────────────────────────────────────────
+
+// Natychmiast po rezerwacji miejsca w grupie.
+export async function sendGroupReservation(to: string, params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  firstLessonDate: string | null
+  format: 'online' | 'offline' | null
+  pricePerMonth: number | null
+  passwordLink?: string | null
+}) {
+  const { subject, html } = groupReservationEmail(params)
+  await send(to, subject, html)
+}
+
+// Zgłoszenie bez konkretnego terminu — „jeszcze nie wiem" i zajęcia indywidualne.
+export async function sendAdviceReceived(to: string, params: {
+  name: string
+  individual?: boolean
+  passwordLink?: string | null
+}) {
+  const { subject, html } = adviceReceivedEmail(params)
+  await send(to, subject, html)
+}
+
+// Dobę po rezerwacji: co zabrać / jak dojechać albo link i test połączenia.
+export async function sendGroupPrep(to: string, params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  format: 'online' | 'offline' | null
+}) {
+  const { subject, html } = groupPrepEmail(params)
+  await send(to, subject, html)
+}
+
+// Trzy dni przed pierwszymi zajęciami grupy.
+export async function sendGroupStartReminder(to: string, params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  firstLessonDate: string
+  format: 'online' | 'offline' | null
+}) {
+  const { subject, html } = groupStartReminderEmail(params)
   await send(to, subject, html)
 }

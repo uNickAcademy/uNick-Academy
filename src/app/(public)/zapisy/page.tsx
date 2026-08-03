@@ -1,13 +1,15 @@
-import { getAllTeachers, getCurrentTerms, getConsentTypes, getPublicGroups, getPublicAvailability } from '@/lib/supabase/queries'
+import { getCurrentTerms, getConsentTypes, getPublicGroups } from '@/lib/supabase/queries'
 import { BookingWizard } from './BookingWizard'
 import { ConsultationProvider } from '@/app/components/ConsultationProvider'
 import ConsultationButton from '@/app/components/ConsultationButton'
 
 export const dynamic = 'force-dynamic'
 
+// Kreator nie wybiera już nauczyciela ani slotu — zajęcia indywidualne idą do
+// rozmowy diagnostycznej — więc grafiki nauczycieli nie są tu potrzebne.
 export default async function ZapisyPage() {
-  const [teachers, terms, consents, groups, availability] = await Promise.all([
-    getAllTeachers(), getCurrentTerms(), getConsentTypes(), getPublicGroups(), getPublicAvailability(),
+  const [terms, consents, groups] = await Promise.all([
+    getCurrentTerms(), getConsentTypes(), getPublicGroups(),
   ])
 
   return (
@@ -16,19 +18,17 @@ export default async function ZapisyPage() {
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-gray-900 mb-2">Zapisz się na zajęcia</h1>
-          <p className="text-gray-500 mb-6">Wybierz formę nauki, która Ci pasuje</p>
-          <ConsultationButton fullWidth>Bezpłatna konsultacja</ConsultationButton>
+          <p className="text-gray-500">Pięć krótkich kroków — albo jeden, jeśli wolisz, żebyśmy doradzili</p>
         </div>
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
           <BookingWizard
-            teachers={teachers.map((t) => ({
-              id: t.id, name: t.profile?.full_name ?? '—', levels: (t.levels ?? []) as string[],
-              rating: Number(t.rating), color: t.color, availability: availability[t.id] ?? [],
-            }))}
             groups={groups}
             terms={terms ? { version: terms.version, title: terms.title, content: terms.content } : null}
             consents={consents.map((c) => ({ id: c.id, label: c.label, description: c.description ?? '', required: c.required }))}
           />
+        </div>
+        <div className="text-center mt-6">
+          <ConsultationButton>Wolę porozmawiać z człowiekiem</ConsultationButton>
         </div>
       </div>
     </div>

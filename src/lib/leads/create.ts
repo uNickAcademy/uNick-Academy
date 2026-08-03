@@ -17,6 +17,7 @@ export type LeadEntryPoint =
 
 export type LeadStudentType = 'child' | 'teen' | 'adult' | 'corporate'
 export type LeadLocation = 'rumianek' | 'online' | 'any'
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'booked' | 'won'
 
 export type CreateLeadInput = {
   entryPoint: LeadEntryPoint
@@ -34,6 +35,10 @@ export type CreateLeadInput = {
   consentMarketing?: boolean
   consentClause?: string | null
   campaign?: string | null
+  /** Domyślnie `new`. Rezerwacja miejsca w grupie wchodzi od razu jako `booked`. */
+  status?: LeadStatus
+  /** Data pierwszych zajęć — zasila metryki lejka. */
+  bookedSlotAt?: string | null
 }
 
 export type CreateLeadResult = {
@@ -59,6 +64,16 @@ function normPhone(phone?: string | null): string | null {
 function clean(v?: string | null): string | null {
   const s = (v ?? '').trim()
   return s || null
+}
+
+// Odpowiednik `lead_stage_rank()` z migracji 116. Kolejność etykiet w enumie
+// nie odpowiada kolejności w lejku, więc porównywanie statusów wprost dałoby
+// bzdurny wynik.
+const STAGE_RANK: Record<string, number> = {
+  new: 0, contacted: 1, qualified: 2, booked: 3, no_show: 3, won: 4, lost: 0, nurture: 0,
+}
+function rank(status?: string | null): number {
+  return STAGE_RANK[status ?? 'new'] ?? 0
 }
 
 export async function createLead(
@@ -94,6 +109,8 @@ export async function createLead(
     consent_marketing: input.consentMarketing ?? false,
     consent_at: input.consentMarketing ? new Date().toISOString() : null,
     consent_clause: input.consentMarketing ? clean(input.consentClause) : null,
+    status: input.status ?? 'new',
+    booked_slot_at: input.bookedSlotAt ?? null,
   }
 
   const existing = await findExisting(admin, emailNorm, phoneNorm)
@@ -157,13 +174,15 @@ async function mergeIntoExisting(
 ): Promise<void> {
   const { data: current } = await admin
     .from('leads')
-    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, consent_marketing')
+    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status')
     .eq('id', leadId)
     .single()
 
   const patch: Record<string, unknown> = {}
   if (current) {
     for (const key of Object.keys(current)) {
+      // `status` nie jest nullowalny i ma własną regułę niżej.
+      if (key === 'status' || key === 'consent_marketing') continue
       const incoming = row[key]
       if (incoming != null && incoming !== '' && current[key as keyof typeof current] == null) {
         patch[key] = incoming
@@ -175,6 +194,12 @@ async function mergeIntoExisting(
       patch.consent_marketing = true
       patch.consent_at = row.consent_at
       patch.consent_clause = row.consent_clause
+    }
+    // Status idzie tylko do przodu. Ktoś, kto pytał o ofertę, a teraz
+    // zarezerwował miejsce, ma trafić na właściwy etap lejka — ale odwrotnie
+    // już nie: ponowne pytanie z formularza nie cofa nikogo z „booked".
+    if (rank(row.status as string) > rank(current.status as string)) {
+      patch.status = row.status
     }
   }
 

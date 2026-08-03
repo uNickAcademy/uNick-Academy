@@ -767,20 +767,32 @@ export type PublicGroup = {
   color: string; capacity: number; taken: number; spots: number
   teacherName: string; teacherId: string; format: 'online' | 'offline' | null
   pricePerMonth: number | null; dayOfWeek: number | null
+  startDate: string | null; endDate: string | null
 }
 
-// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu)
+// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu).
+//
+// Liczba zajętych miejsc idzie przez RPC, nie przez zagnieżdżony odczyt
+// `group_members`: polityka RLS udostępnia członkostwa wyłącznie zalogowanym,
+// więc anonimowy gość dostawał pustą tablicę — bez błędu — i każda grupa
+// pokazywała komplet wolnych miejsc. Funkcja z migracji 120 zwraca same liczby,
+// bez danych osobowych.
 export async function getPublicGroups(): Promise<PublicGroup[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('groups')
-    .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week,
-             teacher:teachers(id, profile:profiles(full_name)),
-             members:group_members(student_id)`)
-    .eq('is_active', true)
+  const [{ data }, { data: seatCounts }] = await Promise.all([
+    supabase
+      .from('groups')
+      .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week, start_date, end_date,
+               teacher:teachers(id, profile:profiles(full_name))`)
+      .eq('is_active', true),
+    supabase.rpc('public_group_seat_counts'),
+  ])
+  const takenByGroup = new Map<string, number>(
+    ((seatCounts as { group_id: string; taken: number }[] | null) ?? []).map((c) => [c.group_id, Number(c.taken)])
+  )
   return (data ?? []).map((g) => {
     const capacity = (g.capacity as number) ?? 0
-    const taken = ((g.members as unknown[]) ?? []).length
+    const taken = takenByGroup.get(g.id as string) ?? 0
     const teacher = g.teacher as { id?: string; profile?: { full_name?: string } } | null
     const levels = Array.isArray(g.levels) ? (g.levels as string[]) : []
     return {
@@ -796,6 +808,8 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
       format: (g.format as 'online' | 'offline' | null) ?? null,
       pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
       dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
+      startDate: (g.start_date as string) ?? null,
+      endDate: (g.end_date as string) ?? null,
     }
   }).sort((a, b) => chronoKey(a.dayOfWeek, a.schedule_text) - chronoKey(b.dayOfWeek, b.schedule_text))
 }
