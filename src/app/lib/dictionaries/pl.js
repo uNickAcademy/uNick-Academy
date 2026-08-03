@@ -725,7 +725,7 @@ const pl = {
       eyebrow: "Inne sposoby kontaktu",
       title: "E-mail, social media albo po prostu „cześć”",
       emailPrefix: "Wolisz e-mail? Napisz do nas na ",
-      emailSuffix: " a odpowiemy w ciągu jednego lub dwóch dni.",
+      emailSuffix: " a odpowiemy w ciągu do 2 dni roboczych.",
       socialPrefix: "Znajdziesz nas też na ",
       socialMiddle: " i ",
       socialSuffix: " — historie, małe sukcesy i okazjonalne pojawienie się uNickorna.",
@@ -837,7 +837,7 @@ const pl = {
     success: {
       title: "Dziękujemy — wkrótce się odezwiemy.",
       subtitle:
-        "Ktoś z naszego zespołu skontaktuje się w ciągu jednego dnia roboczego, by znaleźć odpowiadający ci termin. W międzyczasie zajrzyj na naszą stronę — czeka na ciebie miejsce przy stole.",
+        "Ktoś z naszego zespołu skontaktuje się w ciągu do 2 dni roboczych, by znaleźć odpowiadający ci termin. W międzyczasie zajrzyj na naszą stronę — czeka na ciebie miejsce przy stole.",
       close: "Zamknij",
     },
   },
@@ -849,7 +849,7 @@ const pl = {
     submit: "Wyślij wiadomość",
     success: {
       title: "Dziękujemy — wkrótce się odezwiemy.",
-      text: "Ktoś z naszego zespołu skontaktuje się w ciągu jednego dnia roboczego, by znaleźć odpowiadający ci termin.",
+      text: "Ktoś z naszego zespołu skontaktuje się w ciągu do 2 dni roboczych, by znaleźć odpowiadający ci termin.",
     },
   },
 

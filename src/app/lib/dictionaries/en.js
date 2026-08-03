@@ -725,7 +725,7 @@ const en = {
       eyebrow: "Other ways to reach us",
       title: "Email, follow, or just say hello",
       emailPrefix: "Prefer email? Write to ",
-      emailSuffix: " and we'll get back to you within a day or two.",
+      emailSuffix: " and we'll get back to you within 2 business days.",
       socialPrefix: "You can also find us on ",
       socialMiddle: " and ",
       socialSuffix: " for stories, small wins and the occasional uNickorn sighting.",
@@ -837,7 +837,7 @@ const en = {
     success: {
       title: "Thank you — we'll be in touch.",
       subtitle:
-        "Someone from our team will reach out within one working day to find a time that suits you. In the meantime, take a look around — there's a place at the table for you.",
+        "Someone from our team will reach out within 2 business days to find a time that suits you. In the meantime, take a look around — there's a place at the table for you.",
       close: "Close",
     },
   },
@@ -849,7 +849,7 @@ const en = {
     submit: "Send message",
     success: {
       title: "Thank you — we'll be in touch.",
-      text: "Someone from our team will reach out within one working day to find a time that suits you.",
+      text: "Someone from our team will reach out within 2 business days to find a time that suits you.",
     },
   },
 
