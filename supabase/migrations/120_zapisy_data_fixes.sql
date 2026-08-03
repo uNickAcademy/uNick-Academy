@@ -9,7 +9,7 @@
 --   1. Publiczny licznik miejsc w grupach (naprawa fałszywego „8 wolnych")
 --   2. Flaga `is_bookable_online` dla nauczycieli bez grafiku
 --   3. Język nauczyciela (kolumna + dane)
---   4. Nazwy i opis dwóch grup dla dorosłych  [CZEKA NA DECYZJĘ — zakomentowane]
+--   4. Nazwy i opis dwóch grup dla dorosłych
 -- ============================================================================
 
 
@@ -104,24 +104,34 @@ update public.teachers t
  where p.id = t.profile_id and p.full_name = 'Stefania';
 
 
+-- ── 3b. Uprawnienia kolumnowe ───────────────────────────────────────────────
+--
+-- Migracja 104 zablokowała `teachers` białą listą kolumn — `anon` widzi tylko
+-- wskazane, a `hourly_rate`, `rate_group`, `location` i `whatsapp_phone` są
+-- przed nim ukryte. Nowa kolumna NIE dziedziczy tych uprawnień, więc bez
+-- jawnego GRANT-a publiczna strona dostałaby błąd uprawnień przy odczycie.
+-- Nadajemy dostęp wyłącznie do dwóch nowych, niewrażliwych kolumn.
+
+grant select (is_bookable_online, language) on public.teachers to anon, authenticated;
+
+
 -- ── 4. Dwie grupy dla dorosłych ─────────────────────────────────────────────
 --
--- CZEKA NA DECYZJĘ — celowo zakomentowane, nie uruchamiać bez potwierdzenia.
---
 -- To nie są duplikaty: online obejmuje A1–A2 za 199 zł, stacjonarna A2–B1 za
--- 250 zł. Różnią się poziomem, a przez niemal identyczną nazwę wyglądają na
--- pomyłkę po edycji. Propozycja: rozróżnić nazwą i uzupełnić brakujący opis.
---
--- update public.groups
---    set name = 'Wiecznie Początkujący Dorosły · online (A1–A2)',
---        description = 'Dla osób, które zaczynają od podstaw albo wracają do '
---                   || 'angielskiego po latach przerwy. Zajęcia online, w małej '
---                   || 'grupie, z naciskiem na mówienie od pierwszej lekcji.'
---  where id = 'f49f4f7c-8978-46be-9be0-a2ab959d8b8b';
---
--- update public.groups
---    set name = 'Wiecznie Początkujący Dorosły · stacjonarnie (A2–B1)'
---  where id = '0b30b7c1-5332-4ac3-859b-5d47e3bd662e';
+-- 250 zł. Przez niemal identyczną nazwę wyglądają na pomyłkę po edycji.
+-- Poziomy są już widoczne na karcie jako osobne plakietki, więc do nazwy
+-- wchodzi tylko forma zajęć. Wersja online dostaje brakujący opis.
+
+update public.groups
+   set name = 'Wiecznie Początkujący Dorosły · online',
+       description = 'Dla osób, które zaczynają od podstaw albo wracają do '
+                  || 'angielskiego po latach przerwy. Zajęcia online, w małej '
+                  || 'grupie, z naciskiem na mówienie od pierwszej lekcji.'
+ where id = 'f49f4f7c-8978-46be-9be0-a2ab959d8b8b';
+
+update public.groups
+   set name = 'Wiecznie Początkujący Dorosły · stacjonarnie'
+ where id = '0b30b7c1-5332-4ac3-859b-5d47e3bd662e';
 
 
 -- ── Weryfikacja po uruchomieniu ─────────────────────────────────────────────
