@@ -1,6 +1,7 @@
-import { getBookingRequests, getAllTeachersAdmin, getPendingOnlineBookings } from '@/lib/supabase/queries'
+import { getBookingRequests, getAllTeachersAdmin, getPendingOnlineBookings, getInboxLeads } from '@/lib/supabase/queries'
 import { RequestsView } from './RequestsView'
 import { OnlineBookingsView } from './OnlineBookingsView'
+import { InboxView } from './InboxView'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,10 +20,11 @@ function toLocalInput(iso: string): string {
 }
 
 export default async function ZapisyAdminPage() {
-  const [requests, teachers, onlinePending] = await Promise.all([
+  const [requests, teachers, onlinePending, inbox] = await Promise.all([
     getBookingRequests(),
     getAllTeachersAdmin(),
     getPendingOnlineBookings(),
+    getInboxLeads(),
   ])
 
   const rows = requests.map((r) => {
@@ -65,19 +67,29 @@ export default async function ZapisyAdminPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Zapisy do zatwierdzenia</h1>
-        <p className="text-gray-500 mt-1">Potwierdź nauczyciela, termin i link do zajęć — uczeń dostanie płatność mailem</p>
+        <h1 className="text-2xl font-black text-gray-900">Zapisy</h1>
+        <p className="text-gray-500 mt-1">Wszystkie zgłoszenia w jednym miejscu — najdłużej czekające na górze</p>
       </div>
+
+      <section id="skrzynka" className="mb-10 scroll-mt-6">
+        <h2 className="text-sm font-bold text-gray-500 uppercase mb-3">
+          Skrzynka zgłoszeń{inbox.length > 0 ? ` (${inbox.length})` : ''}
+        </h2>
+        <InboxView rows={inbox} />
+      </section>
 
       <section id="online" className="mb-10 scroll-mt-6">
         <h2 className="text-sm font-bold text-gray-500 uppercase mb-3">
-          Zapisy online{onlineRows.length > 0 ? ` (${onlineRows.length})` : ''}
+          Zapisy online — do zatwierdzenia{onlineRows.length > 0 ? ` (${onlineRows.length})` : ''}
         </h2>
+        <p className="text-xs text-gray-400 mb-3">
+          Zgłoszenia sprzed przebudowy kreatora. Nowe zajęcia indywidualne trafiają do skrzynki wyżej.
+        </p>
         <OnlineBookingsView rows={onlineRows} teacherOptions={teacherOptions} />
       </section>
 
       <section id="stacjonarne" className="scroll-mt-6">
-        <h2 className="text-sm font-bold text-gray-500 uppercase mb-3">Prośby o zajęcia stacjonarne</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase mb-3">Prośby o zajęcia stacjonarne (archiwalne)</h2>
         <RequestsView rows={rows} teacherOptions={teacherOptions} />
       </section>
     </div>

@@ -971,3 +971,72 @@ export async function getRecentNotifications(limit = 50): Promise<AdminNotificat
     .limit(limit)
   return (data as AdminNotification[]) ?? []
 }
+
+// ──────────────────────────────────────────
+// SKRZYNKA ZGŁOSZEŃ (panel admina)
+// ──────────────────────────────────────────
+
+export type InboxLead = {
+  id: string
+  createdAt: string
+  status: string
+  entryPoint: string | null
+  firstName: string | null
+  parentName: string | null
+  email: string | null
+  phone: string | null
+  studentType: string | null
+  studentAge: number | null
+  location: string | null
+  goal: string | null
+  preferredStart: string | null
+  groupName: string | null
+  campaign: string | null
+  firstResponseAt: string | null
+}
+
+// Wszystkie otwarte zgłoszenia, niezależnie od tego, którym formularzem
+// przyszły. Najdłużej czekające na górze — kolejka ma odpowiadać na pytanie
+// „co jest do zrobienia dzisiaj", a nie „co przyszło ostatnie".
+export async function getInboxLeads(): Promise<InboxLead[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('leads')
+    .select(`id, created_at, status, entry_point, first_name, parent_name, email, phone,
+             student_type, student_age, location, goal, preferred_start, campaign, first_response_at,
+             group:groups(name)`)
+    .in('status', ['new', 'contacted', 'qualified', 'booked'])
+    .order('created_at', { ascending: true })
+
+  return (data ?? []).map((l) => {
+    const group = Array.isArray(l.group) ? l.group[0] : l.group
+    return {
+      id: l.id as string,
+      createdAt: l.created_at as string,
+      status: l.status as string,
+      entryPoint: (l.entry_point as string) ?? null,
+      firstName: (l.first_name as string) ?? null,
+      parentName: (l.parent_name as string) ?? null,
+      email: (l.email as string) ?? null,
+      phone: (l.phone as string) ?? null,
+      studentType: (l.student_type as string) ?? null,
+      studentAge: l.student_age != null ? Number(l.student_age) : null,
+      location: (l.location as string) ?? null,
+      goal: (l.goal as string) ?? null,
+      preferredStart: (l.preferred_start as string) ?? null,
+      groupName: (group as { name?: string } | null)?.name ?? null,
+      campaign: (l.campaign as string) ?? null,
+      firstResponseAt: (l.first_response_at as string) ?? null,
+    }
+  })
+}
+
+// Liczba zgłoszeń czekających na pierwszy kontakt — do odznaki w menu.
+export async function getUnhandledLeadsCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'new')
+  return count ?? 0
+}
