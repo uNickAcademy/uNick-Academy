@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { REFERRAL_BONUS_PLN } from '@/lib/referral'
+import { findDuplicateGroups, type DuplicateCandidate, type DuplicateGroup } from '@/lib/students/identity'
 import type { Student, StudentStatus, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
 
 // ──────────────────────────────────────────
@@ -718,6 +719,53 @@ export async function getArrearsReport(): Promise<ArrearsReport> {
       ? { description: biggest[0], at: biggest[1].at, count: biggest[1].count, amount: biggest[1].amount }
       : null,
   }
+}
+
+// ──────────────────────────────────────────
+// DUPLIKATY KARTOTEK
+// ──────────────────────────────────────────
+
+export async function getDuplicateStudents(): Promise<DuplicateGroup[]> {
+  const supabase = await createClient()
+
+  const [{ data: students }, { data: lessons }, { data: members }, { data: txs }] = await Promise.all([
+    supabase
+      .from('students')
+      .select('id, profile_id, full_name, status, phone, credit_balance, joined_at, profile:profiles(full_name, email, phone)')
+      .is('deleted_at', null),
+    supabase.from('lessons').select('student_id').is('cancelled_at', null),
+    supabase.from('group_members').select('student_id'),
+    supabase.from('transactions').select('student_id'),
+  ])
+
+  const tally = (rows: { student_id: string }[] | null) => {
+    const acc: Record<string, number> = {}
+    for (const r of rows ?? []) acc[r.student_id] = (acc[r.student_id] ?? 0) + 1
+    return acc
+  }
+  const lessonCount = tally(lessons)
+  const groupCount = tally(members)
+  const txCount = tally(txs)
+
+  const candidates: DuplicateCandidate[] = (students ?? []).map((s) => {
+    const p = (Array.isArray(s.profile) ? s.profile[0] : s.profile) as
+      { full_name?: string; email?: string; phone?: string } | undefined
+    return {
+      id: s.id,
+      profileId: s.profile_id,
+      name: (s.full_name as string)?.trim() || p?.full_name || '—',
+      email: p?.email ?? null,
+      phone: s.phone ?? p?.phone ?? null,
+      status: s.status,
+      lessons: lessonCount[s.id] ?? 0,
+      groups: groupCount[s.id] ?? 0,
+      transactions: txCount[s.id] ?? 0,
+      balance: Number(s.credit_balance),
+      joinedAt: s.joined_at,
+    }
+  })
+
+  return findDuplicateGroups(candidates)
 }
 
 // Ostatnie transakcje z nazwą ucznia
