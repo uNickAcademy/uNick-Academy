@@ -111,11 +111,13 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
       kind: kind === 'stationary' ? 'stationary' : kind,
       fullName: studentName, childName: studentName, email, phone,
       termsVersion: terms?.version ?? null, consents: checked,
+      // Kod polecenia jedzie z każdą ścieżką zapisu, nie tylko z online.
+      referralCode,
     }
     if (kind === 'group') payload = { ...payload, groupId }
     if (kind === 'online') {
       if (!slot) { setError('Wybierz termin.'); setSubmitting(false); return }
-      payload = { ...payload, teacherId, slot: nextDate(slot.day, slot.time).toISOString(), ongoing, weeks: 12, referralCode, discountCode }
+      payload = { ...payload, teacherId, slot: nextDate(slot.day, slot.time).toISOString(), ongoing, weeks: 12, discountCode }
     }
     if (kind === 'stationary') {
       if (!address) { setError('Podaj adres zajęć.'); setSubmitting(false); return }
@@ -359,12 +361,16 @@ export function BookingWizard({ teachers, groups, terms, consents }: {
               <Field label="Imię i nazwisko ucznia" value={studentName} onChange={setStudentName} placeholder="Jan Kowalski" />
               <Field label="E-mail (kontakt / rodzic)" type="email" value={email} onChange={setEmail} placeholder="jan@email.com" />
               <Field label="Telefon (opc.)" type="tel" value={phone} onChange={setPhone} placeholder="+48 600 000 000" />
-              {kind === 'online' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Kod polecenia (opc.)" value={referralCode} onChange={(v) => setReferralCode(v.toUpperCase())} placeholder="KOD" />
+              {/* Kod polecenia działa na KAŻDEJ ścieżce zapisu — grupy są
+                  produktem wrześniowym, a dotąd po cichu gubiły kod.
+                  Bez .toUpperCase(): kody mają postać uNickAnna8DJ9, a
+                  porównanie w bazie i tak ignoruje wielkość liter. */}
+              <div className={kind === 'online' ? 'grid grid-cols-2 gap-3' : ''}>
+                <Field label="Kod polecenia (opc.)" value={referralCode} onChange={setReferralCode} placeholder="uNickAnna8DJ9" />
+                {kind === 'online' && (
                   <Field label="Kod rabatowy (opc.)" value={discountCode} onChange={(v) => setDiscountCode(v.toUpperCase())} placeholder="RABAT" />
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-4 text-sm space-y-1 mt-5">

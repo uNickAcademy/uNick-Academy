@@ -23,11 +23,12 @@ export async function POST(req: NextRequest) {
     const supabase = createAdminClient()
 
     if (kind === 'group') {
-      const { email, fullName, phone, childName, groupId, termsVersion, consents } = body
+      const { email, fullName, phone, childName, groupId, termsVersion, consents, referralCode } = body
       if (!email || !fullName || !groupId) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
       const { error } = await supabase.rpc('public_enroll_group', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_group_id: groupId, p_terms_version: termsVersion ?? null, p_consents: consents ?? {},
+        p_referral: referralCode || null,
       })
       if (error) {
         const msg = /miejsc/i.test(error.message) ? 'Brak wolnych miejsc w tej grupie.' : 'Nie udało się zapisać do grupy.'
@@ -142,12 +143,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (kind === 'stationary') {
-      const { email, fullName, phone, childName, level, age, address, slots, notes, termsVersion, consents } = body
+      const { email, fullName, phone, childName, level, age, address, slots, notes, termsVersion, consents, referralCode } = body
       if (!email || !fullName || !address) return NextResponse.json({ error: 'Podaj dane i adres zajęć' }, { status: 400 })
       const { error } = await supabase.rpc('public_stationary_request', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_level: level || 'A1', p_age: age ?? null, p_address: address, p_slots: slots ?? [],
         p_notes: notes || '', p_terms_version: termsVersion ?? null, p_consents: consents ?? {},
+        p_referral: referralCode || null,
       })
       if (error) {
         console.error('[Booking stationary] RPC error:', error)
