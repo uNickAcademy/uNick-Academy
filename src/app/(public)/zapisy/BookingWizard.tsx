@@ -224,8 +224,9 @@ export function BookingWizard({ groups, terms, consents }: {
               <p className="text-sm font-bold text-[#23479E] mb-2">Co dalej?</p>
               <p className="text-sm text-gray-700 leading-relaxed">
                 Potwierdzenie poszło na <strong>{email}</strong> — jest w nim link do ustawienia hasła
-                do Twojego konta. Nie musisz teraz nic płacić: rachunek za pierwszy miesiąc wyślemy
-                osobno. Dzień przed startem dostaniesz praktyczne szczegóły.
+                do Twojego konta. Nie musisz teraz nic płacić: przychodzisz na pierwsze zajęcia
+                i dopiero wtedy decydujesz. Jeśli nie podejdą, rezygnujesz bez żadnej opłaty.
+                Dzień przed startem dostaniesz praktyczne szczegóły.
               </p>
             </div>
           </>
@@ -350,6 +351,9 @@ export function BookingWizard({ groups, terms, consents }: {
                   {g.teacherName && g.teacherName !== '—' && (
                     <p className="text-xs text-gray-500 mt-1.5">Prowadzi <span className="font-semibold text-gray-700">{g.teacherName}</span></p>
                   )}
+                  <span className="inline-block mt-2 text-[11px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-2 py-0.5">
+                    Pierwsze zajęcia bez zobowiązań
+                  </span>
                   {g.description && <p className="text-xs text-gray-400 mt-2 leading-relaxed">{g.description}</p>}
                 </button>
               ))}
@@ -406,11 +410,10 @@ export function BookingWizard({ groups, terms, consents }: {
             {/* Największa obawa zimnego rodzica brzmi „czy właśnie podpisuję się
                 na cały rok". Nie podpisuje — i to jest jedyne miejsce, w którym
                 da się to powiedzieć, zanim kliknie. */}
-            <p className="text-xs text-gray-500 leading-relaxed mt-4 bg-green-50 border border-green-100 rounded-xl p-3">
-              <span className="font-semibold text-green-700">Nie płacisz teraz.</span>{' '}
-              Rezerwujesz miejsce, a rachunek za pierwszy miesiąc wysyłamy osobno. Jeśli przed
-              pierwszymi zajęciami coś się zmieni, wystarczy jedna wiadomość — zwalniamy miejsce
-              bez żadnych kosztów.
+            <p className="text-xs text-gray-600 leading-relaxed mt-4 bg-green-50 border border-green-100 rounded-xl p-3">
+              <span className="font-semibold text-green-700">Nic nie ryzykujesz.</span>{' '}
+              Nie płacisz teraz. Przychodzisz na pierwsze zajęcia i dopiero wtedy decydujesz —
+              jeśli nie podejdą, rezygnujesz bez żadnej opłaty.
             </p>
           </div>
         )}
@@ -468,9 +471,15 @@ export function BookingWizard({ groups, terms, consents }: {
         {screen === 'individual' && (
           <div>
             <Heading title="Zajęcia indywidualne" subtitle="Nauczyciela i porę dobierzemy w rozmowie" />
-            <p className="text-sm text-gray-500 mb-5 bg-gray-50 rounded-xl p-4 leading-relaxed">
+            <p className="text-sm text-gray-500 mb-4 bg-gray-50 rounded-xl p-4 leading-relaxed">
               Nie przydzielamy nauczyciela automatycznie. Wolimy najpierw poznać cel i poziom —
               dzięki temu trafiamy za pierwszym razem, zamiast zmieniać lektora po miesiącu.
+            </p>
+            <p className="text-sm text-gray-600 mb-5 bg-green-50 border border-green-100 rounded-xl p-4 leading-relaxed">
+              <span className="font-semibold text-green-700">Nie musisz od razu brać kursu.</span>{' '}
+              Możesz umówić się na krótkie zajęcia próbne — 15 minut za jedną czwartą stawki
+              godzinowej. Bez umów na rok: z regularnych zajęć zrezygnujesz w każdej chwili,
+              z miesięcznym wypowiedzeniem.
             </p>
             <div className="space-y-3">
               <Field label={audience === 'child' ? 'Imię dziecka' : 'Imię'} value={name} onChange={setName} placeholder="Anna" />
@@ -597,9 +606,9 @@ function TermsBlock({ terms, requiredConsents, optionalConsents, checked, setChe
       <div className="bg-[#FFF8F0] border border-amber-100 rounded-2xl p-4 mb-4">
         <p className="text-sm font-bold text-gray-900 mb-2">Najważniejsze zasady</p>
         <ul className="text-xs text-gray-600 space-y-1.5 leading-relaxed">
-          <li>• Płatność z góry, do 5. dnia każdego miesiąca.</li>
-          <li>• Zajęcia indywidualne odwołasz bez kosztu do 24 godzin przed terminem.</li>
-          <li>• Rezygnacja z miesięcznym okresem wypowiedzenia — bez umów na rok.</li>
+          <li>• <strong className="text-gray-900">Przyjdź na pierwsze zajęcia i zobacz.</strong> Jeśli nie podejdą, rezygnujesz bez żadnej opłaty.</li>
+          <li>• Później płatność z góry, do 5. dnia każdego miesiąca.</li>
+          <li>• Bez umów na rok — rezygnacja w każdej chwili, z miesięcznym wypowiedzeniem.</li>
         </ul>
         {terms && (
           <a href="/pl/terms-of-service" target="_blank" rel="noopener noreferrer"

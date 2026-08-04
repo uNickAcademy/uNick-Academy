@@ -21,15 +21,16 @@ export function ProofQuote({ t }: { t: Testimonial | null }) {
 // poniżej pierwszego ekranu na telefonie, ale chcemy, żeby ktoś, kto zawaha się
 // przed pierwszym kliknięciem, miał czego się złapać.
 const FACTS: { value: string; label: string }[] = [
+  { value: 'bez zobowiązań', label: 'przyjdź na pierwsze zajęcia i zdecyduj' },
   { value: 'ponad 10 lat', label: 'uczymy w Rumianku i online' },
   { value: 'maks. 8 osób', label: 'w grupie — każdy zdąży się odezwać' },
-  { value: 'nauczyciele', label: 'z Polski i z zagranicy' },
+  { value: 'bez umów na rok', label: 'rezygnacja w każdej chwili' },
 ]
 
 export function TrustStrip() {
   return (
     <div className="mt-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {FACTS.map((f) => (
           <div key={f.value} className="rounded-2xl bg-white/70 border border-gray-100 px-4 py-3 text-center">
             <p className="text-sm font-black text-[#23479E]">{f.value}</p>
