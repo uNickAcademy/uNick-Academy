@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { REFERRAL_BONUS_PLN } from '@/lib/referral'
 import { findDuplicateGroups, type DuplicateCandidate, type DuplicateGroup } from '@/lib/students/identity'
+import { activeStudentIds } from '@/lib/students/activity'
 import type { Student, StudentStatus, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
 
 // ──────────────────────────────────────────
@@ -433,8 +434,10 @@ export async function getTeacherLessons(teacherId: string, from?: string, to?: s
 export async function getAdminStats() {
   const supabase = await createClient()
 
-  const [studentsRes, lessonsRes, transactionsRes] = await Promise.all([
-    supabase.from('students').select('id, status').eq('status', 'active'),
+  // Aktywny uczeń = ma aktualnie przypisane zajęcia (nie: ma taki status
+  // w bazie). Status bywa nieaktualny, więc liczymy z lekcji i kursów.
+  const [studentsRes, lessonsRes, transactionsRes, allLessonsRes, membersRes] = await Promise.all([
+    supabase.from('students').select('id').is('deleted_at', null),
     supabase.from('lessons').select('id')
       .is('cancelled_at', null)
       .gte('starts_at', new Date(Date.now() - 7 * 86400000).toISOString())
@@ -442,14 +445,24 @@ export async function getAdminStats() {
     supabase.from('transactions')
       .select('amount, type')
       .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+    supabase.from('lessons').select('student_id, starts_at, cancelled_at').gte('starts_at', new Date().toISOString()),
+    supabase.from('group_members').select('student_id, group:groups(start_date, end_date, is_active)'),
   ])
 
   const revenue = (transactionsRes.data ?? [])
     .filter((t) => t.type === 'payment')
     .reduce((acc, t) => acc + t.amount, 0)
 
+  const existing = new Set((studentsRes.data ?? []).map((s) => s.id))
+  const active = activeStudentIds({
+    lessons: allLessonsRes.data ?? [],
+    groupMembers: membersRes.data ?? [],
+  })
+
   return {
-    activeStudents: studentsRes.data?.length ?? 0,
+    // Kartoteki przeniesione do poczekalni nie liczą się, nawet jeśli mają
+    // jeszcze wiszące lekcje.
+    activeStudents: [...active].filter((id) => existing.has(id)).length,
     lessonsThisWeek: lessonsRes.data?.length ?? 0,
     monthlyRevenue: revenue,
   }

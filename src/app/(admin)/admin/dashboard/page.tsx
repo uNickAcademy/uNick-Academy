@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
   const rest = arrears.totals.all.count - collectible.count
 
   const STATS = [
-    { label: 'Aktywni studenci', value: String(stats.activeStudents), change: 'status „aktywny"', icon: Users, color: 'violet', href: '/admin/studenci' },
+    { label: 'Aktywni studenci', value: String(stats.activeStudents), change: 'z przypisanymi zajęciami', icon: Users, color: 'violet', href: '/admin/studenci' },
     { label: 'Lekcje w tym tygodniu', value: String(stats.lessonsThisWeek), change: `${activeTeachers.length} nauczycieli`, icon: BookOpen, color: 'cyan', href: '/admin/lekcje' },
     { label: 'Przychód (ten miesiąc)', value: `${stats.monthlyRevenue.toLocaleString('pl-PL')} zł`, change: 'wpłaty', icon: DollarSign, color: 'green', href: '/admin/platnosci' },
     {

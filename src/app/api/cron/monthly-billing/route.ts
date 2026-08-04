@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   const period = periodOf(new Date())
   const label = periodLabel(period)
 
-  const students = await loadBillableStudents(supabase, ['active', 'trial'])
+  const students = await loadBillableStudents(supabase)
   const outcomes = await chargeStudentsForPeriod(supabase, students, period)
 
   let charged = 0

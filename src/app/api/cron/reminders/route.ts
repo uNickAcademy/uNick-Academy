@@ -4,6 +4,7 @@ import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgr
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
 import { periodOf } from '@/lib/billing/engine'
+import { activeStudentIds } from '@/lib/students/activity'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -36,6 +37,28 @@ export async function GET(req: NextRequest) {
     .lt('ends_at', now.toISOString())
     .select('id')
   const autoPresentCount = autoPresent?.length ?? 0
+
+  // ── 0b. Synchronizacja statusu z rzeczywistością ────────────────────────
+  //
+  // Aktywny uczeń to uczeń z aktualnie przypisanymi zajęciami. Kolumna
+  // `status` to tylko zapis tej decyzji i potrafi się rozjechać (import,
+  // rezygnacja, ręczna zmiana), a rozjechana kłamie na dashboardzie i w
+  // raportach. Raz dziennie doprowadzamy ją do stanu faktycznego.
+  // Statusów „próbny" i „zaległość" nie ruszamy — to stany onboardingu
+  // i rozliczeń, nie obecności na zajęciach.
+  const [{ data: futureLessons }, { data: groupRows }, { data: allStudents }] = await Promise.all([
+    supabase.from('lessons').select('student_id, starts_at, cancelled_at').gte('starts_at', now.toISOString()),
+    supabase.from('group_members').select('student_id, group:groups(start_date, end_date, is_active)'),
+    supabase.from('students').select('id, status').is('deleted_at', null),
+  ])
+
+  const withClasses = activeStudentIds({ lessons: futureLessons ?? [], groupMembers: groupRows ?? [] }, now)
+
+  const toActivate = (allStudents ?? []).filter((s) => s.status === 'paused' && withClasses.has(s.id)).map((s) => s.id)
+  const toPause = (allStudents ?? []).filter((s) => s.status === 'active' && !withClasses.has(s.id)).map((s) => s.id)
+
+  if (toActivate.length > 0) await supabase.from('students').update({ status: 'active' }).in('id', toActivate)
+  if (toPause.length > 0) await supabase.from('students').update({ status: 'paused' }).in('id', toPause)
 
   // ── 1. Przypomnienia o lekcjach (codziennie) ────────────────────────────
   // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
@@ -331,6 +354,7 @@ export async function GET(req: NextRequest) {
     startReminders,
     topUps,
     topUpTotal,
+    statusSynced: { aktywowani: toActivate.length, wstrzymani: toPause.length },
     ranWeekly: isMonday,
   })
 }

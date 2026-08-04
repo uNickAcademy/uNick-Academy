@@ -205,15 +205,19 @@ export async function chargeFirstLesson(
   return { charged: rate, description }
 }
 
-/** Uczniowie objęci cyklem: bez kartotek przeniesionych i bez B2B (ich rozlicza faktura firmy). */
-export async function loadBillableStudents(
-  supabase: SupabaseClient,
-  statuses: string[] = ['active', 'trial', 'overdue'],
-): Promise<BillableStudent[]> {
+/**
+ * Uczniowie objęci cyklem: bez kartotek przeniesionych do poczekalni i bez B2B
+ * (tych rozlicza faktura firmowa).
+ *
+ * Świadomie NIE filtrujemy po kolumnie `status` — bywa nieaktualna w obie
+ * strony: uczeń z zajęciami potrafi mieć wpisane „wstrzymany" (i zostałby
+ * pominięty w rachunku), a ktoś bez zajęć „aktywny". O tym, czy jest za co
+ * płacić, decyduje wyłącznie silnik: brak kursu w toku i brak lekcji = 0 zł.
+ */
+export async function loadBillableStudents(supabase: SupabaseClient): Promise<BillableStudent[]> {
   const { data } = await supabase
     .from('students')
     .select('id, full_name, custom_monthly_price, profile:profiles(full_name, email)')
-    .in('status', statuses)
     .is('deleted_at', null)
     .neq('billing_type', 'b2b')
 

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const offset = Number.isInteger(body.offset) ? Number(body.offset) : 0
   const period: Period = addMonths(periodOf(new Date()), offset)
 
-  const students = await loadBillableStudents(supabase, ['active', 'trial'])
+  const students = await loadBillableStudents(supabase)
   const outcomes = await chargeStudentsForPeriod(supabase, students, period, { dryRun })
 
   const billed = outcomes.filter((o) => o.charged > 0)
