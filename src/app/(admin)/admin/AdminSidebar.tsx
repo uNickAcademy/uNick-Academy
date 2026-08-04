@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X
+  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X, AlertTriangle
 } from 'lucide-react'
 
 // adminOnly: pozycje konfiguracyjne niedostępne dla recepcji
@@ -24,6 +24,7 @@ const NAV = [
   { href: '/admin/cennik', label: 'Cennik', icon: Tag, adminOnly: true },
   { href: '/admin/regulamin', label: 'Regulamin i zgody', icon: FileCheck, adminOnly: true },
   { href: '/admin/platnosci', label: 'Płatności', icon: CreditCard },
+  { href: '/admin/zaleglosci', label: 'Zaległości', icon: AlertTriangle },
   { href: '/admin/komunikacja', label: 'Komunikacja', icon: Megaphone },
   { href: '/admin/polecenia', label: 'Polecenia', icon: Gift, adminOnly: true },
   { href: '/ufos', label: 'Finanse (uFOS)', icon: Landmark, adminOnly: true },

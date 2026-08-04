@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Users, BookOpen, DollarSign, AlertTriangle, UserX } from 'lucide-react'
 import {
-  getAdminStats, getOverdueReport, getAllLessons,
+  getAdminStats, getArrearsReport, getAllLessons,
   getAllTeachersAdmin, getTeacherStatsMap, getChurnRisk,
 } from '@/lib/supabase/queries'
 
@@ -11,9 +11,9 @@ export default async function AdminDashboard() {
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
 
-  const [stats, overdue, todayLessons, teachers, teacherStats, churn] = await Promise.all([
+  const [stats, arrears, todayLessons, teachers, teacherStats, churn] = await Promise.all([
     getAdminStats(),
-    getOverdueReport(),
+    getArrearsReport(),
     getAllLessons(todayStart.toISOString(), todayEnd.toISOString()),
     getAllTeachersAdmin(),
     getTeacherStatsMap(),
@@ -22,11 +22,26 @@ export default async function AdminDashboard() {
 
   const activeTeachers = teachers.filter((t) => t.is_active)
 
+  // Kafelek pokazuje dług realny do odzyskania (uczniowie inni niż wstrzymani).
+  // Salda wstrzymanych — najczęściej efekt zbiorczego naliczenia abonamentu
+  // osobom, które już nie chodzą — lecą do podpisu, żeby liczba nie kłamała.
+  const collectible = arrears.totals.collectible
+  const rest = arrears.totals.all.count - collectible.count
+
   const STATS = [
-    { label: 'Aktywni studenci', value: String(stats.activeStudents), change: 'status „aktywny"', icon: Users, color: 'violet' },
-    { label: 'Lekcje w tym tygodniu', value: String(stats.lessonsThisWeek), change: `${activeTeachers.length} nauczycieli`, icon: BookOpen, color: 'cyan' },
-    { label: 'Przychód (ten miesiąc)', value: `${stats.monthlyRevenue.toLocaleString('pl-PL')} zł`, change: 'wpłaty', icon: DollarSign, color: 'green' },
-    { label: 'Zaległości', value: `${overdue.students.filter((s) => s.balance < 0).length} studentów`, change: `${overdue.total.toLocaleString('pl-PL')} zł łącznie`, icon: AlertTriangle, color: 'amber' },
+    { label: 'Aktywni studenci', value: String(stats.activeStudents), change: 'status „aktywny"', icon: Users, color: 'violet', href: '/admin/studenci' },
+    { label: 'Lekcje w tym tygodniu', value: String(stats.lessonsThisWeek), change: `${activeTeachers.length} nauczycieli`, icon: BookOpen, color: 'cyan', href: '/admin/lekcje' },
+    { label: 'Przychód (ten miesiąc)', value: `${stats.monthlyRevenue.toLocaleString('pl-PL')} zł`, change: 'wpłaty', icon: DollarSign, color: 'green', href: '/admin/platnosci' },
+    {
+      label: 'Zaległości',
+      value: `${collectible.amount.toLocaleString('pl-PL')} zł`,
+      change: rest > 0
+        ? `${collectible.count} do odzyskania · +${rest} wstrzymanych (${arrears.totals.paused.amount.toLocaleString('pl-PL')} zł)`
+        : `${collectible.count} studentów`,
+      icon: AlertTriangle,
+      color: 'amber',
+      href: '/admin/zaleglosci',
+    },
   ]
 
   const colors: Record<string, string> = {
@@ -49,14 +64,15 @@ export default async function AdminDashboard() {
         {STATS.map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <Link key={stat.label} href={stat.href}
+              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:border-[#23479E] hover:shadow-md transition-all">
               <div className={`w-10 h-10 rounded-xl ${colors[stat.color]} flex items-center justify-center mb-3`}>
                 <Icon size={18} />
               </div>
               <p className="text-xs text-gray-500 mb-0.5">{stat.label}</p>
               <p className="text-2xl font-black text-gray-900">{stat.value}</p>
               <p className="text-xs text-gray-400 mt-1">{stat.change}</p>
-            </div>
+            </Link>
           )
         })}
       </div>

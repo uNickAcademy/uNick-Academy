@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { REFERRAL_BONUS_PLN } from '@/lib/referral'
-import type { Student, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
+import type { Student, StudentStatus, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
 
 // ──────────────────────────────────────────
 // STUDENT
@@ -533,6 +533,191 @@ export async function getOverdueReport(): Promise<{ students: { id: string; name
   }))
   const total = students.reduce((acc, s) => acc + (s.balance < 0 ? -s.balance : 0), 0)
   return { students, total }
+}
+
+// ──────────────────────────────────────────
+// ZALEGŁOŚCI – pełny wgląd
+// ──────────────────────────────────────────
+// Sam licznik „ilu studentów zalega" potrafi mocno wprowadzać w błąd: naliczenie
+// abonamentu obejmuje wszystkich, którzy w danym momencie mieli status
+// aktywny/próbny, więc do zaległości wpadają też osoby, które nigdy nie zaczęły
+// zajęć albo zostały później wstrzymane. Ten raport pokazuje pełny kontekst
+// każdej pozycji: z czego powstał dług, ile lekcji uczeń faktycznie odbył i czy
+// rekord nie jest duplikatem.
+
+export type ArrearsRow = {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  status: StudentStatus
+  billingType: 'individual' | 'b2b'
+  companyName: string | null
+  owes: number            // dodatnia kwota długu
+  balance: number         // saldo z bazy (ujemne = dług)
+  charged: number         // suma obciążeń
+  paid: number            // suma wpłat i kredytów
+  lastCharge: { amount: number; description: string; at: string } | null
+  lastPaymentAt: string | null
+  lessonsHeld: number     // odbyte (minione, nieodwołane)
+  lessonsPlanned: number  // przyszłe, nieodwołane
+  lastLessonAt: string | null
+  joinedAt: string
+  teacherName: string | null
+  isDuplicate: boolean    // ten sam uczeń figuruje w bazie kilka razy
+}
+
+export type ArrearsReport = {
+  rows: ArrearsRow[]
+  totals: {
+    all: { count: number; amount: number }
+    collectible: { count: number; amount: number }  // status inny niż „wstrzymany"
+    paused: { count: number; amount: number }
+    noLessons: { count: number; amount: number }
+    duplicates: { count: number; amount: number }
+    b2b: { count: number; amount: number }
+  }
+  // Największa paczka obciążeń wśród dłużników — zwykle to ona tworzy cały dług.
+  biggestChargeBatch: { description: string; at: string; count: number; amount: number } | null
+}
+
+const EMPTY_BUCKET = { count: 0, amount: 0 }
+
+export async function getArrearsReport(): Promise<ArrearsReport> {
+  const supabase = await createClient()
+
+  const { data: students } = await supabase
+    .from('students')
+    .select(`
+      id, full_name, status, credit_balance, billing_type, company_name, joined_at, phone,
+      profile:profiles(full_name, email, phone),
+      teacher:teachers(profile:profiles(full_name))
+    `)
+    .or('credit_balance.lt.0,status.eq.overdue')
+    .is('deleted_at', null)
+
+  const list = students ?? []
+  if (list.length === 0) {
+    return {
+      rows: [],
+      totals: { all: EMPTY_BUCKET, collectible: EMPTY_BUCKET, paused: EMPTY_BUCKET, noLessons: EMPTY_BUCKET, duplicates: EMPTY_BUCKET, b2b: EMPTY_BUCKET },
+      biggestChargeBatch: null,
+    }
+  }
+
+  const ids = list.map((s) => s.id)
+  const [{ data: txs }, { data: lessons }, { data: allStudents }] = await Promise.all([
+    supabase.from('transactions').select('student_id, type, amount, description, created_at').in('student_id', ids),
+    supabase.from('lessons').select('student_id, starts_at, cancelled_at').in('student_id', ids).is('cancelled_at', null),
+    // pełna lista nazwisk – do wykrycia zdublowanych kartotek
+    supabase.from('students').select('full_name, profile:profiles(full_name)').is('deleted_at', null),
+  ])
+
+  // agregacja transakcji per uczeń
+  type TxAgg = { charged: number; paid: number; lastCharge: ArrearsRow['lastCharge']; lastPaymentAt: string | null }
+  const byStudentTx: Record<string, TxAgg> = {}
+  for (const t of txs ?? []) {
+    const agg = (byStudentTx[t.student_id] ??= { charged: 0, paid: 0, lastCharge: null, lastPaymentAt: null })
+    const amount = Number(t.amount)
+    if (t.type === 'charge') {
+      agg.charged += amount
+      if (!agg.lastCharge || t.created_at > agg.lastCharge.at) {
+        agg.lastCharge = { amount, description: t.description ?? 'Obciążenie', at: t.created_at }
+      }
+    } else {
+      agg.paid += amount
+      if (!agg.lastPaymentAt || t.created_at > agg.lastPaymentAt) agg.lastPaymentAt = t.created_at
+    }
+  }
+
+  // agregacja lekcji per uczeń
+  const now = Date.now()
+  const byStudentLessons: Record<string, { held: number; planned: number; last: string | null }> = {}
+  for (const l of lessons ?? []) {
+    const agg = (byStudentLessons[l.student_id] ??= { held: 0, planned: 0, last: null })
+    if (new Date(l.starts_at).getTime() <= now) {
+      agg.held++
+      if (!agg.last || l.starts_at > agg.last) agg.last = l.starts_at
+    } else {
+      agg.planned++
+    }
+  }
+
+  const nameOf = (s: { full_name?: string | null; profile?: unknown }) => {
+    const p = Array.isArray(s.profile) ? s.profile[0] : s.profile
+    return (s.full_name || (p as { full_name?: string } | undefined)?.full_name || '—').trim()
+  }
+
+  // ile razy dane nazwisko występuje w kartotece (bez usuniętych)
+  const nameCounts: Record<string, number> = {}
+  for (const s of allStudents ?? []) {
+    const key = nameOf(s).toLowerCase()
+    nameCounts[key] = (nameCounts[key] ?? 0) + 1
+  }
+
+  const rows: ArrearsRow[] = list.map((s) => {
+    const p = (Array.isArray(s.profile) ? s.profile[0] : s.profile) as { full_name?: string; email?: string; phone?: string } | undefined
+    const t = (Array.isArray(s.teacher) ? s.teacher[0] : s.teacher) as { profile?: { full_name?: string } | { full_name?: string }[] } | undefined
+    const tp = Array.isArray(t?.profile) ? t?.profile[0] : t?.profile
+    const tx = byStudentTx[s.id] ?? { charged: 0, paid: 0, lastCharge: null, lastPaymentAt: null }
+    const ls = byStudentLessons[s.id] ?? { held: 0, planned: 0, last: null }
+    const name = nameOf(s)
+    const balance = Number(s.credit_balance)
+
+    return {
+      id: s.id,
+      name,
+      email: p?.email ?? null,
+      phone: s.phone ?? p?.phone ?? null,
+      status: s.status as StudentStatus,
+      billingType: (s.billing_type ?? 'individual') as 'individual' | 'b2b',
+      companyName: s.company_name ?? null,
+      owes: balance < 0 ? -balance : 0,
+      balance,
+      charged: tx.charged,
+      paid: tx.paid,
+      lastCharge: tx.lastCharge,
+      lastPaymentAt: tx.lastPaymentAt,
+      lessonsHeld: ls.held,
+      lessonsPlanned: ls.planned,
+      lastLessonAt: ls.last,
+      joinedAt: s.joined_at,
+      teacherName: tp?.full_name ?? null,
+      isDuplicate: (nameCounts[name.toLowerCase()] ?? 0) > 1,
+    }
+  })
+
+  rows.sort((a, b) => b.owes - a.owes || a.name.localeCompare(b.name, 'pl'))
+
+  const bucket = (predicate: (r: ArrearsRow) => boolean) =>
+    rows.filter(predicate).reduce((acc, r) => ({ count: acc.count + 1, amount: acc.amount + r.owes }), { count: 0, amount: 0 })
+
+  // największa paczka obciążeń (ten sam opis) wśród dłużników
+  const batches: Record<string, { count: number; amount: number; at: string }> = {}
+  for (const t of txs ?? []) {
+    if (t.type !== 'charge') continue
+    const key = t.description ?? 'Obciążenie'
+    const b = (batches[key] ??= { count: 0, amount: 0, at: t.created_at })
+    b.count++
+    b.amount += Number(t.amount)
+    if (t.created_at < b.at) b.at = t.created_at
+  }
+  const biggest = Object.entries(batches).sort((a, b) => b[1].count - a[1].count)[0]
+
+  return {
+    rows,
+    totals: {
+      all: bucket(() => true),
+      collectible: bucket((r) => r.status !== 'paused'),
+      paused: bucket((r) => r.status === 'paused'),
+      noLessons: bucket((r) => r.lessonsHeld === 0 && r.lessonsPlanned === 0),
+      duplicates: bucket((r) => r.isDuplicate),
+      b2b: bucket((r) => r.billingType === 'b2b'),
+    },
+    biggestChargeBatch: biggest
+      ? { description: biggest[0], at: biggest[1].at, count: biggest[1].count, amount: biggest[1].amount }
+      : null,
+  }
 }
 
 // Ostatnie transakcje z nazwą ucznia

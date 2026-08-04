@@ -17,10 +17,13 @@ export async function POST() {
   const basePlan = plans?.[0]
   const defaultMonthly = basePlan ? Math.round(Number(basePlan.price_per_lesson) * basePlan.lessons_per_week * WEEKS_PER_MONTH) : 0
 
+  // Te same reguły co cron /api/cron/monthly-billing: bez kartotek przeniesionych
+  // do poczekalni i bez uczniów B2B (tych rozlicza faktura firmowa).
   const { data: students } = await supabase
     .from('students')
-    .select('id, custom_monthly_price, status, profile:profiles(full_name)')
+    .select('id, custom_monthly_price, status, billing_type, profile:profiles(full_name)')
     .in('status', ['active', 'trial'])
+    .is('deleted_at', null)
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -31,6 +34,8 @@ export async function POST() {
   const skipped: string[] = []
 
   for (const s of students ?? []) {
+    if (s.billing_type === 'b2b') continue
+
     const price = s.custom_monthly_price != null ? Number(s.custom_monthly_price) : defaultMonthly
     if (price <= 0) continue
 
