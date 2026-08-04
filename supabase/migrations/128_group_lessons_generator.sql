@@ -1,5 +1,9 @@
 -- ============================================================================
--- 122: Generowanie lekcji dla grup
+-- 128: Generowanie lekcji dla grup
+--
+-- (Numer zmieniony ze 122 przy scaleniu: równolegle powstała inna migracja
+--  o tym samym numerze. Obie są już zaaplikowane na produkcji i wzajemnie
+--  niezależne, więc kolejność między nimi nie ma znaczenia.)
 --
 -- Problem: zapis do grupy dopisywał ucznia do `group_members` i na tym się
 -- kończył. Nic nie tworzyło lekcji, więc w kalendarzu nie było ani jednej
