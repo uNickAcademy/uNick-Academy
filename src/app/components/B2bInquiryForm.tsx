@@ -33,7 +33,7 @@ export function B2bInquiryForm() {
       <div className="bg-white rounded-2xl p-10 shadow-sm border border-gray-100 text-center">
         <CheckCircle size={40} className="text-green-500 mx-auto mb-3" />
         <h3 className="text-lg font-black text-gray-900 mb-1">Dziękujemy!</h3>
-        <p className="text-sm text-gray-500">Twoje zapytanie trafiło do naszego zespołu. Oddzwonimy w ciągu 24h.</p>
+        <p className="text-sm text-gray-500">Twoje zapytanie trafiło do naszego zespołu. Odezwiemy się w ciągu 2 dni roboczych.</p>
       </div>
     )
   }

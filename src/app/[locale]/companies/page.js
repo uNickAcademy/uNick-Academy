@@ -5,6 +5,7 @@ import ConsultationButton from "../../components/ConsultationButton";
 import Button from "../../components/Button";
 import CTASection from "../../components/CTASection";
 import StoryCard from "../../components/cards/StoryCard";
+import B2bInquiryFormSection from "../../components/B2bInquiryFormSection";
 import { getDictionary } from "../../lib/dictionaries";
 import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
@@ -103,11 +104,16 @@ export default async function CompaniesPage({ params }) {
         </div>
       </section>
 
+      {/* Formularz zapytania firmowego. Wcześniej żył pod /dla-firm, który jest
+          zasłonięty przekierowaniem 301 na tę stronę — czyli był nieosiągalny,
+          a firma nie miała jak zostawić zapytania. */}
+      <B2bInquiryFormSection locale={locale} />
+
       <CTASection
         title={t.finalCta.title}
         subtitle={t.finalCta.subtitle}
-        signupHref="/zapisy"
-        signupLabel={dict.common.buttons.signUp}
+        signupHref="#zapytanie-firmowe"
+        signupLabel="Zostaw zapytanie"
         secondaryHref={`/${locale}/contact`}
         secondaryLabel={dict.common.buttons.contactUs}
         showUnicorn={false}

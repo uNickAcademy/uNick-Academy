@@ -1,7 +1,10 @@
 import Reveal from "../../components/Reveal";
 import { getDictionary } from "../../lib/dictionaries";
 import { buildMetadata } from "../../lib/seo";
+import { getCurrentTerms } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,10 +18,39 @@ export async function generateMetadata({ params }) {
   });
 }
 
+// Regulamin ma jedno źródło prawdy i jeden adres.
+//
+// W wersji polskiej renderujemy dokument z bazy (`terms_documents`) — to ten
+// sam, którego wersję zapisujemy w `consent_acceptances` przy zapisie na
+// zajęcia. Wcześniej istniały dwa różne teksty: ten ze słowników i ten z bazy,
+// wklejany do rozwijanej harmonijki w kreatorze. Klient akceptował jeden,
+// a czytał drugi.
+//
+// Wersja angielska zostaje na słowniku: dokument w bazie jest po polsku, a
+// stroną umowy dla polskiego rynku jest wersja polska. Angielska pełni rolę
+// tłumaczenia informacyjnego.
 export default async function TermsOfServicePage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.legal.termsOfService;
+
+  const terms = locale === "pl" ? await getCurrentTerms() : null;
+
+  if (terms) {
+    return (
+      <div className="container" style={{ maxWidth: 720, paddingTop: "clamp(48px, 8vw, 80px)", paddingBottom: 64 }}>
+        <Reveal as="div">
+          <h1 className={styles.title}>{terms.title}</h1>
+          <p style={{ color: "var(--color-muted)", fontSize: 14, marginBottom: 40 }}>
+            Wersja {terms.version}
+          </p>
+          <div style={{ color: "var(--color-ink-soft)", lineHeight: 1.75, fontSize: 15, whiteSpace: "pre-wrap" }}>
+            {terms.content}
+          </div>
+        </Reveal>
+      </div>
+    );
+  }
 
   const sections = [
     { heading: t.general, text: t.generalText },

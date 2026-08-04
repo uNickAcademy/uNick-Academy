@@ -6,6 +6,7 @@ import {
   Clock, CalendarDays, Users,
 } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
+import { track, readCampaign } from '@/lib/analytics/track'
 
 const DAYS_PL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
@@ -51,31 +52,37 @@ export function BookingWizard({ groups, terms, consents }: {
   const [preferredTimes, setPreferredTimes] = useState('')
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
-  // Kod polecenia z linku /zapisy?ref=KOD. Nie pokazujemy pola w formularzu —
-  // krok 5 ma zostać trzema polami — ale atrybucji nie gubimy. Czytamy przy
-  // inicjalizacji, nie w efekcie: wartość nigdzie się nie renderuje, więc
-  // różnica między serwerem a klientem nie ma jak wywołać niezgodności.
-  const [referral] = useState(() =>
-    typeof window === 'undefined'
-      ? ''
-      : (new URLSearchParams(window.location.search).get('ref') ?? '').toUpperCase()
-  )
+  // Atrybucja z adresu: utm_campaign/utm_source z reklamy albo kod polecenia.
+  // Nie pokazujemy pola w formularzu — krok 5 ma zostać trzema polami — ale
+  // bez tego nie da się policzyć, ile kosztował uczeń z konkretnej kreacji.
+  // Czytamy przy inicjalizacji, nie w efekcie: wartość nigdzie się nie
+  // renderuje, więc różnica serwer/klient nie ma jak wywołać niezgodności.
+  const [campaign] = useState(() => readCampaign())
+  // Start kreatora liczony raz na sesję odwiedzin. Inicjalizator stanu
+  // uruchamia się raz, więc nie potrzeba tu efektu ani strażnika.
+  useState(() => { track('zapisy_start', { campaign }); return true })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ kind: 'group' | 'advice' | 'individual'; groupName?: string; schedule?: string; firstLessonDate?: string | null } | null>(null)
 
 
-  const go = (s: Screen) => { setHistory((h) => [...h, screen]); setScreen(s); setError(null) }
+  const stepNumber: Record<Screen, number | null> = {
+    audience: 1, location: 2, level: 3, options: 4, details: 5,
+    advice: null, individual: null, done: null,
+  }
+
+  // Każde przejście dalej to ukończony krok — stąd mierzymy w `go`, a nie
+  // przy wejściu na ekran: interesuje nas, ilu ludzi krok DOKOŃCZYŁO.
+  const go = (s: Screen) => {
+    track('zapisy_krok', { z: screen, na: s, krok: stepNumber[screen] ?? 0, campaign })
+    setHistory((h) => [...h, screen]); setScreen(s); setError(null)
+  }
   const back = () => setHistory((h) => {
     const c = [...h]; const prev = c.pop()
     if (prev) { setScreen(prev); setError(null) }
     return c
   })
 
-  const stepNumber: Record<Screen, number | null> = {
-    audience: 1, location: 2, level: 3, options: 4, details: 5,
-    advice: null, individual: null, done: null,
-  }
 
   const requiredConsents = consents.filter((c) => c.required)
   const optionalConsents = consents.filter((c) => !c.required)
@@ -150,7 +157,7 @@ export function BookingWizard({ groups, terms, consents }: {
       undecided: audience === 'unsure',
       consentMarketing: marketingConsent ? !!checked[marketingConsent.id] : false,
       consentClause: marketingConsent?.label ?? null,
-      campaign: referral ? `polecenie_${referral}` : null,
+      campaign,
     }
     if (kind === 'group') {
       payload.groupId = groupId
@@ -167,6 +174,14 @@ export function BookingWizard({ groups, terms, consents }: {
     const data = await res.json().catch(() => ({}))
     setSubmitting(false)
     if (!res.ok) { setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
+
+    track('zapisy_wyslane', {
+      rodzaj: kind,
+      grupa: (data.groupName as string) ?? null,
+      forma: location,
+      odbiorca: audience,
+      campaign,
+    })
 
     setResult({
       kind,
@@ -244,7 +259,7 @@ export function BookingWizard({ groups, terms, consents }: {
           <Choice title="Dla kogo szukasz zajęć?" subtitle="Od tego zależy, co Ci pokażemy" options={[
             { icon: User, label: 'Dla mnie', desc: 'Uczę się sam/sama', on: () => { setAudience('self'); go('location') } },
             { icon: Baby, label: 'Dla mojego dziecka', desc: 'Zajęcia dla dzieci i młodzieży', on: () => { setAudience('child'); go('location') } },
-            { icon: Building2, label: 'Dla mojej firmy', desc: 'Szkolenia dla zespołu', on: () => { window.location.href = '/dla-firm' } },
+            { icon: Building2, label: 'Dla mojej firmy', desc: 'Szkolenia dla zespołu', on: () => { window.location.href = '/pl/companies#zapytanie-firmowe' } },
             { icon: HelpCircle, label: 'Jeszcze nie wiem', desc: 'Doradźcie mi — opowiem, o co chodzi', on: () => { setAudience('unsure'); go('advice') } },
           ]} />
         )}
@@ -551,7 +566,7 @@ function TermsBlock({ terms, requiredConsents, optionalConsents, checked, setChe
           <li>• Rezygnacja z miesięcznym okresem wypowiedzenia — bez umów na rok.</li>
         </ul>
         {terms && (
-          <a href="/regulamin" target="_blank" rel="noopener noreferrer"
+          <a href="/pl/terms-of-service" target="_blank" rel="noopener noreferrer"
             className="inline-block mt-3 text-xs font-bold text-[#23479E] underline">
             Przeczytaj pełny regulamin →
           </a>
