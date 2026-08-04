@@ -87,7 +87,9 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex justify-end">
-              <Link href="/zapomniane-haslo" className="text-xs text-[#23479E] hover:underline">Zapomniałem/am hasła</Link>
+              {/* Ta sama strona ustawia hasło pierwszy raz i resetuje zapomniane,
+                  więc etykieta musi pasować do obu sytuacji. */}
+              <Link href="/zapomniane-haslo" className="text-xs text-[#23479E] hover:underline">Nie masz hasła?</Link>
             </div>
             <button
               type="submit"
