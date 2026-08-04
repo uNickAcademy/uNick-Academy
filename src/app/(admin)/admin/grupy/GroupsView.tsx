@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays, CalendarPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
@@ -80,6 +80,26 @@ export function GroupsView({
     const { error } = await supabase.from('groups').update({ is_active: active }).eq('id', g.id)
     setBusyId(null)
     if (error) { alert('Nie udało się zmienić statusu: ' + error.message); return }
+    router.refresh()
+  }
+
+  // Harmonogram: tworzy lekcje na każdy dzień zajęć od początku do końca
+  // semestru. Bez tego uczeń zapisany do grupy ma pusty panel, mimo że mail
+  // potwierdzający podaje datę pierwszych zajęć. Powtórne wywołanie pomija
+  // istniejące terminy, więc kliknięcie dwa razy niczego nie dubluje.
+  async function generateLessons(g: GroupCard, regenerate: boolean) {
+    if (regenerate && !confirm(`Przebudować harmonogram grupy „${g.name}”?\n\nPrzyszłe, nieodbyte terminy zostaną usunięte i utworzone od nowa według obecnego dnia i godziny. Lekcje, które już się odbyły lub mają oznaczoną frekwencję, zostaną nietknięte.`)) return
+    setBusyId(g.id)
+    const res = await fetch('/api/admin/group-lessons', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupId: g.id, regenerate }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setBusyId(null)
+    if (!res.ok) { alert(data.error || 'Nie udało się utworzyć harmonogramu.'); return }
+    alert(data.created > 0
+      ? `Utworzono ${data.created} zajęć${data.removed ? `, usunięto ${data.removed} starych terminów` : ''}.`
+      : 'Harmonogram jest już kompletny — nie było czego dodać.')
     router.refresh()
   }
 
@@ -172,6 +192,18 @@ export function GroupsView({
                   className="w-full py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
                   Zarządzaj członkami
                 </button>
+                <div className="flex items-center gap-2 mt-2">
+                  <button onClick={() => generateLessons(g, false)} disabled={busyId === g.id}
+                    title="Tworzy brakujące zajęcia od początku do końca semestru"
+                    className="flex-1 py-2 rounded-xl border border-blue-200 text-xs font-semibold text-[#23479E] hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    <CalendarPlus size={13} />Uzupełnij harmonogram
+                  </button>
+                  <button onClick={() => generateLessons(g, true)} disabled={busyId === g.id}
+                    title="Usuwa przyszłe terminy i tworzy je od nowa — po zmianie dnia lub godziny zajęć"
+                    className="py-2 px-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    <RotateCcw size={13} />Przebuduj
+                  </button>
+                </div>
                 <div className="flex items-center gap-2 mt-2">
                   {g.isActive ? (
                     <button onClick={() => setActive(g, false)} disabled={busyId === g.id}
