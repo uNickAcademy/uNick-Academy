@@ -12,7 +12,7 @@ import {
   bookingApprovedEmail,
   monthlyPaymentEmail,
   internalNotificationEmail,
-  platformWelcomeEmail,
+  comebackEmail,
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
@@ -195,11 +195,11 @@ export async function sendProgressDigest(to: string, params: {
   await send(to, subject, html)
 }
 
-export async function sendPlatformWelcome(to: string, params: {
-  name: string
+export async function sendComeback(to: string, params: {
+  firstName: string
   referralCode: string
 }) {
-  const { subject, html } = platformWelcomeEmail({
+  const { subject, html } = comebackEmail({
     ...params,
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
   })
