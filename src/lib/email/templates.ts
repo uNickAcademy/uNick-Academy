@@ -583,9 +583,8 @@ export function adviceReceivedEmail(params: {
       <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
         <p style="font-size: 14px; font-weight: 700; color: #15803d; margin: 0 0 6px;">Nie musisz od razu brać kursu</p>
         <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
-          Możesz zacząć od krótkich zajęć próbnych — 15 minut za jedną czwartą stawki godzinowej.
-          Nie wiążemy nikogo umową na rok: z regularnych zajęć zrezygnujesz w każdej chwili,
-          z miesięcznym wypowiedzeniem.
+          Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Nie wiążemy nikogo umową
+          na rok: z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
         </p>
       </div>` : ''}
 

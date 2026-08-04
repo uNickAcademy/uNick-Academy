@@ -477,9 +477,8 @@ export function BookingWizard({ groups, terms, consents }: {
             </p>
             <p className="text-sm text-gray-600 mb-5 bg-green-50 border border-green-100 rounded-xl p-4 leading-relaxed">
               <span className="font-semibold text-green-700">Nie musisz od razu brać kursu.</span>{' '}
-              Możesz umówić się na krótkie zajęcia próbne — 15 minut za jedną czwartą stawki
-              godzinowej. Bez umów na rok: z regularnych zajęć zrezygnujesz w każdej chwili,
-              z miesięcznym wypowiedzeniem.
+              Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Bez umów na rok —
+              z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
             </p>
             <div className="space-y-3">
               <Field label={audience === 'child' ? 'Imię dziecka' : 'Imię'} value={name} onChange={setName} placeholder="Anna" />
