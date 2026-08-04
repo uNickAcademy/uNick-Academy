@@ -22,13 +22,12 @@ const XDEFAULT_LOCALE = "pl";
  * @param {string} args.description   meta description
  * @param {string} [args.ogImage]     opcjonalny obraz OG (ścieżka względna)
  */
-export function buildMetadata({ locale, path = "", title, description, ogImage = OG_IMAGE }) {
+export function buildMetadata({ locale, path = "", title, description, ogImage = OG_IMAGE, availableLocales = ["pl", "en"] }) {
   const canonicalPath = `/${locale}${path}`;
-  const languages = {
-    pl: `/pl${path}`,
-    en: `/en${path}`,
-    "x-default": `/${XDEFAULT_LOCALE}${path}`,
-  };
+  const languages = Object.fromEntries([
+    ...availableLocales.map((availableLocale) => [availableLocale, `/${availableLocale}${path}`]),
+    ["x-default", `/${availableLocales.includes(XDEFAULT_LOCALE) ? XDEFAULT_LOCALE : availableLocales[0]}${path}`],
+  ]);
 
   return {
     title,

@@ -58,6 +58,12 @@ export const siteConfig = {
   googleAnalyticsId: "G-RZZD2NLW6F",
 };
 
+export const foundationConfig = {
+  name: "uNick Academy Foundation", legalName: "UNICK ACADEMY FOUNDATION", legalForm: "Fundacja",
+  registrationDate: "18 grudnia 2025 r.", krs: "0001212961", nip: "7812102071", regon: "543545058",
+  address: { streetAddress: "Nowa 23", village: "Rumianek", postalCode: "62-080", addressLocality: "Tarnowo Podgórne", addressCountry: "Polska" },
+};
+
 // Pełny adres w jednej linii — do linków map i podpisów.
 export function fullAddressLine() {
   const a = siteConfig.address;
@@ -105,7 +111,10 @@ const NAV_ROUTES = [
     ],
   },
   { key: "howWeTeach", path: "/how-we-teach" },
-  { key: "meetUs", path: "/meet-us" },
+  { key: "meetUs", children: [
+    { key: "meetAcademy", path: "/meet-us" },
+    { key: "foundation", path: "/foundation", locales: ["pl"] },
+  ] },
   { key: "contact", path: "/contact" },
   { key: "teachersZone", path: "/teachers-zone" },
 ];
@@ -115,10 +124,9 @@ export function getPrimaryNav(locale, dict) {
     if (item.children) {
       return {
         label: dict.common.nav[item.key],
-        children: item.children.map((child) => ({
-          label: dict.common.nav[child.key],
-          href: `/${locale}${child.path}`,
-        })),
+        children: item.children
+          .filter((child) => !child.locales || child.locales.includes(locale))
+          .map((child) => ({ label: dict.common.nav[child.key], href: `/${locale}${child.path}` })),
       };
     }
     return {
