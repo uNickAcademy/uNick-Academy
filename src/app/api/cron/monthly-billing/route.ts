@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendMonthlyPayment } from '@/lib/email/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
+import { billFamilies } from '@/lib/billing/family'
 import { periodOf, periodLabel } from '@/lib/billing/engine'
 
 // Cron 1. dnia miesiąca (vercel.json: "0 6 1 * *").
@@ -28,41 +29,26 @@ export async function GET(req: NextRequest) {
   const students = await loadBillableStudents(supabase)
   const outcomes = await chargeStudentsForPeriod(supabase, students, period)
 
-  let charged = 0
-  let emailed = 0
-  let total = 0
+  // Obciążenia zostają per podkonto, ale rachunek idzie jeden na rodzinę.
+  const billed = await billFamilies(supabase, outcomes, label, {
+    createCheckout: (opts) => createCheckoutSession({
+      ...opts,
+      successUrl: `${base}/platnosci?success=true`,
+      cancelUrl: `${base}/platnosci?cancelled=true`,
+    }),
+    sendPayment: sendMonthlyPayment,
+  })
 
-  for (const o of outcomes) {
-    if (o.charged <= 0) continue
-    charged++
-    total += o.charged
-    if (!o.student.email) continue
-
-    let paymentUrl: string | null = null
-    try {
-      paymentUrl = await createCheckoutSession({
-        amount: o.charged, studentId: o.student.id, email: o.student.email,
-        description: `Zajęcia — ${label}`,
-        successUrl: `${base}/platnosci?success=true`,
-        cancelUrl: `${base}/platnosci?cancelled=true`,
-      })
-    } catch (err) {
-      console.error('[Cron monthly-billing] checkout error:', err)
-    }
-
-    await sendMonthlyPayment(o.student.email, {
-      studentName: o.student.name, monthLabel: label, amount: o.charged, paymentUrl,
-    })
-    emailed++
-  }
+  const charged = outcomes.filter((o) => o.charged > 0).length
 
   return NextResponse.json({
     success: true,
     monthLabel: label,
     considered: outcomes.length,
     charged,
-    emailed,
-    total,
+    families: billed.families,
+    emailed: billed.emailed,
+    total: billed.total,
     skipped: outcomes.length - charged,
   })
 }

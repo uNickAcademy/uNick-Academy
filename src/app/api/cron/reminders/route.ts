@@ -3,7 +3,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder, sendMonthlyPayment } from '@/lib/email/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
-import { periodOf } from '@/lib/billing/engine'
+import { periodOf, periodLabel } from '@/lib/billing/engine'
+import { billFamilies } from '@/lib/billing/family'
 import { activeStudentIds } from '@/lib/students/activity'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
@@ -319,28 +320,19 @@ export async function GET(req: NextRequest) {
     const billable = (await loadBillableStudents(supabase)).filter((s) => startedIds.has(s.id))
     const outcomes = await chargeStudentsForPeriod(supabase, billable, period)
 
-    for (const o of outcomes) {
-      if (o.charged <= 0) continue
-      topUps++
-      topUpTotal += o.charged
-      if (!o.student.email) continue
+    topUps = outcomes.filter((o) => o.charged > 0).length
+    topUpTotal = outcomes.reduce((a, o) => a + o.charged, 0)
 
-      let paymentUrl: string | null = null
-      try {
-        paymentUrl = await createCheckoutSession({
-          amount: o.charged, studentId: o.student.id, email: o.student.email,
-          description: `Zajęcia — ${o.periodLabel}`,
-          successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?success=true`,
-          cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?cancelled=true`,
-        })
-      } catch (err) {
-        console.error('[Cron reminders] checkout error:', err)
-      }
-
-      await sendMonthlyPayment(o.student.email, {
-        studentName: o.student.name, monthLabel: o.periodLabel, amount: o.charged, paymentUrl,
-      }).catch(() => {})
-    }
+    // Rodzic dostaje jeden rachunek za wszystkie dzieci, nie osobny za każde.
+    const base = process.env.NEXT_PUBLIC_APP_URL || ''
+    await billFamilies(supabase, outcomes, periodLabel(period), {
+      createCheckout: (opts) => createCheckoutSession({
+        ...opts,
+        successUrl: `${base}/platnosci?success=true`,
+        cancelUrl: `${base}/platnosci?cancelled=true`,
+      }),
+      sendPayment: sendMonthlyPayment,
+    })
   }
 
   return NextResponse.json({

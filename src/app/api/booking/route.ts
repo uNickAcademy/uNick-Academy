@@ -5,6 +5,7 @@ import {
 } from '@/lib/email/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { chargeStudentForPeriod, chargeFirstLesson } from '@/lib/billing/charge'
+import { billFamilies } from '@/lib/billing/family'
 import { firstBillablePeriod } from '@/lib/billing/engine'
 import { notifySchoolSms } from '@/lib/sms/send'
 import { createPasswordSetupLink } from '@/lib/auth/password-link'
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
       // wrześniu naliczamy wrzesień, choćby zapis był w sierpniu. Kolejne
       // miesiące dołoży cron pierwszego dnia miesiąca. Best-effort: problem
       // z naliczeniem nie może wywrócić samej rezerwacji miejsca.
-      let firstMonthCharge: { amount: number; monthLabel: string; paymentUrl: string | null } | null = null
+      let firstMonthCharged = false
       if (enrolledId) {
         try {
           const period = firstBillablePeriod({
@@ -136,19 +137,20 @@ export async function POST(req: NextRequest) {
             id: enrolledId, name: childName || fullName, email, customMonthlyPrice: null,
           }, period)
 
+          // Rachunek wystawiamy rodzinie: jeśli rodzeństwo ma nierozliczoną
+          // kwotę za ten sam miesiąc, wejdzie do tej samej płatności zamiast
+          // generować rodzicowi drugiego maila i drugi link.
           if (outcome.charged > 0) {
-            let paymentUrl: string | null = null
-            try {
-              paymentUrl = await createCheckoutSession({
-                amount: outcome.charged, studentId: enrolledId, email,
-                description: `${groupName} — ${outcome.periodLabel}`,
-                successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?success=true`,
-                cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?cancelled=true`,
-              })
-            } catch (err) {
-              console.error('[Booking group] checkout error:', err)
-            }
-            firstMonthCharge = { amount: outcome.charged, monthLabel: outcome.periodLabel, paymentUrl }
+            const base = process.env.NEXT_PUBLIC_APP_URL || ''
+            const billed = await billFamilies(supabase, [outcome], outcome.periodLabel, {
+              createCheckout: (opts) => createCheckoutSession({
+                ...opts,
+                successUrl: `${base}/platnosci?success=true`,
+                cancelUrl: `${base}/platnosci?cancelled=true`,
+              }),
+              sendPayment: sendMonthlyPayment,
+            })
+            firstMonthCharged = billed.emailed > 0
           }
         } catch (err) {
           console.error('[Booking group] billing error:', err)
@@ -162,15 +164,8 @@ export async function POST(req: NextRequest) {
         format: groupFormat, pricePerMonth: price, passwordLink,
       }).catch(() => {})
 
-      // Rachunek za pierwszy miesiąc osobnym mailem, razem z linkiem do płatności.
-      if (firstMonthCharge) {
-        await sendMonthlyPayment(email, {
-          studentName: childName || fullName,
-          monthLabel: firstMonthCharge.monthLabel,
-          amount: firstMonthCharge.amount,
-          paymentUrl: firstMonthCharge.paymentUrl,
-        }).catch(() => {})
-      }
+      // Rachunek za pierwszy miesiąc wyszedł już z billFamilies — osobnym
+      // mailem, razem z linkiem do płatności i rozbiciem na uczestników.
 
       await notifyAdmin(supabase, 'group', `Nowa rezerwacja miejsca: ${groupName}`,
         `${fullName}${childName ? ` (uczeń: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
@@ -191,7 +186,7 @@ export async function POST(req: NextRequest) {
         actionPath: '/admin/studenci',
       })
 
-      return NextResponse.json({ success: true, groupName, schedule, firstLessonDate: firstLessonLabel })
+      return NextResponse.json({ success: true, groupName, schedule, firstLessonDate: firstLessonLabel, billed: firstMonthCharged })
     }
 
     // ── „Jeszcze nie wiem" i zajęcia indywidualne ─────────────────────────
