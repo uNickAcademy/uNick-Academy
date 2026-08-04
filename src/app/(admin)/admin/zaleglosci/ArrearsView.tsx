@@ -148,7 +148,7 @@ export function ArrearsView({ report }: { report: ArrearsReport }) {
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
           <p className="font-bold flex items-center gap-2 mb-1"><AlertTriangle size={16} />Skąd bierze się ta kwota</p>
           <p>
-            Największa paczka obciążeń to <strong>„{biggestChargeBatch.description}"</strong> z {day(biggestChargeBatch.at)} —{' '}
+            Największa paczka obciążeń to <strong>&bdquo;{biggestChargeBatch.description}&rdquo;</strong> z {day(biggestChargeBatch.at)} —{' '}
             {biggestChargeBatch.count} obciążeń na {zl(biggestChargeBatch.amount)}. Naliczenie obejmuje wszystkich, którzy w tamtym
             momencie mieli status aktywny lub próbny, więc trafiają do niego również osoby, które nigdy nie zaczęły zajęć albo
             zostały później wstrzymane.

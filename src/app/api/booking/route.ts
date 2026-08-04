@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import {
-  sendBookingReceived, notifySchoolEmail, sendGroupReservation, sendAdviceReceived,
+  sendBookingReceived, notifySchoolEmail, sendGroupReservation, sendAdviceReceived, sendMonthlyPayment,
 } from '@/lib/email/send'
+import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { chargeStudentForPeriod, chargeFirstLesson } from '@/lib/billing/charge'
+import { firstBillablePeriod } from '@/lib/billing/engine'
 import { notifySchoolSms } from '@/lib/sms/send'
 import { createPasswordSetupLink } from '@/lib/auth/password-link'
 import { createLead, type LeadLocation, type LeadStudentType } from '@/lib/leads/create'
@@ -62,7 +65,7 @@ export async function POST(req: NextRequest) {
       if (!email || !fullName || !groupId) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
 
       const { data: group } = await supabase.from('groups')
-        .select('name, price_per_month, format, schedule_text, day_of_week, start_date')
+        .select('name, price_per_month, format, schedule_text, day_of_week, start_date, end_date')
         .eq('id', groupId).single()
       if (!group) return NextResponse.json({ error: 'Nie znaleźliśmy tej grupy.' }, { status: 400 })
 
@@ -115,12 +118,59 @@ export async function POST(req: NextRequest) {
         campaign: campaign ?? null,
       }).catch((err) => console.error('[Booking group] createLead error:', err))
 
+      // Pierwszy miesiąc kursu płatny przy zapisie — dla kursu startującego we
+      // wrześniu naliczamy wrzesień, choćby zapis był w sierpniu. Kolejne
+      // miesiące dołoży cron pierwszego dnia miesiąca. Best-effort: problem
+      // z naliczeniem nie może wywrócić samej rezerwacji miejsca.
+      let firstMonthCharge: { amount: number; monthLabel: string; paymentUrl: string | null } | null = null
+      if (enrolledId) {
+        try {
+          const period = firstBillablePeriod({
+            name: groupName,
+            pricePerMonth: group.price_per_month != null ? Number(group.price_per_month) : null,
+            startDate: (group.start_date as string | null) ?? null,
+            endDate: (group.end_date as string | null) ?? null,
+          }, new Date())
+
+          const outcome = await chargeStudentForPeriod(supabase, {
+            id: enrolledId, name: childName || fullName, email, customMonthlyPrice: null,
+          }, period)
+
+          if (outcome.charged > 0) {
+            let paymentUrl: string | null = null
+            try {
+              paymentUrl = await createCheckoutSession({
+                amount: outcome.charged, studentId: enrolledId, email,
+                description: `${groupName} — ${outcome.periodLabel}`,
+                successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?success=true`,
+                cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?cancelled=true`,
+              })
+            } catch (err) {
+              console.error('[Booking group] checkout error:', err)
+            }
+            firstMonthCharge = { amount: outcome.charged, monthLabel: outcome.periodLabel, paymentUrl }
+          }
+        } catch (err) {
+          console.error('[Booking group] billing error:', err)
+        }
+      }
+
       const passwordLink = await createPasswordSetupLink(supabase, email)
       await sendGroupReservation(email, {
         studentName: childName || fullName,
         groupName, schedule, firstLessonDate: firstLessonLabel,
         format: groupFormat, pricePerMonth: price, passwordLink,
       }).catch(() => {})
+
+      // Rachunek za pierwszy miesiąc osobnym mailem, razem z linkiem do płatności.
+      if (firstMonthCharge) {
+        await sendMonthlyPayment(email, {
+          studentName: childName || fullName,
+          monthLabel: firstMonthCharge.monthLabel,
+          amount: firstMonthCharge.amount,
+          paymentUrl: firstMonthCharge.paymentUrl,
+        }).catch(() => {})
+      }
 
       await notifyAdmin(supabase, 'group', `Nowa rezerwacja miejsca: ${groupName}`,
         `${fullName}${childName ? ` (uczeń: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
@@ -238,6 +288,26 @@ export async function POST(req: NextRequest) {
         console.error('[Booking online] RPC error:', error)
         return NextResponse.json({ error: 'Nie udało się zarezerwować lekcji.' }, { status: 500 })
       }
+      // Zajęcia indywidualne: przy zapisie płatna jest pierwsza lekcja.
+      // Pozostałe lekcje z tego miesiąca dolicza cron po jej odbyciu.
+      try {
+        const { data: booked } = await supabase
+          .from('students')
+          .select('id, full_name, profile:profiles!inner(email)')
+          .eq('profile.email', email)
+          .is('deleted_at', null)
+          .order('joined_at', { ascending: false })
+          .limit(1)
+        const student = booked?.[0]
+        if (student) {
+          await chargeFirstLesson(supabase, {
+            id: student.id, name: (student.full_name as string) || fullName, email, customMonthlyPrice: null,
+          }, startsAt.toISOString())
+        }
+      } catch (err) {
+        console.error('[Booking online] billing error:', err)
+      }
+
       const { data: teacher } = await supabase.from('teachers').select('profile:profiles(full_name)').eq('id', teacherId).single()
       const teacherName: string = (teacher?.profile as { full_name?: string } | null)?.full_name ?? 'Nauczyciel'
       await sendBookingReceived(email, {

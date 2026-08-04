@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder } from '@/lib/email/send'
+import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder, sendMonthlyPayment } from '@/lib/email/send'
+import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
+import { periodOf } from '@/lib/billing/engine'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -267,6 +270,56 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── 5. Doliczenie lekcji indywidualnych po pierwszych zajęciach ──────────
+  //
+  // Zapis na zajęcia indywidualne opłaca samą pierwszą lekcję. Gdy już się
+  // odbędzie, dopisujemy resztę lekcji przypadających w tym miesiącu (liczba
+  // lekcji × stawka) i wysyłamy link do płatności. Naliczenie idzie na ten sam
+  // okres rozliczeniowy, więc dopłata to dokładnie brakująca różnica.
+  let topUps = 0
+  let topUpTotal = 0
+
+  const period = periodOf(now)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const { data: heldThisMonth } = await supabase
+    .from('lessons')
+    .select('student_id')
+    .is('cancelled_at', null)
+    .is('group_id', null)
+    .gte('starts_at', monthStart.toISOString())
+    .lte('starts_at', now.toISOString())
+
+  const startedIds = new Set((heldThisMonth ?? []).map((l) => l.student_id as string))
+
+  if (startedIds.size > 0) {
+    const billable = (await loadBillableStudents(supabase)).filter((s) => startedIds.has(s.id))
+    const outcomes = await chargeStudentsForPeriod(supabase, billable, period)
+
+    for (const o of outcomes) {
+      if (o.charged <= 0) continue
+      topUps++
+      topUpTotal += o.charged
+      if (!o.student.email) continue
+
+      let paymentUrl: string | null = null
+      try {
+        paymentUrl = await createCheckoutSession({
+          amount: o.charged, studentId: o.student.id, email: o.student.email,
+          description: `Zajęcia — ${o.periodLabel}`,
+          successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?success=true`,
+          cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/platnosci?cancelled=true`,
+        })
+      } catch (err) {
+        console.error('[Cron reminders] checkout error:', err)
+      }
+
+      await sendMonthlyPayment(o.student.email, {
+        studentName: o.student.name, monthLabel: o.periodLabel, amount: o.charged, paymentUrl,
+      }).catch(() => {})
+    }
+  }
+
   return NextResponse.json({
     autoPresent: autoPresentCount,
     reminders: upcomingLessons?.length ?? 0,
@@ -276,6 +329,8 @@ export async function GET(req: NextRequest) {
     progressDigests,
     prepEmails,
     startReminders,
+    topUps,
+    topUpTotal,
     ranWeekly: isMonday,
   })
 }
