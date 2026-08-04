@@ -2,6 +2,7 @@ import { getCurrentTerms, getConsentTypes, getPublicGroups } from '@/lib/supabas
 import { BookingWizard } from './BookingWizard'
 import { ConsultationProvider } from '@/app/components/ConsultationProvider'
 import ConsultationButton from '@/app/components/ConsultationButton'
+import { TrustStrip } from './SocialProof'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,8 @@ export default async function ZapisyPage() {
             consents={consents.map((c) => ({ id: c.id, label: c.label, description: c.description ?? '', required: c.required }))}
           />
         </div>
+        <TrustStrip />
+
         <div className="text-center mt-6">
           <ConsultationButton>Wolę porozmawiać z człowiekiem</ConsultationButton>
         </div>

@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
 import { track, readCampaign } from '@/lib/analytics/track'
+import { pickTestimonial } from '@/lib/social-proof'
+import { ProofQuote } from './SocialProof'
 
 const DAYS_PL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
@@ -123,6 +125,16 @@ export function BookingWizard({ groups, terms, consents }: {
   }, [groups, location, audience, ageNum, adultLevel])
 
   const selectedGroup = groups.find((g) => g.id === groupId) ?? null
+
+  // Dowód dobrany do tego, kogo dotyczy zapis. W kroku 5 pokazujemy inną
+  // opinię niż w kroku 4 — powtórzenie tej samej wygląda jak jedyna, jaką mamy.
+  const proofOptions = pickTestimonial({ audience, age: ageNum, online: location === 'online' })
+  // Tuż przed kliknięciem pokazujemy osobie wybierającej online opinię kogoś,
+  // kto też miał wątpliwości co do tej formy — to najczęstsza obawa na tym etapie.
+  const proofDetails = pickTestimonial({
+    audience, age: ageNum, online: location === 'online', skip: proofOptions?.author,
+    prefer: location === 'online' ? 'online' : undefined,
+  })
 
   function scheduleOf(g: PublicGroup): string {
     const day = g.dayOfWeek != null ? DAYS_PL[g.dayOfWeek] : null
@@ -256,7 +268,7 @@ export function BookingWizard({ groups, terms, consents }: {
       <div className="min-h-72">
         {/* KROK 1 — dla kogo */}
         {screen === 'audience' && (
-          <Choice title="Dla kogo szukasz zajęć?" subtitle="Od tego zależy, co Ci pokażemy" options={[
+          <Choice title="Dla kogo szukasz zajęć?" subtitle="Od ponad 10 lat uczymy w Rumianku i online — powiedz nam, kogo szukasz, a pokażemy tylko to, co pasuje" options={[
             { icon: User, label: 'Dla mnie', desc: 'Uczę się sam/sama', on: () => { setAudience('self'); go('location') } },
             { icon: Baby, label: 'Dla mojego dziecka', desc: 'Zajęcia dla dzieci i młodzieży', on: () => { setAudience('child'); go('location') } },
             { icon: Building2, label: 'Dla mojej firmy', desc: 'Szkolenia dla zespołu', on: () => { window.location.href = '/pl/companies#zapytanie-firmowe' } },
@@ -277,8 +289,10 @@ export function BookingWizard({ groups, terms, consents }: {
           <div>
             <Heading title="Ile lat ma dziecko?" subtitle="Dobierzemy grupę do wieku" />
             <div className="max-w-xs mx-auto">
+              {/* Bez autoFocus: na telefonie klawiatura wjeżdża od razu i zasłania
+                  przycisk „Pokaż dopasowane grupy". */}
               <input type="number" min={2} max={19} value={age} onChange={(e) => setAge(e.target.value)}
-                placeholder="np. 8" autoFocus
+                placeholder="np. 8" inputMode="numeric"
                 className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 text-center text-2xl font-bold focus:outline-none focus:border-[#23479E]" />
               <p className="text-xs text-gray-400 text-center mt-2">Uczymy dzieci od 2. roku życia</p>
             </div>
@@ -308,8 +322,10 @@ export function BookingWizard({ groups, terms, consents }: {
         {screen === 'options' && (
           <div>
             <Heading
-              title={matched.length > 0 ? 'To pasuje do Ciebie' : 'Nie mamy teraz pasującej grupy'}
-              subtitle={matched.length > 0 ? 'Wybierz termin, który Ci odpowiada' : 'Ale to nie koniec drogi'}
+              title={matched.length > 0 ? 'To pasuje do Ciebie' : 'Tego akurat nie mamy w grafiku'}
+              subtitle={matched.length > 0
+                ? 'Wybierz termin, który Ci odpowiada'
+                : 'Ale prawie zawsze da się coś dopasować — powiedz nam, czego szukasz'}
             />
             <div className="space-y-3">
               {matched.map((g) => (
@@ -328,13 +344,18 @@ export function BookingWizard({ groups, terms, consents }: {
                       {g.format === 'online' ? 'Online' : 'Rumianek'}
                     </span>
                     <span className="flex items-center gap-1 text-green-600 font-semibold">
-                      <Users size={12} />{g.spots} {g.spots === 1 ? 'wolne miejsce' : g.spots < 5 ? 'wolne miejsca' : 'wolnych miejsc'}
+                      <Users size={12} />{g.spots} z {g.capacity} miejsc wolnych
                     </span>
                   </div>
+                  {g.teacherName && g.teacherName !== '—' && (
+                    <p className="text-xs text-gray-500 mt-1.5">Prowadzi <span className="font-semibold text-gray-700">{g.teacherName}</span></p>
+                  )}
                   {g.description && <p className="text-xs text-gray-400 mt-2 leading-relaxed">{g.description}</p>}
                 </button>
               ))}
             </div>
+
+            {matched.length > 0 && <ProofQuote t={proofOptions} />}
 
             <div className="mt-5 pt-5 border-t border-gray-100 space-y-2">
               <button onClick={() => go('advice')}
@@ -359,6 +380,9 @@ export function BookingWizard({ groups, terms, consents }: {
             <div className="bg-gray-50 rounded-2xl p-4 mb-5">
               <p className="font-bold text-gray-900">{selectedGroup.name}</p>
               <p className="text-sm text-gray-500 mt-0.5">{scheduleOf(selectedGroup)}</p>
+              {selectedGroup.teacherName && selectedGroup.teacherName !== '—' && (
+                <p className="text-sm text-gray-500">Prowadzi {selectedGroup.teacherName} · grupa do {selectedGroup.capacity} osób</p>
+              )}
               {selectedGroup.pricePerMonth != null && (
                 <p className="text-sm font-bold text-[#23479E] mt-1">{selectedGroup.pricePerMonth} zł / miesiąc</p>
               )}
@@ -374,8 +398,20 @@ export function BookingWizard({ groups, terms, consents }: {
               <Field label="E-mail" type="email" value={email} onChange={setEmail} placeholder="anna@email.com" />
             </div>
 
+            <ProofQuote t={proofDetails} />
+
             <TermsBlock terms={terms} requiredConsents={requiredConsents} optionalConsents={optionalConsents}
               checked={checked} setChecked={setChecked} />
+
+            {/* Największa obawa zimnego rodzica brzmi „czy właśnie podpisuję się
+                na cały rok". Nie podpisuje — i to jest jedyne miejsce, w którym
+                da się to powiedzieć, zanim kliknie. */}
+            <p className="text-xs text-gray-500 leading-relaxed mt-4 bg-green-50 border border-green-100 rounded-xl p-3">
+              <span className="font-semibold text-green-700">Nie płacisz teraz.</span>{' '}
+              Rezerwujesz miejsce, a rachunek za pierwszy miesiąc wysyłamy osobno. Jeśli przed
+              pierwszymi zajęciami coś się zmieni, wystarczy jedna wiadomość — zwalniamy miejsce
+              bez żadnych kosztów.
+            </p>
           </div>
         )}
 
