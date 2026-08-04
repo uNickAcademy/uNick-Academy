@@ -25,6 +25,11 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/terms-of-service', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
 ]
 
+const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
+  { path: '/foundation', lastmod: '2026-08-04', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/foundation/privacy', lastmod: '2026-08-04', priority: 0.2, changeFrequency: 'yearly' },
+]
+
 // Lokalna strona docelowa ma inny slug w każdym języku, dlatego łączymy je
 // ręcznie jako parę hreflang.
 const LOCAL_LANDING = {
@@ -54,6 +59,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
         alternates: { languages },
       })
     }
+  }
+
+  for (const route of POLISH_ONLY_ROUTES) {
+    entries.push({
+      url: `${BASE}/pl${route.path}`,
+      lastModified: route.lastmod,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+      alternates: { languages: { pl: `${BASE}/pl${route.path}`, 'x-default': `${BASE}/pl${route.path}` } },
+    })
   }
 
   // Lokalna strona docelowa (para PL/EN o różnych slugach).

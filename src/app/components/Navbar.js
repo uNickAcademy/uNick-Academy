@@ -72,7 +72,7 @@ function DropdownItem({ item, pathname, onNavigate }) {
 
 export default function Navbar({ locale, dict }) {
   const [open, setOpen] = useState(false);
-  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(null);
   const pathname = usePathname();
   const primaryNav = getPrimaryNav(locale, dict);
   const homeHref = `/${locale}`;
@@ -150,27 +150,29 @@ export default function Navbar({ locale, dict }) {
         <div className={styles.mobilePanel}>
           {primaryNav.map((item) => {
             if (item.children) {
+              const groupKey = item.label;
+              const isExpanded = mobileExpanded === groupKey;
               return (
                 <div key={item.label} className={styles.mobileGroup}>
                   <button
                     className={styles.mobileGroupToggle}
-                    onClick={() => setMobileExpanded((v) => !v)}
-                    aria-expanded={mobileExpanded}
+                    onClick={() => setMobileExpanded((current) => current === groupKey ? null : groupKey)}
+                    aria-expanded={isExpanded}
                     type="button"
                   >
                     {item.label}
-                    <svg className={`${styles.chevron} ${mobileExpanded ? styles.chevronOpen : ""}`} width="12" height="7" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                    <svg className={`${styles.chevron} ${isExpanded ? styles.chevronOpen : ""}`} width="12" height="7" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                       <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
-                  {mobileExpanded && (
+                  {isExpanded && (
                     <div className={styles.mobileSubLinks}>
                       {item.children.map((child) => (
                         <Link
                           key={child.href}
                           href={child.href}
                           className={styles.mobileSubLink}
-                          onClick={() => { setOpen(false); setMobileExpanded(false); }}
+                          onClick={() => { setOpen(false); setMobileExpanded(null); }}
                         >
                           {child.label}
                         </Link>
