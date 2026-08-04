@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendBookingApproved } from '@/lib/email/send'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { periodKey, periodOf } from '@/lib/billing/engine'
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -105,9 +106,12 @@ export async function POST(req: NextRequest) {
         successUrl: `${base}/platnosci?success=true`,
         cancelUrl: `${base}/platnosci?cancelled=true`,
       })
+      // Okres rozliczeniowy = miesiąc pierwszej lekcji, żeby późniejsze
+      // doliczenie reszty miesiąca odjęło tę wpłatę zamiast liczyć ją od nowa.
       await db.from('transactions').insert({
         student_id: studentId, type: 'charge', amount,
         description: `Pierwsza lekcja — ${format(newStart, 'd.MM.yyyy')}`,
+        billing_period: periodKey(periodOf(newStart)),
       })
     } catch (err) {
       console.error('[Online booking approve] checkout error:', err)

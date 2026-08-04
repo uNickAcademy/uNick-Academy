@@ -111,20 +111,29 @@ export type DueInput = {
 export function computeMonthDue(input: DueInput): MonthDue {
   const { period, groups, lessons, plans, customMonthlyPrice } = input
 
+  const runningGroups = groups.filter((g) => groupRunsIn(g, period))
+  const individual = lessonsInPeriod(lessons.filter((l) => !l.groupId), period)
+
+  // Twarda zasada: bez zajęć nie ma opłaty. Uczeń, który w danym miesiącu nie
+  // ma ani kursu w toku, ani żadnej lekcji, nie może dostać obciążenia —
+  // dotyczy to również cen wynegocjowanych indywidualnie.
+  if (runningGroups.length === 0 && individual.length === 0) {
+    return { total: 0, lines: [], lessonsCount: 0, lessonRate: 0 }
+  }
+
   if (customMonthlyPrice != null && Number(customMonthlyPrice) > 0) {
     const amount = Math.round(Number(customMonthlyPrice))
-    return { total: amount, lines: [{ label: 'Cena indywidualna', amount }], lessonsCount: 0, lessonRate: 0 }
+    return { total: amount, lines: [{ label: 'Cena indywidualna', amount }], lessonsCount: individual.length, lessonRate: 0 }
   }
 
   const lines: DueLine[] = []
 
-  for (const g of groups) {
+  for (const g of runningGroups) {
     const price = g.pricePerMonth != null ? Number(g.pricePerMonth) : 0
-    if (price <= 0 || !groupRunsIn(g, period)) continue
+    if (price <= 0) continue
     lines.push({ label: g.name, amount: Math.round(price) })
   }
 
-  const individual = lessonsInPeriod(lessons.filter((l) => !l.groupId), period)
   const rate = individual.length > 0 ? pickLessonRate(plans, individual.length) : 0
   if (individual.length > 0 && rate > 0) {
     lines.push({

@@ -128,7 +128,10 @@ export async function chargeStudentsForPeriod(
     })
 
     const already = ctx.chargedByStudent[student.id] ?? 0
-    const delta = Math.round(due.total - already)
+    // Bezpiecznik: brak zajęć w miesiącu → zero naliczenia, niezależnie od
+    // tego, co jest w historii transakcji (np. korekta na minus nie może
+    // „odblokować" naliczenia komuś, kto nie ma za co płacić).
+    const delta = due.total <= 0 ? 0 : Math.round(due.total - already)
     const description = chargeDescription(period, due.lines)
 
     outcomes.push({
