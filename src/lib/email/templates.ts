@@ -489,3 +489,91 @@ export function referralEmail(params: {
     `),
   }
 }
+
+// ──────────────────────────────────────────
+// 12. Zaproszenie na platformę + kod polecenia (kampania jednorazowa)
+// ──────────────────────────────────────────
+// Polecenia dotąd działały werbalnie i bez żadnej nagrody — w bazie nie ma
+// ich ani jednego, bo nikt ich nie rejestrował, nie dlatego że ich nie było.
+// Mail dziękuje więc za coś, co ludzie faktycznie robili za darmo, i wprowadza
+// program jako rewanż, a nie jako nowość marketingową.
+//
+// Konta uczniów z importu mają losowe, nieodgadywalne hasła (migracja 101),
+// więc jedyną poprawną drogą wejścia jest „ustaw hasło" przez /zapomniane-haslo.
+// Instrukcja logowania musi to mówić wprost, inaczej ludzie będą próbowali
+// zgadywać hasło i odbijać się od ekranu logowania.
+export function platformWelcomeEmail(params: {
+  name: string
+  referralCode: string
+  appUrl: string
+}): { subject: string; html: string } {
+  const first = params.name.split(' ')[0]
+  return {
+    subject: `${first}, mamy dla Ciebie nową platformę — i kod, który coś daje`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Cześć ${first}!</h2>
+
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 20px;">
+        Chcieliśmy po prostu powiedzieć: dziękujemy. Za to, że uczycie się z nami —
+        i za to, że opowiadacie o nas dalej. Bo wiemy, że opowiadacie: większość osób,
+        które do nas trafiają, przychodzi z czyjegoś polecenia.
+      </p>
+
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+        Do tej pory nie mieliście z tego nic. To się właśnie zmienia — mamy dwie nowości.
+      </p>
+
+      <h3 style="font-size: 17px; font-weight: 800; margin: 0 0 10px;">1. Nowa platforma</h3>
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 12px;">
+        Od teraz w jednym miejscu znajdziecie swoje lekcje, terminy, postępy
+        i rozliczenia. Bez szukania po mailach.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 0 0 20px;">
+        <p style="color: #0f172a; font-size: 14px; font-weight: 700; margin: 0 0 10px;">Jak wejść pierwszy raz</p>
+        <p style="color: #475569; font-size: 14px; line-height: 1.7; margin: 0;">
+          Konto już na Was czeka — jest założone na ten adres e-mail.
+          Nie macie jeszcze hasła, więc ustawcie je sami: kliknijcie przycisk niżej,
+          wpiszcie ten adres, a my wyślemy link do ustawienia hasła.
+        </p>
+      </div>
+
+      ${btn('Ustaw hasło i wejdź →', `${params.appUrl}/zapomniane-haslo`)}
+
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+
+      <h3 style="font-size: 17px; font-weight: 800; margin: 0 0 10px;">2. Wasz kod polecenia</h3>
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">
+        Polecaliście nas dotąd zwyczajnie — w rozmowie, przy odbieraniu dzieci,
+        w wiadomości do koleżanki. Nigdy Wam się za to nie odwdzięczyliśmy.
+        Od teraz macie swój kod.
+      </p>
+
+      <div style="background: #f5f3ff; border-radius: 12px; padding: 20px; margin: 0 0 16px; text-align: center;">
+        <p style="color: #7c3aed; font-size: 13px; font-weight: 600; margin: 0 0 8px;">WASZ KOD</p>
+        <p style="font-size: 24px; font-weight: 900; font-family: monospace; color: #5b21b6; margin: 0; word-break: break-all;">${params.referralCode}</p>
+      </div>
+
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 8px;">
+        Przekażcie go komuś, kto myśli o angielsku. Kiedy ta osoba zapisze się
+        z Waszym kodem i opłaci zajęcia za 250 zł, <strong>oboje dostajecie po 50 zł</strong>
+        kredytu na kolejne lekcje.
+      </p>
+      <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 24px;">
+        Kod działa tylko dla osób, które nie uczyły się jeszcze u nas.
+        Kredyt pojawia się na koncie automatycznie — nie trzeba się o niego upominać.
+      </p>
+
+      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0;">
+        Do zobaczenia na zajęciach!<br />
+        <span style="color: #94a3b8; font-size: 14px;">Zespół uNick Academy</span>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+        Coś nie działa albo macie pytanie? Piszcie śmiało:
+        <a href="mailto:hello@unick-academy.pl" style="color: #7c3aed;">hello@unick-academy.pl</a>
+      </p>
+    `),
+  }
+}
