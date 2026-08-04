@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import {
   CheckCircle, ArrowLeft, Monitor, MapPin, User, Baby, Building2, HelpCircle,
   Clock, CalendarDays, Users,
@@ -9,6 +10,7 @@ import type { PublicGroup } from '@/lib/supabase/queries'
 import { track, readCampaign } from '@/lib/analytics/track'
 import { pickTestimonial } from '@/lib/social-proof'
 import { ProofQuote } from './SocialProof'
+import { Worries } from './Reassurance'
 
 const DAYS_PL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
@@ -301,6 +303,7 @@ export function BookingWizard({ groups, terms, consents }: {
               className="w-full mt-7 py-3 rounded-full gradient-primary text-white font-semibold text-sm disabled:opacity-40 hover:opacity-90">
               Pokaż dopasowane grupy
             </button>
+            <Worries audience="child" />
           </div>
         )}
 
@@ -316,6 +319,7 @@ export function BookingWizard({ groups, terms, consents }: {
                 </button>
               ))}
             </div>
+            <Worries audience="self" />
           </div>
         )}
 
@@ -328,6 +332,17 @@ export function BookingWizard({ groups, terms, consents }: {
                 ? 'Wybierz termin, który Ci odpowiada'
                 : 'Ale prawie zawsze da się coś dopasować — powiedz nam, czego szukasz'}
             />
+
+            {/* Puste wyniki to najdroższy moment całej ścieżki: za to kliknięcie
+                już zapłaciliśmy. Zamiast samego „nie ma” mówimy, czego nie ma
+                i co realnie możemy zaproponować zamiast tego. */}
+            {matched.length === 0 && (
+              <p className="text-sm text-gray-600 leading-relaxed bg-[#EAF3FF] border border-blue-100 rounded-2xl p-4 mb-5">
+                {audience === 'child' && location === 'online'
+                  ? 'Grupy online prowadzimy na razie tylko dla dorosłych. Dla dzieci mamy zajęcia online, ale indywidualne — dobierzemy nauczyciela i porę pod Wasz grafik. Albo zapraszamy do Rumianka, gdzie grup jest najwięcej.'
+                  : 'W tym wieku i o tej porze nie mamy w tej chwili otwartej grupy. Nie znaczy to, że nie da się nic zrobić — czasem otwieramy nowy termin, gdy zgłosi się kilka osób, a zajęcia indywidualne układamy pod Wasz grafik.'}
+              </p>
+            )}
             <div className="space-y-3">
               {matched.map((g) => (
                 <button key={g.id} onClick={() => { setGroupId(g.id); go('details') }}
@@ -348,13 +363,20 @@ export function BookingWizard({ groups, terms, consents }: {
                       <Users size={12} />{g.spots} z {g.capacity} miejsc wolnych
                     </span>
                   </div>
-                  {g.teacherName && g.teacherName !== '—' && (
-                    <p className="text-xs text-gray-500 mt-1.5">Prowadzi <span className="font-semibold text-gray-700">{g.teacherName}</span></p>
-                  )}
-                  <span className="inline-block mt-2 text-[11px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-2 py-0.5">
-                    Pierwsze zajęcia bez zobowiązań
-                  </span>
-                  {g.description && <p className="text-xs text-gray-400 mt-2 leading-relaxed">{g.description}</p>}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2.5">
+                    {g.teacherName && g.teacherName !== '—' && (
+                      <span className="flex items-center gap-2">
+                        <TeacherAvatar name={g.teacherName} photo={g.teacherPhoto} />
+                        <span className="text-xs text-gray-500">
+                          Prowadzi <span className="font-semibold text-gray-700">{g.teacherName}</span>
+                        </span>
+                      </span>
+                    )}
+                    <span className="text-[11px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-2 py-0.5">
+                      Pierwsze zajęcia bez zobowiązań
+                    </span>
+                  </div>
+                  {g.description && <p className="text-xs text-gray-500 mt-2 leading-relaxed">{g.description}</p>}
                 </button>
               ))}
             </div>
@@ -381,15 +403,23 @@ export function BookingWizard({ groups, terms, consents }: {
           <div>
             <Heading title="Ostatni krok" subtitle="Trzy pola i miejsce jest Twoje" />
 
-            <div className="bg-gray-50 rounded-2xl p-4 mb-5">
+            <div className="bg-gray-50 rounded-2xl p-4 mb-5 flex items-start gap-3">
+              {selectedGroup.teacherName !== '—' && (
+                <TeacherAvatar name={selectedGroup.teacherName} photo={selectedGroup.teacherPhoto} size={44} />
+              )}
+              <div className="min-w-0">
               <p className="font-bold text-gray-900">{selectedGroup.name}</p>
               <p className="text-sm text-gray-500 mt-0.5">{scheduleOf(selectedGroup)}</p>
               {selectedGroup.teacherName && selectedGroup.teacherName !== '—' && (
                 <p className="text-sm text-gray-500">Prowadzi {selectedGroup.teacherName} · grupa do {selectedGroup.capacity} osób</p>
               )}
               {selectedGroup.pricePerMonth != null && (
-                <p className="text-sm font-bold text-[#23479E] mt-1">{selectedGroup.pricePerMonth} zł / miesiąc</p>
+                <p className="text-sm font-bold text-[#23479E] mt-1">
+                  {selectedGroup.pricePerMonth} zł / miesiąc
+                  <span className="font-normal text-gray-400"> · ok. {Math.round(selectedGroup.pricePerMonth / 4)} zł za zajęcia</span>
+                </p>
               )}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -463,6 +493,7 @@ export function BookingWizard({ groups, terms, consents }: {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
               </div>
             </div>
+            <ProofQuote t={proofOptions} />
             <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
           </div>
         )}
@@ -508,7 +539,7 @@ export function BookingWizard({ groups, terms, consents }: {
         ) : <div />}
 
         {screen === 'details' && (
-          <button onClick={() => submit('group')} disabled={submitting || !requiredOk}
+          <button onClick={() => submit('group')} disabled={submitting}
             className="flex items-center gap-2 px-6 py-3 rounded-full bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed">
             <CheckCircle size={16} />{submitting ? 'Rezerwuję...' : 'Rezerwuję miejsce'}
           </button>
@@ -525,6 +556,32 @@ export function BookingWizard({ groups, terms, consents }: {
 }
 
 // ── Elementy wspólne ───────────────────────────────────────────────────────
+
+// Twarz prowadzącego. Rodzic wybiera człowieka, nie nazwę kursu — sama
+// nazwa nauczyciela nic mu nie mówi, jeśli szkoły nie zna.
+function TeacherAvatar({ name, photo, size = 28 }: { name: string; photo: string | null; size?: number }) {
+  if (!photo) {
+    return (
+      <span
+        className="rounded-full bg-[#EAF3FF] text-[#23479E] font-bold flex items-center justify-center flex-shrink-0"
+        style={{ width: size, height: size, fontSize: size * 0.4 }}
+        aria-hidden="true"
+      >
+        {name.charAt(0).toUpperCase()}
+      </span>
+    )
+  }
+  return (
+    <Image
+      src={photo}
+      alt={name}
+      width={size}
+      height={size}
+      className="rounded-full object-cover flex-shrink-0"
+      style={{ width: size, height: size }}
+    />
+  )
+}
 
 function Heading({ title, subtitle }: { title: string; subtitle: string }) {
   return (

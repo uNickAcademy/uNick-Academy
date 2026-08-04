@@ -765,7 +765,8 @@ export type PublicGroup = {
   id: string; name: string; level: string; levels: string[]; schedule_text: string; description: string
   age_range: string; ageMin: number | null; ageMax: number | null
   color: string; capacity: number; taken: number; spots: number
-  teacherName: string; teacherId: string; format: 'online' | 'offline' | null
+  teacherName: string; teacherId: string; teacherPhoto: string | null
+  format: 'online' | 'offline' | null
   pricePerMonth: number | null; dayOfWeek: number | null
   startDate: string | null; endDate: string | null
 }
@@ -783,7 +784,7 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
     supabase
       .from('groups')
       .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week, start_date, end_date,
-               teacher:teachers(id, profile:profiles(full_name))`)
+               teacher:teachers(id, photo_url, profile:profiles(full_name))`)
       .eq('is_active', true),
     supabase.rpc('public_group_seat_counts'),
   ])
@@ -793,7 +794,7 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
   return (data ?? []).map((g) => {
     const capacity = (g.capacity as number) ?? 0
     const taken = takenByGroup.get(g.id as string) ?? 0
-    const teacher = g.teacher as { id?: string; profile?: { full_name?: string } } | null
+    const teacher = g.teacher as { id?: string; photo_url?: string | null; profile?: { full_name?: string } } | null
     const levels = Array.isArray(g.levels) ? (g.levels as string[]) : []
     return {
       id: g.id as string, name: g.name as string, level: g.level as string,
@@ -805,6 +806,7 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
       color: (g.color as string) ?? '#23479E',
       capacity, taken, spots: Math.max(capacity - taken, 0),
       teacherName: teacher?.profile?.full_name ?? '—', teacherId: teacher?.id ?? '',
+      teacherPhoto: teacher?.photo_url ?? null,
       format: (g.format as 'online' | 'offline' | null) ?? null,
       pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
       dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
