@@ -76,6 +76,10 @@ export interface Teacher {
   is_active: boolean
   hourly_rate?: number
   rate_group?: number
+  /** Domyślna stawka wypłaty za pojedyncze zajęcia indywidualne online (zł/lekcja). */
+  online_individual_pay_rate?: number
+  /** Domyślna cena dla klienta za pojedyncze zajęcia indywidualne online (zł/lekcja). */
+  online_individual_client_rate?: number
   location?: string
   whatsapp_phone?: string
   contract_type?: TeacherContractType

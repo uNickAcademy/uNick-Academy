@@ -26,7 +26,12 @@ export type OnlineRow = {
   monthlyPrice: number | null
   createdAt: string
 }
-type TeacherOpt = { id: string; name: string }
+type TeacherOpt = {
+  id: string
+  name: string
+  onlineIndividualPayRate: number | null
+  onlineIndividualClientRate: number | null
+}
 
 export function OnlineBookingsView({ rows, teacherOptions, breakDates }: {
   rows: OnlineRow[]
@@ -58,7 +63,9 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
   r: OnlineRow; teacherOptions: TeacherOpt[]; breakDates: string[]
 }) {
   const router = useRouter()
+  const initialTeacher = teacherOptions.find((t) => t.id === r.teacherId)
   const [teacherId, setTeacherId] = useState(r.teacherId)
+  const selectedTeacher = teacherOptions.find((t) => t.id === teacherId) ?? initialTeacher
   const [meetingUrl, setMeetingUrl] = useState(r.meetingUrl)
 
   const [slots, setSlots] = useState<Slot[]>([
@@ -69,9 +76,26 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
   const [excludedDates, setExcludedDates] = useState<string[]>([])
   const [newExcluded, setNewExcluded] = useState('')
 
-  const [lessonPrice, setLessonPrice] = useState('')
-  const [teacherRate, setTeacherRate] = useState('')
+  // Startują z domyślnej stawki nauczyciela z /admin/nauczyciele (cennik
+  // szkoły) — admin może je dowolnie nadpisać dla tego konkretnego kursu.
+  const [lessonPrice, setLessonPrice] = useState(
+    initialTeacher?.onlineIndividualClientRate != null ? String(initialTeacher.onlineIndividualClientRate) : '',
+  )
+  const [teacherRate, setTeacherRate] = useState(
+    initialTeacher?.onlineIndividualPayRate != null ? String(initialTeacher.onlineIndividualPayRate) : '',
+  )
+  const [pricesTouched, setPricesTouched] = useState(false)
   const [paymentMode, setPaymentMode] = useState<'monthly' | 'upfront'>('monthly')
+
+  // Zmiana prowadzącego podmienia podpowiedź cenową — ale tylko dopóki admin
+  // ręcznie nie zaczął jej edytować, żeby nie nadpisać świadomej korekty.
+  function selectTeacher(id: string) {
+    setTeacherId(id)
+    if (pricesTouched) return
+    const t = teacherOptions.find((opt) => opt.id === id)
+    setLessonPrice(t?.onlineIndividualClientRate != null ? String(t.onlineIndividualClientRate) : '')
+    setTeacherRate(t?.onlineIndividualPayRate != null ? String(t.onlineIndividualPayRate) : '')
+  }
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -160,7 +184,7 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-gray-100 pt-4">
         <label className="text-xs text-gray-500">
           Prowadzący
-          <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
+          <select value={teacherId} onChange={(e) => selectTeacher(e.target.value)}
             className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white text-gray-900 focus:outline-none focus:border-[#23479E]">
             {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
@@ -250,11 +274,14 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
       <Section title="Pensja prowadzącego" icon={Banknote}>
         <label className="text-xs text-gray-500">
           Stawka za lekcję (zł)
-          <input type="number" min={0} value={teacherRate} onChange={(e) => setTeacherRate(e.target.value)} placeholder="np. 90"
+          <input type="number" min={0} value={teacherRate}
+            onChange={(e) => { setTeacherRate(e.target.value); setPricesTouched(true) }} placeholder="np. 90"
             className="mt-1 block w-40 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
         </label>
         <p className="text-xs text-gray-400 mt-1.5">
-          Puste = stawka z kartoteki nauczyciela.
+          {selectedTeacher?.onlineIndividualPayRate != null
+            ? 'Podpowiedź z cennika nauczyciela — zmień, jeśli ten kurs rozliczacie inaczej.'
+            : 'Puste = stawka z kartoteki nauczyciela.'}
           {teacherRate && schedule.length > 0 && (
             <> Koszt kursu: <strong className="text-gray-600">{zl(Number(teacherRate) * schedule.length)}</strong>.</>
           )}
@@ -266,8 +293,12 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label className="text-xs text-gray-500">
             Cena za zajęcia (zł)
-            <input type="number" min={0} value={lessonPrice} onChange={(e) => setLessonPrice(e.target.value)} placeholder="np. 75"
+            <input type="number" min={0} value={lessonPrice}
+              onChange={(e) => { setLessonPrice(e.target.value); setPricesTouched(true) }} placeholder="np. 75"
               className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+            {selectedTeacher?.onlineIndividualClientRate != null && (
+              <span className="block text-[11px] text-gray-400 mt-0.5">z cennika: {selectedTeacher.onlineIndividualClientRate} zł</span>
+            )}
           </label>
           <label className="text-xs text-gray-500">
             Klient płaci

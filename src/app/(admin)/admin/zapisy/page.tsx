@@ -76,7 +76,12 @@ export default async function ZapisyAdminPage() {
     createdAt: new Date(b.createdAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
   }))
 
-  const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({ id: t.id, name: t.profile?.full_name ?? '—' }))
+  const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({
+    id: t.id,
+    name: t.profile?.full_name ?? '—',
+    onlineIndividualPayRate: t.online_individual_pay_rate ?? null,
+    onlineIndividualClientRate: t.online_individual_client_rate ?? null,
+  }))
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
