@@ -128,9 +128,22 @@ export function metadataFirstName(user: AuthHookUser): string | null {
   const metadata = user.user_metadata
   if (!metadata) return null
 
-  for (const key of ['first_name', 'full_name', 'name']) {
+  // Tylko pola, które jednoznacznie oznaczają imię. `full_name` bywa w bazie
+  // zapisane jako „Nazwisko Imię” i wymaga osobnego rozpoznania.
+  for (const key of ['first_name', 'given_name']) {
     const value = metadata[key]
     if (typeof value === 'string' && value.trim()) return value.trim().split(/\s+/)[0]
+  }
+  return null
+}
+
+export function metadataFullName(user: AuthHookUser): string | null {
+  const metadata = user.user_metadata
+  if (!metadata) return null
+
+  for (const key of ['full_name', 'name']) {
+    const value = metadata[key]
+    if (typeof value === 'string' && value.trim() && !value.includes('@')) return value.trim()
   }
   return null
 }
