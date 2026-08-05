@@ -53,25 +53,15 @@ export async function GET(request: NextRequest) {
     csvRow(['wiek', 'deklaracje']),
     ...statistics.ages.map(item => csvRow([item.label, item.count])),
     '',
-    csvRow(['DOSTĘPNOŚĆ WEDŁUG DNI']),
-    csvRow(['dzień', 'deklaracje']),
-    ...statistics.days.map(item => csvRow([item.label, item.count])),
-    '',
-    csvRow(['DOSTĘPNOŚĆ WEDŁUG GODZINY']),
-    csvRow(['najwcześniejsza godzina', 'deklaracje']),
-    ...statistics.earliestStarts.map(item => csvRow([item.label, item.count])),
-    '',
     csvRow(['WSZYSTKIE DEKLARACJE']),
   ]
 
   const columns = [
     'created_at', 'status', 'respondent_type', 'participant_first_name',
-    'participant_age', 'municipality', 'locality', 'activities', 'activities_labels',
+    'participant_age', 'locality', 'activities', 'activities_labels',
     'primary_activity', 'primary_activity_label', 'attendance_commitment',
-    'available_days', 'earliest_start', 'preferred_locations', 'primary_location',
-    'travel_flexibility', 'alternative_locations', 'transport_barrier',
-    'english_comfort', 'motivations', 'motivation_other', 'organizational_needs',
-    'contact_name', 'email', 'phone', 'preferred_contact', 'consent_version',
+    'preferred_locations', 'primary_location', 'motivations', 'motivation_other',
+    'organizational_needs', 'contact_name', 'email', 'phone', 'consent_version',
     'privacy_notice_version', 'consented_at',
   ]
 
