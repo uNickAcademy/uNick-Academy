@@ -134,6 +134,8 @@ export interface Lesson {
   attendance?: AttendanceStatus
   homework?: string
   meeting_url?: string
+  /** Stawka prowadzącego za tę lekcję; brak = stawka z kartoteki nauczyciela. */
+  teacher_rate?: number | null
   student?: Student
   teacher?: Teacher
   materials?: LessonMaterial[]

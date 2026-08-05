@@ -106,10 +106,12 @@ export type DueInput = {
   plans: PlanInput[]
   /** Wynegocjowana cena miesięczna — jeśli ustawiona, zastępuje całą kalkulację. */
   customMonthlyPrice?: number | null
+  /** Ustalona cena za pojedyncze zajęcia — ma pierwszeństwo przed cennikiem. */
+  customLessonPrice?: number | null
 }
 
 export function computeMonthDue(input: DueInput): MonthDue {
-  const { period, groups, lessons, plans, customMonthlyPrice } = input
+  const { period, groups, lessons, plans, customMonthlyPrice, customLessonPrice } = input
 
   const runningGroups = groups.filter((g) => groupRunsIn(g, period))
   const individual = lessonsInPeriod(lessons.filter((l) => !l.groupId), period)
@@ -134,7 +136,12 @@ export function computeMonthDue(input: DueInput): MonthDue {
     lines.push({ label: g.name, amount: Math.round(price) })
   }
 
-  const rate = individual.length > 0 ? pickLessonRate(plans, individual.length) : 0
+  // Cena ustalona przy zatwierdzaniu kursu bije cennik ogólny.
+  const rate = individual.length === 0
+    ? 0
+    : customLessonPrice != null && Number(customLessonPrice) > 0
+      ? Math.round(Number(customLessonPrice))
+      : pickLessonRate(plans, individual.length)
   if (individual.length > 0 && rate > 0) {
     lines.push({
       label: `Lekcje indywidualne (${individual.length} × ${rate} zł)`,

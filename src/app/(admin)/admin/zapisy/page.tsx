@@ -1,4 +1,5 @@
-import { getBookingRequests, getAllTeachersAdmin, getPendingOnlineBookings, getInboxLeads } from '@/lib/supabase/queries'
+import { getBookingRequests, getAllTeachersAdmin, getPendingOnlineBookings, getInboxLeads, getHolidays } from '@/lib/supabase/queries'
+import { expandBreaks, dayOfWeek } from '@/lib/lessons/schedule'
 import { RequestsView } from './RequestsView'
 import { OnlineBookingsView } from './OnlineBookingsView'
 import { InboxView } from './InboxView'
@@ -20,12 +21,19 @@ function toLocalInput(iso: string): string {
 }
 
 export default async function ZapisyAdminPage() {
-  const [requests, teachers, onlinePending, inbox] = await Promise.all([
+  const [requests, teachers, onlinePending, inbox, holidays] = await Promise.all([
     getBookingRequests(),
     getAllTeachersAdmin(),
     getPendingOnlineBookings(),
     getInboxLeads(),
+    getHolidays(),
   ])
+
+  // Przerwy szkolne pokazujemy w podglądzie kursu, żeby liczba lekcji i wartość
+  // widoczne w formularzu zgadzały się z tym, co policzy serwer.
+  const breakDates = expandBreaks(
+    holidays.map((h) => ({ start_date: String(h.start_date), end_date: String(h.end_date) })),
+  )
 
   const rows = requests.map((r) => {
     const slots = (r.available_slots as { day: number; time: string }[] | null) ?? []
@@ -56,6 +64,12 @@ export default async function ZapisyAdminPage() {
       weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw',
     }),
     firstStartsAtInput: toLocalInput(b.firstStartsAt),
+    // Rozbite na dzień/datę/godzinę czasu polskiego — z tego formularz układa
+    // pierwszy termin tygodniowy i początek kursu.
+    firstDate: toLocalInput(b.firstStartsAt).slice(0, 10),
+    firstTime: toLocalInput(b.firstStartsAt).slice(11, 16),
+    firstDay: dayOfWeek(toLocalInput(b.firstStartsAt).slice(0, 10)),
+    durationMinutes: b.durationMinutes,
     lessonCount: b.lessonCount,
     meetingUrl: b.meetingUrl,
     monthlyPrice: b.monthlyPrice,
@@ -85,7 +99,7 @@ export default async function ZapisyAdminPage() {
         <p className="text-xs text-gray-400 mb-3">
           Zgłoszenia sprzed przebudowy kreatora. Nowe zajęcia indywidualne trafiają do skrzynki wyżej.
         </p>
-        <OnlineBookingsView rows={onlineRows} teacherOptions={teacherOptions} />
+        <OnlineBookingsView rows={onlineRows} teacherOptions={teacherOptions} breakDates={breakDates} />
       </section>
 
       <section id="stacjonarne" className="scroll-mt-6">

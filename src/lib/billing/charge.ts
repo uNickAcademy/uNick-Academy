@@ -17,6 +17,7 @@ export type BillableStudent = {
   name: string
   email: string | null
   customMonthlyPrice: number | null
+  customLessonPrice?: number | null
 }
 
 export type ChargeOutcome = {
@@ -125,6 +126,7 @@ export async function chargeStudentsForPeriod(
       lessons: ctx.lessonsByStudent[student.id] ?? [],
       plans: ctx.plans,
       customMonthlyPrice: student.customMonthlyPrice,
+      customLessonPrice: student.customLessonPrice ?? null,
     })
 
     const already = ctx.chargedByStudent[student.id] ?? 0
@@ -193,7 +195,9 @@ export async function chargeFirstLesson(
     (lessons.data ?? []).filter((l) => !l.group_id).map((l) => ({ startsAt: l.starts_at })),
     period,
   )
-  const rate = Math.round(pickLessonRate(plans, Math.max(1, inMonth.length)))
+  const rate = student.customLessonPrice != null && Number(student.customLessonPrice) > 0
+    ? Math.round(Number(student.customLessonPrice))
+    : Math.round(pickLessonRate(plans, Math.max(1, inMonth.length)))
   if (rate <= 0) return null
 
   const description = `Pierwsza lekcja — ${periodLabel(period)}`
@@ -217,7 +221,7 @@ export async function chargeFirstLesson(
 export async function loadBillableStudents(supabase: SupabaseClient): Promise<BillableStudent[]> {
   const { data } = await supabase
     .from('students')
-    .select('id, full_name, custom_monthly_price, profile:profiles(full_name, email)')
+    .select('id, full_name, custom_monthly_price, custom_lesson_price, profile:profiles(full_name, email)')
     .is('deleted_at', null)
     .neq('billing_type', 'b2b')
 
@@ -228,6 +232,7 @@ export async function loadBillableStudents(supabase: SupabaseClient): Promise<Bi
       name: (s.full_name as string) || p?.full_name || 'Uczeń',
       email: p?.email ?? null,
       customMonthlyPrice: s.custom_monthly_price != null ? Number(s.custom_monthly_price) : null,
+      customLessonPrice: s.custom_lesson_price != null ? Number(s.custom_lesson_price) : null,
     }
   })
 }
