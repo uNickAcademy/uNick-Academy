@@ -17,9 +17,9 @@ import { comebackEmail } from '@/lib/email/templates'
 //   * konta bez adresu e-mail,
 //   * osoby, którym ten mail już poszedł.
 //
-// Konta objęte incydentem naliczenia z 1.08 NIE są wykluczone, bo pokrywają się
-// niemal w całości z bazą nieaktywnych. Podgląd pokazuje ich liczbę osobno,
-// żeby decyzja o wysyłce do nich była świadoma.
+// Podgląd wypisuje osobno, ilu odbiorców ma ujemne saldo, żeby ciepła
+// wiadomość nie poszła do kogoś, kto ma u nas otwartą zaległość. Liczone
+// z realnych transakcji, nie z historycznej listy incydentu.
 
 const CAMPAIGN = 'powrot_wrzesien_2026'
 
