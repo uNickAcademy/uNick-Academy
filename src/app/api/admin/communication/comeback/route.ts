@@ -60,9 +60,55 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const confirm: boolean = body.confirm === true
+  const testTo: string | null = typeof body.testTo === 'string' ? body.testTo.trim() : null
   const limit: number = Number.isFinite(body.limit) ? Math.max(1, Math.min(500, body.limit)) : 500
 
   const admin = createAdminClient()
+
+  // ── Mail próbny ───────────────────────────────────────────────────────────
+  // Idzie na wskazany adres i NIE dotyka listy kampanii: nie zużywa odbiorcy,
+  // nie blokuje nikomu właściwej wysyłki. Dostaje jednak prawdziwy token, żeby
+  // dało się sprawdzić, czy zliczanie otwarć i kliknięć naprawdę działa.
+  if (testTo) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(testTo)) {
+      return NextResponse.json({ error: 'Niepoprawny adres w testTo' }, { status: 400 })
+    }
+
+    // Kod istniejącego ucznia, żeby próbka wyglądała jak realna wysyłka.
+    const { data: sampleStudent } = await admin
+      .from('students')
+      .select('referral_code, guardian_name, full_name, profile:profiles(full_name)')
+      .is('deleted_at', null)
+      .not('referral_code', 'is', null)
+      .limit(1)
+      .single()
+
+    const sp = Array.isArray(sampleStudent?.profile) ? sampleStudent?.profile[0] : sampleStudent?.profile
+    const sampleSource = (sampleStudent?.guardian_name as string | null)?.trim()
+      || (sp as { full_name?: string } | undefined)?.full_name?.trim()
+      || null
+    const kod = (sampleStudent?.referral_code as string | undefined) ?? 'uNickTest7DZS'
+
+    const { data: logRow } = await admin
+      .from('email_campaign_log')
+      .insert({ campaign: `test_${CAMPAIGN}`, student_id: null, email: testTo })
+      .select('track_token')
+      .single()
+
+    await sendComeback(testTo, {
+      firstName: greetingName(kod, sampleSource),
+      referralCode: kod,
+      trackToken: logRow?.track_token as string | undefined,
+    })
+
+    return NextResponse.json({
+      test: true,
+      wyslanoNa: testTo,
+      uzytyKod: kod,
+      trackToken: logRow?.track_token ?? null,
+      uwaga: 'Wysyłka testowa. Nie zapisała się na liście kampanii, więc nikomu nie zablokowała właściwego maila.',
+    })
+  }
 
   const { data: students, error: qErr } = await admin
     .from('students')
@@ -82,10 +128,16 @@ export async function POST(req: NextRequest) {
     .not('student_id', 'is', null)
   const active = new Set((futureRows ?? []).map((l) => l.student_id as string))
 
-  const { data: incidentRows } = await admin
-    .from('billing_incident_snapshot').select('student_id')
-    .eq('incident', 'abonament_sierpien_2026')
-  const inIncident = new Set((incidentRows ?? []).map((r) => r.student_id as string))
+  // Ostrzeżenie o otwartych obciążeniach liczymy z REALNEGO salda, a nie
+  // z samej przynależności do incydentu z 1.08 — po wycofaniu naliczeń
+  // przynależność nic już nie znaczy, a saldo mówi prawdę.
+  const { data: txRows } = await admin.from('transactions').select('student_id, type, amount')
+  const saldo = new Map<string, number>()
+  for (const t of txRows ?? []) {
+    const id = t.student_id as string
+    const kwota = Number(t.amount) || 0
+    saldo.set(id, (saldo.get(id) ?? 0) + (t.type === 'charge' ? -kwota : kwota))
+  }
 
   const { data: sentRows } = await admin
     .from('email_campaign_log').select('student_id').eq('campaign', CAMPAIGN)
@@ -109,7 +161,7 @@ export async function POST(req: NextRequest) {
       || (s.full_name as string | null)?.trim()
       || null
 
-    if (inIncident.has(s.id as string)) incidentCount++
+    if ((saldo.get(s.id as string) ?? 0) < 0) incidentCount++
 
     recipients.push({
       student_id: s.id as string,
@@ -127,7 +179,7 @@ export async function POST(req: NextRequest) {
       dryRun: true,
       doWyslania: selected.length,
       uwaga: incidentCount > 0
-        ? `${incidentCount} z tych osób ma otwarte obciążenie z 1.08 i dostało wezwanie do zapłaty. Rozstrzygnij zwroty przed wysyłką albo wyślij świadomie.`
+        ? `${incidentCount} z tych osób ma ujemne saldo. Sprawdź, czy to prawdziwe zaległości, zanim wyślesz im ciepłą wiadomość.`
         : null,
       pominieto: { b2b: skB2b, majaZaplanowaneLekcje: skActive, brakMaila: skNoEmail, juzWyslane: skSent },
       odbiorcy: selected.map((r) => ({ email: r.email, imie: r.first_name, kod: r.referral_code })),
