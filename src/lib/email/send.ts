@@ -19,6 +19,7 @@ import {
 } from './templates'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
+const FOUNDATION_FROM = 'uNick Academy Foundation <hello@unick-academy.pl>'
 
 // Leniwa inicjalizacja — klient powstaje dopiero przy wysyłce, gdy jest klucz.
 // Dzięki temu build nie wywala się, gdy RESEND_API_KEY nie jest ustawiony.
@@ -30,14 +31,14 @@ function getResend(): Resend | null {
 // ──────────────────────────────────────────
 // Pomocnik wysyłki
 // ──────────────────────────────────────────
-async function send(to: string, subject: string, html: string) {
+async function send(to: string, subject: string, html: string, from = FROM) {
   const resend = getResend()
   if (!resend) {
     console.warn('[Email] Brak RESEND_API_KEY — pomijam wysyłkę e-maila.')
     return
   }
   try {
-    await resend.emails.send({ from: FROM, to, subject, html })
+    await resend.emails.send({ from, to, subject, html })
   } catch (err) {
     console.error(`[Email] Błąd wysyłki do ${to}:`, err)
     // Nie rzucamy błędu – email to nie blokujący krok
@@ -52,6 +53,12 @@ export function isEmailConfigured() {
 // Adres szkoły do powiadomień wewnętrznych. Nadpisywalny przez env (można
 // podać kilka adresów po przecinku), żeby zmiana nie wymagała deploya.
 const SCHOOL_NOTIFY_EMAIL = process.env.SCHOOL_NOTIFY_EMAIL || 'hello@unick-academy.pl'
+const FOUNDATION_NOTIFY_EMAIL = process.env.FOUNDATION_NOTIFY_EMAIL || SCHOOL_NOTIFY_EMAIL
+
+const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+const foundationWrap=(body:string)=>`<!doctype html><html lang="pl"><body style="font-family:Arial;background:#f7f3e9;padding:20px"><div style="max-width:560px;margin:auto;background:white"><header style="background:#1e3449;color:white;padding:28px;text-align:center"><b>uNick Academy Foundation</b></header><main style="padding:32px">${body}</main><footer style="padding:20px;text-align:center;color:#64748b;background:#f8fafc;font-size:12px">UNICK ACADEMY FOUNDATION · KRS 0001212961<br>Wiadomość dotyczy wyłącznie projektu „Kreatorzy Przyszłości”.</footer></div></body></html>`
+export async function sendFoundationInterestConfirmation(to:string,p:{contactName:string;participantFirstName:string}){await send(to,'Otrzymaliśmy deklarację zainteresowania — Kreatorzy Przyszłości',foundationWrap(`<h2>Dziękujemy za deklarację</h2><p>${esc(p.contactName.split(' ')[0])}, zapisaliśmy informację o zainteresowaniu zajęciami dla ${esc(p.participantFirstName)}.</p><div style="background:#edf7f5;padding:18px;border-left:4px solid #247e85"><b>To nie jest jeszcze formalny zapis.</b><p>Zajęcia powstaną tylko wtedy, gdy projekt otrzyma dofinansowanie. Deklaracja nie gwarantuje miejsca.</p></div><p>Dane wykorzystamy wyłącznie w sprawie projektu — nie trafią do newslettera ani oferty płatnych kursów.</p>`),FOUNDATION_FROM)}
+export async function notifyFoundationEmail(p:{title:string;lines:string[]}){const url=`${process.env.NEXT_PUBLIC_APP_URL||'https://unick-academy.pl'}/admin/fundacja`,html=foundationWrap(`<h2>${esc(p.title)}</h2>${p.lines.map(x=>`<p>${esc(x)}</p>`).join('')}<a href="${url}">Otwórz deklaracje</a>`);for(const to of FOUNDATION_NOTIFY_EMAIL.split(',').map(x=>x.trim()).filter(Boolean))await send(to,p.title,html,FOUNDATION_FROM)}
 
 // Powiadomienie e-mail do szkoły o nowym zapisie/zapytaniu — fire-and-forget,
 // nigdy nie blokuje odpowiedzi dla klienta (błąd wysyłki tylko logujemy).

@@ -19,6 +19,8 @@ const en = {
       companies: "Companies",
       howWeTeach: "Our classes",
       meetUs: "Meet Us",
+      meetAcademy: "Meet uNick Academy",
+      foundation: "uNick Academy Foundation",
       contact: "Contact",
       teachersZone: "Teachers Zone",
       localSchool: "School in Tarnowo Podgórne",

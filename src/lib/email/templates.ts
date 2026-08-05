@@ -542,11 +542,20 @@ export function groupReservationEmail(params: {
         </table>
       </div>
 
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: 700; color: #15803d; margin: 0 0 6px;">Nic nie ryzykujesz</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
+          Przyjdź na pierwsze zajęcia i dopiero wtedy zdecyduj. Jeśli nie podejdą,
+          rezygnujesz bez żadnej opłaty — wystarczy, że dasz nam znać.
+        </p>
+      </div>
+
       <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;"><strong>Co dalej?</strong></p>
       <p style="color: #64748b; font-size: 14px; margin: 0 0 24px; line-height: 1.6;">
-        Nie musisz teraz nic płacić. Rachunek za pierwszy miesiąc wyślemy osobnym mailem —
-        płatność jest z góry, do 5. dnia miesiąca. Dzień przed startem dostaniesz od nas
-        wszystkie praktyczne szczegóły.
+        Nie musisz teraz nic płacić. Jeśli zostajesz, rachunek za pierwszy miesiąc wyślemy
+        osobnym mailem — płatność jest z góry, do 5. dnia miesiąca. Nie wiążemy nikogo umową
+        na rok: zrezygnować można w każdej chwili, z miesięcznym wypowiedzeniem.
+        Dzień przed startem dostaniesz od nas wszystkie praktyczne szczegóły.
       </p>
 
       ${passwordLink ? `
@@ -580,13 +589,22 @@ export function adviceReceivedEmail(params: {
           : 'Nie musisz wiedzieć z góry, co wybrać. Od tego jesteśmy my.'}
       </p>
 
-      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
         <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px;">Odezwiemy się w ciągu 2 dni roboczych</p>
         <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
           Zadzwonimy albo napiszemy — jak Ci wygodniej. Rozmowa trwa kilkanaście minut
           i do niczego nie zobowiązuje.
         </p>
       </div>
+
+      ${individual ? `
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+        <p style="font-size: 14px; font-weight: 700; color: #15803d; margin: 0 0 6px;">Nie musisz od razu brać kursu</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
+          Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Nie wiążemy nikogo umową
+          na rok: z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
+        </p>
+      </div>` : ''}
 
       ${passwordLink ? `
       <div style="background: #EAF3FF; border-radius: 12px; padding: 20px; margin-bottom: 8px;">
