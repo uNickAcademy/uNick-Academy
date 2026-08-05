@@ -198,6 +198,7 @@ export async function sendProgressDigest(to: string, params: {
 export async function sendComeback(to: string, params: {
   firstName: string
   referralCode: string
+  trackToken?: string
 }) {
   const { subject, html } = comebackEmail({
     ...params,

@@ -148,12 +148,19 @@ export async function POST(req: NextRequest) {
     try {
       // Log PRZED wysyłką: przy awarii w połowie wolimy pominąć jedną osobę
       // niż wysłać jej to samo drugi raz przy ponownym uruchomieniu.
-      const { error: logErr } = await admin.from('email_campaign_log').insert({
-        campaign: CAMPAIGN, student_id: r.student_id, email: r.email,
-      })
-      if (logErr) { skSent++; continue }
+      // Wiersz logu generuje track_token, którym oznaczamy piksel i linki.
+      const { data: logRow, error: logErr } = await admin
+        .from('email_campaign_log')
+        .insert({ campaign: CAMPAIGN, student_id: r.student_id, email: r.email })
+        .select('track_token')
+        .single()
+      if (logErr || !logRow) { skSent++; continue }
 
-      await sendComeback(r.email, { firstName: r.first_name, referralCode: r.referral_code })
+      await sendComeback(r.email, {
+        firstName: r.first_name,
+        referralCode: r.referral_code,
+        trackToken: logRow.track_token as string,
+      })
       sent++
     } catch (err) {
       console.error(`[Comeback] Błąd wysyłki do ${r.email}:`, err)
