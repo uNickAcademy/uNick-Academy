@@ -705,3 +705,187 @@ export function comebackEmail(params: {
 </html>`,
   }
 }
+
+// ──────────────────────────────────────────
+// Zapisy przez kreator /zapisy
+// ──────────────────────────────────────────
+
+// Potwierdzenie rezerwacji miejsca w grupie — wysyłane natychmiast po zapisie.
+// Zawiera konkret (nazwa, dzień, godzina, data startu), a nie ogólnik.
+export function groupReservationEmail(params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  firstLessonDate: string | null
+  format: 'online' | 'offline' | null
+  pricePerMonth: number | null
+  passwordLink?: string | null
+}): { subject: string; html: string } {
+  const { studentName, groupName, schedule, firstLessonDate, format, pricePerMonth, passwordLink } = params
+  return {
+    subject: `Miejsce zarezerwowane: ${groupName} 🎉`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Miejsce zarezerwowane! 🎉</h2>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Trzymamy dla Ciebie miejsce. Poniżej szczegóły.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Grupa</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${groupName}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Termin</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${schedule}</td></tr>
+          ${firstLessonDate ? `<tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Pierwsze zajęcia</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${firstLessonDate}</td></tr>` : ''}
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Forma</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${format === 'online' ? 'Online' : 'Stacjonarnie, Rumianek'}</td></tr>
+          ${pricePerMonth != null ? `<tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Cena</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${pricePerMonth} zł / mies.</td></tr>` : ''}
+        </table>
+      </div>
+
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: 700; color: #15803d; margin: 0 0 6px;">Nic nie ryzykujesz</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
+          Przyjdź na pierwsze zajęcia i dopiero wtedy zdecyduj. Jeśli nie podejdą,
+          rezygnujesz bez żadnej opłaty — wystarczy, że dasz nam znać.
+        </p>
+      </div>
+
+      <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;"><strong>Co dalej?</strong></p>
+      <p style="color: #64748b; font-size: 14px; margin: 0 0 24px; line-height: 1.6;">
+        Nie musisz teraz nic płacić. Jeśli zostajesz, rachunek za pierwszy miesiąc wyślemy
+        osobnym mailem — płatność jest z góry, do 5. dnia miesiąca. Nie wiążemy nikogo umową
+        na rok: zrezygnować można w każdej chwili, z miesięcznym wypowiedzeniem.
+        Dzień przed startem dostaniesz od nas wszystkie praktyczne szczegóły.
+      </p>
+
+      ${passwordLink ? `
+      <div style="background: #EAF3FF; border-radius: 12px; padding: 20px; margin-bottom: 8px;">
+        <p style="font-size: 14px; font-weight: 700; color: #23479E; margin: 0 0 6px;">Twoje konto jest gotowe</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0 0 12px;">
+          Założyliśmy je automatycznie — znajdziesz tam terminy, obecności i rozliczenia.
+          Ustaw hasło jednym kliknięciem:
+        </p>
+        ${btn('Ustawiam hasło', passwordLink)}
+      </div>` : ''}
+    `),
+  }
+}
+
+// Potwierdzenie zgłoszenia bez konkretnego terminu — ścieżka „jeszcze nie wiem"
+// i zajęcia indywidualne. Obiecuje konkretny czas odpowiedzi, nie ogólnik.
+export function adviceReceivedEmail(params: {
+  name: string
+  individual?: boolean
+  passwordLink?: string | null
+}): { subject: string; html: string } {
+  const { name, individual, passwordLink } = params
+  return {
+    subject: individual ? 'Mamy Twoje zgłoszenie — odezwiemy się 📨' : 'Dziękujemy — pomożemy wybrać 📨',
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Mamy Twoje zgłoszenie 📨</h2>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+        Cześć ${name.split(' ')[0]}! ${individual
+          ? 'Zajęcia indywidualne dobieramy w rozmowie — chcemy poznać cel i poziom, zanim zaproponujemy nauczyciela i porę.'
+          : 'Nie musisz wiedzieć z góry, co wybrać. Od tego jesteśmy my.'}
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
+        <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px;">Odezwiemy się w ciągu 2 dni roboczych</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
+          Zadzwonimy albo napiszemy — jak Ci wygodniej. Rozmowa trwa kilkanaście minut
+          i do niczego nie zobowiązuje.
+        </p>
+      </div>
+
+      ${individual ? `
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+        <p style="font-size: 14px; font-weight: 700; color: #15803d; margin: 0 0 6px;">Nie musisz od razu brać kursu</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.6;">
+          Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Nie wiążemy nikogo umową
+          na rok: z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
+        </p>
+      </div>` : ''}
+
+      ${passwordLink ? `
+      <div style="background: #EAF3FF; border-radius: 12px; padding: 20px; margin-bottom: 8px;">
+        <p style="font-size: 14px; font-weight: 700; color: #23479E; margin: 0 0 6px;">Twoje konto jest gotowe</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0 0 12px;">Ustaw hasło, żeby mieć wszystko w jednym miejscu:</p>
+        ${btn('Ustawiam hasło', passwordLink)}
+      </div>` : ''}
+    `),
+  }
+}
+
+// Mail „co zabrać / jak dojechać" (stacjonarnie) albo „link i test połączenia"
+// (online). Wysyłany dobę po rezerwacji przez cron.
+export function groupPrepEmail(params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  format: 'online' | 'offline' | null
+}): { subject: string; html: string } {
+  const { studentName, groupName, schedule, format } = params
+  const online = format === 'online'
+  return {
+    subject: online ? `Jak dołączyć do zajęć: ${groupName}` : `Jak trafić na zajęcia: ${groupName}`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">${online ? 'Jak dołączyć' : 'Jak do nas trafić'}</h2>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Kilka praktycznych rzeczy przed startem — ${groupName}, ${schedule}.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #06b6d4;">
+        ${online ? `
+        <p style="font-size: 14px; font-weight: 700; margin: 0 0 10px;">Przed pierwszymi zajęciami</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.7;">
+          • Link do spotkania wyślemy dzień wcześniej — działa w przeglądarce, nic nie instalujesz.<br>
+          • Sprawdź wcześniej mikrofon i kamerę, najlepiej na tym sprzęcie, na którym będziesz się uczyć.<br>
+          • Słuchawki pomagają bardziej, niż się wydaje — mniej echa, lepsze skupienie.<br>
+          • Dołącz 2–3 minuty wcześniej, żeby spokojnie zacząć.
+        </p>` : `
+        <p style="font-size: 14px; font-weight: 700; margin: 0 0 10px;">Adres i praktyczne szczegóły</p>
+        <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.7;">
+          • ul. Nowa 23, 62-080 Rumianek (gmina Tarnowo Podgórne).<br>
+          • Przed budynkiem jest gdzie zaparkować.<br>
+          • Wystarczy zeszyt i coś do pisania — resztę materiałów dajemy my.<br>
+          • Przyjdź 5 minut wcześniej na pierwsze zajęcia, żeby się rozejrzeć.
+        </p>`}
+      </div>
+
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+        Coś się zmieniło albo masz pytanie? Odpisz na tego maila — czytamy wszystkie.
+      </p>
+    `),
+  }
+}
+
+// Przypomnienie na trzy dni przed pierwszymi zajęciami grupy.
+export function groupStartReminderEmail(params: {
+  studentName: string
+  groupName: string
+  schedule: string
+  firstLessonDate: string
+  format: 'online' | 'offline' | null
+}): { subject: string; html: string } {
+  const { studentName, groupName, schedule, firstLessonDate, format } = params
+  return {
+    subject: `Za trzy dni startujemy: ${groupName} 🚀`,
+    html: wrap(`
+      <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Za trzy dni startujemy 🚀</h2>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">
+        Cześć ${studentName.split(' ')[0]}! Przypominamy o pierwszych zajęciach.
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #7c3aed;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Grupa</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${groupName}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Start</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${firstLessonDate}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Termin</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${schedule}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 13px; padding: 6px 0;">Forma</td><td style="font-weight: 700; font-size: 14px; text-align: right;">${format === 'online' ? 'Online' : 'Rumianek, ul. Nowa 23'}</td></tr>
+        </table>
+      </div>
+
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+        Nie możesz być? Odpisz — przesuniemy albo znajdziemy inny termin.
+      </p>
+    `),
+  }
+}

@@ -1,429 +1,613 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { CheckCircle, ArrowLeft, Monitor, MapPin, User, Users, Star, Clock, CalendarDays } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import Image from 'next/image'
+import {
+  CheckCircle, ArrowLeft, Monitor, MapPin, User, Baby, Building2, HelpCircle,
+  Clock, CalendarDays, Users,
+} from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
+import { track, readCampaign, readReferralCode } from '@/lib/analytics/track'
+import { pickTestimonial } from '@/lib/social-proof'
+import { ProofQuote } from './SocialProof'
+import { Worries } from './Reassurance'
 
-const DAYS_PL = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'] // 0 = poniedziałek (== day_of_week)
+const DAYS_PL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
-type Avail = { day_of_week: number; start_time: string; end_time: string }
-type TeacherOpt = { id: string; name: string; levels: string[]; rating: number; color: string; availability: Avail[] }
 type Consent = { id: string; label: string; description: string; required: boolean }
 type Terms = { version: number; title: string; content: string } | null
-type Slot = { day: number; time: string } // time "HH:MM"
 
-// Następne wystąpienie (>= teraz) danego dnia tygodnia (0=pon) i godziny
-function nextDate(day0Mon: number, time: string): Date {
-  const [h, m] = time.split(':').map(Number)
-  const targetDow = day0Mon === 6 ? 0 : day0Mon + 1 // JS: 0=niedziela
-  const d = new Date()
-  d.setSeconds(0, 0)
-  let diff = (targetDow - d.getDay() + 7) % 7
-  const cand = new Date(d); cand.setDate(d.getDate() + diff); cand.setHours(h, m, 0, 0)
-  if (diff === 0 && cand.getTime() <= Date.now()) diff = 7
-  const out = new Date(d); out.setDate(d.getDate() + diff); out.setHours(h, m, 0, 0)
-  return out
-}
+type Audience = 'self' | 'child' | 'company' | 'unsure'
+type Location = 'rumianek' | 'online'
+type AdultLevel = 'start' | 'blocked' | 'fluent'
 
-// Bloki 1h z przedziału dostępności
-function slotsFromAvailability(av: Avail[]): Slot[] {
-  const out: Slot[] = []
-  for (const a of av) {
-    const sh = Number(a.start_time.slice(0, 2)); const eh = Number(a.end_time.slice(0, 2))
-    for (let h = sh; h < eh; h++) out.push({ day: a.day_of_week, time: `${String(h).padStart(2, '0')}:00` })
-  }
-  return out.sort((x, y) => x.day - y.day || x.time.localeCompare(y.time))
-}
+// Trzy opisowe odpowiedzi zamiast liter CEFR — nikt spoza branży nie wie,
+// czym różni się A2 od B1. Mapowanie na poziomy grup zostaje po naszej stronie.
+const ADULT_LEVELS: { id: AdultLevel; label: string; desc: string; levels: string[] }[] = [
+  { id: 'start', label: 'Dopiero zaczynam', desc: 'Od podstaw albo po długiej przerwie', levels: ['A1', 'A2'] },
+  { id: 'blocked', label: 'Rozumiem, ale blokuję się przy mówieniu', desc: 'Znam słowa, gorzej z odwagą', levels: ['A2', 'B1'] },
+  { id: 'fluent', label: 'Mówię swobodnie, chcę więcej naturalności', desc: 'Płynność, niuanse, swoboda', levels: ['B1', 'B2', 'C1'] },
+]
 
-export function BookingWizard({ teachers, groups, terms, consents }: {
-  teachers: TeacherOpt[]; groups: PublicGroup[]; terms: Terms; consents: Consent[]
+const STEP_COUNT = 5
+
+export function BookingWizard({ groups, terms, consents }: {
+  groups: PublicGroup[]; terms: Terms; consents: Consent[]
 }) {
-  const [screen, setScreen] = useState<'start' | 'mode' | 'groupPick' | 'onlineSearch' | 'teacher' | 'onlineSlot' | 'onlineCalendar' | 'offlineGrid' | 'form'>('start')
-  const [kind, setKind] = useState<'group' | 'online' | 'stationary' | null>(null)
-  const [history, setHistory] = useState<string[]>([])
+  type Screen = 'audience' | 'location' | 'level' | 'options' | 'details' | 'advice' | 'individual' | 'done'
 
-  // dane wspólne
+  const [screen, setScreen] = useState<Screen>('audience')
+  const [history, setHistory] = useState<Screen[]>([])
+
+  const [audience, setAudience] = useState<Audience | null>(null)
+  const [location, setLocation] = useState<Location | null>(null)
+  const [age, setAge] = useState<string>('')
+  const [adultLevel, setAdultLevel] = useState<AdultLevel | null>(null)
   const [groupId, setGroupId] = useState<string>('')
-  const [teacherId, setTeacherId] = useState<string>('')
-  const [slot, setSlot] = useState<Slot | null>(null)
-  const [ongoing, setOngoing] = useState(false)
-  const [offlineSlots, setOfflineSlots] = useState<Slot[]>([])
-  const [address, setAddress] = useState('')
-  const [studentName, setStudentName] = useState('')
+  // Doprecyzowanie w ścieżce „jeszcze nie wiem”. `audience` zostaje 'unsure',
+  // żeby nie zgubić informacji, że osoba trafiła tu niezdecydowana.
+  const [unsureFor, setUnsureFor] = useState<Audience | null>(null)
+
+  const [name, setName] = useState('')
+  const [parentName, setParentName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [referralCode, setReferralCode] = useState('')
-  const [discountCode, setDiscountCode] = useState('')
+  const [message, setMessage] = useState('')
+  const [preferredTimes, setPreferredTimes] = useState('')
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
-  const [submitted, setSubmitted] = useState(false)
+  // Atrybucja z adresu: utm_campaign/utm_source z reklamy albo kod polecenia.
+  // Nie pokazujemy pola w formularzu — krok 5 ma zostać trzema polami — ale
+  // bez tego nie da się policzyć, ile kosztował uczeń z konkretnej kreacji.
+  // Czytamy przy inicjalizacji, nie w efekcie: wartość nigdzie się nie
+  // renderuje, więc różnica serwer/klient nie ma jak wywołać niezgodności.
+  const [campaign] = useState(() => readCampaign())
+  // Surowy kod polecenia z linku. Bez niego zapis nie uruchomi
+  // register_referral, więc polecający nigdy nie dostałby swoich 50 zł.
+  const [referralCode] = useState(() => readReferralCode())
+  // Start kreatora liczony raz na sesję odwiedzin. Inicjalizator stanu
+  // uruchamia się raz, więc nie potrzeba tu efektu ani strażnika.
+  useState(() => { track('zapisy_start', { campaign }); return true })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<{ kind: 'group' | 'advice' | 'individual'; groupName?: string; schedule?: string; firstLessonDate?: string | null } | null>(null)
 
-  // Kod polecenia z linku /zapisy?ref=KOD oraz deep-link z przycisków „Zapisz się”
-  // (?tryb=grupa&forma=offline/online lub ?tryb=indywidualnie)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const ref = params.get('ref')
-    if (ref) setReferralCode(ref.toUpperCase())
-    const tryb = params.get('tryb')
-    const forma = params.get('forma')
-    if (tryb === 'grupa') {
-      setKind('group')
-      if (forma === 'offline' || forma === 'online') setFilterFormat(forma)
-      setScreen('groupPick')
-    } else if (tryb === 'indywidualnie') {
-      setKind(null)
-      setScreen('mode')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
-  const go = (s: typeof screen) => { setHistory((h) => [...h, screen]); setScreen(s) }
-  const back = () => { setHistory((h) => { const c = [...h]; const prev = c.pop(); if (prev) setScreen(prev as typeof screen); return c }) }
-
-  const requiredOk = consents.filter((c) => c.required).every((c) => checked[c.id])
-  const teacher = teachers.find((t) => t.id === teacherId)
-
-  // Filtry listy grup
-  const [filterTeacher, setFilterTeacher] = useState('')
-  const [filterDay, setFilterDay] = useState('')
-  const [filterFormat, setFilterFormat] = useState('')
-  const [filterAge, setFilterAge] = useState('')
-  const groupTeacherOptions = Array.from(
-    new Map(groups.filter((g) => g.teacherId).map((g) => [g.teacherId, g.teacherName])).entries()
-  )
-  const ageNum = filterAge === '' ? null : Number(filterAge)
-  const filteredGroups = groups.filter((g) =>
-    (!filterTeacher || g.teacherId === filterTeacher) &&
-    (filterDay === '' || g.dayOfWeek === Number(filterDay)) &&
-    (!filterFormat || g.format === filterFormat) &&
-    (ageNum == null || Number.isNaN(ageNum) ||
-      ((g.ageMin == null || ageNum >= g.ageMin) && (g.ageMax == null || ageNum <= g.ageMax)))
-  )
-
-  async function handleSubmit() {
-    setError(null)
-    if (!studentName || !email) { setError('Podaj imię i e-mail.'); return }
-    if (!requiredOk) { setError('Zaakceptuj wymagane zgody.'); return }
-    setSubmitting(true)
-    let payload: Record<string, unknown> = {
-      kind: kind === 'stationary' ? 'stationary' : kind,
-      fullName: studentName, childName: studentName, email, phone,
-      termsVersion: terms?.version ?? null, consents: checked,
-      // Kod polecenia jedzie z każdą ścieżką zapisu, nie tylko z online.
-      referralCode,
-    }
-    if (kind === 'group') payload = { ...payload, groupId }
-    if (kind === 'online') {
-      if (!slot) { setError('Wybierz termin.'); setSubmitting(false); return }
-      payload = { ...payload, teacherId, slot: nextDate(slot.day, slot.time).toISOString(), ongoing, weeks: 12, discountCode }
-    }
-    if (kind === 'stationary') {
-      if (!address) { setError('Podaj adres zajęć.'); setSubmitting(false); return }
-      payload = { ...payload, address, slots: offlineSlots, level: 'A1' }
-    }
-    const res = await fetch('/api/booking', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) { setSubmitting(false); setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
-    // Zapis do grupy z ceną → od razu przekierowanie do płatności (Stripe: BLIK/P24/karta)
-    if (data.checkoutUrl) { window.location.href = data.checkoutUrl as string; return }
-    setSubmitting(false)
-    setSubmitted(true)
+  const stepNumber: Record<Screen, number | null> = {
+    audience: 1, location: 2, level: 3, options: 4, details: 5,
+    advice: null, individual: null, done: null,
   }
 
-  if (submitted) {
-    const isRequest = kind === 'stationary'
-    return (
-      <div className="text-center py-12">
-        <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6"><CheckCircle size={48} className="text-[#23479E]" /></div>
-        <h2 className="text-3xl font-black text-gray-900 mb-3">{isRequest ? 'Wysłane! 📨' : 'Gotowe! 🎉'}</h2>
-        <p className="text-gray-500 text-lg mb-2">{isRequest ? 'Prośba o zajęcia stacjonarne przyjęta.' : 'Zapis potwierdzony.'}</p>
-        <p className="text-gray-400 text-sm mb-6">{isRequest
-          ? <>Skontaktujemy się na <strong>{email}</strong>, aby potwierdzić termin i stawkę.</>
-          : <>Twoje zajęcia są zapisane na koncie <strong>{email}</strong>.</>}</p>
+  // Każde przejście dalej to ukończony krok — stąd mierzymy w `go`, a nie
+  // przy wejściu na ekran: interesuje nas, ilu ludzi krok DOKOŃCZYŁO.
+  const go = (s: Screen) => {
+    track('zapisy_krok', { z: screen, na: s, krok: stepNumber[screen] ?? 0, campaign })
+    setHistory((h) => [...h, screen]); setScreen(s); setError(null)
+  }
+  const back = () => setHistory((h) => {
+    const c = [...h]; const prev = c.pop()
+    if (prev) { setScreen(prev); setError(null) }
+    return c
+  })
 
-        <div className="bg-[#EAF3FF] border border-blue-100 rounded-2xl p-5 text-left max-w-sm mx-auto">
-          <p className="text-sm font-bold text-[#23479E] mb-2">Twoje konto w panelu</p>
-          <p className="text-sm text-gray-700">Login: <strong>{email}</strong></p>
-          <p className="text-xs text-gray-500 mt-3">
-            Aby ustawić hasło, wejdź na{' '}
-            <a href="/zapomniane-haslo" className="font-bold text-[#23479E] underline">unick-academy.pl/zapomniane-haslo</a>{' '}
-            i podaj swój email — wyślemy link do ustawienia hasła. Jeśli masz już konto u nas, użyj dotychczasowego hasła.
-          </p>
+
+  const requiredConsents = consents.filter((c) => c.required)
+  const optionalConsents = consents.filter((c) => !c.required)
+  const requiredOk = requiredConsents.every((c) => checked[c.id])
+  // Zgoda marketingowa zasila `leads.consent_marketing`; rozpoznajemy ją po
+  // etykiecie, bo `consent_types` nie ma osobnego znacznika rodzaju.
+  const marketingConsent = consents.find((c) => /marketing/i.test(c.label))
+
+  const ageNum = age === '' ? null : Number(age)
+
+  // Dopasowanie ofert: forma z kroku 2, wiek albo poziom z kroku 3.
+  const matched = useMemo(() => {
+    const wantFormat = location === 'online' ? 'online' : 'offline'
+    const levelSet = audience === 'self'
+      ? ADULT_LEVELS.find((l) => l.id === adultLevel)?.levels ?? []
+      : []
+    return groups
+      .filter((g) => g.format === wantFormat)
+      .filter((g) => g.spots > 0)
+      .filter((g) => {
+        if (audience === 'child') {
+          if (ageNum == null || Number.isNaN(ageNum)) return true
+          return (g.ageMin == null || ageNum >= g.ageMin) && (g.ageMax == null || ageNum <= g.ageMax)
+        }
+        if (audience === 'self') {
+          // Najpierw wiek, dopiero potem poziom. Bez tego dorosły „dopiero
+          // zaczynam" dostawał w propozycjach Crafty English — grupę A1,
+          // ale dla sześciolatków. Poziom sam w sobie nie mówi, dla kogo
+          // jest grupa.
+          if (g.ageMax != null && g.ageMax < 18) return false
+          if (levelSet.length === 0) return true
+          const gl = g.levels?.length ? g.levels : [g.level]
+          return gl.some((lv) => levelSet.includes(lv))
+        }
+        return true
+      })
+      .slice(0, 3)
+  }, [groups, location, audience, ageNum, adultLevel])
+
+  const selectedGroup = groups.find((g) => g.id === groupId) ?? null
+
+  // Dowód dobrany do tego, kogo dotyczy zapis. W kroku 5 pokazujemy inną
+  // opinię niż w kroku 4 — powtórzenie tej samej wygląda jak jedyna, jaką mamy.
+  const proofOptions = pickTestimonial({ audience, age: ageNum, online: location === 'online' })
+  // Tuż przed kliknięciem pokazujemy osobie wybierającej online opinię kogoś,
+  // kto też miał wątpliwości co do tej formy — to najczęstsza obawa na tym etapie.
+  const proofDetails = pickTestimonial({
+    audience, age: ageNum, online: location === 'online', skip: proofOptions?.author,
+    prefer: location === 'online' ? 'online' : undefined,
+  })
+
+  function scheduleOf(g: PublicGroup): string {
+    const day = g.dayOfWeek != null ? DAYS_PL[g.dayOfWeek] : null
+    return [day, g.schedule_text].filter(Boolean).join(', ') || 'termin do potwierdzenia'
+  }
+
+  async function submit(kind: 'group' | 'advice' | 'individual') {
+    setError(null)
+    if (!name.trim()) { setError('Podaj imię.'); return }
+    if (kind === 'group' && (!email.trim() || !phone.trim())) {
+      setError('Potrzebujemy e-maila i telefonu, żeby potwierdzić miejsce.'); return
+    }
+    if (kind !== 'group' && !email.trim() && !phone.trim()) {
+      setError('Zostaw e-mail albo telefon — inaczej nie damy rady się odezwać.'); return
+    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Ten adres e-mail wygląda na niepełny. Sprawdź go, proszę.'); return
+    }
+    if (kind === 'group' && !requiredOk) { setError('Zaakceptuj regulamin, żeby dokończyć rezerwację.'); return }
+
+    setSubmitting(true)
+    const isChild = audience === 'child'
+    const payload: Record<string, unknown> = {
+      kind,
+      fullName: isChild ? (parentName.trim() || name.trim()) : name.trim(),
+      childName: isChild ? name.trim() : '',
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      studentAge: ageNum != null && !Number.isNaN(ageNum) ? ageNum : null,
+      location,
+      audience: audience === 'unsure' ? (unsureFor ?? 'unsure') : audience,
+      undecided: audience === 'unsure',
+      consentMarketing: marketingConsent ? !!checked[marketingConsent.id] : false,
+      consentClause: marketingConsent?.label ?? null,
+      campaign,
+      referralCode,
+    }
+    if (kind === 'group') {
+      payload.groupId = groupId
+      payload.termsVersion = terms?.version ?? null
+      payload.consents = checked
+    } else {
+      payload.message = message.trim()
+      payload.preferredTimes = preferredTimes.trim()
+    }
+
+    const res = await fetch('/api/booking', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    })
+    const data = await res.json().catch(() => ({}))
+    setSubmitting(false)
+    if (!res.ok) { setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
+
+    track('zapisy_wyslane', {
+      rodzaj: kind,
+      grupa: (data.groupName as string) ?? null,
+      forma: location,
+      odbiorca: audience,
+      campaign,
+    })
+
+    setResult({
+      kind,
+      groupName: data.groupName, schedule: data.schedule, firstLessonDate: data.firstLessonDate,
+    })
+    setScreen('done')
+  }
+
+  // ── Ekran końcowy ────────────────────────────────────────────────────────
+  if (screen === 'done' && result) {
+    const isGroup = result.kind === 'group'
+    return (
+      <div className="text-center py-10">
+        <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
+          <CheckCircle size={48} className="text-[#23479E]" />
         </div>
+        <h2 className="text-3xl font-black text-gray-900 mb-3">
+          {isGroup ? 'Miejsce zarezerwowane 🎉' : 'Mamy Twoje zgłoszenie 📨'}
+        </h2>
+
+        {isGroup ? (
+          <>
+            <p className="text-gray-500 text-lg mb-5">{result.groupName} — {result.schedule}</p>
+            {result.firstLessonDate && (
+              <p className="text-gray-500 mb-5">Pierwsze zajęcia: <strong>{result.firstLessonDate}</strong></p>
+            )}
+            <div className="bg-[#EAF3FF] border border-blue-100 rounded-2xl p-5 text-left max-w-md mx-auto">
+              <p className="text-sm font-bold text-[#23479E] mb-2">Co dalej?</p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Potwierdzenie poszło na <strong>{email}</strong> — jest w nim link do ustawienia hasła
+                do Twojego konta. Nie musisz teraz nic płacić: przychodzisz na pierwsze zajęcia
+                i dopiero wtedy decydujesz. Jeśli nie podejdą, rezygnujesz bez żadnej opłaty.
+                Dzień przed startem dostaniesz praktyczne szczegóły.
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-500 text-lg mb-5">
+              Odezwiemy się <strong>w ciągu 2 dni roboczych</strong>.
+            </p>
+            <div className="bg-[#EAF3FF] border border-blue-100 rounded-2xl p-5 text-left max-w-md mx-auto">
+              <p className="text-sm font-bold text-[#23479E] mb-2">Co dalej?</p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Zadzwonimy albo napiszemy — jak Ci wygodniej. Rozmowa trwa kilkanaście minut,
+                pomaga dobrać poziom i porę, i do niczego nie zobowiązuje.
+                {email && <> Potwierdzenie wysłaliśmy na <strong>{email}</strong>.</>}
+              </p>
+            </div>
+          </>
+        )}
       </div>
     )
   }
 
+  const step = stepNumber[screen]
+
   return (
     <div>
+      {step && (
+        <div className="mb-7">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-[#23479E]">Krok {step} z {STEP_COUNT}</span>
+            <span className="text-xs text-gray-400">{Math.round((step / STEP_COUNT) * 100)}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full gradient-primary rounded-full transition-all duration-300"
+              style={{ width: `${(step / STEP_COUNT) * 100}%` }} />
+          </div>
+        </div>
+      )}
+
       <div className="min-h-72">
-        {/* 1. INDYWIDUALNIE / GRUPOWO */}
-        {screen === 'start' && (
-          <Choice title="Jak chcesz się uczyć?" subtitle="Wybierz formę zajęć" options={[
-            { icon: User, label: 'Indywidualnie', desc: 'Lekcje 1:1 z nauczycielem', on: () => { setKind(null); go('mode') } },
-            { icon: Users, label: 'Grupowo', desc: 'Zajęcia w grupie, niższa cena', on: () => { setKind('group'); go('groupPick') } },
+        {/* KROK 1 — dla kogo */}
+        {screen === 'audience' && (
+          <Choice title="Dla kogo szukasz zajęć?" subtitle="Od ponad 10 lat uczymy w Rumianku i online — powiedz nam, kogo szukasz, a pokażemy tylko to, co pasuje" options={[
+            { icon: User, label: 'Dla mnie', desc: 'Uczę się sam/sama', on: () => { setAudience('self'); go('location') } },
+            { icon: Baby, label: 'Dla mojego dziecka', desc: 'Zajęcia dla dzieci i młodzieży', on: () => { setAudience('child'); go('location') } },
+            { icon: Building2, label: 'Dla mojej firmy', desc: 'Szkolenia dla zespołu', on: () => { window.location.href = '/pl/companies#zapytanie-firmowe' } },
+            { icon: HelpCircle, label: 'Jeszcze nie wiem', desc: 'Doradźcie mi — opowiem, o co chodzi', on: () => { setAudience('unsure'); go('advice') } },
           ]} />
         )}
 
-        {/* 2. ONLINE / STACJONARNIE */}
-        {screen === 'mode' && (
-          <Choice title="Online czy stacjonarnie?" subtitle="Gdzie mają odbywać się zajęcia" options={[
-            { icon: Monitor, label: 'Online', desc: 'Wybierasz termin z grafiku nauczyciela', on: () => { setKind('online'); go('onlineSearch') } },
-            { icon: MapPin, label: 'Stacjonarnie', desc: 'Podajesz dostępność i adres – my potwierdzamy', on: () => { setKind('stationary'); go('offlineGrid') } },
+        {/* KROK 2 — gdzie */}
+        {screen === 'location' && (
+          <Choice title="Gdzie mają odbywać się zajęcia?" subtitle="Pokażemy tylko to, co pasuje" options={[
+            { icon: MapPin, label: 'W Rumianku', desc: 'Stacjonarnie, gmina Tarnowo Podgórne', on: () => { setLocation('rumianek'); go('level') } },
+            { icon: Monitor, label: 'Online', desc: 'Z dowolnego miejsca w Polsce', on: () => { setLocation('online'); go('level') } },
           ]} />
         )}
 
-        {/* GRUPY */}
-        {screen === 'groupPick' && (
+        {/* KROK 3 — wiek albo poziom */}
+        {screen === 'level' && audience === 'child' && (
           <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wybierz grupę</h2>
-            <p className="text-gray-500 text-center mb-4">Sprawdź terminy i wybierz grupę</p>
-
-            {groups.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <select value={filterTeacher} onChange={(e) => setFilterTeacher(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
-                  <option value="">Nauczyciel: wszyscy</option>
-                  {groupTeacherOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-                </select>
-                <select value={filterDay} onChange={(e) => setFilterDay(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
-                  <option value="">Dzień: wszystkie</option>
-                  {DAYS_PL.map((d, i) => <option key={d} value={i}>{d}</option>)}
-                </select>
-                <select value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400">
-                  <option value="">Forma: wszystkie</option>
-                  <option value="offline">Stacjonarnie</option>
-                  <option value="online">Online</option>
-                </select>
-                <input type="number" min={1} max={99} value={filterAge} onChange={(e) => setFilterAge(e.target.value)}
-                  placeholder="Wiek dziecka"
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-violet-400" />
-              </div>
-            )}
-
-            <div className="space-y-3 max-h-[26rem] overflow-y-auto">
-              {groups.length === 0 && <p className="text-center text-sm text-gray-400 py-8">Brak otwartych grup. Wybierz lekcje indywidualne.</p>}
-              {groups.length > 0 && filteredGroups.length === 0 && (
-                <p className="text-center text-sm text-gray-400 py-8">Brak grup pasujących do filtrów. Spróbuj zmienić kryteria.</p>
-              )}
-              {filteredGroups.map((g) => {
-                const full = g.spots <= 0
-                return (
-                  <button key={g.id} disabled={full} onClick={() => { setGroupId(g.id); go('form') }}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all ${full ? 'border-gray-100 opacity-50 cursor-not-allowed' : groupId === g.id ? 'border-violet-500 bg-[#EAF3FF]' : 'border-gray-200 hover:border-violet-300'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900">{g.name}</span>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-lg ${full ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
-                        {full ? 'Lista rezerwowa' : 'Wolne miejsca'}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
-                      {(g.levels?.length ? g.levels : [g.level]).map((lv) => (
-                        <span key={lv} className="bg-gray-100 px-1.5 py-0.5 rounded font-medium">{lv}</span>
-                      ))}
-                      {g.age_range && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{g.age_range}</span>}
-                      {g.format && (
-                        <span className="flex items-center gap-1">
-                          {g.format === 'online' ? <Monitor size={11} /> : <MapPin size={11} />}
-                          {g.format === 'online' ? 'Online' : 'Stacjonarnie'}
-                        </span>
-                      )}
-                      {g.schedule_text && <span className="flex items-center gap-1"><Clock size={11} />{g.schedule_text}</span>}
-                      <span>· {g.teacherName}</span>
-                    </div>
-                    {g.description && <p className="text-xs text-gray-400 mt-1">{g.description}</p>}
-                    {g.pricePerMonth != null && (
-                      <p className="text-sm font-bold text-[#23479E] mt-2">{g.pricePerMonth} zł / mies.</p>
-                    )}
-                  </button>
-                )
-              })}
+            <Heading title="Ile lat ma dziecko?" subtitle="Dobierzemy grupę do wieku" />
+            <div className="max-w-xs mx-auto">
+              {/* Bez autoFocus: na telefonie klawiatura wjeżdża od razu i zasłania
+                  przycisk „Pokaż dopasowane grupy". */}
+              <input type="number" min={2} max={19} value={age} onChange={(e) => setAge(e.target.value)}
+                placeholder="np. 8" inputMode="numeric"
+                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 text-center text-2xl font-bold focus:outline-none focus:border-[#23479E]" />
+              <p className="text-xs text-gray-400 text-center mt-2">Uczymy dzieci od 2. roku życia</p>
             </div>
+            <button onClick={() => go('options')} disabled={!age}
+              className="w-full mt-7 py-3 rounded-full gradient-primary text-white font-semibold text-sm disabled:opacity-40 hover:opacity-90">
+              Pokaż dopasowane grupy
+            </button>
+            <Worries audience="child" />
           </div>
         )}
 
-        {/* ONLINE: wyszukiwarka – po nauczycielu / po terminie */}
-        {screen === 'onlineSearch' && (
-          <Choice title="Jak chcesz szukać terminu?" subtitle="Po nauczycielu albo po wolnej godzinie" options={[
-            { icon: User, label: 'Po nauczycielu', desc: 'Wybierz lektora i zobacz jego wolne godziny', on: () => go('teacher') },
-            { icon: CalendarDays, label: 'Po terminie', desc: 'Kalendarz wolnych godzin – każdy nauczyciel w swoim kolorze', on: () => { setSlot(null); setTeacherId(''); go('onlineCalendar') } },
-          ]} />
-        )}
-
-        {/* ONLINE: nauczyciel */}
-        {screen === 'teacher' && (
+        {screen === 'level' && audience === 'self' && (
           <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wybierz nauczyciela</h2>
-            <p className="text-gray-500 text-center mb-6">Zobaczysz jego wolne terminy</p>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {teachers.map((t) => (
-                <button key={t.id} onClick={() => { setTeacherId(t.id); setSlot(null); go('onlineSlot') }}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${teacherId === t.id ? 'border-violet-500 bg-[#EAF3FF]' : 'border-gray-200 hover:border-violet-300'}`}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black text-white flex-shrink-0" style={{ backgroundColor: t.color }}>{t.name[0]}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900">{t.name}</span>
-                      <span className="flex items-center gap-0.5 text-xs text-amber-600"><Star size={11} className="fill-amber-400 text-amber-400" />{t.rating}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{t.availability.length > 0 ? `${slotsFromAvailability(t.availability).length} wolnych godzin/tydz.` : 'Brak ustawionego grafiku'}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ONLINE: wybór slotu */}
-        {screen === 'onlineSlot' && teacher && (
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wolne terminy – {teacher.name}</h2>
-            <p className="text-gray-500 text-center mb-6">Wybierz godzinę (powtarza się co tydzień)</p>
-            {(() => {
-              const opts = slotsFromAvailability(teacher.availability)
-              if (opts.length === 0) return <p className="text-center text-sm text-gray-400 py-8">Ten nauczyciel nie ma jeszcze ustawionego grafiku. Wróć i wybierz innego.</p>
-              return (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-72 overflow-y-auto mb-5">
-                  {opts.map((s) => {
-                    const sel = slot?.day === s.day && slot?.time === s.time
-                    return (
-                      <button key={`${s.day}-${s.time}`} onClick={() => setSlot(s)}
-                        className={`px-2 py-2 rounded-lg border text-xs font-semibold transition-all ${sel ? 'border-violet-500 bg-[#EAF3FF] text-[#23479E]' : 'border-gray-200 text-gray-600 hover:border-violet-300'}`}>
-                        {DAYS_PL[s.day]} {s.time}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-            <div className="flex gap-3">
-              {([{ v: false, l: 'Jednorazowo' }, { v: true, l: 'Co tydzień (ongoing)' }]).map((o) => (
-                <button key={String(o.v)} onClick={() => setOngoing(o.v)}
-                  className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${ongoing === o.v ? 'border-violet-500 bg-[#EAF3FF] text-[#23479E]' : 'border-gray-200 text-gray-600'}`}>{o.l}</button>
-              ))}
-            </div>
-            {slot && (
-              <button onClick={() => go('form')} className="w-full mt-5 py-3 rounded-full gradient-primary text-white font-semibold text-sm hover:opacity-90">
-                Dalej – {DAYS_PL[slot.day]} {slot.time}{ongoing ? ' (co tydzień)' : ''}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ONLINE: kalendarz wolnych terminów wszystkich nauczycieli */}
-        {screen === 'onlineCalendar' && (
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Wolne terminy</h2>
-            <p className="text-gray-500 text-center mb-4">Kliknij godzinę – kolor oznacza nauczyciela</p>
-            <FreeCalendar teachers={teachers} selected={slot} selectedTeacher={teacherId}
-              onPick={(tid, s) => { setTeacherId(tid); setSlot(s) }} />
-            {slot && teacher && (
-              <>
-                <div className="flex gap-3 mt-5">
-                  {([{ v: false, l: 'Jednorazowo' }, { v: true, l: 'Co tydzień (ongoing)' }]).map((o) => (
-                    <button key={String(o.v)} onClick={() => setOngoing(o.v)}
-                      className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${ongoing === o.v ? 'border-violet-500 bg-[#EAF3FF] text-[#23479E]' : 'border-gray-200 text-gray-600'}`}>{o.l}</button>
-                  ))}
-                </div>
-                <button onClick={() => go('form')} className="w-full mt-4 py-3 rounded-full gradient-primary text-white font-semibold text-sm hover:opacity-90">
-                  Dalej – {teacher.name}, {DAYS_PL[slot.day]} {slot.time}{ongoing ? ' (co tydzień)' : ''}
-                </button>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* STACJONARNIE: siatka dostępności + adres */}
-        {screen === 'offlineGrid' && (
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Twoja dostępność</h2>
-            <p className="text-gray-500 text-center mb-4">Zaznacz godziny, w których możesz mieć zajęcia</p>
-            <OfflineGrid selected={offlineSlots} setSelected={setOfflineSlots} />
-            <div className="mt-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adres zajęć</label>
-              <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ul. Przykładowa 1, Poznań"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-            </div>
-            <button onClick={() => go('form')} disabled={offlineSlots.length === 0 || !address}
-              className="w-full mt-5 py-3 rounded-full gradient-primary text-white font-semibold text-sm disabled:opacity-40 hover:opacity-90">Dalej</button>
-          </div>
-        )}
-
-        {/* WSPÓLNY FORMULARZ + ZGODY */}
-        {screen === 'form' && (
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">Twoje dane</h2>
-            <p className="text-gray-500 text-center mb-6">{kind === 'stationary' ? 'Wyślemy potwierdzenie terminu i stawki' : 'Potwierdzimy zapis e-mailem'}</p>
+            <Heading title="Jak dziś jest z Twoim angielskim?" subtitle="Bez testów — wybierz, co pasuje najbliżej" />
             <div className="space-y-3">
-              <Field label="Imię i nazwisko ucznia" value={studentName} onChange={setStudentName} placeholder="Jan Kowalski" />
-              <Field label="E-mail (kontakt / rodzic)" type="email" value={email} onChange={setEmail} placeholder="jan@email.com" />
-              <Field label="Telefon (opc.)" type="tel" value={phone} onChange={setPhone} placeholder="+48 600 000 000" />
-              {/* Kod polecenia działa na KAŻDEJ ścieżce zapisu — grupy są
-                  produktem wrześniowym, a dotąd po cichu gubiły kod.
-                  Bez .toUpperCase(): kody mają postać uNickAnna8DJ9, a
-                  porównanie w bazie i tak ignoruje wielkość liter. */}
-              <div className={kind === 'online' ? 'grid grid-cols-2 gap-3' : ''}>
-                <Field label="Kod polecenia (opc.)" value={referralCode} onChange={setReferralCode} placeholder="uNickAnna8DJ9" />
-                {kind === 'online' && (
-                  <Field label="Kod rabatowy (opc.)" value={discountCode} onChange={(v) => setDiscountCode(v.toUpperCase())} placeholder="RABAT" />
-                )}
+              {ADULT_LEVELS.map((l) => (
+                <button key={l.id} onClick={() => { setAdultLevel(l.id); go('options') }}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${adultLevel === l.id ? 'border-violet-500 bg-[#EAF3FF]' : 'border-gray-200 hover:border-violet-300'}`}>
+                  <p className="font-bold text-gray-900">{l.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{l.desc}</p>
+                </button>
+              ))}
+            </div>
+            <Worries audience="self" />
+          </div>
+        )}
+
+        {/* KROK 4 — dopasowane opcje */}
+        {screen === 'options' && (
+          <div>
+            <Heading
+              title={matched.length > 0 ? 'To pasuje do Ciebie' : 'Tego akurat nie mamy w grafiku'}
+              subtitle={matched.length > 0
+                ? 'Wybierz termin, który Ci odpowiada'
+                : 'Ale prawie zawsze da się coś dopasować — powiedz nam, czego szukasz'}
+            />
+
+            {/* Puste wyniki to najdroższy moment całej ścieżki: za to kliknięcie
+                już zapłaciliśmy. Zamiast samego „nie ma” mówimy, czego nie ma
+                i co realnie możemy zaproponować zamiast tego. */}
+            {matched.length === 0 && (
+              <p className="text-sm text-gray-600 leading-relaxed bg-[#EAF3FF] border border-blue-100 rounded-2xl p-4 mb-5">
+                {audience === 'child' && location === 'online'
+                  ? 'Grupy online prowadzimy na razie tylko dla dorosłych. Dla dzieci mamy zajęcia online, ale indywidualne — dobierzemy nauczyciela i porę pod Wasz grafik. Albo zapraszamy do Rumianka, gdzie grup jest najwięcej.'
+                  : 'W tym wieku i o tej porze nie mamy w tej chwili otwartej grupy. Nie znaczy to, że nie da się nic zrobić — czasem otwieramy nowy termin, gdy zgłosi się kilka osób, a zajęcia indywidualne układamy pod Wasz grafik.'}
+              </p>
+            )}
+            <div className="space-y-3">
+              {matched.map((g) => (
+                <button key={g.id} onClick={() => { setGroupId(g.id); go('details') }}
+                  className="w-full p-4 rounded-2xl border-2 border-gray-200 hover:border-violet-400 hover:bg-[#EAF3FF] text-left transition-all">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-bold text-gray-900">{g.name}</span>
+                    {g.pricePerMonth != null && (
+                      <span className="text-sm font-black text-[#23479E] whitespace-nowrap">{g.pricePerMonth} zł/mies.</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+                    <span className="flex items-center gap-1"><CalendarDays size={12} />{scheduleOf(g)}</span>
+                    <span className="flex items-center gap-1">
+                      {g.format === 'online' ? <Monitor size={12} /> : <MapPin size={12} />}
+                      {g.format === 'online' ? 'Online' : 'Rumianek'}
+                    </span>
+                    <span className="flex items-center gap-1 text-green-600 font-semibold">
+                      <Users size={12} />{g.spots} z {g.capacity} miejsc wolnych
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2.5">
+                    {g.teacherName && g.teacherName !== '—' && (
+                      <span className="flex items-center gap-2">
+                        <TeacherAvatar name={g.teacherName} photo={g.teacherPhoto} />
+                        <span className="text-xs text-gray-500">
+                          Prowadzi <span className="font-semibold text-gray-700">{g.teacherName}</span>
+                        </span>
+                      </span>
+                    )}
+                    <span className="text-[11px] font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-2 py-0.5">
+                      Pierwsze zajęcia bez zobowiązań
+                    </span>
+                  </div>
+                  {g.description && <p className="text-xs text-gray-500 mt-2 leading-relaxed">{g.description}</p>}
+                </button>
+              ))}
+            </div>
+
+            {matched.length > 0 && <ProofQuote t={proofOptions} />}
+
+            <div className="mt-5 pt-5 border-t border-gray-100 space-y-2">
+              <button onClick={() => go('advice')}
+                className="w-full p-3 rounded-xl border border-gray-200 hover:border-violet-300 text-left transition-all">
+                <p className="text-sm font-semibold text-gray-700">Żaden termin mi nie pasuje</p>
+                <p className="text-xs text-gray-400">Zostaw kontakt — poszukamy czegoś pod Ciebie</p>
+              </button>
+              <button onClick={() => go('individual')}
+                className="w-full p-3 rounded-xl border border-gray-200 hover:border-violet-300 text-left transition-all">
+                <p className="text-sm font-semibold text-gray-700">Wolę zajęcia indywidualne</p>
+                <p className="text-xs text-gray-400">Dobierzemy nauczyciela i porę w krótkiej rozmowie</p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* KROK 5 — dane i potwierdzenie */}
+        {screen === 'details' && selectedGroup && (
+          <div>
+            <Heading title="Ostatni krok" subtitle="Trzy pola i miejsce jest Twoje" />
+
+            <div className="bg-gray-50 rounded-2xl p-4 mb-5 flex items-start gap-3">
+              {selectedGroup.teacherName !== '—' && (
+                <TeacherAvatar name={selectedGroup.teacherName} photo={selectedGroup.teacherPhoto} size={44} />
+              )}
+              <div className="min-w-0">
+              <p className="font-bold text-gray-900">{selectedGroup.name}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{scheduleOf(selectedGroup)}</p>
+              {selectedGroup.teacherName && selectedGroup.teacherName !== '—' && (
+                <p className="text-sm text-gray-500">Prowadzi {selectedGroup.teacherName} · grupa do {selectedGroup.capacity} osób</p>
+              )}
+              {selectedGroup.pricePerMonth != null && (
+                <p className="text-sm font-bold text-[#23479E] mt-1">
+                  {selectedGroup.pricePerMonth} zł / miesiąc
+                </p>
+              )}
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-4 text-sm space-y-1 mt-5">
-              {kind === 'group' && <Row label="Grupa" value={groups.find((g) => g.id === groupId)?.name ?? '—'} />}
-              {kind === 'online' && <><Row label="Nauczyciel" value={teacher?.name ?? '—'} /><Row label="Termin" value={slot ? `${DAYS_PL[slot.day]} ${slot.time}${ongoing ? ' · co tydzień' : ' · jednorazowo'}` : '—'} /></>}
-              {kind === 'stationary' && <><Row label="Tryb" value="Stacjonarnie (do potwierdzenia)" /><Row label="Adres" value={address || '—'} /><Row label="Dostępność" value={`${offlineSlots.length} slotów`} /></>}
+            <div className="space-y-3">
+              <Field label={audience === 'child' ? 'Imię dziecka' : 'Imię'} value={name} onChange={setName}
+                placeholder={audience === 'child' ? 'Zosia' : 'Anna'} />
+              {audience === 'child' && (
+                <Field label="Twoje imię (rodzic/opiekun)" value={parentName} onChange={setParentName} placeholder="Katarzyna" />
+              )}
+              <Field label="Telefon" type="tel" value={phone} onChange={setPhone} placeholder="+48 600 000 000" />
+              <Field label="E-mail" type="email" value={email} onChange={setEmail} placeholder="anna@email.com" />
             </div>
 
-            {terms && (
-              <details className="my-4 bg-white border border-gray-200 rounded-xl p-3">
-                <summary className="text-sm font-semibold text-gray-700 cursor-pointer">{terms.title} (wersja {terms.version})</summary>
-                <p className="text-xs text-gray-500 mt-2 leading-relaxed whitespace-pre-wrap">{terms.content}</p>
-              </details>
-            )}
-            <div className="space-y-2 mt-3">
-              {consents.map((c) => (
-                <label key={c.id} className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })}
-                    className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#23479E]" />
-                  <span className="text-xs text-gray-600">{c.label}{c.required && <span className="text-red-500"> *</span>}{c.description && <span className="block text-gray-400">{c.description}</span>}</span>
-                </label>
-              ))}
+            <ProofQuote t={proofDetails} />
+
+            <TermsBlock terms={terms} requiredConsents={requiredConsents} optionalConsents={optionalConsents}
+              checked={checked} setChecked={setChecked} />
+
+            {/* Największa obawa zimnego rodzica brzmi „czy właśnie podpisuję się
+                na cały rok". Nie podpisuje — i to jest jedyne miejsce, w którym
+                da się to powiedzieć, zanim kliknie. */}
+            <p className="text-xs text-gray-600 leading-relaxed mt-4 bg-green-50 border border-green-100 rounded-xl p-3">
+              <span className="font-semibold text-green-700">Nic nie ryzykujesz.</span>{' '}
+              Nie płacisz teraz. Przychodzisz na pierwsze zajęcia i dopiero wtedy decydujesz —
+              jeśli nie podejdą, rezygnujesz bez żadnej opłaty.
+            </p>
+          </div>
+        )}
+
+        {/* ŚCIEŻKA „JESZCZE NIE WIEM" */}
+        {screen === 'advice' && (
+          <div>
+            <Heading title="Powiedz nam, o co chodzi" subtitle="Reszta jest po naszej stronie" />
+            <div className="space-y-3">
+              {audience === 'unsure' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dla kogo, mniej więcej?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { v: 'child' as const, l: 'Dla dziecka' },
+                      { v: 'self' as const, l: 'Dla mnie' },
+                      { v: 'company' as const, l: 'Dla firmy' },
+                      { v: 'unsure' as const, l: 'Naprawdę nie wiem' },
+                    ]).map((o) => (
+                      <button key={o.v} onClick={() => setUnsureFor(o.v)}
+                        className={`py-2.5 px-2 rounded-xl border-2 text-sm font-semibold transition-all ${unsureFor === o.v ? 'border-violet-500 bg-[#EAF3FF] text-[#23479E]' : 'border-gray-200 text-gray-600'}`}>{o.l}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!location && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gdzie najchętniej?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([{ v: 'rumianek' as const, l: 'W Rumianku' }, { v: 'online' as const, l: 'Online' }]).map((o) => (
+                      <button key={o.v} onClick={() => setLocation(o.v)}
+                        className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${location === o.v ? 'border-violet-500 bg-[#EAF3FF] text-[#23479E]' : 'border-gray-200 text-gray-600'}`}>{o.l}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Field label="Imię" value={name} onChange={setName} placeholder="Anna" />
+              {(audience === 'child' || unsureFor === 'child') && (
+                <Field label="Wiek dziecka" type="number" value={age} onChange={setAge} placeholder="np. 8" />
+              )}
+              <Field label="Telefon" type="tel" value={phone} onChange={setPhone} placeholder="+48 600 000 000" />
+              <Field label="E-mail" type="email" value={email} onChange={setEmail} placeholder="anna@email.com" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Napisz w dwóch zdaniach, o co chodzi</label>
+                <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3}
+                  placeholder="Np. Syn ma 9 lat, w szkole angielski go zniechęca. Chcemy, żeby przestał się bać mówić."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
+              </div>
             </div>
+            <ProofQuote t={proofOptions} />
+            <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
+          </div>
+        )}
+
+        {/* ZAJĘCIA INDYWIDUALNE */}
+        {screen === 'individual' && (
+          <div>
+            <Heading title="Zajęcia indywidualne" subtitle="Nauczyciela i porę dobierzemy w rozmowie" />
+            <p className="text-sm text-gray-500 mb-4 bg-gray-50 rounded-xl p-4 leading-relaxed">
+              Nie przydzielamy nauczyciela automatycznie. Wolimy najpierw poznać cel i poziom —
+              dzięki temu trafiamy za pierwszym razem, zamiast zmieniać lektora po miesiącu.
+            </p>
+            <p className="text-sm text-gray-600 mb-5 bg-green-50 border border-green-100 rounded-xl p-4 leading-relaxed">
+              <span className="font-semibold text-green-700">Nie musisz od razu brać kursu.</span>{' '}
+              Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Bez umów na rok —
+              z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
+            </p>
+            <div className="space-y-3">
+              <Field label={audience === 'child' ? 'Imię dziecka' : 'Imię'} value={name} onChange={setName} placeholder="Anna" />
+              <Field label="Telefon" type="tel" value={phone} onChange={setPhone} placeholder="+48 600 000 000" />
+              <Field label="E-mail" type="email" value={email} onChange={setEmail} placeholder="anna@email.com" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cel — po co Wam angielski?</label>
+                <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2}
+                  placeholder="Np. rozmowa kwalifikacyjna za trzy miesiące"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
+              </div>
+              <Field label="Preferowane pory" value={preferredTimes} onChange={setPreferredTimes}
+                placeholder="Np. wieczory w tygodniu, po 17:00" />
+            </div>
+            <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
           </div>
         )}
       </div>
 
       {error && <p className="text-sm text-red-500 mt-4 text-center">{error}</p>}
 
-      <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-100">
+      <div className="flex items-center justify-between gap-3 mt-6 pt-5 border-t border-gray-100">
         {history.length > 0 ? (
-          <button onClick={back} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"><ArrowLeft size={16} />Wstecz</button>
+          <button onClick={back} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">
+            <ArrowLeft size={16} />Wstecz
+          </button>
         ) : <div />}
-        {screen === 'form' && (
-          <button onClick={handleSubmit} disabled={submitting || !requiredOk}
+
+        {screen === 'details' && (
+          <button onClick={() => submit('group')} disabled={submitting}
             className="flex items-center gap-2 px-6 py-3 rounded-full bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed">
-            <CheckCircle size={16} />{submitting ? 'Wysyłam...' : (kind === 'stationary' ? 'Wyślij prośbę' : 'Potwierdź zapis')}</button>
+            <CheckCircle size={16} />{submitting ? 'Rezerwuję...' : 'Rezerwuję miejsce'}
+          </button>
+        )}
+        {(screen === 'advice' || screen === 'individual') && (
+          <button onClick={() => submit(screen === 'advice' ? 'advice' : 'individual')} disabled={submitting}
+            className="flex items-center gap-2 px-6 py-3 rounded-full gradient-primary text-white font-semibold text-sm hover:opacity-90 disabled:opacity-40">
+            <Clock size={16} />{submitting ? 'Wysyłam...' : 'Wyślij — odezwiemy się w 2 dni robocze'}
+          </button>
         )}
       </div>
     </div>
   )
 }
 
-function Choice({ title, subtitle, options }: { title: string; subtitle: string; options: { icon: typeof User; label: string; desc: string; on: () => void }[] }) {
+// ── Elementy wspólne ───────────────────────────────────────────────────────
+
+// Twarz prowadzącego. Rodzic wybiera człowieka, nie nazwę kursu — sama
+// nazwa nauczyciela nic mu nie mówi, jeśli szkoły nie zna.
+function TeacherAvatar({ name, photo, size = 28 }: { name: string; photo: string | null; size?: number }) {
+  if (!photo) {
+    return (
+      <span
+        className="rounded-full bg-[#EAF3FF] text-[#23479E] font-bold flex items-center justify-center flex-shrink-0"
+        style={{ width: size, height: size, fontSize: size * 0.4 }}
+        aria-hidden="true"
+      >
+        {name.charAt(0).toUpperCase()}
+      </span>
+    )
+  }
+  return (
+    <Image
+      src={photo}
+      alt={name}
+      width={size}
+      height={size}
+      className="rounded-full object-cover flex-shrink-0"
+      style={{ width: size, height: size }}
+    />
+  )
+}
+
+function Heading({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <>
+      <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">{title}</h2>
+      <p className="text-gray-500 text-center mb-7">{subtitle}</p>
+    </>
+  )
+}
+
+function Choice({ title, subtitle, options }: {
+  title: string; subtitle: string
+  options: { icon: typeof User; label: string; desc: string; on: () => void }[]
+}) {
   return (
     <div>
-      <h2 className="text-2xl font-black text-gray-900 mb-2 text-center">{title}</h2>
-      <p className="text-gray-500 text-center mb-8">{subtitle}</p>
+      <Heading title={title} subtitle={subtitle} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {options.map((o) => {
           const Icon = o.icon
           return (
-            <button key={o.label} onClick={o.on} className="p-5 rounded-2xl border-2 border-gray-200 hover:border-violet-400 hover:bg-[#EAF3FF] text-left transition-all">
+            <button key={o.label} onClick={o.on}
+              className="p-5 rounded-2xl border-2 border-gray-200 hover:border-violet-400 hover:bg-[#EAF3FF] text-left transition-all">
               <Icon size={24} className="text-[#23479E]" />
               <p className="font-bold text-gray-900 mt-3">{o.label}</p>
               <p className="text-xs text-gray-400 mt-0.5">{o.desc}</p>
@@ -435,38 +619,9 @@ function Choice({ title, subtitle, options }: { title: string; subtitle: string;
   )
 }
 
-function OfflineGrid({ selected, setSelected }: { selected: Slot[]; setSelected: (s: Slot[]) => void }) {
-  const hours = Array.from({ length: 13 }, (_, i) => `${String(8 + i).padStart(2, '0')}:00`) // 8:00–20:00
-  const has = (day: number, time: string) => selected.some((s) => s.day === day && s.time === time)
-  const toggle = (day: number, time: string) => {
-    setSelected(has(day, time) ? selected.filter((s) => !(s.day === day && s.time === time)) : [...selected, { day, time }])
-  }
-  return (
-    <div className="overflow-x-auto">
-      <div className="grid grid-cols-8 gap-1 min-w-[20rem] text-center">
-        <div />
-        {DAYS_PL.map((d) => <div key={d} className="text-[10px] font-bold text-gray-500">{d}</div>)}
-        {hours.map((h) => (
-          <FragmentRow key={h} hour={h} has={has} toggle={toggle} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function FragmentRow({ hour, has, toggle }: { hour: string; has: (d: number, t: string) => boolean; toggle: (d: number, t: string) => void }) {
-  return (
-    <>
-      <div className="text-[10px] text-gray-400 flex items-center justify-end pr-1">{hour}</div>
-      {DAYS_PL.map((_, day) => (
-        <button key={day} onClick={() => toggle(day, hour)}
-          className={`h-6 rounded transition-colors ${has(day, hour) ? 'bg-[#23479E]' : 'bg-gray-100 hover:bg-violet-200'}`} />
-      ))}
-    </>
-  )
-}
-
-function Field({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+function Field({ label, value, onChange, placeholder, type = 'text' }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -476,78 +631,66 @@ function Field({ label, value, onChange, placeholder, type = 'text' }: { label: 
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return <div className="flex justify-between"><span className="text-gray-500">{label}</span><span className="font-semibold text-gray-900">{value}</span></div>
-}
-
-// Kalendarz wolnych godzin wszystkich nauczycieli (kolor = nauczyciel)
-function FreeCalendar({ teachers, selected, selectedTeacher, onPick }: {
-  teachers: TeacherOpt[]; selected: Slot | null; selectedTeacher: string
-  onPick: (teacherId: string, s: Slot) => void
+function ConsentList({ consents, checked, setChecked }: {
+  consents: Consent[]; checked: Record<string, boolean>; setChecked: (v: Record<string, boolean>) => void
 }) {
-  // mapa "day-time" -> lista wolnych nauczycieli
-  const map = new Map<string, { id: string; name: string; color: string }[]>()
-  const withSlots = teachers.filter((t) => t.availability.length > 0)
-  for (const t of withSlots) {
-    for (const s of slotsFromAvailability(t.availability)) {
-      const k = `${s.day}-${s.time}`
-      ;(map.get(k) ?? map.set(k, []).get(k)!).push({ id: t.id, name: t.name, color: t.color })
-    }
-  }
-  if (map.size === 0) return <p className="text-center text-sm text-gray-400 py-8">Brak ustawionych grafików. Wróć i wybierz „Po nauczycielu”.</p>
-
-  const hours = Array.from(new Set([...map.keys()].map((k) => k.split('-')[1]))).sort()
-  const usedTeachers = withSlots.filter((t) => [...map.values()].some((arr) => arr.some((x) => x.id === t.id)))
-
+  if (consents.length === 0) return null
   return (
-    <div>
-      <div className="overflow-x-auto">
-        <div className="min-w-[24rem]">
-          <div className="grid gap-1" style={{ gridTemplateColumns: '2.6rem repeat(7, 1fr)' }}>
-            <div />
-            {DAYS_PL.map((d) => <div key={d} className="text-[10px] font-bold text-gray-500 text-center">{d}</div>)}
-            {hours.map((h) => (
-              <CalRow key={h} hour={h} map={map} selected={selected} selectedTeacher={selectedTeacher} onPick={onPick} />
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* legenda */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3">
-        {usedTeachers.map((t) => (
-          <span key={t.id} className="flex items-center gap-1 text-[11px] text-gray-600">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: t.color }} />{t.name}
+    <div className="space-y-2 mt-5">
+      {consents.map((c) => (
+        <label key={c.id} className="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" checked={!!checked[c.id]}
+            onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })}
+            className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#23479E]" />
+          <span className="text-xs text-gray-600">
+            {c.label}
+            {c.description && <span className="block text-gray-400">{c.description}</span>}
           </span>
-        ))}
-      </div>
+        </label>
+      ))}
     </div>
   )
 }
 
-function CalRow({ hour, map, selected, selectedTeacher, onPick }: {
-  hour: string; map: Map<string, { id: string; name: string; color: string }[]>
-  selected: Slot | null; selectedTeacher: string; onPick: (teacherId: string, s: Slot) => void
+// Regulamin w dwóch warstwach: trzy zdania po ludzku + link do pełnej treści.
+// Pełny dokument zostaje dostępny, ale nikt nie musi go czytać, żeby zrozumieć,
+// na co się zgadza.
+function TermsBlock({ terms, requiredConsents, optionalConsents, checked, setChecked }: {
+  terms: Terms
+  requiredConsents: Consent[]; optionalConsents: Consent[]
+  checked: Record<string, boolean>; setChecked: (v: Record<string, boolean>) => void
 }) {
   return (
-    <>
-      <div className="text-[10px] text-gray-400 flex items-center justify-end pr-1">{hour}</div>
-      {DAYS_PL.map((_, day) => {
-        const free = map.get(`${day}-${hour}`) ?? []
-        return (
-          <div key={day} className="min-h-7 flex flex-wrap gap-0.5 items-center justify-center p-0.5 rounded bg-gray-50">
-            {free.map((t) => {
-              const sel = selected?.day === day && selected?.time === hour && selectedTeacher === t.id
-              const initials = t.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-              return (
-                <button key={t.id} title={`${t.name} · ${DAYS_PL[day]} ${hour}`}
-                  onClick={() => onPick(t.id, { day, time: hour })}
-                  className={`w-5 h-5 rounded-sm flex items-center justify-center text-[8px] font-bold text-white leading-none transition-transform hover:scale-125 ${sel ? 'ring-2 ring-offset-1 ring-gray-700 scale-110' : ''}`}
-                  style={{ backgroundColor: t.color }}>{initials}</button>
-              )
-            })}
-          </div>
-        )
-      })}
-    </>
+    <div className="mt-6">
+      <div className="bg-[#FFF8F0] border border-amber-100 rounded-2xl p-4 mb-4">
+        <p className="text-sm font-bold text-gray-900 mb-2">Najważniejsze zasady</p>
+        <ul className="text-xs text-gray-600 space-y-1.5 leading-relaxed">
+          <li>• <strong className="text-gray-900">Przyjdź na pierwsze zajęcia i zobacz.</strong> Jeśli nie podejdą, rezygnujesz bez żadnej opłaty.</li>
+          <li>• Później płatność z góry, do 5. dnia każdego miesiąca.</li>
+          <li>• Bez umów na rok — rezygnacja w każdej chwili, z miesięcznym wypowiedzeniem.</li>
+        </ul>
+        {terms && (
+          <a href="/pl/terms-of-service" target="_blank" rel="noopener noreferrer"
+            className="inline-block mt-3 text-xs font-bold text-[#23479E] underline">
+            Przeczytaj pełny regulamin →
+          </a>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {requiredConsents.map((c) => (
+          <label key={c.id} className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" checked={!!checked[c.id]}
+              onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })}
+              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#23479E]" />
+            <span className="text-xs text-gray-600">
+              {c.label}<span className="text-red-500"> *</span>
+              {c.description && <span className="block text-gray-400">{c.description}</span>}
+            </span>
+          </label>
+        ))}
+      </div>
+      <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
+    </div>
   )
 }

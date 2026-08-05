@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest } from '@/lib/email/send'
+import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder } from '@/lib/email/send'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -187,6 +187,91 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── 4. Zapisy przez kreator: mail przygotowawczy i przypomnienie o starcie ─
+  //
+  // Obie wysyłki są odroczoną częścią automatyzacji zapisu — żadna nie wymaga
+  // ruchu ze strony zespołu. Okna są półotwarte i dobowe, a cron chodzi raz
+  // dziennie, więc każdy adresat łapie się dokładnie raz (ten sam wzorzec co
+  // przypomnienia o lekcjach wyżej).
+
+  const DAYS_PL_FULL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
+
+  // Pierwsze wystąpienie dnia zajęć od początku semestru.
+  function groupFirstLesson(startDate: string | null, dayOfWeek: number | null): Date | null {
+    if (!startDate || dayOfWeek == null) return null
+    const d = new Date(`${startDate}T00:00:00`)
+    const targetDow = dayOfWeek === 6 ? 0 : dayOfWeek + 1
+    d.setDate(d.getDate() + ((targetDow - d.getDay() + 7) % 7))
+    return d
+  }
+  function scheduleOf(dayOfWeek: number | null, text: string | null): string {
+    return [dayOfWeek != null ? DAYS_PL_FULL[dayOfWeek] : null, text].filter(Boolean).join(', ')
+  }
+  const dayKey = (d: Date) => d.toISOString().slice(0, 10)
+
+  // 4a. Dobę po rezerwacji: co zabrać / jak dojechać albo link i test połączenia.
+  let prepEmails = 0
+  const { data: freshBookings } = await supabase
+    .from('leads')
+    .select('first_name, email, interested_group_id')
+    .eq('entry_point', 'zapisy_wizard')
+    .not('interested_group_id', 'is', null)
+    .not('email', 'is', null)
+    .gte('created_at', addHours(now, -48).toISOString())
+    .lt('created_at', addHours(now, -24).toISOString())
+
+  for (const lead of freshBookings ?? []) {
+    const { data: g } = await supabase
+      .from('groups')
+      .select('name, format, schedule_text, day_of_week')
+      .eq('id', lead.interested_group_id as string)
+      .single()
+    if (!g) continue
+    await sendGroupPrep(lead.email as string, {
+      studentName: (lead.first_name as string) ?? '',
+      groupName: g.name as string,
+      schedule: scheduleOf(g.day_of_week as number | null, g.schedule_text as string | null),
+      format: (g.format as 'online' | 'offline' | null) ?? null,
+    })
+    prepEmails++
+  }
+
+  // 4b. Trzy dni przed pierwszymi zajęciami — do wszystkich zapisanych w grupie.
+  let startReminders = 0
+  const targetDay = new Date(now)
+  targetDay.setDate(targetDay.getDate() + 3)
+
+  const { data: startingGroups } = await supabase
+    .from('groups')
+    .select('id, name, format, schedule_text, day_of_week, start_date')
+    .eq('is_active', true)
+    .not('start_date', 'is', null)
+
+  for (const g of startingGroups ?? []) {
+    const first = groupFirstLesson(g.start_date as string | null, g.day_of_week as number | null)
+    if (!first || dayKey(first) !== dayKey(targetDay)) continue
+
+    const { data: members } = await supabase
+      .from('group_members')
+      .select('student:students(full_name, profile:profiles(full_name, email))')
+      .eq('group_id', g.id as string)
+
+    for (const m of members ?? []) {
+      const st = Array.isArray(m.student) ? m.student[0] : m.student
+      const prof = st ? (Array.isArray(st.profile) ? st.profile[0] : st.profile) : null
+      const email = prof?.email as string | undefined
+      if (!email) continue
+      await sendGroupStartReminder(email, {
+        studentName: (st?.full_name as string) || (prof?.full_name as string) || '',
+        groupName: g.name as string,
+        schedule: scheduleOf(g.day_of_week as number | null, g.schedule_text as string | null),
+        firstLessonDate: format(first, 'EEEE, d MMMM yyyy', { locale: pl }),
+        format: (g.format as 'online' | 'offline' | null) ?? null,
+      })
+      startReminders++
+    }
+  }
+
   return NextResponse.json({
     autoPresent: autoPresentCount,
     reminders: upcomingLessons?.length ?? 0,
@@ -194,6 +279,8 @@ export async function GET(req: NextRequest) {
     overdueNotifications,
     statusUpdates,
     progressDigests,
+    prepEmails,
+    startReminders,
     ranWeekly: isMonday,
   })
 }

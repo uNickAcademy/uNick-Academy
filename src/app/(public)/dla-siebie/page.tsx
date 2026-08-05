@@ -139,8 +139,8 @@ export default async function DlaSiebiePage() {
           <p className="text-center text-gray-500 mb-12">Historia uNick Academy</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
-              { name: 'Milly', role: 'Co-founder', desc: 'Polska dusza szkoły. Tłumaczy angielski tak, żeby miał sens w polskiej głowie. Uwielbia kawy i lingwistykę.', gradient: 'from-[#23479E] to-[#1C387D]' },
-              { name: 'Nick', role: 'Co-founder', desc: 'Irlandzki charakter szkoły. Przynosi do klasy prawdziwy angielski ze świata. Fan footballu i dobrej herbaty.', gradient: 'from-[#4EC9B0] to-[#23479E]' },
+              { name: 'Milly', role: 'Współzałożycielka', desc: 'Polska dusza szkoły. Trafiła tu z korporacji i została, bo zobaczyła coś, czego nie dało się odzobaczyć: dzieci mówią po angielsku odważniej, kiedy nie mają jak przełączyć się na polski. Z tej jednej obserwacji wyrosła cała nasza metoda.', gradient: 'from-[#23479E] to-[#1C387D]' },
+              { name: 'Nick', role: 'Współzałożyciel', desc: 'Anglik i pierwszy nauczyciel uNick. Ponad dekadę temu prowadził lekcje jako „English with an Englishman” — z takim skutkiem, że wokół nich trzeba było zbudować szkołę.', gradient: 'from-[#4EC9B0] to-[#23479E]' },
             ].map((person) => (
               <div key={person.name} className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col sm:flex-row">
                 <div className={`w-full sm:w-32 h-32 bg-gradient-to-br ${person.gradient} flex items-center justify-center flex-shrink-0`}>
@@ -168,7 +168,7 @@ export default async function DlaSiebiePage() {
           >
             Zarezerwuj lekcję próbną
           </Link>
-          <p className="mt-4 text-sm text-white/60">Odpowiadamy w ciągu 24h</p>
+          <p className="mt-4 text-sm text-white/60">Odpowiadamy w ciągu 2 dni roboczych</p>
         </div>
       </section>
     </div>

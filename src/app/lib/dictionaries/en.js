@@ -19,6 +19,8 @@ const en = {
       companies: "Companies",
       howWeTeach: "Our classes",
       meetUs: "Meet Us",
+      meetAcademy: "Meet uNick Academy",
+      foundation: "uNick Academy Foundation",
       contact: "Contact",
       teachersZone: "Teachers Zone",
       localSchool: "School in Tarnowo Podgórne",
@@ -725,7 +727,7 @@ const en = {
       eyebrow: "Other ways to reach us",
       title: "Email, follow, or just say hello",
       emailPrefix: "Prefer email? Write to ",
-      emailSuffix: " and we'll get back to you within a day or two.",
+      emailSuffix: " and we'll get back to you within 2 business days.",
       socialPrefix: "You can also find us on ",
       socialMiddle: " and ",
       socialSuffix: " for stories, small wins and the occasional uNickorn sighting.",
@@ -837,7 +839,7 @@ const en = {
     success: {
       title: "Thank you — we'll be in touch.",
       subtitle:
-        "Someone from our team will reach out within one working day to find a time that suits you. In the meantime, take a look around — there's a place at the table for you.",
+        "Someone from our team will reach out within 2 business days to find a time that suits you. In the meantime, take a look around — there's a place at the table for you.",
       close: "Close",
     },
   },
@@ -849,7 +851,7 @@ const en = {
     submit: "Send message",
     success: {
       title: "Thank you — we'll be in touch.",
-      text: "Someone from our team will reach out within one working day to find a time that suits you.",
+      text: "Someone from our team will reach out within 2 business days to find a time that suits you.",
     },
   },
 
@@ -887,7 +889,7 @@ const en = {
       title: "Privacy Policy",
       lastUpdated: "Last updated: 23 June 2026",
       controller: "Data Controller",
-      controllerText: "uNick Academy, Milena Rudd, NIP: 7812067015, hello@unick-academy.pl. The data controller within the meaning of Regulation (EU) 2016/679 (GDPR/RODO) is Milena Rudd conducting business as uNick Academy.",
+      controllerText: "The data controller within the meaning of Regulation (EU) 2016/679 (GDPR) depends on which service your data relates to. Classes for children, teenagers and adults (private individuals): UNICK ACADEMY INTERNATIONAL SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0001093339, NIP 7812067015, REGON 528044862. Corporate language training: UNICK ACADEMY SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0000934614, NIP 7812028328, REGON 520523959. In both cases contact: hello@unick-academy.pl.",
       whatWeCollect: "What data we collect",
       whatWeCollectText: "When you use our forms or create an account, we may collect: name, email address, phone number (optional), information about the audience type (child, teen, adult, company), messages you send us, account login credentials (email and password, stored securely via Supabase Auth).",
       whyWeCollect: "Why we collect your data",
@@ -911,7 +913,7 @@ const en = {
       title: "Terms of Service",
       lastUpdated: "Last updated: 23 June 2026",
       general: "General provisions",
-      generalText: "These Terms of Service (Regulamin) govern the use of the uNick Academy website and services operated by Milena Rudd (uNick Academy), hello@unick-academy.pl. By using the website or creating an account, you agree to these terms.",
+      generalText: "These Terms of Service (Regulamin) govern the use of the uNick Academy website and services. Depending on the type of service, the contracting party is: for classes for private individuals (children, teenagers, adults) — UNICK ACADEMY INTERNATIONAL SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0001093339, NIP 7812067015, REGON 528044862; for corporate language training — UNICK ACADEMY SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0000934614, NIP 7812028328, REGON 520523959. Contact in both cases: hello@unick-academy.pl. By using the website or creating an account, you agree to these terms.",
       services: "Services",
       servicesText: "uNick Academy provides English language education services including: individual and group lessons with international teachers, consultation bookings, the uNickorn AI tutor (an AI-powered educational tool), and digital teaching materials. The uNickorn AI tutor is powered by artificial intelligence and provides supplementary educational support. It does not replace instruction by qualified teachers.",
       accounts: "Accounts",

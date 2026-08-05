@@ -32,6 +32,10 @@ export function organizationNode() {
     "@id": ORG_ID,
     name: siteConfig.name,
     alternateName: siteConfig.alternateName,
+    // Podmiot prowadzący zajęcia dla osób prywatnych (B2C). Szkolenia dla firm
+    // prowadzi UNICK ACADEMY SP. Z O.O. (NIP 7812028328) — osobny podmiot,
+    // opisany w regulaminie, poza tym węzłem.
+    legalName: "UNICK ACADEMY INTERNATIONAL SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
     url: siteConfig.url,
     email: siteConfig.email,
     telephone: siteConfig.phone.e164,

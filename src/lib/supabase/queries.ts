@@ -765,23 +765,36 @@ export type PublicGroup = {
   id: string; name: string; level: string; levels: string[]; schedule_text: string; description: string
   age_range: string; ageMin: number | null; ageMax: number | null
   color: string; capacity: number; taken: number; spots: number
-  teacherName: string; teacherId: string; format: 'online' | 'offline' | null
+  teacherName: string; teacherId: string; teacherPhoto: string | null
+  format: 'online' | 'offline' | null
   pricePerMonth: number | null; dayOfWeek: number | null
+  startDate: string | null; endDate: string | null
 }
 
-// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu)
+// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu).
+//
+// Liczba zajętych miejsc idzie przez RPC, nie przez zagnieżdżony odczyt
+// `group_members`: polityka RLS udostępnia członkostwa wyłącznie zalogowanym,
+// więc anonimowy gość dostawał pustą tablicę — bez błędu — i każda grupa
+// pokazywała komplet wolnych miejsc. Funkcja z migracji 120 zwraca same liczby,
+// bez danych osobowych.
 export async function getPublicGroups(): Promise<PublicGroup[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('groups')
-    .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week,
-             teacher:teachers(id, profile:profiles(full_name)),
-             members:group_members(student_id)`)
-    .eq('is_active', true)
+  const [{ data }, { data: seatCounts }] = await Promise.all([
+    supabase
+      .from('groups')
+      .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week, start_date, end_date,
+               teacher:teachers(id, photo_url, profile:profiles(full_name))`)
+      .eq('is_active', true),
+    supabase.rpc('public_group_seat_counts'),
+  ])
+  const takenByGroup = new Map<string, number>(
+    ((seatCounts as { group_id: string; taken: number }[] | null) ?? []).map((c) => [c.group_id, Number(c.taken)])
+  )
   return (data ?? []).map((g) => {
     const capacity = (g.capacity as number) ?? 0
-    const taken = ((g.members as unknown[]) ?? []).length
-    const teacher = g.teacher as { id?: string; profile?: { full_name?: string } } | null
+    const taken = takenByGroup.get(g.id as string) ?? 0
+    const teacher = g.teacher as { id?: string; photo_url?: string | null; profile?: { full_name?: string } } | null
     const levels = Array.isArray(g.levels) ? (g.levels as string[]) : []
     return {
       id: g.id as string, name: g.name as string, level: g.level as string,
@@ -793,9 +806,12 @@ export async function getPublicGroups(): Promise<PublicGroup[]> {
       color: (g.color as string) ?? '#23479E',
       capacity, taken, spots: Math.max(capacity - taken, 0),
       teacherName: teacher?.profile?.full_name ?? '—', teacherId: teacher?.id ?? '',
+      teacherPhoto: teacher?.photo_url ?? null,
       format: (g.format as 'online' | 'offline' | null) ?? null,
       pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
       dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
+      startDate: (g.start_date as string) ?? null,
+      endDate: (g.end_date as string) ?? null,
     }
   }).sort((a, b) => chronoKey(a.dayOfWeek, a.schedule_text) - chronoKey(b.dayOfWeek, b.schedule_text))
 }
@@ -956,4 +972,73 @@ export async function getRecentNotifications(limit = 50): Promise<AdminNotificat
     .order('created_at', { ascending: false })
     .limit(limit)
   return (data as AdminNotification[]) ?? []
+}
+
+// ──────────────────────────────────────────
+// SKRZYNKA ZGŁOSZEŃ (panel admina)
+// ──────────────────────────────────────────
+
+export type InboxLead = {
+  id: string
+  createdAt: string
+  status: string
+  entryPoint: string | null
+  firstName: string | null
+  parentName: string | null
+  email: string | null
+  phone: string | null
+  studentType: string | null
+  studentAge: number | null
+  location: string | null
+  goal: string | null
+  preferredStart: string | null
+  groupName: string | null
+  campaign: string | null
+  firstResponseAt: string | null
+}
+
+// Wszystkie otwarte zgłoszenia, niezależnie od tego, którym formularzem
+// przyszły. Najdłużej czekające na górze — kolejka ma odpowiadać na pytanie
+// „co jest do zrobienia dzisiaj", a nie „co przyszło ostatnie".
+export async function getInboxLeads(): Promise<InboxLead[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('leads')
+    .select(`id, created_at, status, entry_point, first_name, parent_name, email, phone,
+             student_type, student_age, location, goal, preferred_start, campaign, first_response_at,
+             group:groups(name)`)
+    .in('status', ['new', 'contacted', 'qualified', 'booked'])
+    .order('created_at', { ascending: true })
+
+  return (data ?? []).map((l) => {
+    const group = Array.isArray(l.group) ? l.group[0] : l.group
+    return {
+      id: l.id as string,
+      createdAt: l.created_at as string,
+      status: l.status as string,
+      entryPoint: (l.entry_point as string) ?? null,
+      firstName: (l.first_name as string) ?? null,
+      parentName: (l.parent_name as string) ?? null,
+      email: (l.email as string) ?? null,
+      phone: (l.phone as string) ?? null,
+      studentType: (l.student_type as string) ?? null,
+      studentAge: l.student_age != null ? Number(l.student_age) : null,
+      location: (l.location as string) ?? null,
+      goal: (l.goal as string) ?? null,
+      preferredStart: (l.preferred_start as string) ?? null,
+      groupName: (group as { name?: string } | null)?.name ?? null,
+      campaign: (l.campaign as string) ?? null,
+      firstResponseAt: (l.first_response_at as string) ?? null,
+    }
+  })
+}
+
+// Liczba zgłoszeń czekających na pierwszy kontakt — do odznaki w menu.
+export async function getUnhandledLeadsCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'new')
+  return count ?? 0
 }
