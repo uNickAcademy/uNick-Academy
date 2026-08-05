@@ -57,7 +57,7 @@ type Row = {
   lessonDays: number[]
   lessonTypes: string[]
   active: boolean
-  courseConfig: { slots: Slot[]; startDate: string; endDate: string; excludedDates?: string[]; meetingUrl?: string } | null
+  courseConfig: { slots: Slot[]; startDate: string; endDate: string | null; excludedDates?: string[]; meetingUrl?: string } | null
   inferredSlot: Slot | null
   meetingUrl: string
   lessonPrice: number | null
@@ -606,6 +606,11 @@ function EditModal({
   const [slots, setSlots] = useState<Slot[]>(initialSlots.length > 0 ? initialSlots : [{ day: 1, time: '17:00', durationMin: 60 }])
   const [startDate, setStartDate] = useState(row.courseConfig?.startDate ?? today)
   const [endDate, setEndDate] = useState(row.courseConfig?.endDate ?? defaultCourseEndDate(today))
+  // Kurs bez wyznaczonego końca — serwer i tak dogeneruje terminy tylko do
+  // końca bieżącego roku szkolnego (wiersze w bazie potrzebują konkretnej
+  // daty); podgląd niżej pokazuje wtedy wartość „na razie", nie całego kursu.
+  const [ongoing, setOngoing] = useState(row.courseConfig != null && row.courseConfig.endDate == null)
+  const effectiveEndDate = ongoing ? undefined : endDate
   const [excludedDates, setExcludedDates] = useState<string[]>(row.courseConfig?.excludedDates ?? [])
   const [newExcluded, setNewExcluded] = useState('')
   const [meetingUrl, setMeetingUrl] = useState(row.meetingUrl)
@@ -616,7 +621,8 @@ function EditModal({
   const [scheduleMsg, setScheduleMsg] = useState<string | null>(null)
 
   const selectedTeacher = teacherOptions.find((t) => t.id === teacherId)
-  const preview = generateLessons({ slots, startDate: startDate > today ? startDate : today, endDate, excludedDates })
+  const preview = generateLessons({ slots, startDate: startDate > today ? startDate : today, endDate: effectiveEndDate, excludedDates })
+  const effectiveHorizon = ongoing ? defaultCourseEndDate(startDate > today ? startDate : today) : endDate
   const price = Number(lessonPrice) || 0
   const monthsPreview = Object.entries(lessonsPerMonth(preview)).sort()
 
@@ -652,7 +658,7 @@ function EditModal({
     const res = await fetch('/api/admin/students/schedule', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate, excludedDates,
+        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate: ongoing ? null : endDate, excludedDates,
         lessonPrice, teacherRate, applySchedule: false,
       }),
     })
@@ -668,15 +674,15 @@ function EditModal({
     const from = startDate > today ? startDate : today
     if (!confirm(
       `Zastąpić przyszłe terminy ${row.name}?\n\n` +
-      `${preview.length} zajęć od ${from} do ${endDate}` +
-      (price > 0 ? `\nWartość: ${Math.round(price * preview.length)} zł` : '') +
+      `${preview.length} zajęć od ${from} ${ongoing ? `(bezterminowo, wygenerowane do ${effectiveHorizon})` : `do ${endDate}`}` +
+      (price > 0 ? `\nWartość ${ongoing ? 'na razie' : ''}: ${Math.round(price * preview.length)} zł` : '') +
       `\n\nOdbyte i historyczne lekcje zostają bez zmian — kasujemy tylko to, co jeszcze przed nami.`
     )) return
     setScheduleBusy(true); setScheduleMsg(null); setError(null)
     const res = await fetch('/api/admin/students/schedule', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate, excludedDates,
+        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate: ongoing ? null : endDate, excludedDates,
         lessonPrice, teacherRate, applySchedule: true,
       }),
     })
@@ -828,16 +834,24 @@ function EditModal({
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
                   className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
               </label>
-              <label className="text-xs text-gray-500">
-                Koniec kursu
-                <input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
-              </label>
+              <div>
+                <label className="text-xs text-gray-500">
+                  Koniec kursu
+                  <input type="date" value={endDate} min={startDate} disabled={ongoing}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E] disabled:bg-gray-50 disabled:text-gray-400" />
+                </label>
+                <label className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-600">
+                  <input type="checkbox" checked={ongoing} onChange={(e) => setOngoing(e.target.checked)}
+                    className="rounded border-gray-300" />
+                  Bezterminowo (ongoing) — bez ustalonego końca
+                </label>
+              </div>
             </div>
             <div className="mt-3">
               <p className="text-xs text-gray-500 flex items-center gap-1 mb-1"><CalendarOff size={11} />Wyłączone dni</p>
               <div className="flex flex-wrap items-center gap-2">
-                <input type="date" value={newExcluded} min={startDate} max={endDate}
+                <input type="date" value={newExcluded} min={startDate} max={effectiveHorizon}
                   onChange={(e) => setNewExcluded(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
                 <button type="button" onClick={addExcluded} disabled={!newExcluded}
@@ -859,8 +873,11 @@ function EditModal({
                 <p className="text-red-500">Ta konfiguracja nie daje żadnej lekcji — sprawdź terminy i czas trwania.</p>
               ) : (
                 <p className="text-gray-700">
-                  <strong className="text-gray-900">{preview.length}</strong> zajęć od {startDate > today ? startDate : today} do {endDate}
-                  {price > 0 && <> · wartość <strong className="text-[#23479E]">{Math.round(price * preview.length)} zł</strong></>}
+                  <strong className="text-gray-900">{preview.length}</strong> zajęć od {startDate > today ? startDate : today}{' '}
+                  {ongoing ? <>(bezterminowo, wygenerowane do {effectiveHorizon})</> : <>do {endDate}</>}
+                  {price > 0 && (
+                    <> · wartość {ongoing ? 'na razie' : ''} <strong className="text-[#23479E]">{Math.round(price * preview.length)} zł</strong></>
+                  )}
                   {monthsPreview.length > 0 && ` · ${monthsPreview[0][1]} zajęć w najbliższym miesiącu`}
                 </p>
               )}

@@ -51,8 +51,11 @@ export async function POST(req: NextRequest) {
     teacher_id: effectiveTeacherId || null,
     custom_lesson_price: lessonPrice,
     custom_teacher_rate: teacherRate,
-    course_config: slots.length > 0 && startDate && endDate
-      ? { slots, startDate, endDate, excludedDates, meetingUrl }
+    // endDate puste = kurs bezterminowy (ongoing); zapisujemy to jako null,
+    // nie jako brak konfiguracji — reszta przepisu (terminy, wykluczenia)
+    // zostaje.
+    course_config: slots.length > 0 && startDate
+      ? { slots, startDate, endDate: endDate || null, excludedDates, meetingUrl }
       : null,
   }).eq('id', studentId)
 
@@ -72,10 +75,11 @@ export async function POST(req: NextRequest) {
 
   let regenerated = 0
   if (applySchedule) {
-    if (slots.length === 0 || !startDate || !endDate) {
-      return NextResponse.json({ error: 'Podaj terminy zajęć i czas trwania kursu.' }, { status: 400 })
+    if (slots.length === 0 || !startDate) {
+      return NextResponse.json({ error: 'Podaj terminy zajęć i początek kursu.' }, { status: 400 })
     }
-    if (endDate < startDate) {
+    // Koniec kursu jest opcjonalny — brak oznacza zajęcia bezterminowe.
+    if (endDate && endDate < startDate) {
       return NextResponse.json({ error: 'Koniec kursu nie może wypadać przed początkiem.' }, { status: 400 })
     }
     if (!effectiveTeacherId) {

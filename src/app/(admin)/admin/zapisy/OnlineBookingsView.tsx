@@ -66,6 +66,12 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
   ])
   const [startDate, setStartDate] = useState(r.firstDate)
   const [endDate, setEndDate] = useState(defaultCourseEndDate(r.firstDate))
+  // Kurs bez wyznaczonego końca — najczęściej zajęcia indywidualne płatne
+  // z miesiąca na miesiąc. Serwer i tak dogeneruje terminy tylko do końca
+  // bieżącego roku szkolnego (wiersze w bazie potrzebują konkretnej daty),
+  // więc podgląd niżej pokazuje wartość „na razie", nie całego kursu.
+  const [ongoing, setOngoing] = useState(false)
+  const effectiveEndDate = ongoing ? undefined : endDate
   const [excludedDates, setExcludedDates] = useState<string[]>([])
   const [newExcluded, setNewExcluded] = useState('')
 
@@ -96,9 +102,10 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
   // Podgląd liczy się tym samym generatorem co serwer — razem z przerwami
   // szkolnymi, więc liczba lekcji i wartość kursu nie rozjadą się po zapisie.
   const schedule = useMemo(
-    () => generateLessons({ slots, startDate, endDate, excludedDates: [...excludedDates, ...breakDates] }),
-    [slots, startDate, endDate, excludedDates, breakDates],
+    () => generateLessons({ slots, startDate, endDate: effectiveEndDate, excludedDates: [...excludedDates, ...breakDates] }),
+    [slots, startDate, effectiveEndDate, excludedDates, breakDates],
   )
+  const effectiveHorizon = ongoing ? defaultCourseEndDate(startDate) : endDate
   const price = Number(lessonPrice) || 0
   const courseTotal = price * schedule.length
   const months = useMemo(() => Object.entries(lessonsPerMonth(schedule)).sort(), [schedule])
@@ -128,8 +135,8 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
       if (schedule.length === 0) { setError('Ta konfiguracja nie daje żadnej lekcji — sprawdź terminy i czas trwania.'); return }
       if (!confirm(
         `Zatwierdzić kurs dla ${r.studentName}?\n\n` +
-        `${schedule.length} zajęć od ${startDate} do ${endDate}\n` +
-        (price > 0 ? `Wartość kursu: ${courseTotal} zł (${schedule.length} × ${price} zł)\n` : '') +
+        `${schedule.length} zajęć od ${startDate} ${ongoing ? `(bezterminowo, wygenerowane do ${effectiveHorizon})` : `do ${endDate}`}\n` +
+        (price > 0 ? `Wartość ${ongoing ? 'na razie' : 'kursu'}: ${courseTotal} zł (${schedule.length} × ${price} zł)\n` : '') +
         (paymentMode === 'upfront' ? 'Klient płaci całość z góry.' : `Do zapłaty teraz: ${firstMonth ? firstMonth[1] * price : 0} zł za pierwszy miesiąc.`)
       )) return
     }
@@ -139,7 +146,7 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
       body: JSON.stringify({
         studentId: r.studentId, teacherId: r.teacherId, action,
         newTeacherId: teacherId, meetingUrl,
-        slots, startDate, endDate, excludedDates,
+        slots, startDate, endDate: ongoing ? null : endDate, excludedDates,
         lessonPrice, teacherRate, paymentMode,
       }),
     })
@@ -232,17 +239,25 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
               className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
           </label>
-          <label className="text-xs text-gray-500">
-            Koniec kursu
-            <input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
-          </label>
+          <div>
+            <label className="text-xs text-gray-500">
+              Koniec kursu
+              <input type="date" value={endDate} min={startDate} disabled={ongoing}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E] disabled:bg-gray-50 disabled:text-gray-400" />
+            </label>
+            <label className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-600">
+              <input type="checkbox" checked={ongoing} onChange={(e) => setOngoing(e.target.checked)}
+                className="rounded border-gray-300" />
+              Bezterminowo (ongoing) — bez ustalonego końca
+            </label>
+          </div>
         </div>
 
         <div className="mt-3">
           <p className="text-xs text-gray-500 flex items-center gap-1 mb-1"><CalendarOff size={11} />Wyłączone dni</p>
           <div className="flex flex-wrap items-center gap-2">
-            <input type="date" value={newExcluded} min={startDate} max={endDate}
+            <input type="date" value={newExcluded} min={startDate} max={effectiveHorizon}
               onChange={(e) => setNewExcluded(e.target.value)}
               className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
             <button onClick={addExcluded} disabled={!newExcluded}
@@ -312,10 +327,14 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
           <>
             <p className="text-gray-900 font-semibold">
               {schedule.length} zajęć
-              {price > 0 && <> · wartość kursu <span className="text-[#23479E]">{zl(courseTotal)}</span></>}
+              {price > 0 && (
+                <> · wartość {ongoing ? 'na razie' : 'kursu'} <span className="text-[#23479E]">{zl(courseTotal)}</span></>
+              )}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              od {startDate} do {endDate}
+              {ongoing
+                ? <>od {startDate}, bezterminowo — wygenerowano do {effectiveHorizon}, dogenerujemy dalej bliżej terminu</>
+                : <>od {startDate} do {endDate}</>}
               {excludedDates.length > 0 && ` · pominięto ${excludedDates.length} dni`}
               {price > 0 && firstMonth && (
                 paymentMode === 'upfront'

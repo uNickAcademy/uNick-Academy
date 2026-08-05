@@ -122,7 +122,8 @@ export interface Student {
   course_config?: {
     slots: { day: number; time: string; durationMin: number }[]
     startDate: string
-    endDate: string
+    /** Puste = kurs bezterminowy (ongoing), bez ustalonego końca. */
+    endDate: string | null
     excludedDates?: string[]
     meetingUrl?: string
   } | null

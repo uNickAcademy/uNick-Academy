@@ -82,10 +82,12 @@ export async function POST(req: NextRequest) {
   const teacherId = newTeacherId || currentTeacherId
   const slots = (body.slots ?? []).filter((s) => s && s.time && s.day >= 0 && s.day <= 6)
   if (slots.length === 0) return NextResponse.json({ error: 'Podaj przynajmniej jeden termin zajęć.' }, { status: 400 })
-  if (!body.startDate || !body.endDate) {
-    return NextResponse.json({ error: 'Podaj czas trwania kursu.' }, { status: 400 })
+  if (!body.startDate) {
+    return NextResponse.json({ error: 'Podaj początek kursu.' }, { status: 400 })
   }
-  if (body.endDate < body.startDate) {
+  // Koniec kursu jest opcjonalny — brak oznacza zajęcia bezterminowe (ongoing);
+  // generateLessons() dogeneruje wtedy terminy do końca roku szkolnego.
+  if (body.endDate && body.endDate < body.startDate) {
     return NextResponse.json({ error: 'Koniec kursu nie może wypadać przed początkiem.' }, { status: 400 })
   }
 

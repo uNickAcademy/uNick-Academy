@@ -25,8 +25,13 @@ export type CourseConfig = {
   slots: Slot[]
   /** Pierwszy dzień kursu, „YYYY-MM-DD". */
   startDate: string
-  /** Ostatni dzień kursu, „YYYY-MM-DD". */
-  endDate: string
+  /**
+   * Ostatni dzień kursu, „YYYY-MM-DD". Puste = kurs bez wyznaczonego końca
+   * (ongoing) — generujemy wtedy terminy do końca bieżącego roku szkolnego
+   * (patrz `defaultCourseEndDate`), a admin wydłuża serię później przez
+   * ponowne „Zastosuj terminy", tak samo jak dla kursu z datą końca.
+   */
+  endDate?: string
   /** Dni bez zajęć, „YYYY-MM-DD" — święta, przerwy, odwołania. */
   excludedDates?: string[]
 }
@@ -93,7 +98,11 @@ export function expandBreaks(breaks: { start_date: string; end_date: string }[])
  * przy kilku terminach w tygodniu przeplatają się w naturalnej kolejności.
  */
 export function generateLessons(config: CourseConfig, maxLessons = 500): GeneratedLesson[] {
-  const { slots, startDate, endDate } = config
+  const { slots, startDate } = config
+  // Bez daty końca (ongoing) generujemy do końca bieżącego roku szkolnego —
+  // wiersze w bazie potrzebują konkretnej daty, więc „bezterminowo" to
+  // w praktyce „na razie tyle, dogenerujemy później".
+  const endDate = config.endDate || defaultCourseEndDate(startDate || '')
   if (!slots.length || !startDate || !endDate || endDate < startDate) return []
 
   const excluded = new Set((config.excludedDates ?? []).map((d) => d.slice(0, 10)))
