@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
         consentMarketing: !!consentMarketing,
         consentClause: consentClause ?? null,
         campaign: campaign ?? null,
+        referralCode: referralCode ?? null,
       }).catch((err) => console.error('[Booking group] createLead error:', err))
 
       const passwordLink = await createPasswordSetupLink(supabase, email)
@@ -153,6 +154,7 @@ export async function POST(req: NextRequest) {
       const {
         email, fullName, phone, childName, studentAge, location, audience, message,
         preferredTimes, consentMarketing, consentClause, campaign, undecided,
+        referralCode,
       } = body
       if (!fullName || (!email && !phone)) {
         return NextResponse.json({ error: 'Podaj imię oraz e-mail lub telefon.' }, { status: 400 })
@@ -180,6 +182,7 @@ export async function POST(req: NextRequest) {
         consentMarketing: !!consentMarketing,
         consentClause: consentClause ?? null,
         campaign: campaign ?? null,
+        referralCode: referralCode ?? null,
       })
 
       // Konto powstaje od razu, żeby klient nie musiał zakładać go osobno.
