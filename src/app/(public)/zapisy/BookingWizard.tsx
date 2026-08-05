@@ -416,7 +416,6 @@ export function BookingWizard({ groups, terms, consents }: {
               {selectedGroup.pricePerMonth != null && (
                 <p className="text-sm font-bold text-[#23479E] mt-1">
                   {selectedGroup.pricePerMonth} zł / miesiąc
-                  <span className="font-normal text-gray-400"> · ok. {Math.round(selectedGroup.pricePerMonth / 4)} zł za zajęcia</span>
                 </p>
               )}
               </div>
