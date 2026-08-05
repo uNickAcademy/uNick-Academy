@@ -1,53 +1,49 @@
-# uNick Academy — Konfiguracja e-maili (Resend + Supabase Auth)
+# uNick Academy — e-maile uwierzytelniające
 
-Po wykonaniu tych kroków będą działać: **powiadomienia z aplikacji** (potwierdzenia rezerwacji, przypomnienia) oraz **reset hasła / linki logowania** dla rodziców.
+Reset hasła, aktywacja konta i linki logowania są wysyłane przez podpisany Supabase Send Email Hook do endpointu aplikacji. Dzięki temu wiadomości są po polsku, mają markę uNick Academy, używają imienia odbiorcy i nie zależą od ograniczonego domyślnego SMTP Supabase.
 
-Stan obecny: klucz `RESEND_API_KEY` w projekcie to placeholder → żadne e-maile realnie nie wychodzą. Trzeba podać prawdziwy klucz i skonfigurować SMTP w Supabase.
+## Architektura
 
----
+1. Supabase podpisuje żądanie zgodnie ze Standard Webhooks.
+2. `POST /api/auth/send-email-hook` weryfikuje podpis i dane.
+3. Aplikacja buduje polską wiadomość i wysyła ją przez Resend z adresu `uNick Academy <hello@unick-academy.pl>`.
+4. Link prowadzi do `/auth/confirm`, który bezpiecznie potwierdza jednorazowy token i przekierowuje do `/reset-haslo`.
 
-## Krok 1 — Resend: konto + weryfikacja domeny (DNS)
-1. Załóż/zaloguj konto na **resend.com**.
-2. **Domains → Add Domain** → wpisz `unick-academy.pl`.
-3. Resend pokaże rekordy DNS (zwykle **MX** + **TXT/SPF**, **DKIM**, opcjonalnie **DMARC**). Dodaj je u rejestratora domeny / w DNS (tam gdzie masz rekordy A/CNAME dla Vercela).
-4. Poczekaj na status **Verified** (kilka–kilkadziesiąt minut).
-5. **API Keys → Create API Key** (uprawnienie *Sending*). Skopiuj klucz `re_...` — pokazywany tylko raz.
+Webhook obsługuje wszystkie aktualne rodzaje wiadomości Auth, nie tylko reset hasła. Błędy Resend nie są wyciszane: endpoint zwraca `503`, aby Supabase mógł ponowić wysyłkę.
 
-## Krok 2 — Wstaw prawdziwy klucz Resend do aplikacji
-1. Lokalnie w `.env.local` ustaw `RESEND_API_KEY=re_twój_klucz`.
-2. W Vercel: **Project u-nick-academy → Settings → Environment Variables** → ustaw `RESEND_API_KEY` (scope **Production**) na ten sam klucz (nadpisz placeholder).
-   - lub z terminala (w katalogu projektu): `printf '%s' 're_twój_klucz' | npx vercel env add RESEND_API_KEY production --force`
-3. **Redeploy**: `npx vercel --prod`.
-4. Sprawdź adres nadawcy w kodzie wysyłki (`src/lib/email/send.ts`) — musi być z **zweryfikowanej domeny**, np. `no-reply@unick-academy.pl`. (Mogę to ustawić.)
+## Konfiguracja produkcyjna
 
-## Krok 3 — Supabase: Auth URL Configuration
-Panel Supabase → projekt `xkydfgunafxfuzsggmca` → **Authentication → URL Configuration**:
-- **Site URL:** `https://unick-academy.pl`
-- **Redirect URLs:** dodaj `https://unick-academy.pl/**`
+### Vercel
 
-Bez tego linki w mailach (reset hasła) prowadziłyby pod zły adres.
+W środowisku Production muszą istnieć:
 
-## Krok 4 — Supabase: własny SMTP przez Resend
-Panel Supabase → **Authentication → Emails → SMTP Settings** → **Enable Custom SMTP**:
-- **Host:** `smtp.resend.com`
-- **Port:** `465` (SSL) lub `587` (STARTTLS)
-- **Username:** `resend`
-- **Password:** Twój klucz **`re_...`** (ten sam co w Resend)
-- **Sender email:** `no-reply@unick-academy.pl` (z zweryfikowanej domeny)
-- **Sender name:** `uNick Academy`
+- `RESEND_API_KEY` — aktywny klucz Resend dla zweryfikowanej domeny `unick-academy.pl`;
+- `NEXT_PUBLIC_APP_URL=https://unick-academy.pl`;
+- `SEND_EMAIL_HOOK_SECRET` — pełny sekret wygenerowany przez Supabase, w formacie `v1,whsec_...`.
 
-Zapisz. Domyślny SMTP Supabase wysyła tylko do członków projektu i ma ostre limity — własny SMTP odblokowuje wysyłkę do wszystkich rodziców.
+Można użyć `SEND_EMAIL_HOOK_SECRETS` z kilkoma sekretami rozdzielonymi `|` podczas bezpiecznej rotacji.
 
-## Krok 5 — (opcjonalnie) limity i szablony
-- **Authentication → Rate Limits** — podnieś limit e-maili, jeśli planujesz dużo resetów naraz.
-- **Authentication → Emails → Templates** — spolszcz treści (reset hasła, zaproszenie, magic link).
+### Supabase
 
-## Krok 6 — Test
-1. Na `unick-academy.pl/login` → „Zapomniałem/am hasła" → podaj swój e-mail.
-2. Sprawdź, czy mail dotarł (i w Resend → **Logs** czy wysyłka = *delivered*).
+Projekt `xkydfgunafxfuzsggmca`:
 
----
+1. **Authentication → URL Configuration**:
+   - Site URL: `https://unick-academy.pl`
+   - Redirect URLs: `https://unick-academy.pl/**`
+2. **Authentication → Hooks → Send Email**:
+   - typ: HTTP;
+   - URL: `https://unick-academy.pl/api/auth/send-email-hook`;
+   - wygeneruj sekret i zapisz ten sam pełny sekret w Vercel jako `SEND_EMAIL_HOOK_SECRET`;
+   - włącz hook dopiero po zakończonym wdrożeniu Vercel.
 
-### Uwagi
-- Konta z zapisów online dostają losowe hasło startowe — rodzic ustawia własne hasło przez „Zapomniane hasło" (link wysyłany mailem).
-- Te same dane SMTP (Resend) obsługują równolegle maile aplikacyjne i maile Auth — wystarczy jeden klucz.
+Sekretu nie zapisujemy w repozytorium ani dokumentacji.
+
+## Test po wdrożeniu
+
+1. Otwórz `https://unick-academy.pl/zapomniane-haslo`.
+2. Podaj adres istniejącego konta.
+3. Sprawdź nadawcę, polski temat, imię i logo.
+4. Kliknij „Ustawiam nowe hasło”; adres ma zaczynać się od `https://unick-academy.pl/auth/confirm` i zakończyć formularzem nowego hasła.
+5. Ustaw hasło i zaloguj się nim ponownie.
+
+Przy problemie sprawdź kolejno logi funkcji Vercel, logi Resend i Supabase Auth Logs. Nie loguj tokenów ani pełnego payloadu webhooka.

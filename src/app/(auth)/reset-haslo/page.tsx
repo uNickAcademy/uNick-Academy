@@ -99,6 +99,7 @@ export default function ResetPasswordPage() {
       return
     }
 
+    await supabase.auth.signOut()
     setSuccess(true)
     setTimeout(() => router.push('/login'), 1500)
   }

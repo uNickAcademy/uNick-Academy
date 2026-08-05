@@ -27,6 +27,7 @@ npm run dev   # http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | klucz publiczny (anon) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **tajny** klucz service_role (operacje serwerowe, zapisy) |
 | `RESEND_API_KEY` | wysyłka e-maili (Resend) |
+| `SEND_EMAIL_HOOK_SECRET` | sekret `v1,whsec_...` z Supabase Auth → Hooks |
 | `CRON_SECRET` | zabezpieczenie endpointu cron przypomnień |
 | `NEXT_PUBLIC_APP_URL` | `https://unick-academy.pl` |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` / `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | płatności (opcjonalne – do włączenia później) |
@@ -38,7 +39,7 @@ npm run dev   # http://localhost:3000
 4. **Domena:** Vercel → Settings → Domains → dodaj `unick-academy.pl` i `www.unick-academy.pl`. U rejestratora ustaw rekordy DNS pokazane przez Vercel:
    - `A` `@` → `76.76.21.21`
    - `CNAME` `www` → `cname.vercel-dns.com`
-5. **Supabase Auth** → URL Configuration: Site URL `https://unick-academy.pl`, Redirect URLs `https://unick-academy.pl/**`.
+5. **Supabase Auth** → URL Configuration: Site URL `https://unick-academy.pl`, Redirect URLs `https://unick-academy.pl/**`. Następnie skonfiguruj podpisany Send Email Hook zgodnie z `uNick-Academy-Konfiguracja-Email.md`.
 6. **Stripe (gdy włączasz płatności):** webhook `https://unick-academy.pl/api/stripe/webhook`, zdarzenia `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`; sekret → `STRIPE_WEBHOOK_SECRET`.
 
 ## Konta startowe

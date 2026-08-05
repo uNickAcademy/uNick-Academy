@@ -1,114 +1,85 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { Webhook, WebhookVerificationError } from 'standardwebhooks'
+import { NextRequest } from 'next/server'
+import {
+  verifyAuthEmailHook,
+  metadataFirstName,
+  metadataFullName,
+  type AuthHookUser,
+} from '@/lib/auth/email-hook'
+import { buildAuthEmailMessages } from '@/lib/email/auth-email'
 import { sendAuthActionEmail } from '@/lib/email/send'
-
-// Supabase Auth "Send Email Hook": Supabase wywołuje ten endpoint zamiast
-// wysyłać maile logowania samodzielnie. Bez tego hooka Supabase używa
-// własnego, angielskiego, niebrandowanego szablonu — i buduje link z
-// Site URL projektu, co przy błędnej konfiguracji (localhost:3000) blokuje
-// WSZYSTKIM ustawienie hasła. Ten endpoint przejmuje wysyłkę w całości.
-//
-// Konfiguracja jednorazowa w panelu Supabase (Authentication → Hooks →
-// „Send Email hook”, typ HTTPS): URL tego endpointu + wygenerowany sekret
-// jako zmienna środowiskowa SEND_EMAIL_HOOK_SECRET w Vercelu. Dopóki hook
-// nie jest tam podłączony, ten route nigdy nie zostanie wywołany — Supabase
-// dalej wysyła własne maile, więc wdrożenie tego pliku samo w sobie niczego
-// nie psuje.
-//
-// Sekret z panelu Supabase ma postać "v1,whsec_<base64>" — biblioteka
-// standardwebhooks oczekuje samego base64, stąd obcięcie prefiksu. Wzorzec
-// dokładnie taki, jak w oficjalnej dokumentacji Supabase (Deno: `.replace
-// ('v1,whsec_', '')`), żeby nie zgadywać formatu przy czymś, co blokuje
-// logowanie każdemu, jeśli się pomylimy.
+import { createAdminClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
-type SendEmailHookPayload = {
-  user: {
-    email: string
-    user_metadata?: Record<string, unknown> | null
-  }
-  email_data: {
-    token_hash: string
-    redirect_to: string
-    email_action_type: string
+async function accountFirstName(user: AuthHookUser): Promise<string | null> {
+  const explicitFirstName = metadataFirstName(user)
+  if (explicitFirstName) return explicitFirstName
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null
+
+  try {
+    const admin = createAdminClient()
+    let fullName = metadataFullName(user)
+
+    if (!fullName) {
+      const { data, error } = await admin
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (error) throw error
+      fullName = typeof data?.full_name === 'string' ? data.full_name.trim() : null
+    }
+
+    if (!fullName || fullName.includes('@')) return null
+
+    const { data, error } = await admin.rpc('pick_first_name', { p_name: fullName })
+    if (error) throw error
+    const detected = Array.isArray(data) ? data[0] : data
+    const firstName = typeof detected?.imie === 'string' ? detected.imie.trim() : ''
+    const confidence = typeof detected?.pewnosc === 'string' ? detected.pewnosc : ''
+
+    // Przy niejednoznacznych danych bezpieczniej użyć neutralnego „Cześć,”
+    // niż zwrócić się do ucznia po nazwisku.
+    return firstName && confidence !== 'niepewne' ? firstName : null
+  } catch (error) {
+    console.error('[AuthEmailHook] Nie udało się pobrać imienia:', error)
+    return null
   }
 }
 
-function isSendEmailHookPayload(v: unknown): v is SendEmailHookPayload {
-  if (!v || typeof v !== 'object') return false
-  const o = v as Record<string, unknown>
-  const user = o.user as Record<string, unknown> | undefined
-  const emailData = o.email_data as Record<string, unknown> | undefined
-  return (
-    !!user && typeof user.email === 'string' &&
-    !!emailData &&
-    typeof emailData.token_hash === 'string' &&
-    typeof emailData.redirect_to === 'string' &&
-    typeof emailData.email_action_type === 'string'
-  )
-}
+export async function POST(request: NextRequest) {
+  const configuredSecrets =
+    process.env.SEND_EMAIL_HOOK_SECRETS || process.env.SEND_EMAIL_HOOK_SECRET || ''
 
-export async function POST(req: NextRequest) {
-  const rawSecret = process.env.SEND_EMAIL_HOOK_SECRET
-  if (!rawSecret) {
-    // Nie 401 — to nie jest podpis odrzucony, tylko brak konfiguracji po
-    // naszej stronie. Rozróżnienie ułatwia diagnozę w logach Vercela.
-    console.error('[SendEmailHook] Brak SEND_EMAIL_HOOK_SECRET w środowisku.')
-    return NextResponse.json({ error: { message: 'Hook nieskonfigurowany' } }, { status: 500 })
+  if (!configuredSecrets) {
+    console.error('[AuthEmailHook] Brak SEND_EMAIL_HOOK_SECRET(S).')
+    return Response.json(
+      { error: 'Usługa e-mail jest chwilowo niedostępna.' },
+      { status: 503 }
+    )
   }
 
-  const payload = await req.text()
-  const headers = Object.fromEntries(req.headers)
-
-  let verified: unknown
+  const rawBody = await request.text()
+  let payload
   try {
-    const wh = new Webhook(rawSecret.replace('v1,whsec_', ''))
-    verified = wh.verify(payload, headers)
-  } catch (err) {
-    const msg = err instanceof WebhookVerificationError ? err.message : 'Weryfikacja nie powiodła się'
-    console.error('[SendEmailHook] Odrzucony podpis:', msg)
-    return NextResponse.json({ error: { http_code: 401, message: msg } }, { status: 401 })
+    payload = verifyAuthEmailHook(rawBody, Object.fromEntries(request.headers), configuredSecrets)
+  } catch (error) {
+    console.error('[AuthEmailHook] Odrzucono nieprawidłowy podpis lub dane:', error)
+    return Response.json({ error: 'Nieprawidłowe żądanie.' }, { status: 401 })
   }
-
-  if (!isSendEmailHookPayload(verified)) {
-    console.error('[SendEmailHook] Nieoczekiwany kształt payloadu:', JSON.stringify(verified).slice(0, 500))
-    return NextResponse.json({ error: { message: 'Nieoczekiwany payload' } }, { status: 400 })
-  }
-
-  const { user, email_data } = verified
-  const { token_hash, redirect_to, email_action_type } = email_data
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!supabaseUrl) {
-    console.error('[SendEmailHook] Brak NEXT_PUBLIC_SUPABASE_URL.')
-    return NextResponse.json({ error: { message: 'Brak konfiguracji Supabase URL' } }, { status: 500 })
-  }
-
-  const verifyUrl =
-    `${supabaseUrl}/auth/v1/verify` +
-    `?token=${encodeURIComponent(token_hash)}` +
-    `&type=${encodeURIComponent(email_action_type)}` +
-    `&redirect_to=${encodeURIComponent(redirect_to)}`
-
-  const fullName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : ''
-  const firstName = fullName.trim().split(/\s+/)[0] ?? ''
 
   try {
-    await sendAuthActionEmail(user.email, {
-      actionType: email_action_type,
-      firstName,
-      verifyUrl,
-    })
-  } catch (err) {
-    // Świadomie NIE połykamy tego błędu (w odróżnieniu od reszty maili
-    // w aplikacji) — to jedyny kanał dostarczenia linku logowania. Zwrócenie
-    // błędu Supabase powoduje, że resetPasswordForEmail() na kliencie dostaje
-    // realny błąd zamiast fałszywego "sprawdź skrzynkę", które nigdy by nie
-    // nadeszło.
-    console.error(`[SendEmailHook] Nie udało się wysłać maila do ${user.email}:`, err)
-    return NextResponse.json({ error: { message: 'Nie udało się wysłać e-maila' } }, { status: 500 })
+    const firstName = await accountFirstName(payload.user)
+    const messages = buildAuthEmailMessages(payload, firstName)
+    const webhookId = request.headers.get('webhook-id') || 'auth-email'
+    await Promise.all(messages.map((message, index) =>
+      sendAuthActionEmail(message, `${webhookId}-${index}`)
+    ))
+    // Supabase Auth wymaga odpowiedzi JSON również wtedy, gdy hook nie zwraca danych.
+    return Response.json({}, { status: 200 })
+  } catch (error) {
+    // 503 powoduje ponowienie próby przez Supabase (maks. 3 próby w budżecie 5 s).
+    console.error('[AuthEmailHook] Wysyłka nie powiodła się:', error)
+    return Response.json({ error: 'Nie udało się wysłać wiadomości.' }, { status: 503 })
   }
-
-  return NextResponse.json({}, { status: 200 })
 }

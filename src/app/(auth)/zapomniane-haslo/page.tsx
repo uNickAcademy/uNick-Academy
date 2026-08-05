@@ -17,8 +17,12 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     const supabase = createClient()
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL
+    const appOrigin = configuredAppUrl && window.location.hostname !== 'localhost'
+      ? configuredAppUrl.replace(/\/$/, '')
+      : window.location.origin
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-haslo`,
+      redirectTo: `${appOrigin}/reset-haslo`,
     })
 
     setLoading(false)
