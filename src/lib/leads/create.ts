@@ -32,8 +32,6 @@ export type CreateLeadInput = {
   goal?: string | null
   preferredStart?: string | null
   interestedGroupId?: string | null
-  /** Kod polecenia — na razie tylko zapamiętany na leadzie, do ręcznego honorowania w pipeline. */
-  referralCode?: string | null
   consentMarketing?: boolean
   consentClause?: string | null
   campaign?: string | null
@@ -41,6 +39,12 @@ export type CreateLeadInput = {
   status?: LeadStatus
   /** Data pierwszych zajęć — zasila metryki lejka. */
   bookedSlotAt?: string | null
+  /**
+   * Kod polecenia podany przy zgłoszeniu. Zostaje na leadzie i wchodzi w grę
+   * automatycznie, gdy ta osoba faktycznie się zapisze — także wtedy, gdy
+   * najpierw przyszła tylko na rozmowę doradczą.
+   */
+  referralCode?: string | null
 }
 
 export type CreateLeadResult = {
@@ -108,12 +112,12 @@ export async function createLead(
     goal: clean(input.goal),
     preferred_start: clean(input.preferredStart),
     interested_group_id: input.interestedGroupId ?? null,
-    referral_code: clean(input.referralCode),
     consent_marketing: input.consentMarketing ?? false,
     consent_at: input.consentMarketing ? new Date().toISOString() : null,
     consent_clause: input.consentMarketing ? clean(input.consentClause) : null,
     status: input.status ?? 'new',
     booked_slot_at: input.bookedSlotAt ?? null,
+    referral_code: clean(input.referralCode),
   }
 
   const existing = await findExisting(admin, emailNorm, phoneNorm)

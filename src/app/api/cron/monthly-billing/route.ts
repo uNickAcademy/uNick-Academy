@@ -30,6 +30,10 @@ export async function GET(req: NextRequest) {
   const outcomes = await chargeStudentsForPeriod(supabase, students, period)
 
   // Obciążenia zostają per podkonto, ale rachunek idzie jeden na rodzinę.
+  // loadBillableStudents() odsiewa konta z aktywnym dunning_paused_until
+  // (incydent 1.08 — sporne obciążenie w trakcie wyjaśniania), a computeMonthDue
+  // strukturalnie zwraca 0 zł bez kursu w toku i bez lekcji w miesiącu, więc
+  // oba zabezpieczenia z tamtego incydentu są tu zachowane.
   const billed = await billFamilies(supabase, outcomes, label, {
     createCheckout: (opts) => createCheckoutSession({
       ...opts,

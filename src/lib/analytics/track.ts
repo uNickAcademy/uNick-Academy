@@ -27,6 +27,15 @@ export function track(event: string, params?: GtagParams): void {
 // dopinane do rekordu w `leads`, żeby dało się policzyć koszt ucznia z
 // konkretnej reklamy. `ref` to kod polecenia, nie kampania płatna, ale trafia
 // do tego samego pola, bo pytanie brzmi tak samo: skąd przyszedł ten uczeń.
+// Surowy kod polecenia z ?ref=. readCampaign() zwraca etykietę atrybucji
+// („polecenie_UNICKANNAR4VW"), a do rejestracji polecenia potrzebny jest kod
+// dokładnie taki, jaki nosi uczeń: uNickAnnaR4VW.
+export function readReferralCode(): string | null {
+  if (typeof window === 'undefined') return null
+  const ref = new URLSearchParams(window.location.search).get('ref')?.trim()
+  return ref || null
+}
+
 export function readCampaign(): string | null {
   if (typeof window === 'undefined') return null
   const p = new URLSearchParams(window.location.search)

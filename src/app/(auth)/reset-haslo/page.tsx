@@ -99,6 +99,7 @@ export default function ResetPasswordPage() {
       return
     }
 
+    await supabase.auth.signOut()
     setSuccess(true)
     setTimeout(() => router.push('/login'), 1500)
   }
@@ -122,7 +123,7 @@ export default function ResetPasswordPage() {
           {linkState === 'invalid' && (
             <div className="text-center space-y-4">
               <p className="text-sm text-gray-600">
-                Ten link do resetu hasła jest nieprawidłowy lub wygasł. Poproś o nowy —
+                Ten link do ustawienia hasła jest nieprawidłowy lub wygasł. Poproś o nowy,
                 linki są ważne przez ograniczony czas i tylko przy pierwszym kliknięciu.
               </p>
               <Link

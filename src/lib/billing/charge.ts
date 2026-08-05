@@ -217,22 +217,30 @@ export async function chargeFirstLesson(
  * strony: uczeń z zajęciami potrafi mieć wpisane „wstrzymany" (i zostałby
  * pominięty w rachunku), a ktoś bez zajęć „aktywny". O tym, czy jest za co
  * płacić, decyduje wyłącznie silnik: brak kursu w toku i brak lekcji = 0 zł.
+ *
+ * Wyjątek: `dunning_paused_until` to świadome, ręczne wstrzymanie naliczania
+ * (sporne obciążenie w trakcie wyjaśniania) — ono jednak liczy się nadrzędnie
+ * nad regułą silnika, więc filtrujemy tu wprost, zanim ktokolwiek policzy,
+ * ile taki uczeń jest winien.
  */
 export async function loadBillableStudents(supabase: SupabaseClient): Promise<BillableStudent[]> {
   const { data } = await supabase
     .from('students')
-    .select('id, full_name, custom_monthly_price, custom_lesson_price, profile:profiles(full_name, email)')
+    .select('id, full_name, custom_monthly_price, custom_lesson_price, dunning_paused_until, profile:profiles(full_name, email)')
     .is('deleted_at', null)
     .neq('billing_type', 'b2b')
 
-  return (data ?? []).map((s) => {
-    const p = (Array.isArray(s.profile) ? s.profile[0] : s.profile) as { full_name?: string; email?: string } | undefined
-    return {
-      id: s.id,
-      name: (s.full_name as string) || p?.full_name || 'Uczeń',
-      email: p?.email ?? null,
-      customMonthlyPrice: s.custom_monthly_price != null ? Number(s.custom_monthly_price) : null,
-      customLessonPrice: s.custom_lesson_price != null ? Number(s.custom_lesson_price) : null,
-    }
-  })
+  const now = Date.now()
+  return (data ?? [])
+    .filter((s) => !s.dunning_paused_until || new Date(s.dunning_paused_until as string).getTime() <= now)
+    .map((s) => {
+      const p = (Array.isArray(s.profile) ? s.profile[0] : s.profile) as { full_name?: string; email?: string } | undefined
+      return {
+        id: s.id,
+        name: (s.full_name as string) || p?.full_name || 'Uczeń',
+        email: p?.email ?? null,
+        customMonthlyPrice: s.custom_monthly_price != null ? Number(s.custom_monthly_price) : null,
+        customLessonPrice: s.custom_lesson_price != null ? Number(s.custom_lesson_price) : null,
+      }
+    })
 }
