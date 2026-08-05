@@ -889,3 +889,110 @@ export function groupStartReminderEmail(params: {
     `),
   }
 }
+
+// ──────────────────────────────────────────
+// Maile logowania Supabase Auth (Send Email Hook)
+// ──────────────────────────────────────────
+//
+// Supabase domyślnie wysyła własne maile logowania (reset hasła, zaproszenia)
+// swoim mechanizmem: po angielsku, bez brandu, i z linkiem zbudowanym z
+// Site URL projektu — który był ustawiony na localhost:3000. Efekt: NIKT nie
+// mógł ustawić hasła. Send Email Hook (src/app/api/auth/send-email-hook)
+// przejmuje wysyłkę całkowicie — Supabase wywołuje nasz endpoint zamiast
+// wysyłać cokolwiek samodzielnie.
+//
+// Link budujemy sami z token_hash + email_action_type, dokładnie według
+// oficjalnego wzorca Supabase (ConfirmationURL):
+//   {SUPABASE_URL}/auth/v1/verify?token={token_hash}&type={action}&redirect_to={redirect_to}
+
+const AUTH_ACTION_COPY: Record<string, { subject: string; naglowek: string; tresc: string; przycisk: string }> = {
+  recovery: {
+    subject: 'Ustaw hasło do konta w uNick Academy',
+    naglowek: 'Ustawmy Ci hasło',
+    tresc: 'Dostaliśmy prośbę o ustawienie hasła do Twojego konta. Kliknij przycisk niżej, żeby wybrać nowe.',
+    przycisk: 'USTAW HASŁO',
+  },
+  invite: {
+    subject: 'Zaproszenie do panelu uNick Academy',
+    naglowek: 'Zapraszamy Cię do panelu',
+    tresc: 'Ktoś z zespołu uNick Academy założył dla Ciebie konto w panelu. Kliknij przycisk, żeby ustawić hasło i wejść.',
+    przycisk: 'USTAW HASŁO I WEJDŹ',
+  },
+  signup: {
+    subject: 'Potwierdź swój adres e-mail w uNick Academy',
+    naglowek: 'Jeszcze jeden krok',
+    tresc: 'Potwierdź swój adres e-mail, żeby dokończyć zakładanie konta.',
+    przycisk: 'POTWIERDŹ E-MAIL',
+  },
+  magiclink: {
+    subject: 'Twój link do zalogowania w uNick Academy',
+    naglowek: 'Twój link do logowania',
+    tresc: 'Kliknij przycisk, żeby zalogować się bez hasła.',
+    przycisk: 'ZALOGUJ SIĘ',
+  },
+  email_change: {
+    subject: 'Potwierdź zmianę adresu e-mail w uNick Academy',
+    naglowek: 'Potwierdź nowy adres',
+    tresc: 'Potwierdź, że to Ty chcesz zmienić adres e-mail przypisany do konta.',
+    przycisk: 'POTWIERDŹ ZMIANĘ',
+  },
+}
+
+export function authActionEmail(params: {
+  actionType: string
+  firstName: string
+  verifyUrl: string
+  appUrl: string
+}): { subject: string; html: string } {
+  const { actionType, firstName, verifyUrl, appUrl } = params
+  const copy = AUTH_ACTION_COPY[actionType] ?? AUTH_ACTION_COPY.recovery
+
+  return {
+    subject: copy.subject,
+    html: `
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Comfortaa:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 24px 12px; background: #F0DCC8;">
+  <div style="max-width: 480px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden;">
+
+    <div style="background: #FFFFFF; padding: 28px 40px 8px; text-align: center;">
+      <img src="${appUrl}/brand/unick-academy-logo.png" alt="uNick Academy"
+           width="180" style="display: block; margin: 0 auto; max-width: 180px; height: auto;" />
+    </div>
+
+    <div style="padding: 16px 40px 32px; font-family: 'Comfortaa', 'Trebuchet MS', Verdana, sans-serif; color: #1E3282;">
+      <h2 style="font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-size: 22px; font-weight: 700; color: #1E3282; margin: 0 0 14px;">
+        ${firstName ? `Cześć ${firstName},` : copy.naglowek}
+      </h2>
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 24px;">
+        ${copy.tresc}
+      </p>
+
+      <div style="text-align: center; margin: 0 0 20px;">
+        <a href="${verifyUrl}" style="display: inline-block; padding: 14px 30px; background: #B4321E; color: #FFFFFF; font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
+          ${copy.przycisk}
+        </a>
+      </div>
+
+      <p style="font-size: 13px; line-height: 1.6; color: #6B7280; margin: 0;">
+        Jeśli o to nie prosiłeś/aś, zignoruj tę wiadomość: nic się nie stanie.
+        Link jest ważny przez ograniczony czas i działa tylko raz.
+      </p>
+    </div>
+
+    <div style="background: #F0DCC8; padding: 18px 40px; text-align: center; font-family: 'Comfortaa', 'Trebuchet MS', Verdana, sans-serif;">
+      <p style="color: #1E3282; font-size: 12px; margin: 0;">
+        uNick Academy, <a href="mailto:${siteConfig.email}" style="color: #1E3282; text-decoration: none;">${siteConfig.email}</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>`,
+  }
+}

@@ -13,6 +13,7 @@ import {
   monthlyPaymentEmail,
   internalNotificationEmail,
   comebackEmail,
+  authActionEmail,
   groupReservationEmail,
   adviceReceivedEmail,
   groupPrepEmail,
@@ -267,4 +268,29 @@ export async function sendGroupStartReminder(to: string, params: {
 }) {
   const { subject, html } = groupStartReminderEmail(params)
   await send(to, subject, html)
+}
+
+// Jedyne miejsce, gdzie wysyłka NIE może po cichu połknąć błędu: to jest
+// jedyny kanał dostarczenia linku logowania (Send Email Hook zastępuje
+// wysyłkę Supabase w całości). Gdy Resend padnie, hook musi zwrócić błąd,
+// żeby ekran /zapomniane-haslo pokazał realny komunikat zamiast fałszywego
+// "sprawdź skrzynkę" — dlatego woła Resend bezpośrednio, z pominięciem
+// współdzielonego send(), które błędy tylko loguje.
+export async function sendAuthActionEmail(to: string, params: {
+  actionType: string
+  firstName: string
+  verifyUrl: string
+}): Promise<void> {
+  const resend = getResend()
+  if (!resend) {
+    throw new Error('RESEND_API_KEY nie jest skonfigurowany — nie można wysłać maila logowania.')
+  }
+  const { subject, html } = authActionEmail({
+    ...params,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
+  })
+  const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+  if (error) {
+    throw new Error(`Resend: ${error.message ?? 'nieznany błąd wysyłki'}`)
+  }
 }
