@@ -6,7 +6,7 @@ import {
   Monitor, Check, X, Mail, Phone, Link2, Repeat, Plus, Trash2,
   CalendarRange, CalendarOff, Wallet, Banknote,
 } from 'lucide-react'
-import { generateLessons, lessonsPerMonth, DAYS_PL_SHORT, type Slot } from '@/lib/lessons/schedule'
+import { generateLessons, lessonsPerMonth, defaultCourseEndDate, DAYS_PL_SHORT, type Slot } from '@/lib/lessons/schedule'
 
 export type OnlineRow = {
   studentId: string
@@ -50,13 +50,6 @@ export function OnlineBookingsView({ rows, teacherOptions, breakDates }: {
   )
 }
 
-/** Domyślny koniec kursu: najbliższy 30 czerwca po dacie startu. */
-function defaultEndDate(start: string): string {
-  const year = Number(start.slice(0, 4))
-  const endThisYear = `${year}-06-30`
-  return start <= endThisYear ? endThisYear : `${year + 1}-06-30`
-}
-
 const zl = (n: number) => `${Math.round(n).toLocaleString('pl-PL')} zł`
 
 function OnlineCard({ r, teacherOptions, breakDates }: {
@@ -72,7 +65,7 @@ function OnlineCard({ r, teacherOptions, breakDates }: {
     { day: r.firstDay, time: r.firstTime, durationMin: r.durationMinutes },
   ])
   const [startDate, setStartDate] = useState(r.firstDate)
-  const [endDate, setEndDate] = useState(defaultEndDate(r.firstDate))
+  const [endDate, setEndDate] = useState(defaultCourseEndDate(r.firstDate))
   const [excludedDates, setExcludedDates] = useState<string[]>([])
   const [newExcluded, setNewExcluded] = useState('')
 

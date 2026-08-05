@@ -135,6 +135,13 @@ export function lessonsPerMonth(lessons: GeneratedLesson[]): Record<string, numb
   return acc
 }
 
+/** Domyślny koniec kursu: najbliższy 30 czerwca od podanej daty (rok szkolny). */
+export function defaultCourseEndDate(fromDate: string): string {
+  const year = Number(fromDate.slice(0, 4))
+  const endThisYear = `${year}-06-30`
+  return fromDate <= endThisYear ? endThisYear : `${year + 1}-06-30`
+}
+
 /** Krótki opis terminów, np. „wtorki 12:00 (30 min) · czwartki 12:15 (30 min)". */
 export function describeSlots(slots: Slot[]): string {
   return slots

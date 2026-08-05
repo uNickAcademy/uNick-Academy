@@ -117,6 +117,20 @@ export interface Student {
   deleted_at?: string | null
   custom_fields?: Record<string, string>
   age_group?: string
+  phone?: string
+  /** Przepis na kurs indywidualny: terminy tygodniowe, czas trwania, wykluczenia, link. */
+  course_config?: {
+    slots: { day: number; time: string; durationMin: number }[]
+    startDate: string
+    endDate: string
+    excludedDates?: string[]
+    meetingUrl?: string
+  } | null
+  /** Cena za pojedyncze zajęcia (zł) — bije cennik ogólny w naliczeniach. */
+  custom_lesson_price?: number | null
+  /** Stawka wypłaty nauczyciela za pojedyncze zajęcia tego ucznia (zł). */
+  custom_teacher_rate?: number | null
+  payment_mode?: 'monthly' | 'upfront' | null
   profile?: Profile
   teacher?: Teacher
 }
