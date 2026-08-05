@@ -893,6 +893,10 @@ const pl = {
     subtitle:
       "Powiedz nam coś o sobie, a odpowiemy, by umówić bezpłatną rozmowę bez presji — o tobie, twoich celach i czy będziemy dobrze dopasowani.",
     audienceLabel: "Ta konsultacja jest dla",
+    referralLabel: "Kod polecenia (jeśli ktoś Was nam polecił)",
+    referralPlaceholder: "uNickAnna8DJ9",
+    referralFromLink: "Kod wczytany z linku. Możesz go zmienić.",
+    referralHint: "Po opłaceniu zajęć za 250 zł oboje dostaniecie po 50 zł na kolejne lekcje.",
     messageLabel: "Coś, co warto wiedzieć? (opcjonalnie)",
     messagePlaceholder: "np. obecny poziom, cele, preferencje dotyczące terminów...",
     submit: "Wyślij i zarezerwuj konsultację",

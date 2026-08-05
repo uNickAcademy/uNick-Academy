@@ -6,10 +6,24 @@ import UNickorn from "./UNickorn";
 import ConsentCheckboxes from "./ConsentCheckboxes";
 import styles from "./ConsultationModal.module.css";
 
+// Kod z linku ?ref= to tylko wartość startowa — pole zostaje edytowalne, bo
+// większość poleceń dzieje się ustnie: znajoma dostaje kod od kogoś i wchodzi
+// na stronę normalnie, bez linku. Bez pola do wpisania takie polecenie ginie.
+function readReferralCodeFromUrl() {
+  if (typeof window === "undefined") return "";
+  try {
+    return new URLSearchParams(window.location.search).get("ref") || "";
+  } catch {
+    return "";
+  }
+}
+
 export default function ConsultationModal({ isOpen, onClose, audience, teacher, dict, locale }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [referralCode, setReferralCode] = useState(() => readReferralCodeFromUrl());
+  const referralFromLink = !!readReferralCodeFromUrl();
 
   useEffect(() => {
     if (!isOpen) {
@@ -49,6 +63,7 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
       phone: formData.get("phone"),
       audience: formData.get("audience"),
       message: formData.get("message"),
+      referralCode,
     };
 
     try {
@@ -157,6 +172,24 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
                   className={styles.input}
                   placeholder={fields.phonePlaceholder}
                 />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="consult-referral">
+                  {t.referralLabel}
+                </label>
+                <input
+                  id="consult-referral"
+                  name="referralCode"
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  className={styles.input}
+                  placeholder={t.referralPlaceholder}
+                />
+                <p className={styles.hint}>
+                  {referralFromLink ? t.referralFromLink : t.referralHint}
+                </p>
               </div>
 
               <div className={styles.field}>

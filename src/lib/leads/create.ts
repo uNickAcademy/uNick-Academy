@@ -32,6 +32,8 @@ export type CreateLeadInput = {
   goal?: string | null
   preferredStart?: string | null
   interestedGroupId?: string | null
+  /** Kod polecenia — na razie tylko zapamiętany na leadzie, do ręcznego honorowania w pipeline. */
+  referralCode?: string | null
   consentMarketing?: boolean
   consentClause?: string | null
   campaign?: string | null
@@ -106,6 +108,7 @@ export async function createLead(
     goal: clean(input.goal),
     preferred_start: clean(input.preferredStart),
     interested_group_id: input.interestedGroupId ?? null,
+    referral_code: clean(input.referralCode),
     consent_marketing: input.consentMarketing ?? false,
     consent_at: input.consentMarketing ? new Date().toISOString() : null,
     consent_clause: input.consentMarketing ? clean(input.consentClause) : null,
@@ -174,7 +177,7 @@ async function mergeIntoExisting(
 ): Promise<void> {
   const { data: current } = await admin
     .from('leads')
-    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status')
+    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status, referral_code')
     .eq('id', leadId)
     .single()
 
