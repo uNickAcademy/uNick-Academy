@@ -37,6 +37,9 @@ export async function POST(req: NextRequest) {
   const lessonPrice = numOrNull(body.lessonPrice)
   const teacherRate = numOrNull(body.teacherRate)
   const applySchedule: boolean = body.applySchedule === true
+  // Zajęcia B2B bywają stacjonarne w siedzibie firmy, a indywidualne online —
+  // domyślne wartości odpowiadają dotychczasowemu zachowaniu panelu Studenci.
+  const lessonType: 'online' | 'offline' = body.lessonType === 'offline' ? 'offline' : 'online'
 
   if (!studentId) return NextResponse.json({ error: 'Brak ucznia' }, { status: 400 })
 
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest) {
     const { error: insertError } = await db.from('lessons').insert(schedule.map((s) => ({
       student_id: studentId,
       teacher_id: effectiveTeacherId,
-      type: 'online' as const,
+      type: lessonType,
       format: 'individual' as const,
       level: student.level,
       starts_at: s.startsAt,

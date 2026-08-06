@@ -2,17 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search, Clock, RotateCcw, EyeOff, Eye } from 'lucide-react'
+import { Plus, X, Building2, UserPlus, Users, FileText, Check, Search, Clock, RotateCcw, EyeOff, Eye, CalendarClock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { EmployeeScheduleModal, type EmployeeRow, type TeacherOpt } from './EmployeeScheduleModal'
 
 type Company = { id: string; name: string; nip: string; address: string; employeeCount: number; hrName: string | null; isActive: boolean }
 type DeletedCompany = { id: string; name: string }
-type StudentOpt = { id: string; name: string; companyId: string }
+type StudentOpt = EmployeeRow & { email: string; companyId: string }
 type Inv = { id: string; companyId: string; number: string; gross: number; period: string; issuedAt: string; companyName: string | null }
 type EntityOpt = { id: string; short_name: string; name: string; vat_payer: boolean }
 
-export function CompaniesView({ companies, students, invoices, deletedCompanies }: {
-  companies: Company[]; students: StudentOpt[]; invoices: Inv[]; deletedCompanies: DeletedCompany[]
+export function CompaniesView({ companies, students, invoices, deletedCompanies, teacherOptions }: {
+  companies: Company[]; students: StudentOpt[]; invoices: Inv[]; deletedCompanies: DeletedCompany[]; teacherOptions: TeacherOpt[]
 }) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
@@ -99,7 +100,7 @@ export function CompaniesView({ companies, students, invoices, deletedCompanies 
 
       {creating && <CompanyModal onClose={() => setCreating(false)} onSaved={() => { setCreating(false); router.refresh() }} />}
       {managing && (
-        <ManageModal company={managing} students={students} uaEntityId={uaEntity?.id ?? null}
+        <ManageModal company={managing} students={students} uaEntityId={uaEntity?.id ?? null} teacherOptions={teacherOptions}
           invoices={invoices.filter((i) => i.companyId === managing.id)}
           onClose={() => setManaging(null)} onChanged={() => router.refresh()}
           onDeleted={() => { setManaging(null); router.refresh() }} />
@@ -246,13 +247,14 @@ function CompanyModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   )
 }
 
-function ManageModal({ company, students, invoices, uaEntityId, onClose, onChanged, onDeleted }: {
-  company: Company; students: StudentOpt[]; invoices: Inv[]; uaEntityId: string | null
+function ManageModal({ company, students, invoices, uaEntityId, teacherOptions, onClose, onChanged, onDeleted }: {
+  company: Company; students: StudentOpt[]; invoices: Inv[]; uaEntityId: string | null; teacherOptions: TeacherOpt[]
   onClose: () => void; onChanged: () => void; onDeleted: () => void
 }) {
   const employees = students.filter((s) => s.companyId === company.id)
   const available = students.filter((s) => !s.companyId)
   const [toAdd, setToAdd] = useState('')
+  const [scheduling, setScheduling] = useState<StudentOpt | null>(null)
   const [hrName, setHrName] = useState(''); const [hrEmail, setHrEmail] = useState(''); const [hrPhone, setHrPhone] = useState('')
   const [hrPassword, setHrPassword] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -322,6 +324,7 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
   }
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 w-full max-w-lg my-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
@@ -368,6 +371,10 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
               employees.map((e) => (
                 <div key={e.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
                   <span className="text-sm text-gray-700 flex-1">{e.name}</span>
+                  <button onClick={() => setScheduling(e)}
+                    className="flex items-center gap-1 text-xs text-[#23479E] hover:underline font-medium">
+                    <CalendarClock size={12} />Harmonogram
+                  </button>
                   <button onClick={() => removeEmployee(e.id)} className="text-xs text-gray-400 hover:text-red-500">Usuń</button>
                 </div>
               ))}
@@ -427,5 +434,11 @@ function ManageModal({ company, students, invoices, uaEntityId, onClose, onChang
         </div>
       </div>
     </div>
+    {scheduling && (
+      <EmployeeScheduleModal employee={scheduling} teacherOptions={teacherOptions}
+        onClose={() => setScheduling(null)}
+        onSaved={() => { setScheduling(null); onChanged() }} />
+    )}
+    </>
   )
 }
