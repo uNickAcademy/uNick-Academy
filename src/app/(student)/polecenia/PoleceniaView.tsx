@@ -5,12 +5,19 @@ import { Copy, Check, Share2, Gift } from 'lucide-react'
 import { t, type Lang } from '@/lib/i18n'
 
 type ReferralItem = { id: string; name: string; date: string; credit: number }
+type PendingItem = {
+  rola: 'polecajacy' | 'polecony'
+  kwota: number; prog: number; wplacone: number; brakuje: number; postep: number
+  drugaStrona: string
+}
 
-export function PoleceniaView({ lang, code, referrals }: {
+export function PoleceniaView({ lang, code, referrals, pending = [] }: {
   lang: Lang
   code: string
   referrals: ReferralItem[]
+  pending?: PendingItem[]
 }) {
+  const pendingTotal = pending.reduce((s, p) => s + p.kwota, 0)
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   // origin ustalamy dopiero po zamontowaniu — inaczej SSR renderuje względny
   // link, a klient absolutny, co daje ostrzeżenie o niezgodności hydracji.
@@ -47,6 +54,42 @@ export function PoleceniaView({ lang, code, referrals }: {
           </div>
         </div>
       </div>
+
+      {/* Kredyt oczekujący — widoczny od razu po zapisie znajomego, ale
+          świadomie NIE wliczony do salda: pieniądze pojawią się na koncie
+          dopiero po opłaceniu zajęć za 250 zł. */}
+      {pending.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-[#F0DCC8] mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-bold text-[#1E3282]">Kredyt oczekujący</h2>
+            <span className="text-sm font-bold text-[#B4321E]">{pendingTotal} zł</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Trafi na Twoje saldo, gdy druga strona opłaci zajęcia za 250 zł.
+          </p>
+          <div className="space-y-4">
+            {pending.map((p, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between text-sm mb-1.5">
+                  <span className="text-gray-700">
+                    {p.rola === 'polecajacy' ? p.drugaStrona : `Polecenie od: ${p.drugaStrona}`}
+                  </span>
+                  <span className="font-semibold text-[#1E3282]">+{p.kwota} zł</span>
+                </div>
+                <div className="h-2 bg-[#F0DCC8] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#B4321E] rounded-full transition-all"
+                       style={{ width: `${Math.min(p.postep, 100)}%` }} />
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">
+                  {p.brakuje > 0
+                    ? `Wpłacone ${p.wplacone} z ${p.prog} zł, brakuje ${p.brakuje} zł`
+                    : 'Próg osiągnięty, kredyt zaraz trafi na saldo'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Kod polecenia */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-4">

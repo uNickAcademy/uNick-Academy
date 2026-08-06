@@ -1,7 +1,7 @@
 export const FOUNDATION_CONSENT_VERSION='2026-08-04'
 export const FOUNDATION_PRIVACY_NOTICE_VERSION='2026-08-04'
 const o=(value:string,label:string)=>({value,label})
-export const respondentOptions=[o('parent_guardian','rodzic lub opiekun prawny'),o('adult_participant','pełnoletni uczestnik'),o('young_with_guardian','młody uczestnik wspólnie z rodzicem lub opiekunem')] as const
+export const respondentOptions=[o('parent_guardian','rodzic lub opiekun prawny'),o('young_with_guardian','młody uczestnik wspólnie z rodzicem lub opiekunem')] as const
 export const activityOptions=[
   {value:'teenpreneurs',label:'Teenpreneurs, 13–18 lat',minAge:13,maxAge:18},
   {value:'creative_diy',label:'Creative DIY, 10–15 lat',minAge:10,maxAge:15},

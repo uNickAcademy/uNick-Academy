@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import {
-  sendBookingReceived, notifySchoolEmail, sendGroupReservation, sendAdviceReceived,
+  sendBookingReceived, notifySchoolEmail, sendGroupReservation, sendAdviceReceived, sendMonthlyPayment,
 } from '@/lib/email/send'
+import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { chargeStudentForPeriod, chargeFirstLesson } from '@/lib/billing/charge'
+import { billFamilies } from '@/lib/billing/family'
+import { firstBillablePeriod } from '@/lib/billing/engine'
 import { notifySchoolSms } from '@/lib/sms/send'
 import { createPasswordSetupLink } from '@/lib/auth/password-link'
 import { createLead, type LeadLocation, type LeadStudentType } from '@/lib/leads/create'
@@ -58,17 +62,19 @@ export async function POST(req: NextRequest) {
       const {
         email, fullName, phone, childName, groupId, termsVersion, consents,
         studentAge, location, consentMarketing, consentClause, campaign,
+        referralCode,
       } = body
       if (!email || !fullName || !groupId) return NextResponse.json({ error: 'Brakujące pola' }, { status: 400 })
 
       const { data: group } = await supabase.from('groups')
-        .select('name, price_per_month, format, schedule_text, day_of_week, start_date')
+        .select('name, price_per_month, format, schedule_text, day_of_week, start_date, end_date')
         .eq('id', groupId).single()
       if (!group) return NextResponse.json({ error: 'Nie znaleźliśmy tej grupy.' }, { status: 400 })
 
       const { error } = await supabase.rpc('public_enroll_group', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_group_id: groupId, p_terms_version: termsVersion ?? null, p_consents: consents ?? {},
+        p_referral: referralCode || null,
       })
       if (error) {
         const msg = /miejsc/i.test(error.message)
@@ -113,7 +119,46 @@ export async function POST(req: NextRequest) {
         consentMarketing: !!consentMarketing,
         consentClause: consentClause ?? null,
         campaign: campaign ?? null,
+        referralCode: referralCode ?? null,
       }).catch((err) => console.error('[Booking group] createLead error:', err))
+
+      // Pierwszy miesiąc kursu płatny przy zapisie — dla kursu startującego we
+      // wrześniu naliczamy wrzesień, choćby zapis był w sierpniu. Kolejne
+      // miesiące dołoży cron pierwszego dnia miesiąca. Best-effort: problem
+      // z naliczeniem nie może wywrócić samej rezerwacji miejsca.
+      let firstMonthCharged = false
+      if (enrolledId) {
+        try {
+          const period = firstBillablePeriod({
+            name: groupName,
+            pricePerMonth: group.price_per_month != null ? Number(group.price_per_month) : null,
+            startDate: (group.start_date as string | null) ?? null,
+            endDate: (group.end_date as string | null) ?? null,
+          }, new Date())
+
+          const outcome = await chargeStudentForPeriod(supabase, {
+            id: enrolledId, name: childName || fullName, email, customMonthlyPrice: null,
+          }, period)
+
+          // Rachunek wystawiamy rodzinie: jeśli rodzeństwo ma nierozliczoną
+          // kwotę za ten sam miesiąc, wejdzie do tej samej płatności zamiast
+          // generować rodzicowi drugiego maila i drugi link.
+          if (outcome.charged > 0) {
+            const base = process.env.NEXT_PUBLIC_APP_URL || ''
+            const billed = await billFamilies(supabase, [outcome], outcome.periodLabel, {
+              createCheckout: (opts) => createCheckoutSession({
+                ...opts,
+                successUrl: `${base}/platnosci?success=true`,
+                cancelUrl: `${base}/platnosci?cancelled=true`,
+              }),
+              sendPayment: sendMonthlyPayment,
+            })
+            firstMonthCharged = billed.emailed > 0
+          }
+        } catch (err) {
+          console.error('[Booking group] billing error:', err)
+        }
+      }
 
       const passwordLink = await createPasswordSetupLink(supabase, email)
       await sendGroupReservation(email, {
@@ -121,6 +166,9 @@ export async function POST(req: NextRequest) {
         groupName, schedule, firstLessonDate: firstLessonLabel,
         format: groupFormat, pricePerMonth: price, passwordLink,
       }).catch(() => {})
+
+      // Rachunek za pierwszy miesiąc wyszedł już z billFamilies — osobnym
+      // mailem, razem z linkiem do płatności i rozbiciem na uczestników.
 
       await notifyAdmin(supabase, 'group', `Nowa rezerwacja miejsca: ${groupName}`,
         `${fullName}${childName ? ` (uczeń: ${childName})` : ''}${phone ? `, tel. ${phone}` : ''}, ${email}`, enrolledId)
@@ -141,7 +189,7 @@ export async function POST(req: NextRequest) {
         actionPath: '/admin/studenci',
       })
 
-      return NextResponse.json({ success: true, groupName, schedule, firstLessonDate: firstLessonLabel })
+      return NextResponse.json({ success: true, groupName, schedule, firstLessonDate: firstLessonLabel, billed: firstMonthCharged })
     }
 
     // ── „Jeszcze nie wiem" i zajęcia indywidualne ─────────────────────────
@@ -151,6 +199,7 @@ export async function POST(req: NextRequest) {
       const {
         email, fullName, phone, childName, studentAge, location, audience, message,
         preferredTimes, consentMarketing, consentClause, campaign, undecided,
+        referralCode,
       } = body
       if (!fullName || (!email && !phone)) {
         return NextResponse.json({ error: 'Podaj imię oraz e-mail lub telefon.' }, { status: 400 })
@@ -178,6 +227,7 @@ export async function POST(req: NextRequest) {
         consentMarketing: !!consentMarketing,
         consentClause: consentClause ?? null,
         campaign: campaign ?? null,
+        referralCode: referralCode ?? null,
       })
 
       // Konto powstaje od razu, żeby klient nie musiał zakładać go osobno.
@@ -238,6 +288,26 @@ export async function POST(req: NextRequest) {
         console.error('[Booking online] RPC error:', error)
         return NextResponse.json({ error: 'Nie udało się zarezerwować lekcji.' }, { status: 500 })
       }
+      // Zajęcia indywidualne: przy zapisie płatna jest pierwsza lekcja.
+      // Pozostałe lekcje z tego miesiąca dolicza cron po jej odbyciu.
+      try {
+        const { data: booked } = await supabase
+          .from('students')
+          .select('id, full_name, profile:profiles!inner(email)')
+          .eq('profile.email', email)
+          .is('deleted_at', null)
+          .order('joined_at', { ascending: false })
+          .limit(1)
+        const student = booked?.[0]
+        if (student) {
+          await chargeFirstLesson(supabase, {
+            id: student.id, name: (student.full_name as string) || fullName, email, customMonthlyPrice: null,
+          }, startsAt.toISOString())
+        }
+      } catch (err) {
+        console.error('[Booking online] billing error:', err)
+      }
+
       const { data: teacher } = await supabase.from('teachers').select('profile:profiles(full_name)').eq('id', teacherId).single()
       const teacherName: string = (teacher?.profile as { full_name?: string } | null)?.full_name ?? 'Nauczyciel'
       await sendBookingReceived(email, {
@@ -250,12 +320,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (kind === 'stationary') {
-      const { email, fullName, phone, childName, level, age, address, slots, notes, termsVersion, consents } = body
+      const { email, fullName, phone, childName, level, age, address, slots, notes, termsVersion, consents, referralCode } = body
       if (!email || !fullName || !address) return NextResponse.json({ error: 'Podaj dane i adres zajęć' }, { status: 400 })
       const { error } = await supabase.rpc('public_stationary_request', {
         p_email: email, p_full_name: fullName, p_phone: phone || '', p_child: childName || '',
         p_level: level || 'A1', p_age: age ?? null, p_address: address, p_slots: slots ?? [],
         p_notes: notes || '', p_terms_version: termsVersion ?? null, p_consents: consents ?? {},
+        p_referral: referralCode || null,
       })
       if (error) {
         console.error('[Booking stationary] RPC error:', error)

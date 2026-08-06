@@ -831,6 +831,10 @@ const en = {
     subtitle:
       "Tell us a little about you and we'll get back to you to arrange a free, no-pressure conversation — about you, your goals, and whether we're a good fit.",
     audienceLabel: "This consultation is for",
+    referralLabel: "Referral code (if someone told you about us)",
+    referralPlaceholder: "uNickAnna8DJ9",
+    referralFromLink: "Code loaded from your link. You can change it.",
+    referralHint: "Once you've paid for 250 zł of lessons, you'll both get 50 zł towards more classes.",
     messageLabel: "Anything you'd like us to know? (optional)",
     messagePlaceholder: "e.g. current level, goals, scheduling preferences...",
     submit: "Send & book my consultation",

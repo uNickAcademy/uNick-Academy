@@ -17,8 +17,12 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     const supabase = createClient()
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL
+    const appOrigin = configuredAppUrl && window.location.hostname !== 'localhost'
+      ? configuredAppUrl.replace(/\/$/, '')
+      : window.location.origin
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-haslo`,
+      redirectTo: `${appOrigin}/reset-haslo`,
     })
 
     setLoading(false)
@@ -38,14 +42,22 @@ export default function ForgotPasswordPage() {
           <div className="flex justify-center mb-4">
             <Image src="/unicorn.PNG" alt="uNickorn" width={80} height={80} className="object-contain" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Zapomniałeś hasła?</h1>
-          <p className="text-gray-500 text-sm mt-1">Wyślemy Ci link do zresetowania hasła</p>
+          {/* „Nie masz hasła?" zamiast „Zapomniałeś hasła?", bo ta sama strona
+              obsługuje dwie sytuacje: reset zapomnianego hasła ORAZ ustawienie
+              go po raz pierwszy. Konta uczniów z importu mają losowe hasła,
+              których nikt nigdy nie znał, więc „zapomniałeś" było dla nich
+              mylące. */}
+          <h1 className="text-2xl font-black text-gray-900">Nie masz hasła?</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Wyślemy Ci link, żebyś mógł/mogła je ustawić. Działa tak samo, gdy ustawiasz
+            hasło pierwszy raz i gdy je zapomniałeś/aś.
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           {sent ? (
             <p className="text-sm text-gray-600 text-center">
-              Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do resetu hasła. Sprawdź skrzynkę.
+              Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do ustawienia hasła. Sprawdź skrzynkę.
             </p>
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>

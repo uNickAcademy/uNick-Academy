@@ -67,14 +67,37 @@ export async function POST(req: NextRequest) {
       const studentId = session.metadata?.studentId
       if (studentId && session.payment_status === 'paid') {
         const amount = (session.amount_total ?? 0) / 100
-        // Saldo przeliczy trigger trg_recalc_balance
-        await supabase.from('transactions').insert({
-          student_id: studentId,
-          type: 'payment',
-          amount,
-          description: 'Wpłata online (Stripe)',
-        })
-        await supabase.from('students').update({ status: 'active' }).eq('id', studentId)
+
+        // Opłata rodzinna: rodzic płaci raz za wszystkie dzieci, więc wpłatę
+        // rozksięgowujemy na podkonta wg udziałów zapisanych przy tworzeniu
+        // sesji. Bez tego saldo jednego dziecka rosłoby, a reszty zostawało
+        // na minusie.
+        let split: { studentId: string; amount: number }[] = [{ studentId, amount }]
+        const packed = session.metadata?.allocation
+        if (packed) {
+          try {
+            const parsed = JSON.parse(packed) as [string, number][]
+            const sum = parsed.reduce((a, [, v]) => a + Number(v), 0)
+            if (parsed.length > 0 && Math.abs(sum - amount) < 1) {
+              split = parsed.map(([id, v]) => ({ studentId: id, amount: Number(v) }))
+            }
+          } catch (err) {
+            console.error('[Stripe] Nieczytelny podział wpłaty rodzinnej:', err)
+          }
+        }
+        const family = split.length > 1
+
+        await supabase.from('transactions').insert(
+          split.filter((s) => s.amount > 0).map((s) => ({
+            student_id: s.studentId,
+            type: 'payment' as const,
+            amount: s.amount,
+            description: family ? 'Wpłata online (Stripe) — opłata rodzinna' : 'Wpłata online (Stripe)',
+          })),
+        )
+        await supabase.from('students').update({ status: 'active' })
+          .in('id', split.map((s) => s.studentId))
+        // Paragon idzie raz, na adres płatnika.
         await emailReceipt(supabase, studentId, amount, 'Płatność online (BLIK / Przelewy24 / karta)')
       }
       break

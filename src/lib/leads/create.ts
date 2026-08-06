@@ -39,6 +39,12 @@ export type CreateLeadInput = {
   status?: LeadStatus
   /** Data pierwszych zajęć — zasila metryki lejka. */
   bookedSlotAt?: string | null
+  /**
+   * Kod polecenia podany przy zgłoszeniu. Zostaje na leadzie i wchodzi w grę
+   * automatycznie, gdy ta osoba faktycznie się zapisze — także wtedy, gdy
+   * najpierw przyszła tylko na rozmowę doradczą.
+   */
+  referralCode?: string | null
 }
 
 export type CreateLeadResult = {
@@ -111,6 +117,7 @@ export async function createLead(
     consent_clause: input.consentMarketing ? clean(input.consentClause) : null,
     status: input.status ?? 'new',
     booked_slot_at: input.bookedSlotAt ?? null,
+    referral_code: clean(input.referralCode),
   }
 
   const existing = await findExisting(admin, emailNorm, phoneNorm)
@@ -174,7 +181,7 @@ async function mergeIntoExisting(
 ): Promise<void> {
   const { data: current } = await admin
     .from('leads')
-    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status')
+    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status, referral_code')
     .eq('id', leadId)
     .single()
 

@@ -23,8 +23,8 @@ type FoundationRow = FoundationStatisticsRow & {
   phone: string
   activities: string[]
   preferred_locations: string[]
-  available_days: string[]
-  earliest_start: string
+  available_days?: string[] | null
+  earliest_start?: string | null
   organizational_needs?: string | null
 }
 
@@ -83,7 +83,7 @@ export default async function Page() {
       <div className="mb-4">
         <p className="text-xs font-bold uppercase text-teal-700">Statystyki zainteresowania</p>
         <h2 id="teenage-talk-statistics" className="text-xl font-black text-gray-900">Teenage Talk</h2>
-        <p className="text-sm text-gray-500">Preferencje lokalizacji i dni mogą się nakładać, ponieważ formularz pozwala wybrać kilka odpowiedzi.</p>
+        <p className="text-sm text-gray-500">Preferencje lokalizacji mogą się nakładać, ponieważ formularz pozwala wybrać kilka odpowiedzi.</p>
       </div>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
@@ -105,8 +105,6 @@ export default async function Page() {
       <div className="grid gap-4 md:grid-cols-2">
         <Distribution title="Preferowane lokalizacje" items={statistics.locations} showGroups />
         <Distribution title="Wiek uczestników" items={statistics.ages} />
-        <Distribution title="Dostępność według dni" items={statistics.days} />
-        <Distribution title="Najwcześniejsza godzina rozpoczęcia" items={statistics.earliestStarts} />
       </div>
     </section>
 
@@ -124,8 +122,7 @@ export default async function Page() {
               <p><b>Kontakt:</b> {row.contact_name}<br />{row.email}<br />{row.phone}</p>
               <p><b>Zajęcia:</b> {row.activities?.map(activityLabel).join(', ')}<br />
                 <b>Lokalizacje:</b> {row.preferred_locations?.map(locationLabel).join(', ')}</p>
-              <p><b>Dni:</b> {row.available_days?.join(', ')} · {row.earliest_start}</p>
-              <p><b>Potrzeby:</b> {row.organizational_needs || '—'}</p>
+              <p><b>Uwagi:</b> {row.organizational_needs || '—'}</p>
             </div>
           </details>)}
       </div>

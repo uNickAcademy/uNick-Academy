@@ -1,3 +1,7 @@
+// Kanoniczne dane kontaktowe i profile społecznościowe, wspólne ze stroną
+// i danymi strukturalnymi SEO.
+import { siteConfig } from '@/app/lib/site-config'
+
 // Wspólne style dla wszystkich emaili uNick Academy
 
 const BASE_STYLE = `
@@ -266,18 +270,36 @@ export function monthlyPaymentEmail(params: {
   monthLabel: string
   amount: number
   paymentUrl?: string | null
+  /** Rozbicie na uczestników — rodzina dostaje jeden rachunek za wszystkich. */
+  items?: { name: string; amount: number }[]
 }): { subject: string; html: string } {
-  const { studentName, monthLabel, amount, paymentUrl } = params
+  const { studentName, monthLabel, amount, paymentUrl, items } = params
+  const family = (items?.length ?? 0) > 1
+
+  const breakdown = family
+    ? `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        ${items!.map((i) => `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px;">${i.name}</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; text-align: right; font-weight: 600;">${i.amount} zł</td>
+          </tr>`).join('')}
+      </table>`
+    : ''
+
   return {
     subject: `Płatność za ${monthLabel} — ${amount} zł`,
     html: wrap(`
       <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Płatność za ${monthLabel}</h2>
       <p style="color: #64748b; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
-        Cześć ${studentName.split(' ')[0]}! To przypomnienie o opłacie za zajęcia w miesiącu ${monthLabel} — płatnej z góry.
+        Cześć ${studentName.split(' ')[0]}! ${family
+          ? `To rachunek za zajęcia w miesiącu ${monthLabel} — jedna płatność za wszystkich uczestników, z góry.`
+          : `To przypomnienie o opłacie za zajęcia w miesiącu ${monthLabel} — płatnej z góry.`}
       </p>
 
+      ${breakdown}
+
       <div style="background: #f5f3ff; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
-        <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">DO ZAPŁATY</p>
+        <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">${family ? 'RAZEM DO ZAPŁATY' : 'DO ZAPŁATY'}</p>
         <p style="font-size: 28px; font-weight: 900; color: #5b21b6; margin: 0 0 12px;">${amount} zł</p>
         ${paymentUrl ? btn('Zapłać teraz →', paymentUrl) : ''}
         ${paymentUrl ? `<p style="color: #8b5cf6; font-size: 12px; margin: 12px 0 0;">BLIK, Przelewy24 lub karta</p>` : ''}
@@ -490,6 +512,218 @@ export function referralEmail(params: {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// SZABLONY BRANDOWE (unick-brand)
+//
+// Osobny wrapper, bo starsze maile używają gradientu fiolet→cyan i fontu
+// Inter, czego brand zabrania wprost. Nie przepisuję ich hurtem przy okazji
+// kampanii; nowe treści powstają już zgodnie z tokenami.
+//
+// Tokeny: brand-red #B4321E, brand-navy #1E3282, cream #F0DCC8,
+// sky #6090B0 (tylko akcent). Bez fioletu, bez cyanu, bez gradientów.
+// Nagłówki Poppins, treść Comfortaa. Klienty pocztowe rzadko ładują webfonty,
+// więc font-stack ma zwykły sans-serif jako fallback.
+// W treści nie używamy myślnika „—”.
+// ══════════════════════════════════════════════════════════════════════════
+
+const BRAND = {
+  red: '#B4321E',
+  navy: '#1E3282',
+  cream: '#F0DCC8',
+  ink: '#1E3282',
+  muted: '#6B7280',
+} as const
+
+const FONT_HEAD = "'Poppins', 'Trebuchet MS', Verdana, sans-serif"
+const FONT_BODY = "'Comfortaa', 'Trebuchet MS', Verdana, sans-serif"
+
+// Logo ma białe tło, więc siedzi na białym pasku, nigdy na kolorze.
+function brandWrap(content: string, appUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="pl">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Comfortaa:wght@400;600&display=swap" rel="stylesheet">
+    </head>
+    <body style="margin: 0; padding: 24px 12px; background: ${BRAND.cream};">
+      <div style="max-width: 560px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden;">
+
+        <div style="background: #FFFFFF; padding: 28px 40px 8px; text-align: center;">
+          <img src="${appUrl}/brand/unick-academy-logo.png" alt="uNick Academy"
+               width="180" style="display: block; margin: 0 auto; max-width: 180px; height: auto;" />
+        </div>
+
+        <div style="padding: 16px 40px 32px; font-family: ${FONT_BODY}; color: ${BRAND.ink};">
+          ${content}
+        </div>
+
+        <div style="background: ${BRAND.cream}; padding: 20px 40px; text-align: center; font-family: ${FONT_BODY};">
+          <p style="color: ${BRAND.navy}; font-size: 12px; margin: 0 0 6px;">uNick Academy, hello@unick-academy.pl</p>
+          <p style="color: ${BRAND.muted}; font-size: 11px; margin: 0;">Nie chcesz takich wiadomości? Odpisz „rezygnuję”, usuniemy Cię z listy.</p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `
+}
+
+// Przycisk pełnym kolorem marki, bez gradientu.
+function brandBtn(label: string, url: string, color: string = BRAND.red): string {
+  return `
+    <a href="${url}" style="display: inline-block; padding: 14px 30px; background: ${color}; color: #FFFFFF; font-family: ${FONT_HEAD}; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 8px;">
+      ${label}
+    </a>
+  `
+}
+
+// ──────────────────────────────────────────
+// Kampania „powrót": treść zatwierdzona przez Milenę + śledzenie otwarć i kliknięć
+// ──────────────────────────────────────────
+//
+// Śledzenie działa tylko, gdy podany jest `trackToken`. Bez niego szablon
+// renderuje się czysto (podgląd, testy) i nie zawiera ani piksela, ani
+// przekierowań.
+//
+// Ikony społecznościowe (40x40 PNG) odzyskane z pliku preview przekazanego
+// przez Milenę i zapisane w public/brand/icons/. Wersja finalna odwoływała się
+// do tych ścieżek, ale plików nie było w repo, więc bez tego kroku 90 osób
+// zobaczyłoby cztery połamane obrazki.
+export function comebackEmail(params: {
+  firstName: string
+  referralCode: string
+  appUrl: string
+  trackToken?: string
+}): { subject: string; html: string } {
+  const { firstName, referralCode, appUrl, trackToken } = params
+
+  // Link opakowany w przekierowanie zliczające. Bez tokenu zwraca oryginał.
+  const t = (url: string) =>
+    trackToken
+      ? `${appUrl}/api/track/c/${trackToken}?u=${encodeURIComponent(url)}`
+      : url
+
+  const pixel = trackToken
+    ? `<img src="${appUrl}/api/track/o/${trackToken}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />`
+    : ''
+
+  // Adresy bierzemy z site-config.js, tego samego pliku, który zasila stopkę
+  // strony i dane strukturalne SEO. Dzięki temu zmiana profilu w jednym miejscu
+  // przechodzi też na maile i linki nie mogą się rozjechać.
+  const soc = siteConfig.social as Record<string, string>
+  const social = [
+    ['Facebook', soc.facebook, 'icon-facebook.png'],
+    ['Instagram', soc.instagram, 'icon-instagram.png'],
+    ['YouTube', soc.youtube, 'icon-youtube.png'],
+    ['LinkedIn', soc.linkedin, 'icon-linkedin.png'],
+  ]
+    .map(([label, url, file]) =>
+      `<a href="${t(url)}" style="display: inline-block; margin: 0 4px;">` +
+      `<img src="${appUrl}/brand/icons/${file}" width="32" height="32" alt="${label}" style="display: block; border-radius: 50%;" />` +
+      `</a>`)
+    .join('')
+
+  return {
+    subject: `${firstName}, mamy dla Ciebie nową platformę i kod na kolejne lekcje`,
+    html: `
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Comfortaa:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 24px 12px; background: #F0DCC8;">
+  <div style="max-width: 560px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden;">
+
+    <div style="background: #FFFFFF; padding: 28px 40px 8px; text-align: center;">
+      <img src="${appUrl}/brand/unick-academy-logo.png" alt="uNick Academy"
+           width="180" style="display: block; margin: 0 auto; max-width: 180px; height: auto;" />
+    </div>
+
+    <div style="padding: 16px 40px 32px; font-family: 'Comfortaa', 'Trebuchet MS', Verdana, sans-serif; color: #1E3282;">
+
+      <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 8px;">
+        <tr>
+          <td style="vertical-align: middle;">
+            <h2 style="font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-size: 24px; font-weight: 700; color: #1E3282; margin: 0;">
+              Cześć ${firstName},
+            </h2>
+          </td>
+          <td style="width: 96px; text-align: right; vertical-align: middle;">
+            <img src="${appUrl}/brand/unickorn-mascot-wave.png" alt="" width="88"
+                 style="display: block; width: 88px; height: auto; margin-left: auto;" />
+          </td>
+        </tr>
+      </table>
+
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 20px;">
+        mamy nadzieję, że wakacje są dokładnie takie, jak powinny być. U nas trochę cicho bez uczniów,
+        więc chętnie się przypomnimy, zanim wrócicie do zajęć.
+      </p>
+
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+        Zaczniemy od czegoś praktycznego. Przygotowaliśmy jedno miejsce na wszystko: lekcje, terminy,
+        postępy, rozliczenia. Konto już na Ciebie czeka, wystarczy ustawić hasło.
+      </p>
+
+      <div style="text-align: center; margin: 0 0 8px;">
+        <a href="${t(`${appUrl}/zapomniane-haslo`)}" style="display: inline-block; padding: 14px 30px; background: #1E3282; color: #FFFFFF; font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
+          USTAW HASŁO I SPRAWDŹ
+        </a>
+      </div>
+
+      <h3 style="font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-size: 17px; font-weight: 600; color: #B4321E; margin: 32px 0 8px;">
+        A teraz coś, co należy się Wam od dawna
+      </h3>
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+        Polecacie nas znajomym, wiemy o tym, bo właśnie stąd bierze się większość naszych nowych
+        uczniów. Teraz chcemy się za to odwdzięczyć. Dajemy Ci Twój kod do poleceń:
+      </p>
+
+      <div style="background: #F0DCC8; border-radius: 12px; padding: 18px; margin: 0 0 14px; text-align: center;">
+        <p style="font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; color: #1E3282; font-size: 12px; font-weight: 600; letter-spacing: 1px; margin: 0 0 6px;">TWÓJ KOD</p>
+        <p style="font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-size: 22px; font-weight: 700; color: #B4321E; margin: 0; word-break: break-all;">${referralCode}</p>
+      </div>
+
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 24px;">
+        Podaj go komuś, kto myśli o nauce języka. Gdy ta osoba zapisze się z Twoim kodem
+        i opłaci pierwsze zajęcia (za minimum 250 zł), <strong style="color: #1E3282;">oboje dostajecie po 50 zł</strong>
+        na kolejne lekcje. Nic więcej nie musisz robić, kwota automatycznie pojawi się w systemie.
+      </p>
+
+      <div style="border-top: 1px solid #F0DCC8; padding-top: 20px;">
+        <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+          Platforma jest nowiutka i chcemy ją ulepszać jak się da, więc jeśli coś Ci zgrzytnie
+          albo zobaczysz coś, co można poprawić, po prostu daj znać, zajmiemy się tym.
+        </p>
+        <p style="font-size: 15px; line-height: 1.8; margin: 0;">
+          Do zobaczenia wkrótce,<br />
+          <span style="color: #6B7280;">Zespół uNick Academy</span>
+        </p>
+      </div>
+
+    </div>
+
+    <div style="background: #F0DCC8; padding: 20px 40px; text-align: center; font-family: 'Comfortaa', 'Trebuchet MS', Verdana, sans-serif;">
+      <p style="color: #1E3282; font-size: 12px; margin: 0 0 6px;">
+        uNick Academy, <a href="mailto:${siteConfig.email}" style="color: #1E3282; text-decoration: none;">${siteConfig.email}</a> ·
+        <a href="tel:${siteConfig.phone.e164}" style="color: #1E3282; text-decoration: none;">${siteConfig.phone.display}</a>
+      </p>
+      <div style="margin: 12px 0;">${social}</div>
+      <p style="color: #6B7280; font-size: 11px; margin: 0 0 4px;">Nie chcesz takich wiadomości? Odpisz „rezygnuję”, usuniemy Cię z listy.</p>
+      ${trackToken ? `<p style="color: #9CA3AF; font-size: 10px; margin: 0;">Sprawdzamy, czy nasze wiadomości docierają i czy linki działają. Szczegóły w <a href="${t(`${appUrl}/polityka-prywatnosci`)}" style="color: #9CA3AF;">polityce prywatności</a>.</p>` : ''}
+    </div>
+
+  </div>
+  ${pixel}
+</body>
+</html>`,
+  }
+}
+
 // ──────────────────────────────────────────
 // Zapisy przez kreator /zapisy
 // ──────────────────────────────────────────
@@ -673,3 +907,4 @@ export function groupStartReminderEmail(params: {
     `),
   }
 }
+

@@ -76,6 +76,10 @@ export interface Teacher {
   is_active: boolean
   hourly_rate?: number
   rate_group?: number
+  /** Domyślna stawka wypłaty za pojedyncze zajęcia indywidualne online (zł/lekcja). */
+  online_individual_pay_rate?: number
+  /** Domyślna cena dla klienta za pojedyncze zajęcia indywidualne online (zł/lekcja). */
+  online_individual_client_rate?: number
   location?: string
   whatsapp_phone?: string
   contract_type?: TeacherContractType
@@ -113,6 +117,21 @@ export interface Student {
   deleted_at?: string | null
   custom_fields?: Record<string, string>
   age_group?: string
+  phone?: string
+  /** Przepis na kurs indywidualny: terminy tygodniowe, czas trwania, wykluczenia, link. */
+  course_config?: {
+    slots: { day: number; time: string; durationMin: number }[]
+    startDate: string
+    /** Puste = kurs bezterminowy (ongoing), bez ustalonego końca. */
+    endDate: string | null
+    excludedDates?: string[]
+    meetingUrl?: string
+  } | null
+  /** Cena za pojedyncze zajęcia (zł) — bije cennik ogólny w naliczeniach. */
+  custom_lesson_price?: number | null
+  /** Stawka wypłaty nauczyciela za pojedyncze zajęcia tego ucznia (zł). */
+  custom_teacher_rate?: number | null
+  payment_mode?: 'monthly' | 'upfront' | null
   profile?: Profile
   teacher?: Teacher
 }
@@ -134,6 +153,8 @@ export interface Lesson {
   attendance?: AttendanceStatus
   homework?: string
   meeting_url?: string
+  /** Stawka prowadzącego za tę lekcję; brak = stawka z kartoteki nauczyciela. */
+  teacher_rate?: number | null
   student?: Student
   teacher?: Teacher
   materials?: LessonMaterial[]

@@ -7,7 +7,7 @@ import {
   Clock, CalendarDays, Users,
 } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
-import { track, readCampaign } from '@/lib/analytics/track'
+import { track, readCampaign, readReferralCode } from '@/lib/analytics/track'
 import { pickTestimonial } from '@/lib/social-proof'
 import { ProofQuote } from './SocialProof'
 import { Worries } from './Reassurance'
@@ -57,11 +57,15 @@ export function BookingWizard({ groups, terms, consents }: {
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
   // Atrybucja z adresu: utm_campaign/utm_source z reklamy albo kod polecenia.
-  // Nie pokazujemy pola w formularzu — krok 5 ma zostać trzema polami — ale
-  // bez tego nie da się policzyć, ile kosztował uczeń z konkretnej kreacji.
+  // Bez tego nie da się policzyć, ile kosztował uczeń z konkretnej kreacji.
   // Czytamy przy inicjalizacji, nie w efekcie: wartość nigdzie się nie
   // renderuje, więc różnica serwer/klient nie ma jak wywołać niezgodności.
   const [campaign] = useState(() => readCampaign())
+  // Kod z linku ?ref= jest tylko wartością startową — pole jest edytowalne,
+  // bo większość poleceń dzieje się ustnie: ktoś podaje kod znajomej, a ta
+  // wchodzi na stronę normalnie i musi mieć gdzie go wpisać. Bez przekazania
+  // kodu nie odpali się register_referral i polecający nie dostanie 50 zł.
+  const [referralCode, setReferralCode] = useState(() => readReferralCode() ?? '')
   // Start kreatora liczony raz na sesję odwiedzin. Inicjalizator stanu
   // uruchamia się raz, więc nie potrzeba tu efektu ani strażnika.
   useState(() => { track('zapisy_start', { campaign }); return true })
@@ -180,6 +184,7 @@ export function BookingWizard({ groups, terms, consents }: {
       consentMarketing: marketingConsent ? !!checked[marketingConsent.id] : false,
       consentClause: marketingConsent?.label ?? null,
       campaign,
+      referralCode,
     }
     if (kind === 'group') {
       payload.groupId = groupId
@@ -439,6 +444,8 @@ export function BookingWizard({ groups, terms, consents }: {
               <Field label="E-mail" type="email" value={email} onChange={setEmail} placeholder="anna@email.com" />
             </div>
 
+            <ReferralField value={referralCode} onChange={setReferralCode} fromLink={!!readReferralCode()} />
+
             <ProofQuote t={proofDetails} />
 
             <TermsBlock terms={terms} requiredConsents={requiredConsents} optionalConsents={optionalConsents}
@@ -499,6 +506,7 @@ export function BookingWizard({ groups, terms, consents }: {
                   placeholder="Np. Syn ma 9 lat, w szkole angielski go zniechęca. Chcemy, żeby przestał się bać mówić."
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E] resize-none" />
               </div>
+              <ReferralField value={referralCode} onChange={setReferralCode} fromLink={!!readReferralCode()} />
             </div>
             <ProofQuote t={proofAdvice} />
             <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
@@ -530,6 +538,7 @@ export function BookingWizard({ groups, terms, consents }: {
               </div>
               <Field label="Preferowane pory" value={preferredTimes} onChange={setPreferredTimes}
                 placeholder="Np. wieczory w tygodniu, po 17:00" />
+              <ReferralField value={referralCode} onChange={setReferralCode} fromLink={!!readReferralCode()} />
             </div>
             <ProofQuote t={proofDetails} />
             <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
@@ -704,6 +713,34 @@ function TermsBlock({ terms, requiredConsents, optionalConsents, checked, setChe
         ))}
       </div>
       <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
+    </div>
+  )
+}
+
+// Pole kodu polecenia. Wielkości liter nie ruszamy: kody mają postać
+// uNickAnna8DJ9, a dopasowanie w bazie i tak jest bez rozróżniania wielkości.
+function ReferralField({ value, onChange, fromLink }: {
+  value: string
+  onChange: (v: string) => void
+  fromLink: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Kod polecenia <span className="text-gray-400 font-normal">(jeśli ktoś Wam nas polecił)</span>
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="uNickAnna8DJ9"
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]"
+      />
+      <p className="text-xs text-gray-500 mt-1">
+        {fromLink
+          ? 'Kod wczytany z linku. Możesz go zmienić.'
+          : 'Po opłaceniu zajęć za 250 zł oboje dostaniecie po 50 zł na kolejne lekcje.'}
+      </p>
     </div>
   )
 }

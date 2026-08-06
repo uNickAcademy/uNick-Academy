@@ -12,14 +12,17 @@ import {
   bookingApprovedEmail,
   monthlyPaymentEmail,
   internalNotificationEmail,
+  comebackEmail,
   groupReservationEmail,
   adviceReceivedEmail,
   groupPrepEmail,
   groupStartReminderEmail,
 } from './templates'
+import type { AuthEmailMessage } from './auth-email'
 
 const FROM = 'uNick Academy <hello@unick-academy.pl>'
 const FOUNDATION_FROM = 'uNick Academy Foundation <hello@unick-academy.pl>'
+const AUTH_FROM = 'uNick Academy <hello@unick-academy.pl>'
 
 // Leniwa inicjalizacja — klient powstaje dopiero przy wysyłce, gdy jest klucz.
 // Dzięki temu build nie wywala się, gdy RESEND_API_KEY nie jest ustawiony.
@@ -43,6 +46,29 @@ async function send(to: string, subject: string, html: string, from = FROM) {
     console.error(`[Email] Błąd wysyłki do ${to}:`, err)
     // Nie rzucamy błędu – email to nie blokujący krok
   }
+}
+
+// Wiadomości uwierzytelniające są krytyczne: błąd musi wrócić do hooka,
+// aby Supabase mógł ponowić próbę zamiast potwierdzić cichy sukces.
+export async function sendAuthActionEmail(
+  message: AuthEmailMessage,
+  idempotencyKey: string,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) throw new Error('Brak RESEND_API_KEY.')
+
+  const { error } = await resend.emails.send(
+    {
+      from: AUTH_FROM,
+      to: message.to,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+      replyTo: 'hello@unick-academy.pl',
+    },
+    { idempotencyKey },
+  )
+  if (error) throw new Error(`Resend: ${error.message}`)
 }
 
 // Czy Resend jest skonfigurowany (klucz API)
@@ -147,6 +173,7 @@ export async function sendMonthlyPayment(to: string, params: {
   monthLabel: string
   amount: number
   paymentUrl?: string | null
+  items?: { name: string; amount: number }[]
 }) {
   const { subject, html } = monthlyPaymentEmail(params)
   await send(to, subject, html)
@@ -203,6 +230,18 @@ export async function sendProgressDigest(to: string, params: {
 }) {
   const { subject, html } = progressDigestEmail(params)
   await send(to, subject, html)
+}
+
+export async function sendComeback(to: string, params: {
+  firstName: string
+  referralCode: string
+  trackToken?: string
+}) {
+  const { subject, html } = comebackEmail({
+    ...params,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
+  })
+  return send(to, subject, html)
 }
 
 // ──────────────────────────────────────────
