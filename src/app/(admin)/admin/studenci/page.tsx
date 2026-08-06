@@ -1,20 +1,9 @@
 import { getAllStudents, getStudentHoursMap, getAllTeachersAdmin, getDeletedStudents } from '@/lib/supabase/queries'
 import { createClient } from '@/lib/supabase/server'
+import { warsawDayOfWeek as warsawDow, warsawTimeOfDay as warsawTime } from '@/lib/lessons/schedule'
 import { StudentsTable } from './StudentsTable'
 
 export const dynamic = 'force-dynamic'
-
-// Dzień tygodnia (0=Pon..6=Ndz, konwencja aplikacji) z daty w strefie Europe/Warsaw.
-const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-function warsawDow(iso: string): number {
-  const short = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(iso))
-  return DOW.indexOf(short)
-}
-
-// Godzina „HH:MM" czasu polskiego z daty ISO.
-function warsawTime(iso: string): string {
-  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
-}
 
 export default async function StudenciPage() {
   const supabase = await createClient()

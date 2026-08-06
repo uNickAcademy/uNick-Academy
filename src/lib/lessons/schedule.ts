@@ -71,6 +71,19 @@ export function dayOfWeek(dateStr: string): number {
   return (js + 6) % 7
 }
 
+/** Dzień tygodnia (konwencja aplikacji) dla momentu ISO, liczony w czasie polskim. */
+export function warsawDayOfWeek(iso: string): number {
+  const short = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: TZ }).format(new Date(iso))
+  return DAYS_EN_SHORT.indexOf(short)
+}
+
+/** Godzina „HH:MM" czasu polskiego dla momentu ISO. */
+export function warsawTimeOfDay(iso: string): string {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
+}
+
+const DAYS_EN_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 function addDays(dateStr: string, n: number): string {
   const d = new Date(`${dateStr}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() + n)
