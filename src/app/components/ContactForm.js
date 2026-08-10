@@ -5,6 +5,7 @@ import Button from "./Button";
 import UNickorn from "./UNickorn";
 import ConsentCheckboxes from "./ConsentCheckboxes";
 import styles from "./ContactForm.module.css";
+import { trackConversion, readCampaign } from "@/lib/analytics/track";
 
 export default function ContactForm({ dict, locale }) {
   const [submitted, setSubmitted] = useState(false);
@@ -30,6 +31,7 @@ export default function ContactForm({ dict, locale }) {
       phone: formData.get("phone"),
       audience: formData.get("audience"),
       message: formData.get("message"),
+      campaign: readCampaign(),
     };
 
     try {
@@ -44,6 +46,11 @@ export default function ContactForm({ dict, locale }) {
         throw new Error(result.error || "Submission failed");
       }
 
+      trackConversion("kontakt_wyslany", {
+        metaEvent: "Lead",
+        odbiorca: data.audience || null,
+        campaign: data.campaign,
+      });
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);

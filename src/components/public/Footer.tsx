@@ -22,8 +22,8 @@ export function Footer() {
           <h4 className="text-white font-semibold mb-4">Oferta</h4>
           <ul className="space-y-2 text-sm">
             <li><Link href="/dla-siebie" className="hover:text-white transition-colors">Dla siebie</Link></li>
-            <li><Link href="/dla-firm" className="hover:text-white transition-colors">Dla firm</Link></li>
-            <li><Link href="/nauczyciele" className="hover:text-white transition-colors">Nauczyciele</Link></li>
+            <li><Link href="/pl/companies" className="hover:text-white transition-colors">Dla firm</Link></li>
+            <li><Link href="/pl/meet-us" className="hover:text-white transition-colors">Nauczyciele</Link></li>
             <li><Link href="/zapisy" className="hover:text-white transition-colors">Zapisz się</Link></li>
           </ul>
         </div>
@@ -31,9 +31,9 @@ export function Footer() {
         <div>
           <h4 className="text-white font-semibold mb-4">Informacje</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/kontakt" className="hover:text-white transition-colors">Kontakt</Link></li>
-            <li><Link href="/polityka-prywatnosci" className="hover:text-white transition-colors">Polityka prywatności</Link></li>
-            <li><Link href="/regulamin" className="hover:text-white transition-colors">Regulamin</Link></li>
+            <li><Link href="/pl/contact" className="hover:text-white transition-colors">Kontakt</Link></li>
+            <li><Link href="/pl/privacy-policy" className="hover:text-white transition-colors">Polityka prywatności</Link></li>
+            <li><Link href="/pl/terms-of-service" className="hover:text-white transition-colors">Regulamin</Link></li>
           </ul>
         </div>
       </div>

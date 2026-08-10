@@ -124,7 +124,7 @@ export default async function DlaSiebiePage() {
 
           {hasMoreTeachers && (
             <div className="text-center mt-8">
-              <Link href="/nauczyciele" className="text-[#23479E] font-semibold hover:underline">
+              <Link href="/pl/meet-us" className="text-[#23479E] font-semibold hover:underline">
                 Zobacz wszystkich nauczycieli →
               </Link>
             </div>

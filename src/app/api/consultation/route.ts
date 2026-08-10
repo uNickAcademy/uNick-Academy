@@ -25,7 +25,7 @@ const AUDIENCE_TO_TYPE: Record<string, LeadStudentType> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, audience, message, referralCode } = await req.json()
+    const { name, email, phone, audience, message, referralCode, campaign } = await req.json()
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Imię i e-mail są wymagane.' }, { status: 400 })
     }
@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
     const cleanPhone = phone?.trim() || null
     const cleanMessage = message?.trim() || null
     const cleanReferralCode = referralCode?.trim() || null
+    // Atrybucja zebrana po stronie klienta (utm_*, gclid/fbclid, ?ref=,
+    // strona odsyłająca) — zasila `leads.campaign` i widok `v_lead_funnel`.
+    const cleanCampaign = typeof campaign === 'string' ? campaign.trim() || null : null
 
     // 'unsure' i brak wyboru zostają puste — agent dopyta.
     const studentType = AUDIENCE_TO_TYPE[audience] ?? null
@@ -50,6 +53,7 @@ export async function POST(req: NextRequest) {
         studentType,
         goal: cleanMessage,
         referralCode: cleanReferralCode,
+        campaign: cleanCampaign,
       })
       isReturning = result.isReturning
     } catch (err) {

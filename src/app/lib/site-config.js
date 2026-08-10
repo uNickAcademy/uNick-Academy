@@ -56,6 +56,10 @@ export const siteConfig = {
   // Measurement ID nie jest sekretem (widoczny w kliencie każdej strony z GA),
   // więc trzymamy go tu jak resztę publicznej konfiguracji.
   googleAnalyticsId: "G-RZZD2NLW6F",
+  // Meta Pixel ID — inaczej niż GA, ze zmiennej środowiskowej: pixel zakłada
+  // się w Meta Events Managerze, a strona ma działać (bez pomiaru Meta) także
+  // zanim to nastąpi. Pusta wartość = komponent MetaPixel nic nie ładuje.
+  metaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || "",
 };
 
 export const foundationConfig = {

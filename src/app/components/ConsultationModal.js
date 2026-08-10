@@ -5,6 +5,7 @@ import Button from "./Button";
 import UNickorn from "./UNickorn";
 import ConsentCheckboxes from "./ConsentCheckboxes";
 import styles from "./ConsultationModal.module.css";
+import { trackConversion, readCampaign } from "@/lib/analytics/track";
 
 // Kod z linku ?ref= to tylko wartość startowa — pole zostaje edytowalne, bo
 // większość poleceń dzieje się ustnie: znajoma dostaje kod od kogoś i wchodzi
@@ -64,6 +65,10 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
       audience: formData.get("audience"),
       message: formData.get("message"),
       referralCode,
+      // Bez tego konsultacje wpadały do lejka jako „(brak kampanii)" — modal
+      // otwiera się z dowolnej strony marketingowej, więc reklama, z której
+      // ktoś przyszedł, była tu tracona w całości.
+      campaign: readCampaign(),
     };
 
     try {
@@ -78,6 +83,11 @@ export default function ConsultationModal({ isOpen, onClose, audience, teacher, 
         throw new Error(result.error || "Submission failed");
       }
 
+      trackConversion("konsultacja_wyslana", {
+        metaEvent: "Lead",
+        odbiorca: data.audience || null,
+        campaign: data.campaign,
+      });
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);

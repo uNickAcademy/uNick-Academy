@@ -7,7 +7,7 @@ import {
   Clock, CalendarDays, Users,
 } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
-import { track, readCampaign, readReferralCode } from '@/lib/analytics/track'
+import { track, trackConversion, readCampaign, readReferralCode } from '@/lib/analytics/track'
 import { pickTestimonial } from '@/lib/social-proof'
 import { ProofQuote } from './SocialProof'
 import { Worries } from './Reassurance'
@@ -68,7 +68,10 @@ export function BookingWizard({ groups, terms, consents }: {
   const [referralCode, setReferralCode] = useState(() => readReferralCode() ?? '')
   // Start kreatora liczony raz na sesję odwiedzin. Inicjalizator stanu
   // uruchamia się raz, więc nie potrzeba tu efektu ani strażnika.
-  useState(() => { track('zapisy_start', { campaign }); return true })
+  // `InitiateCheckout` to standardowe zdarzenie Meta dla „ktoś wszedł w
+  // wieloetapową ścieżkę konwersji" — po nim algorytm uczy się szukać ludzi,
+  // którzy naprawdę zaczynają zapis, a nie tylko oglądają stronę.
+  useState(() => { trackConversion('zapisy_start', { metaEvent: 'InitiateCheckout', campaign }); return true })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ kind: 'group' | 'advice' | 'individual'; groupName?: string; schedule?: string; firstLessonDate?: string | null } | null>(null)
@@ -202,7 +205,12 @@ export function BookingWizard({ groups, terms, consents }: {
     setSubmitting(false)
     if (!res.ok) { setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
 
-    track('zapisy_wyslane', {
+    // Rezerwacja miejsca w grupie to domknięty zapis (`CompleteRegistration`);
+    // prośba o poradę albo o kurs indywidualny to na tym etapie wciąż zapytanie
+    // (`Lead`). Meta rozlicza kampanie po tych nazwach, więc rozróżnienie
+    // decyduje o tym, pod co optymalizuje się budżet.
+    trackConversion('zapisy_wyslane', {
+      metaEvent: kind === 'group' ? 'CompleteRegistration' : 'Lead',
       rodzaj: kind,
       grupa: (data.groupName as string) ?? null,
       forma: location,
