@@ -4,6 +4,10 @@ import { notifySchoolSms } from '@/lib/sms/send'
 import { notifySchoolEmail } from '@/lib/email/send'
 import { createLead, type LeadStudentType } from '@/lib/leads/create'
 
+// createLead() woła Agenta Łowcę (Claude + Resend) synchronicznie dla nowych
+// leadów — domyślny limit czasu funkcji Vercel bywa za krótki na to wywołanie.
+export const maxDuration = 30
+
 // Publiczny formularz "Bezpłatna konsultacja" (modal na stronach publicznych).
 //
 // Zapisywał do `consultation_requests`, którą migracja 116 wycofała

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { respondToNewLead } from '@/lib/agents/lowca'
 
 // Jedyne miejsce, przez które formularze ze strony trafiają do lejka `leads`.
 // Migracja 116 uczyniła `leads` jedynym lejkiem B2C i wycofała
@@ -142,7 +143,17 @@ export async function createLead(
     throw error
   }
 
-  return { leadId: data.id as string, isReturning: false }
+  const leadId = data.id as string
+
+  // Pierwsza automatyczna odpowiedź tylko dla świeżych zapytań, które jeszcze
+  // czekają na kontakt — nie dla rezerwacji miejsca w grupie (status `booked`,
+  // klient dostaje już osobne, konkretne potwierdzenie) i nie dla powrotów
+  // (obsłużone wyżej, w mergeIntoExisting).
+  if (row.status === 'new') {
+    await respondToNewLead(admin, leadId)
+  }
+
+  return { leadId, isReturning: false }
 }
 
 // Dwa osobne zapytania zamiast jednego `.or(...)`: filtr `.or()` przyjmuje
