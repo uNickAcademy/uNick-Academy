@@ -20,6 +20,8 @@ export default async function NauczycieleAdminPage() {
       isActive: t.is_active,
       hourlyRate: t.hourly_rate ?? null,
       rateGroup: t.rate_group ?? null,
+      onlineIndividualPayRate: t.online_individual_pay_rate ?? null,
+      onlineIndividualClientRate: t.online_individual_client_rate ?? null,
       location: t.location ?? '',
       contractType: t.contract_type ?? 'b2b',
       students: s.students,

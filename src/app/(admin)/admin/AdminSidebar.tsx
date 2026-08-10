@@ -5,15 +5,15 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X
+  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X, AlertTriangle, Copy, HeartHandshake,
 } from 'lucide-react'
-import { HeartHandshake } from 'lucide-react'
 
 // adminOnly: pozycje konfiguracyjne niedostępne dla recepcji
 const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/studenci', label: 'Studenci', icon: Users },
   { href: '/admin/grupy', label: 'Grupy', icon: UsersRound },
+  { href: '/admin/duplikaty', label: 'Duplikaty', icon: Copy, adminOnly: true },
   { href: '/admin/zapisy', label: 'Prośby o zapis', icon: Inbox },
   { href: '/admin/firmy', label: 'Firmy (B2B)', icon: Building2 },
   { href: '/admin/pipeline', label: 'Pipeline B2B', icon: Target, adminOnly: true },
@@ -26,6 +26,7 @@ const NAV = [
   { href: '/admin/regulamin', label: 'Regulamin i zgody', icon: FileCheck, adminOnly: true },
   { href: '/admin/fundacja', label: 'Fundacja', icon: HeartHandshake, adminOnly: true },
   { href: '/admin/platnosci', label: 'Płatności', icon: CreditCard },
+  { href: '/admin/zaleglosci', label: 'Zaległości', icon: AlertTriangle },
   { href: '/admin/komunikacja', label: 'Komunikacja', icon: Megaphone },
   { href: '/admin/polecenia', label: 'Polecenia', icon: Gift, adminOnly: true },
   { href: '/ufos', label: 'Finanse (uFOS)', icon: Landmark, adminOnly: true },

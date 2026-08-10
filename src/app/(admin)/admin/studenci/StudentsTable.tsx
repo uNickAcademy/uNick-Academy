@@ -3,9 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Clock, RotateCcw, Send, MessageSquare, ChevronRight } from 'lucide-react'
+import {
+  Search, Plus, AlertCircle, Pause, CheckCircle, FlaskConical, X, Mail, Phone, Clock, RotateCcw, Send, MessageSquare, ChevronRight,
+  Repeat, Trash2, CalendarRange, CalendarOff, Link2, Banknote, Wallet, RefreshCw,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { StudentStatus, LanguageLevel } from '@/types'
+import { generateLessons, lessonsPerMonth, defaultCourseEndDate, DAYS_PL_SHORT, type Slot } from '@/lib/lessons/schedule'
 
 const DAYS_PL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
 
@@ -53,6 +57,18 @@ type Row = {
   lessonDays: number[]
   lessonTypes: string[]
   active: boolean
+  courseConfig: { slots: Slot[]; startDate: string; endDate: string | null; excludedDates?: string[]; meetingUrl?: string } | null
+  inferredSlot: Slot | null
+  meetingUrl: string
+  lessonPrice: number | null
+  teacherRate: number | null
+}
+
+type TeacherOpt = {
+  id: string
+  name: string
+  onlineIndividualPayRate: number | null
+  onlineIndividualClientRate: number | null
 }
 
 type EntityOption = { id: string; short_name: string; name: string; vat_payer: boolean }
@@ -66,7 +82,7 @@ export function StudentsTable({
   entityOptions = [],
 }: {
   rows: Row[]
-  teacherOptions: { id: string; name: string }[]
+  teacherOptions: TeacherOpt[]
   deletedRows: DeletedRow[]
   entityOptions?: EntityOption[]
 }) {
@@ -455,7 +471,7 @@ function AddStudentModal({
   onClose,
   onSaved,
 }: {
-  teacherOptions: { id: string; name: string }[]
+  teacherOptions: TeacherOpt[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -559,7 +575,7 @@ function EditModal({
   onSaved,
 }: {
   row: Row
-  teacherOptions: { id: string; name: string }[]
+  teacherOptions: TeacherOpt[]
   entityOptions: EntityOption[]
   onClose: () => void
   onSaved: () => void
@@ -580,6 +596,102 @@ function EditModal({
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Terminy zajęć, stawka i link — to samo, co ustala się przy zatwierdzaniu
+  // nowego zapisu, tylko dla ucznia, który już jest w systemie. Bez course_config
+  // (uczniowie sprzed przebudowy kreatora) startujemy z terminu odgadniętego
+  // z ich najbliższej co do „teraz" lekcji, żeby edytor nie był pusty.
+  const today = new Date().toISOString().slice(0, 10)
+  const initialSlots = row.courseConfig?.slots?.length ? row.courseConfig.slots : (row.inferredSlot ? [row.inferredSlot] : [])
+  const [slots, setSlots] = useState<Slot[]>(initialSlots.length > 0 ? initialSlots : [{ day: 1, time: '17:00', durationMin: 60 }])
+  const [startDate, setStartDate] = useState(row.courseConfig?.startDate ?? today)
+  const [endDate, setEndDate] = useState(row.courseConfig?.endDate ?? defaultCourseEndDate(today))
+  // Kurs bez wyznaczonego końca — serwer i tak dogeneruje terminy tylko do
+  // końca bieżącego roku szkolnego (wiersze w bazie potrzebują konkretnej
+  // daty); podgląd niżej pokazuje wtedy wartość „na razie", nie całego kursu.
+  const [ongoing, setOngoing] = useState(row.courseConfig != null && row.courseConfig.endDate == null)
+  const effectiveEndDate = ongoing ? undefined : endDate
+  const [excludedDates, setExcludedDates] = useState<string[]>(row.courseConfig?.excludedDates ?? [])
+  const [newExcluded, setNewExcluded] = useState('')
+  const [meetingUrl, setMeetingUrl] = useState(row.meetingUrl)
+  const [lessonPrice, setLessonPrice] = useState(row.lessonPrice != null ? String(row.lessonPrice) : '')
+  const [teacherRate, setTeacherRate] = useState(row.teacherRate != null ? String(row.teacherRate) : '')
+  const [pricesTouched, setPricesTouched] = useState(false)
+  const [scheduleBusy, setScheduleBusy] = useState(false)
+  const [scheduleMsg, setScheduleMsg] = useState<string | null>(null)
+
+  const selectedTeacher = teacherOptions.find((t) => t.id === teacherId)
+  const preview = generateLessons({ slots, startDate: startDate > today ? startDate : today, endDate: effectiveEndDate, excludedDates })
+  const effectiveHorizon = ongoing ? defaultCourseEndDate(startDate > today ? startDate : today) : endDate
+  const price = Number(lessonPrice) || 0
+  const monthsPreview = Object.entries(lessonsPerMonth(preview)).sort()
+
+  function selectTeacher(id: string) {
+    setTeacherId(id)
+    if (pricesTouched) return
+    const t = teacherOptions.find((opt) => opt.id === id)
+    setLessonPrice(t?.onlineIndividualClientRate != null ? String(t.onlineIndividualClientRate) : '')
+    setTeacherRate(t?.onlineIndividualPayRate != null ? String(t.onlineIndividualPayRate) : '')
+  }
+
+  function setSlot(i: number, patch: Partial<Slot>) {
+    setSlots((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)))
+  }
+  function addSlot() {
+    const last = slots[slots.length - 1]
+    setSlots((prev) => [...prev, { day: (last?.day ?? 0) + 2 > 6 ? 0 : (last?.day ?? 0) + 2, time: last?.time ?? '17:00', durationMin: last?.durationMin ?? 60 }])
+  }
+  function removeSlot(i: number) {
+    setSlots((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev))
+  }
+  function addExcluded() {
+    const d = newExcluded.slice(0, 10)
+    if (!d || excludedDates.includes(d)) return
+    setExcludedDates((prev) => [...prev, d].sort())
+    setNewExcluded('')
+  }
+
+  // Nienaruszający zapis: aktualizuje link/stawkę/prowadzącego na już
+  // zaplanowanych, przyszłych lekcjach i zapamiętuje konfigurację — nic nie
+  // usuwa. Wołany razem z głównym „Zapisz".
+  async function syncSchedule() {
+    const res = await fetch('/api/admin/students/schedule', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate: ongoing ? null : endDate, excludedDates,
+        lessonPrice, teacherRate, applySchedule: false,
+      }),
+    })
+    if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Nie udało się zapisać harmonogramu.') }
+  }
+
+  // Zastąpienie serii terminów — jedyna operacja, która cokolwiek kasuje,
+  // i tylko to, co jeszcze się nie odbyło. Osobny przycisk i potwierdzenie,
+  // żeby nie stało się to przypadkiem przy zwykłym zapisie innych pól.
+  async function applySchedule() {
+    if (preview.length === 0) { setScheduleMsg('Ta konfiguracja nie daje żadnej lekcji — sprawdź terminy i czas trwania.'); return }
+    if (!teacherId) { setScheduleMsg('Przypisz nauczyciela przed wygenerowaniem terminów.'); return }
+    const from = startDate > today ? startDate : today
+    if (!confirm(
+      `Zastąpić przyszłe terminy ${row.name}?\n\n` +
+      `${preview.length} zajęć od ${from} ${ongoing ? `(bezterminowo, wygenerowane do ${effectiveHorizon})` : `do ${endDate}`}` +
+      (price > 0 ? `\nWartość ${ongoing ? 'na razie' : ''}: ${Math.round(price * preview.length)} zł` : '') +
+      `\n\nOdbyte i historyczne lekcje zostają bez zmian — kasujemy tylko to, co jeszcze przed nami.`
+    )) return
+    setScheduleBusy(true); setScheduleMsg(null); setError(null)
+    const res = await fetch('/api/admin/students/schedule', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId: row.id, teacherId, meetingUrl, slots, startDate, endDate: ongoing ? null : endDate, excludedDates,
+        lessonPrice, teacherRate, applySchedule: true,
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setScheduleBusy(false)
+    if (!res.ok) { setScheduleMsg('Błąd: ' + (data.error ?? 'nie udało się')); return }
+    setScheduleMsg(`Zapisano ${data.regenerated} terminów.`)
+    onSaved()
+  }
 
   function handleBillingTypeChange(bt: 'individual' | 'b2b') {
     setBillingType(bt)
@@ -618,6 +730,12 @@ function EditModal({
 
     if (!error && phone !== row.phone) {
       await supabase.from('profiles').update({ phone: phone || null }).eq('id', row.profileId)
+    }
+
+    // Link, stawka i prowadzący na już zaplanowanych lekcjach — nienaruszający
+    // zapis, osobno od regeneracji serii (przycisk „Zastosuj terminy" niżej).
+    if (!error) {
+      try { await syncSchedule() } catch (e) { setSaving(false); setError((e as Error).message); return }
     }
 
     setSaving(false)
@@ -667,12 +785,145 @@ function EditModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nauczyciel</label>
-            <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}
+            <select value={teacherId} onChange={(e) => selectTeacher(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]">
               <option value="">— brak —</option>
               {teacherOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
+
+          {/* Terminy zajęć */}
+          <ModalSection title="Termin zajęć" icon={Repeat}
+            action={<button type="button" onClick={addSlot} className="flex items-center gap-1 text-xs font-semibold text-[#23479E] hover:underline">
+              <Plus size={13} />Dodaj termin</button>}>
+            <div className="space-y-2">
+              {slots.map((s, i) => (
+                <div key={i} className="flex flex-wrap items-end gap-2">
+                  <label className="text-xs text-gray-500">
+                    Dzień
+                    <select value={s.day} onChange={(e) => setSlot(i, { day: Number(e.target.value) })}
+                      className="mt-1 block px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white text-gray-900 focus:outline-none focus:border-[#23479E]">
+                      {DAYS_PL_SHORT.map((d, idx) => <option key={idx} value={idx}>{d}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs text-gray-500">
+                    Godzina
+                    <input type="time" value={s.time} onChange={(e) => setSlot(i, { time: e.target.value })}
+                      className="mt-1 block px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+                  </label>
+                  <label className="text-xs text-gray-500">
+                    Długość (min)
+                    <input type="number" min={15} step={5} value={s.durationMin}
+                      onChange={(e) => setSlot(i, { durationMin: Number(e.target.value) })}
+                      className="mt-1 block w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+                  </label>
+                  {slots.length > 1 && (
+                    <button type="button" onClick={() => removeSlot(i)} title="Usuń termin"
+                      className="p-2 mb-0.5 text-gray-400 hover:text-red-500"><Trash2 size={15} /></button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ModalSection>
+
+          {/* Harmonogram */}
+          <ModalSection title="Harmonogram zajęć" icon={CalendarRange}>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs text-gray-500">
+                Regeneruj od
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+              </label>
+              <div>
+                <label className="text-xs text-gray-500">
+                  Koniec kursu
+                  <input type="date" value={endDate} min={startDate} disabled={ongoing}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E] disabled:bg-gray-50 disabled:text-gray-400" />
+                </label>
+                <label className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-600">
+                  <input type="checkbox" checked={ongoing} onChange={(e) => setOngoing(e.target.checked)}
+                    className="rounded border-gray-300" />
+                  Bezterminowo (ongoing) — bez ustalonego końca
+                </label>
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs text-gray-500 flex items-center gap-1 mb-1"><CalendarOff size={11} />Wyłączone dni</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input type="date" value={newExcluded} min={startDate} max={effectiveHorizon}
+                  onChange={(e) => setNewExcluded(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+                <button type="button" onClick={addExcluded} disabled={!newExcluded}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                  Dodaj
+                </button>
+                {excludedDates.map((d) => (
+                  <span key={d} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-700">
+                    {d}
+                    <button type="button" onClick={() => setExcludedDates((prev) => prev.filter((x) => x !== d))}
+                      className="text-gray-400 hover:text-red-500"><X size={12} /></button>
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">Ferie i przerwy z kalendarza szkoły są pomijane automatycznie.</p>
+            </div>
+            <div className="mt-3 rounded-xl bg-[#F5F8FF] border border-[#dbe6ff] px-3 py-2.5 text-xs">
+              {preview.length === 0 ? (
+                <p className="text-red-500">Ta konfiguracja nie daje żadnej lekcji — sprawdź terminy i czas trwania.</p>
+              ) : (
+                <p className="text-gray-700">
+                  <strong className="text-gray-900">{preview.length}</strong> zajęć od {startDate > today ? startDate : today}{' '}
+                  {ongoing ? <>(bezterminowo, wygenerowane do {effectiveHorizon})</> : <>do {endDate}</>}
+                  {price > 0 && (
+                    <> · wartość {ongoing ? 'na razie' : ''} <strong className="text-[#23479E]">{Math.round(price * preview.length)} zł</strong></>
+                  )}
+                  {monthsPreview.length > 0 && ` · ${monthsPreview[0][1]} zajęć w najbliższym miesiącu`}
+                </p>
+              )}
+            </div>
+            <button type="button" onClick={applySchedule} disabled={scheduleBusy}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              <RefreshCw size={14} />{scheduleBusy ? 'Zapisywanie...' : 'Zastosuj terminy (zastąpi przyszłe, jeszcze nieodbyte lekcje)'}
+            </button>
+            {scheduleMsg && <p className="text-xs text-gray-500 mt-2">{scheduleMsg}</p>}
+          </ModalSection>
+
+          {/* Link i stawki */}
+          <ModalSection title="Link do zajęć" icon={Link2}>
+            <input type="url" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://meet.jit.si/..."
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+          </ModalSection>
+
+          <ModalSection title="Stawka nauczyciela" icon={Banknote}>
+            <label className="text-xs text-gray-500">
+              Za lekcję (zł)
+              <input type="number" min={0} value={teacherRate}
+                onChange={(e) => { setTeacherRate(e.target.value); setPricesTouched(true) }} placeholder="np. 35"
+                className="mt-1 block w-40 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+            </label>
+            <p className="text-xs text-gray-400 mt-1.5">
+              {selectedTeacher?.onlineIndividualPayRate != null
+                ? 'Podpowiedź z cennika nauczyciela — zmień, jeśli tego ucznia rozliczacie inaczej.'
+                : 'Puste = stawka z kartoteki nauczyciela.'}
+            </p>
+          </ModalSection>
+
+          <ModalSection title="Cena za zajęcia" icon={Wallet}>
+            <label className="text-xs text-gray-500">
+              Za lekcję (zł)
+              <input type="number" min={0} value={lessonPrice}
+                onChange={(e) => { setLessonPrice(e.target.value); setPricesTouched(true) }} placeholder="np. 60"
+                className="mt-1 block w-40 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#23479E]" />
+              {selectedTeacher?.onlineIndividualClientRate != null && (
+                <span className="block text-[11px] text-gray-400 mt-0.5">z cennika: {selectedTeacher.onlineIndividualClientRate} zł</span>
+              )}
+            </label>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Miesięczna opłata to ta stawka razy liczba zajęć w danym miesiącu. Puste = cennik ogólny wg liczby lekcji na tydzień.
+            </p>
+          </ModalSection>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
@@ -706,9 +957,12 @@ function EditModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cena indywidualna (zł/mies., opc.)</label>
-            <input type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="zostaw puste = cennik bazowy"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ryczałt miesięczny (zł/mies., opc.)</label>
+            <input type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="zostaw puste = licz z ceny za zajęcia"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            <p className="text-xs text-gray-400 mt-1">
+              Wyjątek dla stałej kwoty miesięcznej niezależnej od liczby zajęć — jeśli ustawiony, bije &bdquo;Cenę za zajęcia&rdquo; wyżej.
+            </p>
           </div>
 
           <div className="rounded-xl border border-gray-200 p-3">
@@ -767,6 +1021,25 @@ function EditModal({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ModalSection({ title, icon: Icon, action, children }: {
+  title: string
+  icon: typeof Wallet
+  action?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+          <Icon size={13} className="text-gray-400" />{title}
+        </h4>
+        {action}
+      </div>
+      {children}
     </div>
   )
 }

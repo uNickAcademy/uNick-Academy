@@ -29,14 +29,37 @@ export function PaymentsView({
   const [chargeMsg, setChargeMsg] = useState<string | null>(null)
   const [payFor, setPayFor] = useState<Debtor | null>(null)
 
+  // Najpierw podgląd (dryRun), dopiero po akceptacji realne naliczenie —
+  // widać wtedy dokładnie, kto i za co dostanie obciążenie.
   async function chargeMonth() {
-    if (!confirm('Naliczyć miesięczny abonament aktywnym uczniom? (pominie już naliczonych w tym miesiącu)')) return
     setCharging(true); setChargeMsg(null)
-    const res = await fetch('/api/admin/billing/charge-month', { method: 'POST' })
+    const preview = await fetch('/api/admin/billing/charge-month', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dryRun: true }),
+    })
+    const plan = await preview.json()
+    setCharging(false)
+    if (!preview.ok) { setChargeMsg('Błąd: ' + (plan.error ?? 'nie udało się')); return }
+
+    if (plan.charged === 0) {
+      setChargeMsg(`Nie ma czego naliczać za ${plan.monthLabel} — wszyscy mają już opłacony ten miesiąc lub nie mają w nim zajęć.`)
+      return
+    }
+
+    type Row = { name: string; amount: number; lines: string[] }
+    const sample = (plan.details as Row[]).slice(0, 8)
+      .map((d) => `• ${d.name} — ${d.amount} zł (${d.lines.join(', ')})`).join('\n')
+    const more = plan.charged > 8 ? `\n…i ${plan.charged - 8} więcej` : ''
+    if (!confirm(`Naliczyć ${plan.monthLabel}?\n\n${plan.charged} uczniów, razem ${plan.total} zł:\n${sample}${more}`)) return
+
+    setCharging(true)
+    const res = await fetch('/api/admin/billing/charge-month', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+    })
     const data = await res.json()
     setCharging(false)
     if (!res.ok) { setChargeMsg('Błąd: ' + (data.error ?? 'nie udało się')); return }
-    setChargeMsg(`Naliczono ${data.charged} uczniom (${data.total} zł) za ${data.monthLabel}.${data.skipped?.length ? ' Pominięto: ' + data.skipped.join(', ') + '.' : ''}`)
+    setChargeMsg(`Naliczono ${data.charged} uczniom (${data.total} zł) za ${data.monthLabel}.`)
     router.refresh()
   }
 

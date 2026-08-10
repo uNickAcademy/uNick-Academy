@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder } from '@/lib/email/send'
+import { sendLessonReminder, sendOverdueNotification, sendBulkMessage, sendProgressDigest, sendGroupPrep, sendGroupStartReminder, sendMonthlyPayment } from '@/lib/email/send'
+import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
+import { periodOf, periodLabel } from '@/lib/billing/engine'
+import { billFamilies } from '@/lib/billing/family'
+import { activeStudentIds } from '@/lib/students/activity'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -33,6 +38,28 @@ export async function GET(req: NextRequest) {
     .lt('ends_at', now.toISOString())
     .select('id')
   const autoPresentCount = autoPresent?.length ?? 0
+
+  // ── 0b. Synchronizacja statusu z rzeczywistością ────────────────────────
+  //
+  // Aktywny uczeń to uczeń z aktualnie przypisanymi zajęciami. Kolumna
+  // `status` to tylko zapis tej decyzji i potrafi się rozjechać (import,
+  // rezygnacja, ręczna zmiana), a rozjechana kłamie na dashboardzie i w
+  // raportach. Raz dziennie doprowadzamy ją do stanu faktycznego.
+  // Statusów „próbny" i „zaległość" nie ruszamy — to stany onboardingu
+  // i rozliczeń, nie obecności na zajęciach.
+  const [{ data: futureLessons }, { data: groupRows }, { data: allStudents }] = await Promise.all([
+    supabase.from('lessons').select('student_id, starts_at, cancelled_at').gte('starts_at', now.toISOString()),
+    supabase.from('group_members').select('student_id, group:groups(start_date, end_date, is_active)'),
+    supabase.from('students').select('id, status').is('deleted_at', null),
+  ])
+
+  const withClasses = activeStudentIds({ lessons: futureLessons ?? [], groupMembers: groupRows ?? [] }, now)
+
+  const toActivate = (allStudents ?? []).filter((s) => s.status === 'paused' && withClasses.has(s.id)).map((s) => s.id)
+  const toPause = (allStudents ?? []).filter((s) => s.status === 'active' && !withClasses.has(s.id)).map((s) => s.id)
+
+  if (toActivate.length > 0) await supabase.from('students').update({ status: 'active' }).in('id', toActivate)
+  if (toPause.length > 0) await supabase.from('students').update({ status: 'paused' }).in('id', toPause)
 
   // ── 1. Przypomnienia o lekcjach (codziennie) ────────────────────────────
   // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
@@ -272,6 +299,47 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── 5. Doliczenie lekcji indywidualnych po pierwszych zajęciach ──────────
+  //
+  // Zapis na zajęcia indywidualne opłaca samą pierwszą lekcję. Gdy już się
+  // odbędzie, dopisujemy resztę lekcji przypadających w tym miesiącu (liczba
+  // lekcji × stawka) i wysyłamy link do płatności. Naliczenie idzie na ten sam
+  // okres rozliczeniowy, więc dopłata to dokładnie brakująca różnica.
+  let topUps = 0
+  let topUpTotal = 0
+
+  const period = periodOf(now)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const { data: heldThisMonth } = await supabase
+    .from('lessons')
+    .select('student_id')
+    .is('cancelled_at', null)
+    .is('group_id', null)
+    .gte('starts_at', monthStart.toISOString())
+    .lte('starts_at', now.toISOString())
+
+  const startedIds = new Set((heldThisMonth ?? []).map((l) => l.student_id as string))
+
+  if (startedIds.size > 0) {
+    const billable = (await loadBillableStudents(supabase)).filter((s) => startedIds.has(s.id))
+    const outcomes = await chargeStudentsForPeriod(supabase, billable, period)
+
+    topUps = outcomes.filter((o) => o.charged > 0).length
+    topUpTotal = outcomes.reduce((a, o) => a + o.charged, 0)
+
+    // Rodzic dostaje jeden rachunek za wszystkie dzieci, nie osobny za każde.
+    const base = process.env.NEXT_PUBLIC_APP_URL || ''
+    await billFamilies(supabase, outcomes, periodLabel(period), {
+      createCheckout: (opts) => createCheckoutSession({
+        ...opts,
+        successUrl: `${base}/platnosci?success=true`,
+        cancelUrl: `${base}/platnosci?cancelled=true`,
+      }),
+      sendPayment: sendMonthlyPayment,
+    })
+  }
+
   return NextResponse.json({
     autoPresent: autoPresentCount,
     reminders: upcomingLessons?.length ?? 0,
@@ -281,6 +349,9 @@ export async function GET(req: NextRequest) {
     progressDigests,
     prepEmails,
     startReminders,
+    topUps,
+    topUpTotal,
+    statusSynced: { aktywowani: toActivate.length, wstrzymani: toPause.length },
     ranWeekly: isMonday,
   })
 }

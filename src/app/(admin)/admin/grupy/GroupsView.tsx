@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays, CalendarPlus } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Copy, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays, CalendarPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
@@ -68,6 +68,7 @@ export function GroupsView({
   const router = useRouter()
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<GroupCard | null>(null)
+  const [cloning, setCloning] = useState<GroupCard | null>(null)
   const [managingMembers, setManagingMembers] = useState<GroupCard | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -142,9 +143,14 @@ export function GroupsView({
                   <h3 className="text-lg font-black text-white truncate">{g.name}</h3>
                   {!g.isActive && <span className="text-[10px] font-bold uppercase tracking-wide text-white/80">Kurs zakończony</span>}
                 </div>
-                <button onClick={() => setEditing(g)} className="text-white/80 hover:text-white flex-shrink-0 ml-2">
-                  <Pencil size={16} />
-                </button>
+                <div className="flex items-center gap-2.5 flex-shrink-0 ml-2">
+                  <button onClick={() => setCloning(g)} title="Sklonuj kurs (bez uczestników)" className="text-white/80 hover:text-white">
+                    <Copy size={16} />
+                  </button>
+                  <button onClick={() => setEditing(g)} className="text-white/80 hover:text-white">
+                    <Pencil size={16} />
+                  </button>
+                </div>
               </div>
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -235,6 +241,10 @@ export function GroupsView({
         <GroupFormModal teacherOptions={teacherOptions} group={editing} onClose={() => setEditing(null)}
           onSaved={() => { setEditing(null); router.refresh() }} />
       )}
+      {cloning && (
+        <GroupFormModal teacherOptions={teacherOptions} cloneFrom={cloning} onClose={() => setCloning(null)}
+          onSaved={() => { setCloning(null); router.refresh() }} />
+      )}
       {managingMembers && (
         <MembersModal group={managingMembers} studentOptions={studentOptions}
           onClose={() => setManagingMembers(null)} onChanged={() => router.refresh()} />
@@ -243,27 +253,30 @@ export function GroupsView({
   )
 }
 
-function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
+function GroupFormModal({ teacherOptions, group, cloneFrom, onClose, onSaved }: {
   teacherOptions: { id: string; name: string }[]
   group?: GroupCard
+  /** Grupa źródłowa do sklonowania — wypełnia formularz, ale zapis zawsze robi INSERT (nowa grupa, bez uczestników). */
+  cloneFrom?: GroupCard
   onClose: () => void
   onSaved: () => void
 }) {
   const isEdit = !!group
-  const [name, setName] = useState(group?.name ?? '')
-  const [teacherId, setTeacherId] = useState(group?.teacherId || teacherOptions[0]?.id || '')
-  const [levels, setLevels] = useState<LanguageLevel[]>(group?.levels?.length ? group.levels : (group?.level ? [group.level] : ['A1']))
-  const [color, setColor] = useState(group?.color ?? COLORS[0])
-  const [capacity, setCapacity] = useState(group?.capacity ?? 6)
-  const [format, setFormat] = useState<LessonType | ''>(group?.format ?? '')
-  const [pricePerMonth, setPricePerMonth] = useState(group?.pricePerMonth != null ? String(group.pricePerMonth) : '')
-  const [dayOfWeek, setDayOfWeek] = useState(group?.dayOfWeek != null ? String(group.dayOfWeek) : '')
-  const [scheduleText, setScheduleText] = useState(group?.scheduleText ?? '')
-  const [startDate, setStartDate] = useState(group?.startDate ?? '')
-  const [endDate, setEndDate] = useState(group?.endDate ?? '')
-  const [ageFrom, setAgeFrom] = useState(group?.ageMin != null ? String(group.ageMin) : '')
-  const [ageTo, setAgeTo] = useState(group?.ageMax != null ? String(group.ageMax) : '')
-  const [description, setDescription] = useState(group?.description ?? '')
+  const src = group ?? cloneFrom
+  const [name, setName] = useState(cloneFrom ? `${cloneFrom.name} (kopia)` : (group?.name ?? ''))
+  const [teacherId, setTeacherId] = useState(src?.teacherId || teacherOptions[0]?.id || '')
+  const [levels, setLevels] = useState<LanguageLevel[]>(src?.levels?.length ? src.levels : (src?.level ? [src.level] : ['A1']))
+  const [color, setColor] = useState(src?.color ?? COLORS[0])
+  const [capacity, setCapacity] = useState(src?.capacity ?? 6)
+  const [format, setFormat] = useState<LessonType | ''>(src?.format ?? '')
+  const [pricePerMonth, setPricePerMonth] = useState(src?.pricePerMonth != null ? String(src.pricePerMonth) : '')
+  const [dayOfWeek, setDayOfWeek] = useState(src?.dayOfWeek != null ? String(src.dayOfWeek) : '')
+  const [scheduleText, setScheduleText] = useState(src?.scheduleText ?? '')
+  const [startDate, setStartDate] = useState(cloneFrom ? '' : (group?.startDate ?? ''))
+  const [endDate, setEndDate] = useState(cloneFrom ? '' : (group?.endDate ?? ''))
+  const [ageFrom, setAgeFrom] = useState(src?.ageMin != null ? String(src.ageMin) : '')
+  const [ageTo, setAgeTo] = useState(src?.ageMax != null ? String(src.ageMax) : '')
+  const [description, setDescription] = useState(src?.description ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -303,7 +316,7 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-black text-gray-900">{isEdit ? 'Edytuj grupę' : 'Nowa grupa'}</h2>
+          <h2 className="text-lg font-black text-gray-900">{isEdit ? 'Edytuj grupę' : cloneFrom ? 'Sklonuj grupę' : 'Nowa grupa'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <div className="space-y-3">
@@ -411,7 +424,7 @@ function GroupFormModal({ teacherOptions, group, onClose, onSaved }: {
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
           <button onClick={save} disabled={saving}
             className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60">
-            {saving ? 'Zapisywanie...' : isEdit ? 'Zapisz zmiany' : 'Utwórz grupę'}
+            {saving ? 'Zapisywanie...' : isEdit ? 'Zapisz zmiany' : cloneFrom ? 'Utwórz kopię' : 'Utwórz grupę'}
           </button>
         </div>
       </div>

@@ -47,9 +47,12 @@ export default async function RaportyPage({ searchParams }: { searchParams: Prom
     perTeacher[l.teacher_id] ??= { name: t?.profile?.full_name ?? '—', contract: (t?.contract_type ?? 'b2b') as TeacherContractType, lessons: 0, hours: 0, rateInd: t?.hourly_rate ?? null, rateGrp: t?.rate_group ?? null, gross: 0 }
     const row = perTeacher[l.teacher_id]
     const h = hoursOf(l)
-    // stawka zależna od formatu: grupowa (jeśli ustawiona) vs indywidualna
+    // Stawka ustalona przy zatwierdzaniu kursu jest kwotą za lekcję i bije
+    // stawki godzinowe z kartoteki; bez niej liczymy jak dotąd: stawka zależna
+    // od formatu (grupowa, jeśli ustawiona) razy liczba godzin.
+    const perLesson = l.teacher_rate != null ? Number(l.teacher_rate) : null
     const rate = l.format === 'group' ? (t?.rate_group ?? t?.hourly_rate ?? 0) : (t?.hourly_rate ?? 0)
-    row.lessons++; row.hours += h; row.gross += rate * h
+    row.lessons++; row.hours += h; row.gross += perLesson ?? rate * h
   }
   // Netto wg typu umowy — spójnie z uFOS Kadry (b2b i student <26 = 100%, zlecenie z potrąceniami)
   const teacherRows = Object.values(perTeacher)

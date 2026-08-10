@@ -270,18 +270,36 @@ export function monthlyPaymentEmail(params: {
   monthLabel: string
   amount: number
   paymentUrl?: string | null
+  /** Rozbicie na uczestników — rodzina dostaje jeden rachunek za wszystkich. */
+  items?: { name: string; amount: number }[]
 }): { subject: string; html: string } {
-  const { studentName, monthLabel, amount, paymentUrl } = params
+  const { studentName, monthLabel, amount, paymentUrl, items } = params
+  const family = (items?.length ?? 0) > 1
+
+  const breakdown = family
+    ? `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        ${items!.map((i) => `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px;">${i.name}</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; text-align: right; font-weight: 600;">${i.amount} zł</td>
+          </tr>`).join('')}
+      </table>`
+    : ''
+
   return {
     subject: `Płatność za ${monthLabel} — ${amount} zł`,
     html: wrap(`
       <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 8px;">Płatność za ${monthLabel}</h2>
       <p style="color: #64748b; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
-        Cześć ${studentName.split(' ')[0]}! To przypomnienie o opłacie za zajęcia w miesiącu ${monthLabel} — płatnej z góry.
+        Cześć ${studentName.split(' ')[0]}! ${family
+          ? `To rachunek za zajęcia w miesiącu ${monthLabel} — jedna płatność za wszystkich uczestników, z góry.`
+          : `To przypomnienie o opłacie za zajęcia w miesiącu ${monthLabel} — płatnej z góry.`}
       </p>
 
+      ${breakdown}
+
       <div style="background: #f5f3ff; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
-        <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">DO ZAPŁATY</p>
+        <p style="color: #6d28d9; font-size: 13px; font-weight: 600; margin: 0 0 4px;">${family ? 'RAZEM DO ZAPŁATY' : 'DO ZAPŁATY'}</p>
         <p style="font-size: 28px; font-weight: 900; color: #5b21b6; margin: 0 0 12px;">${amount} zł</p>
         ${paymentUrl ? btn('Zapłać teraz →', paymentUrl) : ''}
         ${paymentUrl ? `<p style="color: #8b5cf6; font-size: 12px; margin: 12px 0 0;">BLIK, Przelewy24 lub karta</p>` : ''}

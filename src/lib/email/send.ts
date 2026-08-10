@@ -174,6 +174,7 @@ export async function sendMonthlyPayment(to: string, params: {
   monthLabel: string
   amount: number
   paymentUrl?: string | null
+  items?: { name: string; amount: number }[]
 }) {
   const { subject, html } = monthlyPaymentEmail(params)
   await send(to, subject, html)

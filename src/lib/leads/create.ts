@@ -192,7 +192,7 @@ async function mergeIntoExisting(
 ): Promise<void> {
   const { data: current } = await admin
     .from('leads')
-    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status')
+    .select('first_name, last_name, phone, email, parent_name, student_type, student_age, location, goal, preferred_start, interested_group_id, booked_slot_at, consent_marketing, status, referral_code')
     .eq('id', leadId)
     .single()
 

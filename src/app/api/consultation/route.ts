@@ -25,7 +25,7 @@ const AUDIENCE_TO_TYPE: Record<string, LeadStudentType> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, audience, message } = await req.json()
+    const { name, email, phone, audience, message, referralCode } = await req.json()
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Imię i e-mail są wymagane.' }, { status: 400 })
     }
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.trim()
     const cleanPhone = phone?.trim() || null
     const cleanMessage = message?.trim() || null
+    const cleanReferralCode = referralCode?.trim() || null
 
     // 'unsure' i brak wyboru zostają puste — agent dopyta.
     const studentType = AUDIENCE_TO_TYPE[audience] ?? null
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
         phone: cleanPhone,
         studentType,
         goal: cleanMessage,
+        referralCode: cleanReferralCode,
       })
       isReturning = result.isReturning
     } catch (err) {
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
     await admin.from('admin_notifications').insert({
       kind: 'consultation',
       title: `${isReturning ? 'Ponowna konsultacja' : 'Nowa konsultacja'}: ${cleanName}`,
-      body: `${cleanPhone ? `tel. ${cleanPhone}, ` : ''}${cleanEmail}${audience ? ` · dla: ${audience}` : ''}${cleanMessage ? ` — ${cleanMessage}` : ''}`,
+      body: `${cleanPhone ? `tel. ${cleanPhone}, ` : ''}${cleanEmail}${audience ? ` · dla: ${audience}` : ''}${cleanMessage ? ` — ${cleanMessage}` : ''}${cleanReferralCode ? ` · kod polecenia: ${cleanReferralCode}` : ''}`,
     }).then(undefined, (e: unknown) => console.error('[Consultation] notify error:', e))
 
     await notifySchoolSms(
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
         `E-mail: ${cleanEmail}`,
         audience ? `Konsultacja dla: ${audience}` : '',
         cleanMessage ? `Wiadomość: ${cleanMessage}` : '',
+        cleanReferralCode ? `Kod polecenia: ${cleanReferralCode}` : '',
         isReturning ? 'Uwaga: ten kontakt jest już w lejku — dopisano do istniejącego leada.' : '',
       ],
       actionLabel: 'Otwórz pipeline →',

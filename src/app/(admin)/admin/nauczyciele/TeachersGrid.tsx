@@ -16,6 +16,8 @@ type Card = {
   isActive: boolean
   hourlyRate: number | null
   rateGroup: number | null
+  onlineIndividualPayRate: number | null
+  onlineIndividualClientRate: number | null
   location: string
   contractType: TeacherContractType
   students: number
@@ -104,6 +106,8 @@ function Stat({ icon: Icon, value, label, color }: { icon: typeof Users; value: 
 function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSaved: () => void }) {
   const [hourlyRate, setHourlyRate] = useState(t.hourlyRate != null ? String(t.hourlyRate) : '')
   const [rateGroup, setRateGroup] = useState(t.rateGroup != null ? String(t.rateGroup) : '')
+  const [onlinePayRate, setOnlinePayRate] = useState(t.onlineIndividualPayRate != null ? String(t.onlineIndividualPayRate) : '')
+  const [onlineClientRate, setOnlineClientRate] = useState(t.onlineIndividualClientRate != null ? String(t.onlineIndividualClientRate) : '')
   const [location, setLocation] = useState(t.location)
   const [isActive, setIsActive] = useState(t.isActive)
   const [contractType, setContractType] = useState<TeacherContractType>(t.contractType)
@@ -119,6 +123,8 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
       .update({
         hourly_rate: hourlyRate === '' ? null : Number(hourlyRate),
         rate_group: rateGroup === '' ? null : Number(rateGroup),
+        online_individual_pay_rate: onlinePayRate === '' ? null : Number(onlinePayRate),
+        online_individual_client_rate: onlineClientRate === '' ? null : Number(onlineClientRate),
         location: location || null,
         is_active: isActive,
         contract_type: contractType,
@@ -153,6 +159,21 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Lekcja indyw. online — wypłata (zł/lekcja)</label>
+              <input type="number" value={onlinePayRate} onChange={(e) => setOnlinePayRate(e.target.value)} placeholder="np. 35"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Lekcja indyw. online — cena klienta (zł/lekcja)</label>
+              <input type="number" value={onlineClientRate} onChange={(e) => setOnlineClientRate(e.target.value)} placeholder="np. 60"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 -mt-2">
+            Domyślne stawki za pojedyncze zajęcia (30 min) — podpowiedź przy zatwierdzaniu zapisu, do zmiany dla każdego kursu z osobna.
+          </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Lokalizacja</label>
             <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="np. Tarnowo Podgórne / Online"
