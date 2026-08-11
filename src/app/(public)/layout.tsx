@@ -2,6 +2,8 @@ import { Navbar } from '@/components/public/Navbar'
 import { Footer } from '@/components/public/Footer'
 import CookieBanner from '@/app/components/CookieBanner'
 import GoogleAnalytics from '@/app/components/GoogleAnalytics'
+import MetaPixel from '@/app/components/MetaPixel'
+import { AttributionCapture } from '@/app/components/AttributionCapture'
 import { getDictionary } from '@/app/lib/dictionaries'
 
 // GA4 i baner zgody były wcześniej wpięte wyłącznie w layout stron
@@ -22,7 +24,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </div>
       <Footer />
       <CookieBanner locale="pl" dict={dict} />
+      <AttributionCapture />
       <GoogleAnalytics />
+      <MetaPixel />
     </>
   )
 }

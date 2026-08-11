@@ -7,7 +7,7 @@ import {
   Clock, CalendarDays, Users,
 } from 'lucide-react'
 import type { PublicGroup } from '@/lib/supabase/queries'
-import { track, readCampaign, readReferralCode } from '@/lib/analytics/track'
+import { track, trackConversion, readCampaign, readReferralCode } from '@/lib/analytics/track'
 import { pickTestimonial } from '@/lib/social-proof'
 import { ProofQuote } from './SocialProof'
 import { Worries } from './Reassurance'
@@ -68,7 +68,10 @@ export function BookingWizard({ groups, terms, consents }: {
   const [referralCode, setReferralCode] = useState(() => readReferralCode() ?? '')
   // Start kreatora liczony raz na sesję odwiedzin. Inicjalizator stanu
   // uruchamia się raz, więc nie potrzeba tu efektu ani strażnika.
-  useState(() => { track('zapisy_start', { campaign }); return true })
+  // `InitiateCheckout` to standardowe zdarzenie Meta dla „ktoś wszedł w
+  // wieloetapową ścieżkę konwersji" — po nim algorytm uczy się szukać ludzi,
+  // którzy naprawdę zaczynają zapis, a nie tylko oglądają stronę.
+  useState(() => { trackConversion('zapisy_start', { metaEvent: 'InitiateCheckout', campaign }); return true })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ kind: 'group' | 'advice' | 'individual'; groupName?: string; schedule?: string; firstLessonDate?: string | null } | null>(null)
@@ -141,6 +144,14 @@ export function BookingWizard({ groups, terms, consents }: {
     audience, age: ageNum, online: location === 'online', skip: proofOptions?.author,
     prefer: location === 'online' ? 'online' : undefined,
   })
+  // Ścieżka doradcza ma własny dobór: tam odbiorcę poznajemy dopiero
+  // z podpytania, więc `audience` wciąż brzmi 'unsure'. Bez tego rodzic,
+  // który przed chwilą zaznaczył „dla dziecka”, czytał opinię dorosłego.
+  const proofAdvice = pickTestimonial({
+    audience: audience === 'unsure' ? unsureFor : audience,
+    age: ageNum,
+    online: location === 'online',
+  })
 
   function scheduleOf(g: PublicGroup): string {
     const day = g.dayOfWeek != null ? DAYS_PL[g.dayOfWeek] : null
@@ -194,7 +205,12 @@ export function BookingWizard({ groups, terms, consents }: {
     setSubmitting(false)
     if (!res.ok) { setError(data.error || 'Nie udało się wysłać. Spróbuj ponownie.'); return }
 
-    track('zapisy_wyslane', {
+    // Rezerwacja miejsca w grupie to domknięty zapis (`CompleteRegistration`);
+    // prośba o poradę albo o kurs indywidualny to na tym etapie wciąż zapytanie
+    // (`Lead`). Meta rozlicza kampanie po tych nazwach, więc rozróżnienie
+    // decyduje o tym, pod co optymalizuje się budżet.
+    trackConversion('zapisy_wyslane', {
+      metaEvent: kind === 'group' ? 'CompleteRegistration' : 'Lead',
       rodzaj: kind,
       grupa: (data.groupName as string) ?? null,
       forma: location,
@@ -500,7 +516,7 @@ export function BookingWizard({ groups, terms, consents }: {
               </div>
               <ReferralField value={referralCode} onChange={setReferralCode} fromLink={!!readReferralCode()} />
             </div>
-            <ProofQuote t={proofOptions} />
+            <ProofQuote t={proofAdvice} />
             <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
           </div>
         )}
@@ -508,15 +524,15 @@ export function BookingWizard({ groups, terms, consents }: {
         {/* ZAJĘCIA INDYWIDUALNE */}
         {screen === 'individual' && (
           <div>
-            <Heading title="Zajęcia indywidualne" subtitle="Nauczyciela i porę dobierzemy w rozmowie" />
-            <p className="text-sm text-gray-500 mb-4 bg-gray-50 rounded-xl p-4 leading-relaxed">
-              Nie przydzielamy nauczyciela automatycznie. Wolimy najpierw poznać cel i poziom —
-              dzięki temu trafiamy za pierwszym razem, zamiast zmieniać lektora po miesiącu.
-            </p>
+            <Heading title="Zajęcia indywidualne" subtitle="Dobierzemy nauczyciela do celu i poziomu" />
             <p className="text-sm text-gray-600 mb-5 bg-green-50 border border-green-100 rounded-xl p-4 leading-relaxed">
               <span className="font-semibold text-green-700">Nie musisz od razu brać kursu.</span>{' '}
               Możesz umówić się na pojedyncze zajęcia, dowolnej długości. Bez umów na rok —
               z regularnych zajęć zrezygnujesz w każdej chwili, z miesięcznym wypowiedzeniem.
+            </p>
+            <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+              Zadzwonimy w ciągu 2 dni roboczych, żeby poznać cel i poziom — dzięki temu
+              dobieramy nauczyciela za pierwszym razem, zamiast zmieniać go po miesiącu.
             </p>
             <div className="space-y-3">
               <Field label={audience === 'child' ? 'Imię dziecka' : 'Imię'} value={name} onChange={setName} placeholder="Anna" />
@@ -532,6 +548,7 @@ export function BookingWizard({ groups, terms, consents }: {
                 placeholder="Np. wieczory w tygodniu, po 17:00" />
               <ReferralField value={referralCode} onChange={setReferralCode} fromLink={!!readReferralCode()} />
             </div>
+            <ProofQuote t={proofDetails} />
             <ConsentList consents={optionalConsents} checked={checked} setChecked={setChecked} />
           </div>
         )}
@@ -539,7 +556,15 @@ export function BookingWizard({ groups, terms, consents }: {
 
       {error && <p className="text-sm text-red-500 mt-4 text-center">{error}</p>}
 
-      <div className="flex items-center justify-between gap-3 mt-6 pt-5 border-t border-gray-100">
+      {/* Obietnica nad przyciskiem, nie w przycisku: w etykiecie rozbijała się
+          na cztery wiersze i tłoczyła „Wstecz” na wąskim ekranie. */}
+      {(screen === 'advice' || screen === 'individual') && (
+        <p className="text-xs text-gray-500 text-center mt-5">
+          Odezwiemy się w ciągu <strong className="text-gray-700">2 dni roboczych</strong> — telefonicznie albo mailem.
+        </p>
+      )}
+
+      <div className="flex items-center justify-between gap-3 mt-4 pt-5 border-t border-gray-100">
         {history.length > 0 ? (
           <button onClick={back} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">
             <ArrowLeft size={16} />Wstecz
@@ -554,8 +579,8 @@ export function BookingWizard({ groups, terms, consents }: {
         )}
         {(screen === 'advice' || screen === 'individual') && (
           <button onClick={() => submit(screen === 'advice' ? 'advice' : 'individual')} disabled={submitting}
-            className="flex items-center gap-2 px-6 py-3 rounded-full gradient-primary text-white font-semibold text-sm hover:opacity-90 disabled:opacity-40">
-            <Clock size={16} />{submitting ? 'Wysyłam...' : 'Wyślij — odezwiemy się w 2 dni robocze'}
+            className="flex items-center gap-2 px-6 py-3 rounded-full gradient-primary text-white font-semibold text-sm whitespace-nowrap hover:opacity-90 disabled:opacity-40">
+            <Clock size={16} />{submitting ? 'Wysyłam...' : 'Wyślij zgłoszenie'}
           </button>
         )}
       </div>

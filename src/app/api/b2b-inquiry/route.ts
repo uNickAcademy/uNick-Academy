@@ -5,12 +5,17 @@ import { notifySchoolEmail } from '@/lib/email/send'
 
 // Publiczny formularz zapytań B2B → tworzy leada w pipeline (etap 'approach')
 export async function POST(req: NextRequest) {
-  const { companyName, contactName, email, phone, employeesCount, goal } = await req.json()
+  const { companyName, contactName, email, phone, employeesCount, goal, campaign } = await req.json()
   if (!companyName?.trim() || !email?.trim()) {
     return NextResponse.json({ error: 'Nazwa firmy i email są wymagane.' }, { status: 400 })
   }
 
   const admin = createAdminClient()
+  // Atrybucja z klienta (utm_*, gclid/fbclid, strona odsyłająca). `b2b_leads`
+  // nie ma osobnej kolumny na kampanię — `source` musi zostać stabilną
+  // etykietą kanału, po której grupuje się pipeline, więc szczegół kampanii
+  // ląduje w notatce, gdzie handlowiec i tak go szuka.
+  const cleanCampaign = typeof campaign === 'string' ? campaign.trim() || null : null
   const { error } = await admin.from('b2b_leads').insert({
     company_name: companyName.trim(),
     contact_name: contactName || null,
@@ -20,6 +25,7 @@ export async function POST(req: NextRequest) {
     goal: goal || null,
     stage: 'approach',
     source: 'formularz www',
+    notes: cleanCampaign ? `Kampania: ${cleanCampaign}` : null,
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
@@ -42,6 +48,7 @@ export async function POST(req: NextRequest) {
       `E-mail: ${email.trim()}`,
       employeesCount ? `Liczba pracowników: ${employeesCount}` : '',
       goal ? `Cel: ${goal}` : '',
+      cleanCampaign ? `Kampania: ${cleanCampaign}` : '',
     ],
     actionLabel: 'Otwórz pipeline →',
     actionPath: '/admin/pipeline',

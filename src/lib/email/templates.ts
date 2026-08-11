@@ -580,6 +580,71 @@ function brandBtn(label: string, url: string, color: string = BRAND.red): string
 }
 
 // ──────────────────────────────────────────
+// Agent Łowca: pierwsza automatyczna odpowiedź na nowe zapytanie
+// ──────────────────────────────────────────
+//
+// Treść (temat + tekst) generuje model językowy — patrz src/lib/agents/lowca.ts.
+// Ta funkcja tylko opakowuje gotowy tekst w brandowany szablon: dzieli go na
+// akapity po pustej linii i ucieka HTML, żeby wygenerowany tekst nie mógł
+// wstrzyknąć znaczników.
+function escapeHtmlLowca(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+export function agentLowcaEmail(params: {
+  subject: string
+  body: string
+  appUrl: string
+}): { subject: string; html: string } {
+  const { subject, body, appUrl } = params
+  const paragraphs = body
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">${escapeHtmlLowca(p).replace(/\n/g, '<br>')}</p>`)
+    .join('')
+
+  return {
+    subject,
+    html: `
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Comfortaa:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 24px 12px; background: #F0DCC8;">
+  <div style="max-width: 480px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden;">
+
+    <div style="background: #FFFFFF; padding: 28px 40px 8px; text-align: center;">
+      <img src="${appUrl}/brand/unick-academy-logo.png" alt="uNick Academy"
+           width="180" style="display: block; margin: 0 auto; max-width: 180px; height: auto;" />
+    </div>
+
+    <div style="padding: 16px 40px 32px; font-family: 'Comfortaa', 'Trebuchet MS', Verdana, sans-serif; color: #1E3282;">
+      ${paragraphs}
+
+      <div style="border-top: 1px solid #F0DCC8; padding-top: 16px; margin-top: 8px;">
+        <p style="font-size: 13px; line-height: 1.6; color: #6B7280; margin: 0;">
+          Możesz po prostu odpowiedzieć na tego maila albo zadzwonić: <a href="tel:${siteConfig.phone.e164}" style="color: #1E3282;">${siteConfig.phone.display}</a>.
+        </p>
+      </div>
+    </div>
+
+    <div style="background: #F0DCC8; padding: 18px 40px; text-align: center;">
+      <p style="color: #1E3282; font-size: 12px; margin: 0;">
+        uNick Academy, <a href="mailto:${siteConfig.email}" style="color: #1E3282; text-decoration: none;">${siteConfig.email}</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>`,
+  }
+}
+
+// ──────────────────────────────────────────
 // Kampania „powrót": treść zatwierdzona przez Milenę + śledzenie otwarć i kliknięć
 // ──────────────────────────────────────────
 //

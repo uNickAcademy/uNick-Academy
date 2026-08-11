@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CheckCircle } from 'lucide-react'
+import { trackConversion, readCampaign } from '@/lib/analytics/track'
 
 export function B2bInquiryForm() {
   const [contactName, setContactName] = useState('')
@@ -18,13 +19,15 @@ export function B2bInquiryForm() {
     e.preventDefault()
     if (!companyName.trim() || !email.trim()) { setError('Podaj nazwę firmy i email służbowy.'); return }
     setSending(true); setError(null)
+    const campaign = readCampaign()
     const res = await fetch('/api/b2b-inquiry', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyName, contactName, email, phone, employeesCount, goal }),
+      body: JSON.stringify({ companyName, contactName, email, phone, employeesCount, goal, campaign }),
     })
     const data = await res.json().catch(() => ({}))
     setSending(false)
     if (!res.ok) { setError(data.error ?? 'Nie udało się wysłać. Spróbuj ponownie.'); return }
+    trackConversion('b2b_zapytanie', { metaEvent: 'Lead', campaign })
     setDone(true)
   }
 

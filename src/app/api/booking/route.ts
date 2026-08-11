@@ -14,6 +14,11 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
+// createLead() woła Agenta Łowcę (Claude + Resend) synchronicznie dla nowych
+// leadów (kind 'advice'/'individual') — domyślny limit czasu funkcji Vercel
+// bywa za krótki na to wywołanie.
+export const maxDuration = 30
+
 const DAYS_PL_FULL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']
 
 // Powiadomienie do panelu admina (dzwonek). Best-effort — nie blokuje zapisu.

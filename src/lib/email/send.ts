@@ -13,6 +13,7 @@ import {
   monthlyPaymentEmail,
   internalNotificationEmail,
   comebackEmail,
+  agentLowcaEmail,
   groupReservationEmail,
   adviceReceivedEmail,
   groupPrepEmail,
@@ -242,6 +243,28 @@ export async function sendComeback(to: string, params: {
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
   })
   return send(to, subject, html)
+}
+
+// Pierwsza odpowiedź Agenta Łowcy na nowe zapytanie. W przeciwieństwie do
+// send() zwraca sukces/błąd wprost — wołający zapisuje w agent_usage, czy
+// wiadomość faktycznie poszła, więc cichy fallback tutaj zafałszowałby telemetrię.
+export async function sendAgentLowcaEmail(to: string, params: {
+  subject: string
+  body: string
+}): Promise<boolean> {
+  const resend = getResend()
+  if (!resend) return false
+  const { subject, html } = agentLowcaEmail({
+    ...params,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
+  })
+  try {
+    const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+    return !error
+  } catch (err) {
+    console.error('[AgentLowca] Błąd wysyłki:', err)
+    return false
+  }
 }
 
 // ──────────────────────────────────────────

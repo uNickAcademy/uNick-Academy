@@ -11,6 +11,11 @@ import { siteConfig } from './lib/site-config'
 // Prywatne/techniczne ścieżki (panele, API, auth) są zablokowane dla
 // wszystkich, ale nie blokujemy zasobów _next (CSS/JS/obrazy potrzebne do
 // prawidłowego renderowania i oceny strony).
+//
+// Na liście NIE ma starych adresów z WordPressa (/nauczyciele, /dla-firm,
+// /metoda...), które next.config.ts przekierowuje na nowe strony: bota nie
+// wolno blokować przed adresem, przez który ma przejść dalej — inaczej stare
+// linki przychodzące nie przekazują nic nowym stronom.
 
 const DISALLOW_PRIVATE = [
   '/api/',
@@ -26,7 +31,6 @@ const DISALLOW_PRIVATE = [
   '/rozliczenia',
   '/profil',
   '/kursy',
-  '/nauczyciele',
   '/zapisy',
   '/login',
   '/logowanie',

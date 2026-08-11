@@ -4,6 +4,10 @@ import { notifySchoolSms } from '@/lib/sms/send'
 import { notifySchoolEmail } from '@/lib/email/send'
 import { createLead, type LeadStudentType } from '@/lib/leads/create'
 
+// createLead() woła Agenta Łowcę (Claude + Resend) synchronicznie dla nowych
+// leadów — domyślny limit czasu funkcji Vercel bywa za krótki na to wywołanie.
+export const maxDuration = 30
+
 // Formularz kontaktowy ze stron marketingowych (/pl/contact).
 //
 // Ten endpoint nie istniał — `ContactForm.js` wysyłał POST pod nieistniejącą
@@ -21,7 +25,7 @@ const AUDIENCE_TO_TYPE: Record<string, LeadStudentType> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, audience, message } = await req.json()
+    const { name, email, phone, audience, message, campaign } = await req.json()
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Imię i e-mail są wymagane.' }, { status: 400 })
     }
@@ -31,6 +35,9 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.trim()
     const cleanPhone = phone?.trim() || null
     const cleanMessage = message?.trim() || null
+    // Atrybucja zebrana po stronie klienta (utm_*, gclid/fbclid, ?ref=,
+    // strona odsyłająca) — zasila `leads.campaign` i widok `v_lead_funnel`.
+    const cleanCampaign = typeof campaign === 'string' ? campaign.trim() || null : null
 
     // 'unsure' i brak wyboru zostają puste — agent dopyta. Zgadywanie typu
     // ucznia zaśmieciłoby lejek gorzej niż pusta wartość.
@@ -45,6 +52,7 @@ export async function POST(req: NextRequest) {
         phone: cleanPhone,
         studentType,
         goal: cleanMessage,
+        campaign: cleanCampaign,
       })
       isReturning = result.isReturning
     } catch (err) {
