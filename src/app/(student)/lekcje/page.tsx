@@ -1,8 +1,9 @@
 import { Calendar, Video, MapPin, Clock, User, BookOpen, GraduationCap, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getStudentByProfileId, getStudentLessons } from '@/lib/supabase/queries'
+import { getStudentByProfileId, getStudentLessons, getStudentMakeupBalance } from '@/lib/supabase/queries'
 import type { Lesson, AttendanceStatus } from '@/types'
 import { MakeupActions } from './MakeupActions'
+import { MakeupBalance } from './MakeupBalance'
 import { getLang } from '@/lib/lang'
 import { t, type Lang } from '@/lib/i18n'
 
@@ -26,7 +27,10 @@ export default async function LekcjePage() {
   if (!student) return null
 
   const lang = await getLang()
-  const lessons = await getStudentLessons(student.id)
+  const [lessons, makeupBalance] = await Promise.all([
+    getStudentLessons(student.id),
+    getStudentMakeupBalance(student.id),
+  ])
   const now = Date.now()
   const upcoming = lessons.filter((l) => new Date(l.starts_at).getTime() >= now)
   const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now)
@@ -35,6 +39,8 @@ export default async function LekcjePage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-black text-gray-900 mb-6">{t(lang, 'my_lessons')}</h1>
+
+      <MakeupBalance items={makeupBalance} lang={lang} />
 
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">{t(lang, 'upcoming')} ({upcoming.length})</h2>
@@ -107,10 +113,6 @@ function LessonCard({ lesson, upcoming, lang }: { lesson: Lesson; upcoming: bool
       {upcoming && lesson.is_confirmed !== false && lesson.student_id && (lesson.attendance === 'scheduled' || !lesson.attendance) && (
         <MakeupActions
           lessonId={lesson.id}
-          studentId={lesson.student_id}
-          teacherId={lesson.teacher_id}
-          level={lesson.level}
-          originalDate={date}
           startsAt={lesson.starts_at}
           lang={lang}
         />

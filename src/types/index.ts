@@ -155,6 +155,8 @@ export interface Lesson {
   meeting_url?: string
   /** Stawka prowadzącego za tę lekcję; brak = stawka z kartoteki nauczyciela. */
   teacher_rate?: number | null
+  /** Dla lekcji odrabianej — id oryginalnej, odwołanej lekcji. */
+  makeup_for_lesson_id?: string | null
   student?: Student
   teacher?: Teacher
   materials?: LessonMaterial[]
@@ -166,6 +168,37 @@ export interface LessonMaterial {
   title: string
   url: string
   created_at: string
+}
+
+export type MakeupProposedBy = 'student' | 'teacher'
+export type MakeupProposalStatus = 'pending' | 'accepted' | 'declined' | 'cancelled'
+
+export interface MakeupProposal {
+  id: string
+  lesson_id: string
+  student_id: string
+  teacher_id: string
+  proposed_by: MakeupProposedBy
+  proposed_starts_at: string
+  proposed_ends_at: string
+  meeting_url?: string | null
+  status: MakeupProposalStatus
+  created_lesson_id?: string | null
+  created_at: string
+  responded_at?: string | null
+}
+
+/** Odwołana lekcja czekająca na odrobienie, wraz z ewentualną aktywną propozycją terminu. */
+export interface MakeupBalanceItem {
+  lessonId: string
+  studentId: string
+  teacherId: string
+  studentName: string
+  teacherName: string
+  level: LanguageLevel
+  originalStartsAt: string
+  originalEndsAt: string
+  activeProposal: MakeupProposal | null
 }
 
 export interface Holiday {

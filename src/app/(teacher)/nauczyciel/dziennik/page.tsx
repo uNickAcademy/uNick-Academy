@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { getTeacherByProfileId, getTeacherLessons } from '@/lib/supabase/queries'
+import { getTeacherByProfileId, getTeacherLessons, getTeacherMakeupQueue } from '@/lib/supabase/queries'
 import { RegisterView } from './RegisterView'
+import { MakeupQueue } from './MakeupQueue'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,10 @@ export default async function TeacherRegisterPage() {
 
   const from = new Date(Date.now() - 30 * 86400000).toISOString()
   const to = new Date(Date.now() + 14 * 86400000).toISOString()
-  const lessons = await getTeacherLessons(teacher.id, from, to)
+  const [lessons, makeupQueue] = await Promise.all([
+    getTeacherLessons(teacher.id, from, to),
+    getTeacherMakeupQueue(teacher.id),
+  ])
 
   const rows = lessons.map((l) => ({
     id: l.id,
@@ -36,6 +40,7 @@ export default async function TeacherRegisterPage() {
         <h1 className="text-2xl font-black text-gray-900">Dziennik</h1>
         <p className="text-gray-500 mt-1">Zaznaczaj obecność, temat lekcji, pracę domową i udostępniaj materiały.</p>
       </div>
+      <MakeupQueue items={makeupQueue} />
       <RegisterView rows={rows} teacherId={teacher.id} />
     </div>
   )

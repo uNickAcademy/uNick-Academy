@@ -3,7 +3,7 @@ import { createClient } from './server'
 import { REFERRAL_BONUS_PLN } from '@/lib/referral'
 import { findDuplicateGroups, type DuplicateCandidate, type DuplicateGroup } from '@/lib/students/identity'
 import { activeStudentIds } from '@/lib/students/activity'
-import type { Student, StudentStatus, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead } from '@/types'
+import type { Student, StudentStatus, Teacher, Lesson, Transaction, Referral, Availability, Holiday, Group, PricingPlan, DiscountCode, Company, Invoice, B2bLead, MakeupBalanceItem, MakeupProposalStatus } from '@/types'
 
 // ──────────────────────────────────────────
 // STUDENT
@@ -63,6 +63,78 @@ export async function getStudentLessons(studentId: string): Promise<Lesson[]> {
 
   const { data } = await query
   return (data as Lesson[]) ?? []
+}
+
+type MakeupProposalRow = {
+  id: string; lesson_id: string; proposed_by: 'student' | 'teacher'
+  proposed_starts_at: string; proposed_ends_at: string; meeting_url: string | null
+  status: string; created_lesson_id: string | null; created_at: string; responded_at: string | null
+}
+
+// Odwołane (excused) lekcje ucznia/nauczyciela, którym nie towarzyszy jeszcze
+// zaakceptowana propozycja odrobienia — "saldo zajęć do odrobienia". Dla
+// każdej doczepiamy najnowszą oczekującą propozycję, jeśli jakaś już wisi.
+async function loadMakeupBalance(filterCol: 'student_id' | 'teacher_id', id: string): Promise<MakeupBalanceItem[]> {
+  const supabase = await createClient()
+  const { data: excused } = await supabase
+    .from('lessons')
+    .select('id, student_id, teacher_id, level, starts_at, ends_at, student:students(full_name, profile:profiles(full_name)), teacher:teachers(profile:profiles(full_name))')
+    .eq(filterCol, id)
+    .eq('attendance', 'excused')
+    .is('cancelled_at', null)
+    .order('starts_at', { ascending: false })
+
+  const lessons = excused ?? []
+  if (lessons.length === 0) return []
+
+  const { data: proposals } = await supabase
+    .from('makeup_proposals')
+    .select('*')
+    .in('lesson_id', lessons.map((l) => l.id))
+    .order('created_at', { ascending: false })
+
+  const byLesson = new Map<string, MakeupProposalRow[]>()
+  for (const p of (proposals ?? []) as MakeupProposalRow[]) {
+    const list = byLesson.get(p.lesson_id) ?? []
+    list.push(p)
+    byLesson.set(p.lesson_id, list)
+  }
+
+  const items: MakeupBalanceItem[] = []
+  for (const l of lessons as unknown as { id: string; student_id: string; teacher_id: string; level: Lesson['level']; starts_at: string; ends_at: string; student?: unknown; teacher?: unknown }[]) {
+    const props = byLesson.get(l.id) ?? []
+    if (props.some((p) => p.status === 'accepted')) continue // już odrobiona
+    const active = props.find((p) => p.status === 'pending') ?? null
+    const student = (Array.isArray(l.student) ? l.student[0] : l.student) as { full_name?: string; profile?: unknown } | undefined
+    const teacher = (Array.isArray(l.teacher) ? l.teacher[0] : l.teacher) as { profile?: unknown } | undefined
+    const sProfile = (Array.isArray(student?.profile) ? student!.profile[0] : student?.profile) as { full_name?: string } | undefined
+    const tProfile = (Array.isArray(teacher?.profile) ? teacher!.profile[0] : teacher?.profile) as { full_name?: string } | undefined
+    items.push({
+      lessonId: l.id,
+      studentId: l.student_id,
+      teacherId: l.teacher_id,
+      studentName: student?.full_name ?? sProfile?.full_name ?? '—',
+      teacherName: tProfile?.full_name ?? '—',
+      level: l.level,
+      originalStartsAt: l.starts_at,
+      originalEndsAt: l.ends_at,
+      activeProposal: active ? {
+        id: active.id, lesson_id: active.lesson_id, student_id: l.student_id, teacher_id: l.teacher_id,
+        proposed_by: active.proposed_by, proposed_starts_at: active.proposed_starts_at, proposed_ends_at: active.proposed_ends_at,
+        meeting_url: active.meeting_url, status: active.status as MakeupProposalStatus,
+        created_lesson_id: active.created_lesson_id, created_at: active.created_at, responded_at: active.responded_at,
+      } : null,
+    })
+  }
+  return items
+}
+
+export async function getStudentMakeupBalance(studentId: string): Promise<MakeupBalanceItem[]> {
+  return loadMakeupBalance('student_id', studentId)
+}
+
+export async function getTeacherMakeupQueue(teacherId: string): Promise<MakeupBalanceItem[]> {
+  return loadMakeupBalance('teacher_id', teacherId)
 }
 
 export async function getStudentTransactions(studentId: string): Promise<Transaction[]> {
