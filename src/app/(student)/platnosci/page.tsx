@@ -98,7 +98,7 @@ export default async function PlatnosciPage({ searchParams }: {
           <PayOnlineButton
             amount={toPay}
             studentId={student.id}
-            description={`Abonament – ${student.full_name ?? ''}`.trim()}
+            description={`Opłata – ${student.full_name ?? ''}`.trim()}
             label={t(lang, 'pay_blik')}
             unavailableLabel={t(lang, 'payments_unavailable')}
             stripeReady={stripeReady}

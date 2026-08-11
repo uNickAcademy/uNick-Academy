@@ -159,6 +159,6 @@ export function computeMonthDue(input: DueInput): MonthDue {
 
 /** Opis transakcji — czytelny w historii płatności ucznia. */
 export function chargeDescription(p: Period, lines: DueLine[]): string {
-  const base = `Abonament ${periodLabel(p)}`
+  const base = `Opłata ${periodLabel(p)}`
   return lines.length === 1 ? `${base} — ${lines[0].label}` : base
 }

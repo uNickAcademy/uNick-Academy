@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, CheckCircle, XCircle, Clock, User, CreditCard, BookOpen, Tag, UsersRound, Monitor, MapPin } from 'lucide-react'
-import { getStudentById, getStudentLessons, getStudentTransactions, getStudentGroups } from '@/lib/supabase/queries'
+import { getStudentById, getStudentLessons, getStudentTransactions, getStudentGroups, getAllTeachersAdmin } from '@/lib/supabase/queries'
+import { warsawDayOfWeek, warsawTimeOfDay } from '@/lib/lessons/schedule'
+import { ScheduleEditor } from './ScheduleEditor'
+import { LessonHistory } from './LessonHistory'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,14 +13,16 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
   const student = await getStudentById(id)
   if (!student) notFound()
 
-  const [lessons, transactions, groups] = await Promise.all([
+  const [lessons, transactions, groups, teachers] = await Promise.all([
     getStudentLessons(student.id),
     getStudentTransactions(student.id),
     getStudentGroups(student.id),
+    getAllTeachersAdmin(),
   ])
 
   const now = Date.now()
-  const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now)
+  const past = lessons.filter((l) => new Date(l.starts_at).getTime() < now).sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
+  const upcoming = lessons.filter((l) => new Date(l.starts_at).getTime() >= now)
   const present = past.filter((l) => l.attendance === 'present' || l.attendance === 'scheduled').length
   // Nieobecności sensu stricto; no_show i late_cancellation to lekcje odbyte i
   // płatne (przepadły z winy ucznia) — pokazywane osobno, nie jako "nieobecność".
@@ -28,6 +33,34 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
     .filter((l) => ['present', 'scheduled', 'no_show', 'late_cancellation'].includes(l.attendance ?? 'scheduled'))
     .reduce((acc, l) => acc + (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000, 0)
   const customFields = student.custom_fields ?? {}
+
+  // Uczniowie sprzed przebudowy kreatora nie mają course_config — podpowiedź
+  // terminu w edytorze harmonogramu bierzemy wtedy z najbliższej co do „teraz"
+  // lekcji, żeby edytor nie startował z pustego miejsca.
+  const nearLesson = upcoming[0] ?? past[0] ?? null
+  const inferredSlot = !student.course_config && nearLesson
+    ? {
+        day: warsawDayOfWeek(nearLesson.starts_at),
+        time: warsawTimeOfDay(nearLesson.starts_at),
+        durationMin: Math.max(1, Math.round((new Date(nearLesson.ends_at).getTime() - new Date(nearLesson.starts_at).getTime()) / 60000)),
+      }
+    : null
+  const teacherOptions = teachers.filter((t) => t.is_active).map((t) => ({
+    id: t.id,
+    name: t.profile?.full_name ?? '—',
+    onlineIndividualPayRate: t.online_individual_pay_rate ?? null,
+    onlineIndividualClientRate: t.online_individual_client_rate ?? null,
+  }))
+  const scheduleStudent = {
+    id: student.id,
+    name: student.full_name ?? student.profile?.full_name ?? '—',
+    teacherId: student.teacher_id ?? '',
+    courseConfig: student.course_config ?? null,
+    inferredSlot,
+    meetingUrl: student.course_config?.meetingUrl ?? nearLesson?.meeting_url ?? '',
+    lessonPrice: student.custom_lesson_price ?? null,
+    teacherRate: student.custom_teacher_rate ?? null,
+  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -47,6 +80,9 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
               <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{student.status}</span>
               <span className="text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-600">{student.teacher?.profile?.full_name ?? 'bez lektora'}</span>
               <span className="text-xs text-gray-400 font-mono">{student.referral_code}</span>
+            </div>
+            <div className="mt-3">
+              <ScheduleEditor student={scheduleStudent} teacherOptions={teacherOptions} />
             </div>
           </div>
           <div className="text-right">
@@ -105,20 +141,7 @@ export default async function Client360Page({ params }: { params: Promise<{ id: 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><BookOpen size={16} />Historia lekcji</h2>
-          {lessons.length === 0 ? <p className="text-sm text-gray-400">Brak lekcji.</p> : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {lessons.slice().reverse().map((l) => (
-                <div key={l.id} className="flex items-center gap-3 text-sm">
-                  <span className="text-xs text-gray-400 w-28 flex-shrink-0">{new Date(l.starts_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'Europe/Warsaw' })} {new Date(l.starts_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' })}</span>
-                  <span className="flex-1 truncate text-gray-700">{l.topic || 'Lekcja'}</span>
-                  {(l.attendance === 'present' || l.attendance === 'scheduled') && <CheckCircle size={14} className="text-green-600" />}
-                  {(l.attendance === 'absent' || l.attendance === 'no_show') && <XCircle size={14} className="text-red-500" />}
-                  {l.attendance === 'late_cancellation' && <span className="text-xs text-orange-600">późne odwoł.</span>}
-                  {l.attendance === 'excused' && <span className="text-xs text-amber-600">do odrob.</span>}
-                </div>
-              ))}
-            </div>
-          )}
+          <LessonHistory lessons={past} />
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5">

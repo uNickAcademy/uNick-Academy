@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
         student_id: studentId,
         type: 'charge' as const,
         amount: Math.round(perMonth[m] * lessonPrice),
-        description: `Abonament ${periodLabel(period)} — Lekcje indywidualne (${perMonth[m]} × ${lessonPrice} zł)`,
+        description: `Opłata ${periodLabel(period)} — Lekcje indywidualne (${perMonth[m]} × ${lessonPrice} zł)`,
         billing_period: periodKey(period),
       }
     })
