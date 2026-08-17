@@ -6,13 +6,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const ROLE_REDIRECT: Record<string, string> = {
-  admin: '/admin/dashboard',
-  reception: '/admin/dashboard',
-  teacher: '/nauczyciel/dashboard',
-  hr: '/firma/dashboard',
-  student: '/dashboard',
-}
+const INVALID_CREDENTIALS = 'Nieprawidłowy email lub hasło.'
+const SERVER_UNREACHABLE = 'Nie udało się połączyć z serwerem. Spróbuj ponownie za chwilę.'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -26,24 +21,30 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const supabase = createClient()
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (signInError || !data.user) {
-      setError('Nieprawidłowy email lub hasło.')
+      if (signInError || !data.user) {
+        // 400/401 to faktycznie złe dane. Reszta (timeout, 5xx, brak sieci)
+        // to awaria po stronie serwera — nie zrzucaj jej na hasło użytkownika.
+        const badCredentials = !signInError || signInError.status === 400 || signInError.status === 401
+        setError(badCredentials ? INVALID_CREDENTIALS : SERVER_UNREACHABLE)
+        setLoading(false)
+        return
+      }
+
+      // Rolę ustala middleware przy pierwszym żądaniu, więc /dashboard jest
+      // wspólnym lądowiskiem — każdy trafia stąd do swojego panelu. Wcześniej
+      // ta strona sama odpytywała `profiles` i gdy REST nie odpowiadał
+      // (504 z PostgREST), przycisk wisiał w nieskończoność na „Logowanie...",
+      // mimo że samo logowanie już się udało.
+      router.replace('/dashboard')
+      router.refresh()
+    } catch {
+      setError(SERVER_UNREACHABLE)
       setLoading(false)
-      return
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    const destination = ROLE_REDIRECT[profile?.role ?? 'student'] ?? '/dashboard'
-    router.push(destination)
-    router.refresh()
   }
 
   return (

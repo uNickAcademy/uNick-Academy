@@ -73,6 +73,12 @@ export async function middleware(req: NextRequest) {
     if (role === 'reception' && otherRolePath(adminPaths)) {
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
+    // Admin ma dostęp wszędzie, ale nie ma kartoteki ucznia — panel ucznia
+    // wyświetliłby mu się pusty. /dashboard jest lądowiskiem po zalogowaniu,
+    // więc admina trzeba stąd odesłać do jego panelu.
+    if (role === 'admin' && path === '/dashboard') {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
   }
 
   return res
