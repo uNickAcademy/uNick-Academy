@@ -332,6 +332,38 @@ export function AdminCalendar({
   )
 }
 
+/**
+ * Lekcje jednej serii: ta i wszystkie przyszłe tego samego ucznia (albo tej samej
+ * grupy) u tego samego nauczyciela, w ten sam dzień tygodnia i o tej samej
+ * godzinie. Dzień i godzinę bierzemy z ORYGINALNEGO terminu — to on wyznacza
+ * wzorzec, po którym rozpoznajemy serię, jeszcze przed zmianą.
+ */
+async function findSeries(lesson: CalLesson) {
+  const supabase = createClient()
+  const base = new Date(lesson.startsAt)
+  const baseDow = base.getDay()
+  const baseHM = base.getHours() * 60 + base.getMinutes()
+
+  let q = supabase
+    .from('lessons')
+    .select('id, starts_at, ends_at')
+    .eq('teacher_id', lesson.teacherId)
+    .is('cancelled_at', null)
+    .gte('starts_at', lesson.startsAt)
+
+  // Grupa i uczeń indywidualny to rozłączne przypadki: lekcja grupowa ma puste
+  // student_id, więc szukanie serii po uczniu nie znajdowało dla niej niczego.
+  q = lesson.isGroup && lesson.groupId
+    ? q.eq('group_id', lesson.groupId)
+    : q.eq('student_id', lesson.studentId)
+
+  const { data } = await q
+  return (data ?? []).filter((l) => {
+    const d = new Date(l.starts_at)
+    return d.getDay() === baseDow && d.getHours() * 60 + d.getMinutes() === baseHM
+  })
+}
+
 function toLocalInput(iso: string) {
   const d = new Date(iso); const off = d.getTimezoneOffset() * 60000
   return new Date(d.getTime() - off).toISOString().slice(0, 16)
@@ -359,18 +391,29 @@ function ManageLessonModal({
   const [cancelReason, setCancelReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [applyToSeries, setApplyToSeries] = useState(false)
+  const [seriesCount, setSeriesCount] = useState(1)
+
+  // Ile lekcji obejmie zapis „na stałe" — bez tego admin nie wie, czy
+  // zaznaczenie opcji w ogóle coś zmieni.
+  useEffect(() => {
+    let active = true
+    findSeries(lesson).then((series) => { if (active) setSeriesCount(series.length) })
+    return () => { active = false }
+  }, [lesson])
 
   const isLate = mode === 'cancel' && Date.now() > new Date(lesson.startsAt).getTime() - 24 * 3600 * 1000
 
-  async function teacherHasConflict(newStart: Date, newEnd: Date) {
+  async function teacherHasConflict(excludeIds: string[], newStart: Date, newEnd: Date) {
     const supabase = createClient()
     const { data } = await supabase
       .from('lessons')
       .select('id')
       .eq('teacher_id', teacherId)
+      .is('cancelled_at', null)
       .lt('starts_at', newEnd.toISOString())
       .gt('ends_at', newStart.toISOString())
-    return (data ?? []).some((r) => r.id !== lesson.id)
+    return (data ?? []).some((r) => !excludeIds.includes(r.id))
   }
 
   async function saveChanges() {
@@ -379,24 +422,84 @@ function ManageLessonModal({
     const newEnd = new Date(newStart.getTime() + duration * 60000)
     const teacherChanged = teacherId !== lesson.teacherId
     const timeChanged = newStart.getTime() !== new Date(lesson.startsAt).getTime() || newEnd.getTime() !== new Date(lesson.endsAt).getTime()
+    const supabase = createClient()
 
-    if (teacherChanged || timeChanged) {
-      if (await teacherHasConflict(newStart, newEnd)) {
-        setSaving(false); setError('Nauczyciel ma już lekcję w tym terminie.'); return
+    // Wspólne dla tej lekcji i dla serii — temat celowo nie, bo dotyczy
+    // konkretnych zajęć, a nie całego cyklu.
+    const shared = {
+      teacher_id: teacherId,
+      type,
+      meeting_url: meetingUrl || null,
+    }
+
+    if (!applyToSeries) {
+      if (teacherChanged || timeChanged) {
+        if (await teacherHasConflict([lesson.id], newStart, newEnd)) {
+          setSaving(false); setError('Nauczyciel ma już lekcję w tym terminie.'); return
+        }
+      }
+
+      const { error } = await supabase.from('lessons').update({
+        ...shared,
+        starts_at: newStart.toISOString(),
+        ends_at: newEnd.toISOString(),
+        topic: topic || null,
+      }).eq('id', lesson.id)
+      setSaving(false)
+      if (error) { setError('Nie udało się zapisać: ' + error.message); return }
+      onDone()
+      return
+    }
+
+    // Seria: przyszłe lekcje przejmują nowy dzień tygodnia i godzinę, ale każda
+    // zostaje w swoim tygodniu. Gdybyśmy przesuwali je o tę samą różnicę co tę
+    // jedną lekcję, przeniesienie zajęć „o miesiąc" wypchnęłoby całą serię
+    // o miesiąc w przyszłość.
+    const oldDow = new Date(lesson.startsAt).getDay()
+    let dowShift = newStart.getDay() - oldDow
+    if (dowShift > 3) dowShift -= 7
+    if (dowShift < -3) dowShift += 7
+    const newHour = newStart.getHours()
+    const newMinute = newStart.getMinutes()
+
+    const series = await findSeries(lesson)
+    if (series.length === 0) {
+      setSaving(false); setError('Nie znaleziono serii do zapisania.'); return
+    }
+    const seriesIds = series.map((l) => l.id)
+
+    // Nową pozycję tej jednej lekcji bierzemy dokładnie z formularza; pozostałe
+    // układamy według wzorca (dzień tygodnia + godzina).
+    const slots = series.map((l) => {
+      if (l.id === lesson.id) return { id: l.id, s: newStart, e: newEnd }
+      const s = new Date(l.starts_at)
+      s.setDate(s.getDate() + dowShift)
+      s.setHours(newHour, newMinute, 0, 0)
+      return { id: l.id, s, e: new Date(s.getTime() + duration * 60000) }
+    })
+
+    for (const slot of slots) {
+      if (await teacherHasConflict(seriesIds, slot.s, slot.e)) {
+        setSaving(false)
+        setError(`Kolizja w serii: ${slot.s.toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} jest już zajęte.`)
+        return
       }
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.from('lessons').update({
-      starts_at: newStart.toISOString(),
-      ends_at: newEnd.toISOString(),
-      teacher_id: teacherId,
-      type,
-      topic: topic || null,
-      meeting_url: meetingUrl || null,
-    }).eq('id', lesson.id)
+    for (const slot of slots) {
+      const { error } = await supabase.from('lessons').update({
+        ...shared,
+        starts_at: slot.s.toISOString(),
+        ends_at: slot.e.toISOString(),
+        // Temat tylko przy edytowanej lekcji.
+        ...(slot.id === lesson.id ? { topic: topic || null } : {}),
+      }).eq('id', slot.id)
+      if (error) {
+        setSaving(false); setError('Nie udało się zapisać całej serii: ' + error.message); return
+      }
+    }
+
     setSaving(false)
-    if (error) { setError('Nie udało się zapisać: ' + error.message); return }
     onDone()
   }
 
@@ -489,13 +592,26 @@ function ManageLessonModal({
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
             </div>
 
+            {seriesCount > 1 && (
+              <label className="flex items-start gap-2.5 rounded-xl border border-gray-200 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input type="checkbox" checked={applyToSeries} onChange={(e) => setApplyToSeries(e.target.checked)}
+                  className="mt-0.5 accent-[#23479E]" />
+                <span className="text-sm">
+                  <span className="font-semibold text-gray-800">Ta i wszystkie przyszłe (na stałe)</span>
+                  <span className="block text-xs text-gray-500 mt-0.5">
+                    Dzień tygodnia, godzina, czas trwania, nauczyciel, typ i link trafią na wszystkie {seriesCount} lekcji tej serii. Temat zostaje tylko przy tej lekcji.
+                  </span>
+                </span>
+              </label>
+            )}
+
             {error && <p className="text-sm text-red-500">{error}</p>}
 
             <div className="flex gap-2 pt-2">
               <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Anuluj</button>
               <button onClick={saveChanges} disabled={saving}
                 className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-bold hover:opacity-90 disabled:opacity-60">
-                {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+                {saving ? 'Zapisywanie...' : applyToSeries ? `Zapisz serię (${seriesCount})` : 'Zapisz zmiany'}
               </button>
             </div>
             <button onClick={hardDelete} disabled={saving}
@@ -552,6 +668,7 @@ function ConfirmMoveModal({
       .from('lessons')
       .select('id')
       .eq('teacher_id', lesson.teacherId)
+      .is('cancelled_at', null)
       .lt('starts_at', end.toISOString())
       .gt('ends_at', start.toISOString())
     return (data ?? []).some((r) => !excludeIds.includes(r.id))
@@ -576,23 +693,11 @@ function ConfirmMoveModal({
       return
     }
 
-    // series: ta i przyszłe lekcje tego samego studenta+nauczyciela w ten sam dzień tygodnia i godzinę
+    // Seria rozpoznawana tak samo jak w modalu „Zarządzaj lekcją" — jedno miejsce
+    // definiuje, co jest serią. Przy przeciąganiu przesuwamy o tę samą różnicę,
+    // bo ruch zawsze mieści się w widocznym tygodniu.
     const deltaMs = newStart.getTime() - new Date(lesson.startsAt).getTime()
-    const base = new Date(lesson.startsAt)
-    const baseDow = base.getDay()
-    const baseHM = base.getHours() * 60 + base.getMinutes()
-
-    const { data: candidates } = await supabase
-      .from('lessons')
-      .select('id, starts_at, ends_at')
-      .eq('student_id', (await supabase.from('lessons').select('student_id').eq('id', lesson.id).single()).data?.student_id)
-      .eq('teacher_id', lesson.teacherId)
-      .gte('starts_at', lesson.startsAt)
-
-    const series = (candidates ?? []).filter((l) => {
-      const d = new Date(l.starts_at)
-      return d.getDay() === baseDow && d.getHours() * 60 + d.getMinutes() === baseHM
-    })
+    const series = await findSeries(lesson)
     const seriesIds = series.map((s) => s.id)
 
     for (const l of series) {
