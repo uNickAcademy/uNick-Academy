@@ -332,17 +332,27 @@ export function AdminCalendar({
   )
 }
 
+type SeriesLesson = { id: string; starts_at: string; ends_at: string }
+type Series = { lessons: SeriesLesson[]; slotLabel: string; movedOut: boolean }
+
+function slotLabelOf(d: Date) {
+  return d.toLocaleString('pl-PL', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
 /**
- * Lekcje jednej serii: ta i wszystkie przyszłe tego samego ucznia (albo tej samej
- * grupy) u tego samego nauczyciela, w ten sam dzień tygodnia i o tej samej
- * godzinie. Dzień i godzinę bierzemy z ORYGINALNEGO terminu — to on wyznacza
- * wzorzec, po którym rozpoznajemy serię, jeszcze przed zmianą.
+ * Seria lekcji tego ucznia (albo tej grupy) u tego nauczyciela, od tej lekcji w górę.
+ *
+ * Uczeń może mieć kilka cyklów w tygodniu (np. pon. i śr.), więc nie wystarczy
+ * wziąć wszystkich przyszłych lekcji — grupujemy je po dniu tygodnia i godzinie.
+ *
+ * Jeśli edytowana lekcja była już kiedyś przełożona pojedynczo, to wypadła ze
+ * swojego cyklu i jest w swoim koszyku sama. Wtedy serią jest najliczniejszy
+ * pozostały cykl plus ta lekcja — bo admin właśnie ustawia dla niej nowy stały
+ * termin. Wcześniej w takiej sytuacji seria „znikała" i opcja zapisu na stałe
+ * nie pokazywała się w ogóle.
  */
-async function findSeries(lesson: CalLesson) {
+async function findSeries(lesson: CalLesson): Promise<Series> {
   const supabase = createClient()
-  const base = new Date(lesson.startsAt)
-  const baseDow = base.getDay()
-  const baseHM = base.getHours() * 60 + base.getMinutes()
 
   let q = supabase
     .from('lessons')
@@ -350,6 +360,7 @@ async function findSeries(lesson: CalLesson) {
     .eq('teacher_id', lesson.teacherId)
     .is('cancelled_at', null)
     .gte('starts_at', lesson.startsAt)
+    .order('starts_at')
 
   // Grupa i uczeń indywidualny to rozłączne przypadki: lekcja grupowa ma puste
   // student_id, więc szukanie serii po uczniu nie znajdowało dla niej niczego.
@@ -358,9 +369,58 @@ async function findSeries(lesson: CalLesson) {
     : q.eq('student_id', lesson.studentId)
 
   const { data } = await q
-  return (data ?? []).filter((l) => {
-    const d = new Date(l.starts_at)
-    return d.getDay() === baseDow && d.getHours() * 60 + d.getMinutes() === baseHM
+  const base = new Date(lesson.startsAt)
+  const slotKey = (iso: string) => {
+    const d = new Date(iso)
+    return `${d.getDay()}-${d.getHours()}-${d.getMinutes()}`
+  }
+  const baseKey = slotKey(lesson.startsAt)
+
+  const buckets = new Map<string, SeriesLesson[]>()
+  for (const l of data ?? []) {
+    const arr = buckets.get(slotKey(l.starts_at))
+    if (arr) arr.push(l)
+    else buckets.set(slotKey(l.starts_at), [l])
+  }
+
+  const own = buckets.get(baseKey) ?? []
+  if (own.length > 1) {
+    return { lessons: own, slotLabel: slotLabelOf(base), movedOut: false }
+  }
+
+  let biggest: SeriesLesson[] = []
+  for (const [key, arr] of buckets) {
+    if (key !== baseKey && arr.length > biggest.length) biggest = arr
+  }
+  if (biggest.length === 0) {
+    return { lessons: own, slotLabel: slotLabelOf(base), movedOut: false }
+  }
+  return {
+    lessons: [...own, ...biggest],
+    slotLabel: slotLabelOf(new Date(biggest[0].starts_at)),
+    movedOut: true,
+  }
+}
+
+/**
+ * Nowe terminy dla serii. Każda lekcja przechodzi na docelowy dzień tygodnia
+ * i godzinę, ale zostaje w swoim tygodniu — „od teraz zajęcia są we wtorki
+ * o 11:30", a nie „przesuń całą serię o tyle samo, o ile przesunęła się ta
+ * jedna lekcja" (to drugie przy przeniesieniu lekcji o miesiąc wypchnęłoby
+ * cały cykl o miesiąc w przyszłość).
+ *
+ * Edytowana lekcja ląduje dokładnie tam, gdzie ją admin ustawił.
+ */
+function seriesSlots(series: SeriesLesson[], editedId: string, newStart: Date, newEnd: Date, durationMin: number) {
+  const mondayIndex = (d: Date) => (d.getDay() + 6) % 7
+  const targetIdx = mondayIndex(newStart)
+
+  return series.map((l) => {
+    if (l.id === editedId) return { id: l.id, start: newStart, end: newEnd }
+    const start = new Date(l.starts_at)
+    start.setDate(start.getDate() + (targetIdx - mondayIndex(start)))
+    start.setHours(newStart.getHours(), newStart.getMinutes(), 0, 0)
+    return { id: l.id, start, end: new Date(start.getTime() + durationMin * 60000) }
   })
 }
 
@@ -392,15 +452,17 @@ function ManageLessonModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [applyToSeries, setApplyToSeries] = useState(false)
-  const [seriesCount, setSeriesCount] = useState(1)
+  const [series, setSeries] = useState<Series | null>(null)
 
-  // Ile lekcji obejmie zapis „na stałe" — bez tego admin nie wie, czy
-  // zaznaczenie opcji w ogóle coś zmieni.
+  // Serię wczytujemy od razu przy otwarciu, żeby pokazać ile lekcji obejmie
+  // zapis „na stałe" i jaki cykl został rozpoznany.
   useEffect(() => {
     let active = true
-    findSeries(lesson).then((series) => { if (active) setSeriesCount(series.length) })
+    findSeries(lesson).then((found) => { if (active) setSeries(found) })
     return () => { active = false }
   }, [lesson])
+
+  const seriesCount = series?.lessons.length ?? 1
 
   const isLate = mode === 'cancel' && Date.now() > new Date(lesson.startsAt).getTime() - 24 * 3600 * 1000
 
@@ -451,37 +513,17 @@ function ManageLessonModal({
       return
     }
 
-    // Seria: przyszłe lekcje przejmują nowy dzień tygodnia i godzinę, ale każda
-    // zostaje w swoim tygodniu. Gdybyśmy przesuwali je o tę samą różnicę co tę
-    // jedną lekcję, przeniesienie zajęć „o miesiąc" wypchnęłoby całą serię
-    // o miesiąc w przyszłość.
-    const oldDow = new Date(lesson.startsAt).getDay()
-    let dowShift = newStart.getDay() - oldDow
-    if (dowShift > 3) dowShift -= 7
-    if (dowShift < -3) dowShift += 7
-    const newHour = newStart.getHours()
-    const newMinute = newStart.getMinutes()
-
-    const series = await findSeries(lesson)
-    if (series.length === 0) {
+    const found = series ?? await findSeries(lesson)
+    if (found.lessons.length === 0) {
       setSaving(false); setError('Nie znaleziono serii do zapisania.'); return
     }
-    const seriesIds = series.map((l) => l.id)
-
-    // Nową pozycję tej jednej lekcji bierzemy dokładnie z formularza; pozostałe
-    // układamy według wzorca (dzień tygodnia + godzina).
-    const slots = series.map((l) => {
-      if (l.id === lesson.id) return { id: l.id, s: newStart, e: newEnd }
-      const s = new Date(l.starts_at)
-      s.setDate(s.getDate() + dowShift)
-      s.setHours(newHour, newMinute, 0, 0)
-      return { id: l.id, s, e: new Date(s.getTime() + duration * 60000) }
-    })
+    const seriesIds = found.lessons.map((l) => l.id)
+    const slots = seriesSlots(found.lessons, lesson.id, newStart, newEnd, duration)
 
     for (const slot of slots) {
-      if (await teacherHasConflict(seriesIds, slot.s, slot.e)) {
+      if (await teacherHasConflict(seriesIds, slot.start, slot.end)) {
         setSaving(false)
-        setError(`Kolizja w serii: ${slot.s.toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} jest już zajęte.`)
+        setError(`Kolizja w serii: ${slot.start.toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} jest już zajęte.`)
         return
       }
     }
@@ -489,8 +531,8 @@ function ManageLessonModal({
     for (const slot of slots) {
       const { error } = await supabase.from('lessons').update({
         ...shared,
-        starts_at: slot.s.toISOString(),
-        ends_at: slot.e.toISOString(),
+        starts_at: slot.start.toISOString(),
+        ends_at: slot.end.toISOString(),
         // Temat tylko przy edytowanej lekcji.
         ...(slot.id === lesson.id ? { topic: topic || null } : {}),
       }).eq('id', slot.id)
@@ -599,8 +641,13 @@ function ManageLessonModal({
                 <span className="text-sm">
                   <span className="font-semibold text-gray-800">Ta i wszystkie przyszłe (na stałe)</span>
                   <span className="block text-xs text-gray-500 mt-0.5">
-                    Dzień tygodnia, godzina, czas trwania, nauczyciel, typ i link trafią na wszystkie {seriesCount} lekcji tej serii. Temat zostaje tylko przy tej lekcji.
+                    Obejmie {seriesCount} lekcji, obecnie {series?.slotLabel}. Na serię idą dzień tygodnia, godzina, czas trwania, nauczyciel, typ i link — temat zostaje przy tej lekcji.
                   </span>
+                  {series?.movedOut && (
+                    <span className="block text-xs text-amber-700 mt-1">
+                      Ta lekcja była już przełożona pojedynczo, więc reszta cyklu nadal stoi na {series.slotLabel}.
+                    </span>
+                  )}
                 </span>
               </label>
             )}
@@ -658,6 +705,15 @@ function ConfirmMoveModal({
   const { lesson, newStart, newEnd } = move
   const [saving, setSaving] = useState<'one' | 'series' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [series, setSeries] = useState<Series | null>(null)
+
+  // Ile lekcji ruszy opcja „na stałe" — bulk na kilkanaście terminów nie może
+  // się dziać bez pokazania liczby.
+  useEffect(() => {
+    let active = true
+    findSeries(lesson).then((found) => { if (active) setSeries(found) })
+    return () => { active = false }
+  }, [lesson])
 
   const oldLabel = new Date(lesson.startsAt).toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   const newLabel = newStart.toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -693,25 +749,30 @@ function ConfirmMoveModal({
       return
     }
 
-    // Seria rozpoznawana tak samo jak w modalu „Zarządzaj lekcją" — jedno miejsce
-    // definiuje, co jest serią. Przy przeciąganiu przesuwamy o tę samą różnicę,
-    // bo ruch zawsze mieści się w widocznym tygodniu.
-    const deltaMs = newStart.getTime() - new Date(lesson.startsAt).getTime()
-    const series = await findSeries(lesson)
-    const seriesIds = series.map((s) => s.id)
+    // Rozpoznanie serii i wyliczenie nowych terminów dzielimy z modalem
+    // „Zarządzaj lekcją", żeby przeciąganie i edycja robiły dokładnie to samo.
+    const found = series ?? await findSeries(lesson)
+    if (found.lessons.length === 0) {
+      setSaving(null); setError('Nie znaleziono serii do przełożenia.'); return
+    }
+    const seriesIds = found.lessons.map((l) => l.id)
+    const durationMin = Math.round((newEnd.getTime() - newStart.getTime()) / 60000)
+    const slots = seriesSlots(found.lessons, lesson.id, newStart, newEnd, durationMin)
 
-    for (const l of series) {
-      const s = new Date(new Date(l.starts_at).getTime() + deltaMs)
-      const e = new Date(new Date(l.ends_at).getTime() + deltaMs)
-      if (await teacherHasConflict(seriesIds, s, e)) {
+    for (const slot of slots) {
+      if (await teacherHasConflict(seriesIds, slot.start, slot.end)) {
         setSaving(null); setError('Kolizja w serii — jeden z nowych terminów jest zajęty.'); return
       }
     }
 
-    for (const l of series) {
-      const s = new Date(new Date(l.starts_at).getTime() + deltaMs).toISOString()
-      const e = new Date(new Date(l.ends_at).getTime() + deltaMs).toISOString()
-      await supabase.from('lessons').update({ starts_at: s, ends_at: e }).eq('id', l.id)
+    for (const slot of slots) {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ starts_at: slot.start.toISOString(), ends_at: slot.end.toISOString() })
+        .eq('id', slot.id)
+      if (error) {
+        setSaving(null); setError('Nie udało się przełożyć całej serii: ' + error.message); return
+      }
     }
     setSaving(null)
     onDone()
@@ -739,8 +800,12 @@ function ConfirmMoveModal({
           </button>
           <button onClick={() => apply('series')} disabled={saving !== null}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800 font-bold text-sm hover:bg-gray-50 transition-colors disabled:opacity-60 text-left">
-            {saving === 'series' ? 'Przekładanie serii...' : 'Ta i wszystkie przyszłe (na stałe)'}
-            <span className="block text-xs font-normal text-gray-500">Przesuwa wszystkie kolejne lekcje tego ucznia w ten sam dzień i godzinę.</span>
+            {saving === 'series' ? 'Przekładanie serii...' : `Ta i wszystkie przyszłe (na stałe)${series ? ` — ${series.lessons.length}` : ''}`}
+            <span className="block text-xs font-normal text-gray-500">
+              {series?.movedOut
+                ? `Ta lekcja była już przełożona pojedynczo — reszta cyklu stoi na ${series.slotLabel} i też się przesunie.`
+                : 'Przesuwa wszystkie kolejne lekcje tego ucznia na nowy dzień i godzinę.'}
+            </span>
           </button>
           <button onClick={onClose} disabled={saving !== null}
             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50">
