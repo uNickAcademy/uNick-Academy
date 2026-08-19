@@ -335,6 +335,15 @@ export function AdminCalendar({
 type SeriesLesson = { id: string; starts_at: string; ends_at: string }
 type Series = { lessons: SeriesLesson[]; slotLabel: string; movedOut: boolean }
 
+// 1 lekcję, 2-4 lekcje, 5+ lekcji — bez tego wychodziło „Obejmie 3 lekcji".
+function lessonsPlural(n: number) {
+  const last = n % 10
+  const lastTwo = n % 100
+  if (n === 1) return 'lekcję'
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return 'lekcje'
+  return 'lekcji'
+}
+
 function slotLabelOf(d: Date) {
   return d.toLocaleString('pl-PL', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 }
@@ -558,10 +567,22 @@ function ManageLessonModal({
   }
 
   async function hardDelete() {
-    if (!confirm('Usunąć tę lekcję na stałe? Tej operacji nie można cofnąć.')) return
+    // Checkbox „ta i wszystkie przyszłe" stoi tuż nad tym przyciskiem, więc
+    // musi rządzić także usuwaniem — wcześniej dotyczył wyłącznie zapisu
+    // i kasowała się jedna lekcja mimo zaznaczonej opcji.
+    const wholeSeries = applyToSeries && seriesCount > 1
+    const ids = wholeSeries
+      ? (series ?? await findSeries(lesson)).lessons.map((l) => l.id)
+      : [lesson.id]
+
+    const question = wholeSeries
+      ? `Usunąć na stałe ${ids.length} ${lessonsPlural(ids.length)} tej serii? Tej operacji nie można cofnąć.`
+      : 'Usunąć tę lekcję na stałe? Tej operacji nie można cofnąć.'
+    if (!confirm(question)) return
+
     setSaving(true); setError(null)
     const supabase = createClient()
-    const { error } = await supabase.from('lessons').delete().eq('id', lesson.id)
+    const { error } = await supabase.from('lessons').delete().in('id', ids)
     setSaving(false)
     if (error) { setError('Nie udało się usunąć: ' + error.message); return }
     onDone()
@@ -641,7 +662,7 @@ function ManageLessonModal({
                 <span className="text-sm">
                   <span className="font-semibold text-gray-800">Ta i wszystkie przyszłe (na stałe)</span>
                   <span className="block text-xs text-gray-500 mt-0.5">
-                    Obejmie {seriesCount} lekcji, obecnie {series?.slotLabel}. Na serię idą dzień tygodnia, godzina, czas trwania, nauczyciel, typ i link — temat zostaje przy tej lekcji.
+                    Obejmie {seriesCount} {lessonsPlural(seriesCount)}, obecnie {series?.slotLabel} — przy zapisie i przy usuwaniu. Na serię idą dzień tygodnia, godzina, czas trwania, nauczyciel, typ i link; temat zostaje przy tej lekcji.
                   </span>
                   {series?.movedOut && (
                     <span className="block text-xs text-amber-700 mt-1">
@@ -663,7 +684,7 @@ function ManageLessonModal({
             </div>
             <button onClick={hardDelete} disabled={saving}
               className="w-full mt-1 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-red-500 flex items-center justify-center gap-1.5">
-              <Trash2 size={13} />Usuń lekcję na stałe
+              <Trash2 size={13} />{applyToSeries && seriesCount > 1 ? `Usuń serię (${seriesCount}) na stałe` : 'Usuń lekcję na stałe'}
             </button>
           </div>
         ) : (
