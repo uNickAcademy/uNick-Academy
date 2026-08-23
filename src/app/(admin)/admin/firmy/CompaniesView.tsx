@@ -260,6 +260,28 @@ function ManageModal({ company, students, invoices, uaEntityId, teacherOptions, 
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [invNum, setInvNum] = useState(''); const [net, setNet] = useState(''); const [vat, setVat] = useState('23'); const [period, setPeriod] = useState(''); const [gtu, setGtu] = useState('')
+  const [month, setMonth] = useState('')
+  const [preview, setPreview] = useState<{ lessons: number; rate: number | null; net: number | null; label: string; employees: number } | null>(null)
+  const [previewBusy, setPreviewBusy] = useState(false)
+
+  // Wybór miesiąca liczy podstawę faktury z lekcji, które faktycznie się odbyły,
+  // zamiast zostawiać administratorowi liczenie w arkuszu obok systemu.
+  useEffect(() => {
+    if (!/^\d{4}-\d{2}$/.test(month)) { setPreview(null); return }
+    let anulowane = false
+    setPreviewBusy(true)
+    fetch(`/api/admin/companies/invoice-preview?companyId=${company.id}&month=${month}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (anulowane || d?.error) return
+        setPreview(d)
+        setPeriod(d.label)
+        if (d.net != null) setNet(String(d.net))
+      })
+      .catch(() => { /* podpowiedź jest pomocą, nie warunkiem wystawienia faktury */ })
+      .finally(() => { if (!anulowane) setPreviewBusy(false) })
+    return () => { anulowane = true }
+  }, [month, company.id])
 
   async function toggleActive() {
     setBusy(true); setError(null)
@@ -405,9 +427,26 @@ function ManageModal({ company, students, invoices, uaEntityId, teacherOptions, 
           <div className="grid grid-cols-2 gap-2 mb-2">
             <input type="text" value={invNum} onChange={(e) => setInvNum(e.target.value)} placeholder="Nr faktury (np. FV 1/2026)"
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
-            <input type="text" value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Okres (np. czerwiec 2026)"
+            <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Miesiąc rozliczeniowy"
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           </div>
+          {previewBusy && <p className="text-xs text-gray-400 mb-2">Liczę lekcje...</p>}
+          {preview && !previewBusy && (
+            <div className="mb-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs">
+              {preview.rate == null ? (
+                <span className="text-amber-700">
+                  {preview.lessons} lekcji w tym miesiącu ({preview.employees} pracowników). Ta firma nie ma ustalonej
+                  stawki za lekcję, więc kwotę trzeba wpisać ręcznie.
+                </span>
+              ) : (
+                <span className="text-gray-600">
+                  <b className="text-gray-900">{preview.lessons}</b> lekcji × <b className="text-gray-900">{preview.rate} zł</b>
+                  {' = '}<b className="text-gray-900">{preview.net?.toLocaleString('pl-PL')} zł</b> netto
+                  <span className="text-gray-400"> ({preview.employees} pracowników, {preview.label})</span>
+                </span>
+              )}
+            </div>
+          )}
           <input type="text" value={gtu} onChange={(e) => setGtu(e.target.value)} placeholder="Kody GTU (np. GTU_12)"
             className="w-full px-3 py-2 mb-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#23479E]" />
           <div className="flex gap-2">
