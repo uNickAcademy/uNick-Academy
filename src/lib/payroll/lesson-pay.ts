@@ -2,8 +2,9 @@
  * Wycena lekcji dla lektora.
  *
  * Jednostka lekcyjna to 30 minut i tak podane są stawki w cenniku nauczycieli.
- * Wartość konkretnej lekcji wynika z jej długości: 60 minut to dwie jednostki,
- * 40 minut to 1,33 jednostki.
+ * Każda lekcja liczy się jako jedna taka jednostka, niezależnie od tego, jaką
+ * długość ma zapisaną w kalendarzu. Skalowanie po minutach dawało kwoty
+ * z groszami przy wpisach 40-minutowych, a lekcje i tak są 30-minutowe.
  *
  * Wcześniej zarobki liczyły się z `teachers.hourly_rate`, o którym nie wiadomo
  * było, czy znaczy stawkę za godzinę, czy za lekcję, a ośmiu z trzynastu
@@ -12,17 +13,8 @@
 
 export const UNIT_MINUTES = 30
 
-export function lessonUnits(startsAt: string, endsAt: string): number {
-  const minutes = (new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60_000
-  return minutes > 0 ? minutes / UNIT_MINUTES : 0
-}
-
-/** Kwota brutto należna lektorowi za jedną lekcję. */
-export function lessonPay(
-  lesson: { starts_at: string; ends_at: string },
-  payRate30min: number | null | undefined,
-): number {
+/** Kwota brutto należna lektorowi za jedną lekcję: dokładnie jedna jednostka. */
+export function lessonPay(payRate30min: number | null | undefined): number {
   const rate = Number(payRate30min ?? 0)
-  if (!Number.isFinite(rate) || rate <= 0) return 0
-  return lessonUnits(lesson.starts_at, lesson.ends_at) * rate
+  return Number.isFinite(rate) && rate > 0 ? rate : 0
 }

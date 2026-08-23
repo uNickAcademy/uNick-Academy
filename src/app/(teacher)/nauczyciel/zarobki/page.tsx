@@ -48,7 +48,7 @@ export default async function TeacherEarningsPage() {
     const m = byKey.get(key)
     if (!m) continue
     const hours = (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000
-    m.gross += lessonPay(l, teacher.pay_rate_30min)
+    m.gross += lessonPay(teacher.pay_rate_30min)
     m.hours += hours
     m.count += 1
   }

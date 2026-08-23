@@ -23,6 +23,16 @@ export const MONTHS_PL = [
 
 const WEEKS_PER_MONTH = 4.33
 
+/**
+ * Pierwszy miesiąc, za który wolno cokolwiek naliczyć.
+ *
+ * Wszystko wcześniejsze to okres demo: lekcje z czerwca, lipca i sierpnia 2026
+ * wpisywano, żeby przetestować system, a nie po to, żeby ktoś za nie zapłacił.
+ * Bramka siedzi w silniku, a nie w cronie, więc obowiązuje każdą ścieżkę:
+ * naliczenie miesięczne, naliczenie przy zapisie i wyliczenie zaległości.
+ */
+export const BILLING_START: Period = { year: 2026, month: 8 } // wrzesień 2026
+
 export type Period = { year: number; month: number } // month: 0–11, jak w Date
 
 export function periodOf(date: Date): Period {
@@ -112,6 +122,12 @@ export type DueInput = {
 
 export function computeMonthDue(input: DueInput): MonthDue {
   const { period, groups, lessons, plans, customMonthlyPrice, customLessonPrice } = input
+
+  // Przed startem realnych płatności nie naliczamy nic, niezależnie od tego,
+  // ile lekcji stoi w kalendarzu.
+  if (comparePeriods(period, BILLING_START) < 0) {
+    return { total: 0, lines: [], lessonsCount: 0, lessonRate: 0 }
+  }
 
   const runningGroups = groups.filter((g) => groupRunsIn(g, period))
   const individual = lessonsInPeriod(lessons.filter((l) => !l.groupId), period)
