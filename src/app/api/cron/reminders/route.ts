@@ -31,10 +31,15 @@ export async function GET(req: NextRequest) {
 
   // ── 0. Auto-obecność ────────────────────────────────────────────────────
   // Zakończone lekcje, których nikt nie oznaczył, domyślnie liczymy jako obecność.
+  // Odwołane są wyłączone: bez tego filtra lekcja odwołana przez admina (który
+  // ustawia cancelled_at, nie attendance) następnego ranka stawała się
+  // „obecny" — liczyła się jako odbyta w statystykach i w dzienniku, i nigdy
+  // nie trafiała do kolejki odrabiania.
   const { data: autoPresent } = await supabase
     .from('lessons')
     .update({ attendance: 'present' })
     .eq('attendance', 'scheduled')
+    .is('cancelled_at', null)
     .lt('ends_at', now.toISOString())
     .select('id')
   const autoPresentCount = autoPresent?.length ?? 0

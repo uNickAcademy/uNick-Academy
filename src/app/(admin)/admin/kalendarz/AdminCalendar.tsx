@@ -557,9 +557,13 @@ function ManageLessonModal({
   async function confirmCancel() {
     setSaving(true); setError(null)
     const supabase = createClient()
+    // Sam cancelled_at nie wystarczy: obecność zostawała na „scheduled", więc
+    // lekcja wyglądała jak niezaznaczona i wypadała poza kolejkę odrabiania.
+    // Odwołanie w terminie = do odrobienia, w ciągu 24h = spóźnione odwołanie.
     const { error } = await supabase.from('lessons').update({
       cancelled_reason: cancelReason.trim() || null,
       cancelled_at: new Date().toISOString(),
+      attendance: isLate ? 'late_cancellation' : 'excused',
     }).eq('id', lesson.id)
     setSaving(false)
     if (error) { setError('Nie udało się odwołać: ' + error.message); return }
