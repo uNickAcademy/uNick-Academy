@@ -74,8 +74,14 @@ export interface Teacher {
   sort_order?: number
   color: string
   is_active: boolean
+  /** @deprecated Niejednoznaczna jednostka, zastapione przez pay_rate_30min. */
   hourly_rate?: number
+  /** @deprecated Niejednoznaczna jednostka, zastapione przez pay_rate_30min. */
   rate_group?: number
+  /** Placa lektora za jednostke lekcyjna 30 minut (Cennik nauczycieli). */
+  pay_rate_30min?: number | null
+  /** Cena dla klienta za 30 minut, zajecia indywidualne online. Referencyjna. */
+  client_rate_30min?: number | null
   /** Domyślna stawka wypłaty za pojedyncze zajęcia indywidualne online (zł/lekcja). */
   online_individual_pay_rate?: number
   /** Domyślna cena dla klienta za pojedyncze zajęcia indywidualne online (zł/lekcja). */

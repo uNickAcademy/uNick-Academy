@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getTeacherByProfileId, getTeacherLessons } from '@/lib/supabase/queries'
+import { lessonPay } from '@/lib/payroll/lesson-pay'
 import { calculateNetPayout, CONTRACT_TYPE_LABELS } from '@/lib/payroll/pl-zlecenie'
 import { redirect } from 'next/navigation'
 import { AlertTriangle, Wallet } from 'lucide-react'
@@ -47,8 +48,7 @@ export default async function TeacherEarningsPage() {
     const m = byKey.get(key)
     if (!m) continue
     const hours = (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 3_600_000
-    const rate = l.format === 'group' && teacher.rate_group != null ? teacher.rate_group : (teacher.hourly_rate ?? 0)
-    m.gross += hours * rate
+    m.gross += lessonPay(l, teacher.pay_rate_30min)
     m.hours += hours
     m.count += 1
   }
