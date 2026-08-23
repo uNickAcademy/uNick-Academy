@@ -87,18 +87,36 @@ export async function POST(req: NextRequest) {
         }
         const family = split.length > 1
 
-        await supabase.from('transactions').insert(
-          split.filter((s) => s.amount > 0).map((s) => ({
-            student_id: s.studentId,
-            type: 'payment' as const,
-            amount: s.amount,
-            description: family ? 'Wpłata online (Stripe) — opłata rodzinna' : 'Wpłata online (Stripe)',
-          })),
-        )
-        await supabase.from('students').update({ status: 'active' })
-          .in('id', split.map((s) => s.studentId))
-        // Paragon idzie raz, na adres płatnika.
-        await emailReceipt(supabase, studentId, amount, 'Płatność online (BLIK / Przelewy24 / karta)')
+        // Stripe ponawia webhooki i potrafi dostarczyć to samo zdarzenie dwa razy.
+        // external_id z unikalnym indeksem sprawia, że powtórkę odrzuca baza,
+        // a `.select()` zwraca tylko wiersze faktycznie dopisane — dzięki temu
+        // przy powtórce nie wysyłamy drugiego paragonu.
+        const { data: booked, error: bookError } = await supabase
+          .from('transactions')
+          .upsert(
+            split.filter((s) => s.amount > 0).map((s) => ({
+              student_id: s.studentId,
+              type: 'payment' as const,
+              amount: s.amount,
+              description: family ? 'Wpłata online (Stripe), opłata rodzinna' : 'Wpłata online (Stripe)',
+              external_id: `${session.id}:${s.studentId}`,
+            })),
+            { onConflict: 'external_id', ignoreDuplicates: true },
+          )
+          .select('id')
+
+        if (bookError) {
+          // Nie 2xx, żeby Stripe ponowił. Wpłata jest u nich, u nas jeszcze nie.
+          console.error('[Stripe] Nie udało się zaksięgować wpłaty:', bookError)
+          return NextResponse.json({ error: 'Nie udało się zaksięgować wpłaty.' }, { status: 500 })
+        }
+
+        if ((booked?.length ?? 0) > 0) {
+          await supabase.from('students').update({ status: 'active' })
+            .in('id', split.map((s) => s.studentId))
+          // Paragon idzie raz, na adres płatnika.
+          await emailReceipt(supabase, studentId, amount, 'Płatność online (BLIK / Przelewy24 / karta)')
+        }
       }
       break
     }
@@ -116,20 +134,29 @@ export async function POST(req: NextRequest) {
 
       if (student) {
         const amount = (invoice.amount_paid ?? 0) / 100
-        // Dodaj transakcję wpłaty
-        await supabase.from('transactions').insert({
-          student_id: student.id,
-          type: 'payment',
-          amount,
-          description: `Wpłata – faktura ${invoice.number}`,
-        })
+        const { data: booked, error: bookError } = await supabase
+          .from('transactions')
+          .upsert({
+            student_id: student.id,
+            type: 'payment',
+            amount,
+            description: `Wpłata za fakturę ${invoice.number}`,
+            external_id: invoice.id,
+          }, { onConflict: 'external_id', ignoreDuplicates: true })
+          .select('id')
 
-        // Zaktualizuj status studenta na aktywny
-        await supabase
-          .from('students')
-          .update({ status: 'active' })
-          .eq('id', student.id)
-        await emailReceipt(supabase, student.id, amount, `Faktura ${invoice.number}`)
+        if (bookError) {
+          console.error('[Stripe] Nie udało się zaksięgować wpłaty za fakturę:', bookError)
+          return NextResponse.json({ error: 'Nie udało się zaksięgować wpłaty.' }, { status: 500 })
+        }
+
+        if ((booked?.length ?? 0) > 0) {
+          await supabase
+            .from('students')
+            .update({ status: 'active' })
+            .eq('id', student.id)
+          await emailReceipt(supabase, student.id, amount, `Faktura ${invoice.number}`)
+        }
       }
       break
     }
