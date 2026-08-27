@@ -103,8 +103,10 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
     const form = new FormData(event.currentTarget)
 
     const payload = {
-      parentName: form.get('parentName'),
-      contact: form.get('contact'),
+      parentFirstName: form.get('parentFirstName'),
+      parentLastName: form.get('parentLastName'),
+      email: form.get('email'),
+      phone: form.get('phone'),
       childName: form.get('childName'),
       childAge: Number(form.get('childAge')),
       level: form.get('level'),
@@ -191,14 +193,26 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
         <legend>Kontakt</legend>
         <div className={styles.cols}>
           <label>
-            Imię i nazwisko rodzica *
-            <input name="parentName" maxLength={120} autoComplete="name" />
-            <FieldError name="parentName" errors={errors} />
+            Imię *
+            <input name="parentFirstName" maxLength={80} autoComplete="given-name" />
+            <FieldError name="parentFirstName" errors={errors} />
           </label>
           <label>
-            Telefon i e-mail *
-            <input name="contact" maxLength={160} placeholder="np. 600 100 200, anna@example.com" />
-            <FieldError name="contact" errors={errors} />
+            Nazwisko *
+            <input name="parentLastName" maxLength={80} autoComplete="family-name" />
+            <FieldError name="parentLastName" errors={errors} />
+          </label>
+        </div>
+        <div className={styles.cols}>
+          <label>
+            E-mail *
+            <input name="email" type="email" maxLength={160} autoComplete="email" placeholder="anna@example.com" />
+            <FieldError name="email" errors={errors} />
+          </label>
+          <label>
+            Telefon *
+            <input name="phone" type="tel" maxLength={40} autoComplete="tel" placeholder="600 100 200" />
+            <FieldError name="phone" errors={errors} />
           </label>
         </div>
       </fieldset>

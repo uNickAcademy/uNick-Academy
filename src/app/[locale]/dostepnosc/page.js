@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import Reveal from "../../components/Reveal";
 import UNickorn from "../../components/UNickorn";
@@ -49,6 +50,18 @@ export default async function AvailabilityPage({ params }) {
 
   return (
     <>
+      <div className={styles.banner}>
+        <Image
+          src="/availability/banner.jpg"
+          alt="uNickorn, maskotka uNick Academy, w klasie językowej"
+          width={2172}
+          height={724}
+          priority
+          sizes="100vw"
+          className={styles.bannerImage}
+        />
+      </div>
+
       <section className={styles.hero}>
         <div className={`container ${styles.heroGrid}`}>
           <Reveal className={styles.heroCopy}>

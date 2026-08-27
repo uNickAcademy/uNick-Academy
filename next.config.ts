@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
       { source: "/polityka-prywatnosci", destination: "/pl/privacy-policy", permanent: false },
       { source: "/regulamin", destination: "/pl/terms-of-service", permanent: false },
 
+      // Krótki adres na formularz dostępności (nabór wrzesień 2026), do druku
+      // i mówienia na głos — /pl/dostepnosc jest niewygodne do podyktowania.
+      // Tymczasowy, usuń razem z resztą naboru (docs/FORMULARZ-DOSTEPNOSCI.md).
+      { source: "/september", destination: "/pl/dostepnosc", permanent: false },
+
       // Lokalna strona docelowa ma różne slugi w każdym języku. Kierujemy
       // „zły” slug w danym języku na właściwy odpowiednik (301), aby uniknąć
       // duplikatów i utrzymać jeden kanoniczny URL na język.

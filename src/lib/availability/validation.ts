@@ -10,8 +10,10 @@ import {
 } from './schedule'
 
 export type AvailabilitySubmission = {
-  parentName: string
-  contact: string
+  parentFirstName: string
+  parentLastName: string
+  email: string
+  phone: string
   childName: string
   childAge: number
   level: string
@@ -68,8 +70,10 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   // Pułapka na boty: pole ukryte poza ekranem, którego człowiek nie wypełni.
   if (text(values.website)) errors.form = 'Nie udało się wysłać formularza.'
 
-  const parentName = text(values.parentName, 120)
-  const contact = text(values.contact, 160)
+  const parentFirstName = text(values.parentFirstName, 80)
+  const parentLastName = text(values.parentLastName, 80)
+  const email = text(values.email, 160)
+  const phone = text(values.phone, 40)
   const childName = text(values.childName, 80)
   const childAge = Number(values.childAge)
   const level = text(values.level, 40)
@@ -80,8 +84,11 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const schoolCity = text(values.schoolCity, 120)
   const notes = text(values.notes, 2000)
 
-  if (!parentName) errors.parentName = 'Podaj imię i nazwisko.'
-  if (!contact) errors.contact = 'Podaj telefon i e-mail.'
+  if (!parentFirstName) errors.parentFirstName = 'Podaj imię.'
+  if (!parentLastName) errors.parentLastName = 'Podaj nazwisko.'
+  if (!email) errors.email = 'Podaj adres e-mail.'
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Podaj poprawny adres e-mail.'
+  if (!phone) errors.phone = 'Podaj numer telefonu.'
   if (!childName) errors.childName = 'Podaj imię dziecka.'
   if (!Number.isInteger(childAge) || childAge < O.MIN_AGE || childAge > O.MAX_AGE) {
     errors.childAge = `Podaj wiek dziecka (${O.MIN_AGE}–${O.MAX_AGE} lat).`
@@ -114,8 +121,10 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   return {
     ok: true,
     data: {
-      parentName,
-      contact,
+      parentFirstName,
+      parentLastName,
+      email,
+      phone,
       childName,
       childAge,
       level,

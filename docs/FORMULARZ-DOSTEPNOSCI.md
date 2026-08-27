@@ -4,6 +4,7 @@ Jednorazowy nabór: zbieramy od rodziców dostępność i preferencje, żeby uł
 grafik na rok szkolny 2026/2027 pod prawdziwe terminy rodzin.
 
 - **Adres:** `/pl/dostepnosc` (tylko po polsku; `/en/dostepnosc` przekierowuje na PL)
+- **Krótki adres:** `unick-academy.pl/september` → przekierowuje na `/pl/dostepnosc` (do podyktowania, druku)
 - **Otwarty do:** 7.09.2026, 23:59 czasu polskiego
 - **Zapis:** webhook Zapiera → nowy wiersz w Google Sheets, plus kopia mailem
 
@@ -24,12 +25,14 @@ nie zostanie po niej martwy link w wynikach wyszukiwania.
    **Test trigger** — pojawi się komplet pól do zmapowania.
 5. **Action: Google Sheets → Create Spreadsheet Row.** Zmapuj kolumny 1:1:
 
-| Kolumna w arkuszu | Pole z webhooka  | Przykład |
-| ----------------- | ---------------- | -------- |
-| data zgłoszenia   | `data_zgloszenia`| `2026-09-01 18:42` |
-| rodzic            | `rodzic`         | `Anna Kowalska` |
-| kontakt           | `kontakt`        | `600 100 200, anna@example.com` |
-| dziecko           | `dziecko`        | `Zosia` |
+| Kolumna w arkuszu | Pole z webhooka    | Przykład |
+| ----------------- | ------------------ | -------- |
+| data zgłoszenia   | `data_zgloszenia`  | `2026-09-01 18:42` |
+| imię rodzica      | `imie_rodzica`     | `Anna` |
+| nazwisko rodzica  | `nazwisko_rodzica` | `Kowalska` |
+| e-mail            | `email`            | `anna@example.com` |
+| telefon           | `telefon`          | `600 100 200` |
+| dziecko           | `dziecko`          | `Zosia` |
 | wiek              | `wiek`           | `9` |
 | poziom            | `poziom`         | `Początkujący` |
 | tryb              | `tryb`           | `Grupowo` |
@@ -64,6 +67,7 @@ podziękowania — nie chcemy dziękować za coś, czego nie zapisaliśmy.
 | `src/app/components/availability/AvailabilityBanner.js` + `.module.css` | pasek na stronie głównej |
 | `src/app/api/availability/route.ts` | walidacja, wysyłka do Zapiera, kopia mailem |
 | `src/lib/availability/*` | stałe, listy wyboru, walidacja, data zamknięcia |
+| `public/availability/banner.jpg` | baner na górze strony |
 
 ## 3. Po terminie — nic nie trzeba robić
 
@@ -79,12 +83,13 @@ w treści).
 ## 4. Trwałe usunięcie
 
 1. Skasuj katalogi `src/app/[locale]/dostepnosc/`,
-   `src/app/components/availability/`, `src/app/api/availability/`
-   i `src/lib/availability/`.
+   `src/app/components/availability/`, `src/app/api/availability/`,
+   `src/lib/availability/` i `public/availability/`.
 2. W `src/app/[locale]/page.js` usuń import `AvailabilityBanner`, linijkę
    `<AvailabilityBanner locale={locale} />` oraz `export const revalidate`
    (był tylko po to, żeby pasek zniknął sam).
 3. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
-4. Skasuj ten plik.
+4. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
+5. Skasuj ten plik.
 
 W sitemapie i w nawigacji nie ma nic do sprzątania — formularz nigdy tam nie był.

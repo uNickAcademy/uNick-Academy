@@ -89,8 +89,10 @@ export async function POST(request: NextRequest) {
   const availabilityText = formatAvailability(data.availability)
   const payload = {
     data_zgloszenia: warsawTimestamp(),
-    rodzic: data.parentName,
-    kontakt: data.contact,
+    imie_rodzica: data.parentFirstName,
+    nazwisko_rodzica: data.parentLastName,
+    email: data.email,
+    telefon: data.phone,
     dziecko: data.childName,
     wiek: data.childAge,
     poziom: O.labelOf(O.levelOptions, data.level),
@@ -110,8 +112,9 @@ export async function POST(request: NextRequest) {
   await notifySchoolEmail({
     title: `Dostępność na wrzesień: ${data.childName} (${data.childAge} l.)`,
     lines: [
-      `Rodzic: ${data.parentName}`,
-      `Kontakt: ${data.contact}`,
+      `Rodzic: ${data.parentFirstName} ${data.parentLastName}`,
+      `E-mail: ${data.email}`,
+      `Telefon: ${data.phone}`,
       `Dziecko: ${data.childName}, ${data.childAge} lat`,
       payload.poziom ? `Poziom: ${payload.poziom}` : '',
       `Tryb: ${payload.tryb} — ${payload.forma}`,
