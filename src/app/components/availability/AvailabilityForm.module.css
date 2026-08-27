@@ -247,10 +247,6 @@
   line-height: 1.6;
 }
 
-.honeypot {
-  position: absolute !important;
-  left: -9999px !important;
-}
 
 .success {
   display: grid;

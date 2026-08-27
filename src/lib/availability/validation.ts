@@ -67,8 +67,15 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const values = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
   const errors: Record<string, string> = {}
 
-  // Pułapka na boty: pole ukryte poza ekranem, którego człowiek nie wypełni.
-  if (text(values.website)) errors.form = 'Nie udało się wysłać formularza.'
+  // Pułapka na boty: formularz musi być otwarty choć chwilę przed wysłaniem.
+  // Wcześniej stało tu też ukryte pole-pułapka ("website"), ale menedżery
+  // haseł i wtyczki do autouzupełniania wypełniały je razem z resztą
+  // formularza (widoczne na niebiesko w Chrome), odrzucając prawdziwe
+  // zgłoszenia — czas otwarcia nie ma tego problemu.
+  const startedAt = Number(values.startedAt)
+  if (!startedAt || Date.now() - startedAt < 1500 || Date.now() - startedAt > 86400000) {
+    errors.form = 'Odśwież stronę i spróbuj ponownie.'
+  }
 
   const parentFirstName = text(values.parentFirstName, 80)
   const parentLastName = text(values.parentLastName, 80)

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import Button from '../Button'
 import UNickorn from '../UNickorn'
 import TimeRangeSlider from './TimeRangeSlider'
@@ -52,6 +52,7 @@ function suggestSlot(existing: EditableSlot[]): TimeSlot {
 export default function AvailabilityForm({ locale }: { locale: string }) {
   const summaryRef = useRef<HTMLDivElement>(null)
   const slotId = useRef(0)
+  const startedAt = useRef(0)
 
   const [mode, setMode] = useState('')
   const [classFormat, setClassFormat] = useState('')
@@ -59,6 +60,10 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
   const [errors, setErrors] = useState<Errors>({})
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    startedAt.current = Date.now()
+  }, [])
 
   const formatOptions = mode ? O.formatOptionsFor(mode) : []
   const needsAddress = classFormat === O.FORMAT_NEEDING_ADDRESS
@@ -121,7 +126,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       })).filter((day) => day.slots.length > 0),
       notes: form.get('notes') ?? '',
       consent: form.get('consent') === 'on',
-      website: form.get('website'),
+      startedAt: startedAt.current,
     }
 
     // Ta sama walidacja co na serwerze — rodzic dostaje komplet błędów od razu,
@@ -183,11 +188,6 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
           </ul>
         </div>
       )}
-
-      {/* Pułapka na boty — poza ekranem, niedostępna dla klawiatury. */}
-      <div className={styles.honeypot} aria-hidden="true">
-        <input name="website" tabIndex={-1} autoComplete="off" />
-      </div>
 
       <fieldset>
         <legend>Kontakt</legend>
