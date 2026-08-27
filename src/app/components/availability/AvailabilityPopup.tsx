@@ -79,8 +79,8 @@ export default function AvailabilityPopup({ locale }: { locale: string }) {
           Zapisy na wrzesień
         </h2>
         <p className={styles.text}>
-          Układamy grafik zajęć pod prawdziwe terminy rodzin. Powiedz nam, kiedy Twoje dziecko
-          ma wolne — zajmie to około dwóch minut.
+          Układamy grafik zajęć tak, żeby dopasować się do Ciebie. Powiedz nam, kiedy Twoje
+          dziecko ma wolne, a my zajmiemy się resztą.
         </p>
         {/* Tylko zapamiętanie, bez setVisible: ten klik już nawiguje na inną
             stronę, więc popup i tak zniknie wraz z odmontowaniem strony
