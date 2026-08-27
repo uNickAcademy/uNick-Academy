@@ -65,9 +65,14 @@ podziękowania — nie chcemy dziękować za coś, czego nie zapisaliśmy.
 | `src/app/components/availability/AvailabilityForm.tsx` + `.module.css` | formularz, logika warunkowa, przedziały godzinowe |
 | `src/app/components/availability/TimeRangeSlider.tsx` + `.module.css` | suwak zakresu z dwoma uchwytami |
 | `src/app/components/availability/AvailabilityBanner.js` + `.module.css` | pasek na stronie głównej |
+| `src/app/components/availability/AvailabilityPopup.tsx` + `.module.css` | popup na stronie głównej |
 | `src/app/api/availability/route.ts` | walidacja, wysyłka do Zapiera, kopia mailem |
 | `src/lib/availability/*` | stałe, listy wyboru, walidacja, data zamknięcia |
 | `public/availability/banner.jpg` | baner na górze strony |
+
+Poza tym dwa miejsca mają wklejone fragmenty, nie całe pliki — patrz krok 2 niżej:
+`src/app/[locale]/page.js` (banner + popup) i `src/app/components/Navbar.js` +
+`.module.css` (przycisk „Zapisy na wrzesień” w rogu każdej podstrony).
 
 ## 3. Po terminie — nic nie trzeba robić
 
@@ -85,11 +90,17 @@ w treści).
 1. Skasuj katalogi `src/app/[locale]/dostepnosc/`,
    `src/app/components/availability/`, `src/app/api/availability/`,
    `src/lib/availability/` i `public/availability/`.
-2. W `src/app/[locale]/page.js` usuń import `AvailabilityBanner`, linijkę
-   `<AvailabilityBanner locale={locale} />` oraz `export const revalidate`
-   (był tylko po to, żeby pasek zniknął sam).
-3. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
-4. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
-5. Skasuj ten plik.
+2. W `src/app/[locale]/page.js` usuń importy `AvailabilityBanner` i
+   `AvailabilityPopup`, obie linijki `<Availability… locale={locale} />` oraz
+   `export const revalidate` (był tylko po to, żeby pasek/popup zniknęły same).
+3. W `src/app/components/Navbar.js` usuń import `isFormOpen`, linijkę
+   `showAvailabilityCta` oraz OBA bloki `{showAvailabilityCta && (...)}` z
+   przyciskiem — jeden w górnym pasku, drugi w `.mobileExtra` (rezerwa na
+   ekranach <390px, gdzie przycisk w pasku sam się chowa). W
+   `Navbar.module.css` usuń `.septemberCta`, `.septemberCtaFull`,
+   `.septemberCtaShort` i ich media queries.
+4. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
+5. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
+6. Skasuj ten plik.
 
-W sitemapie i w nawigacji nie ma nic do sprzątania — formularz nigdy tam nie był.
+W sitemapie nie ma nic do sprzątania — formularz nigdy tam nie był.

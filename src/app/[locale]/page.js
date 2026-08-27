@@ -7,8 +7,10 @@ import MeetPeople from "../components/home/MeetPeople";
 import Stories from "../components/home/Stories";
 import Manifesto from "../components/home/Manifesto";
 import CTASection from "../components/CTASection";
-// TYMCZASOWE (nabór wrzesień 2026) — usuń ten import razem z <AvailabilityBanner/> poniżej.
+// TYMCZASOWE (nabór wrzesień 2026) — usuń te importy razem z <AvailabilityBanner/>
+// i <AvailabilityPopup/> poniżej.
 import AvailabilityBanner from "../components/availability/AvailabilityBanner";
+import AvailabilityPopup from "../components/availability/AvailabilityPopup";
 import LocationSection from "../components/LocationSection";
 import { getDictionary } from "../lib/dictionaries";
 
@@ -22,8 +24,9 @@ export default async function HomePage({ params }) {
 
   return (
     <>
-      {/* TYMCZASOWE (nabór wrzesień 2026) — jedna linijka do skasowania. */}
+      {/* TYMCZASOWE (nabór wrzesień 2026) — dwie linijki do skasowania. */}
       <AvailabilityBanner locale={locale} />
+      <AvailabilityPopup locale={locale} />
       <Hero dict={dict} locale={locale} />
       <Founders dict={dict} locale={locale} />
       <Differentiators dict={dict} />

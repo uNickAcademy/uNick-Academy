@@ -264,6 +264,47 @@
   display: none;
 }
 
+/* TYMCZASOWE (nabór wrzesień 2026) — w odróżnieniu od .ctaDesktop widoczny na
+   każdej szerokości, bo ma być w rogu każdej podstrony, nie tylko od 1440px. */
+.septemberCta {
+  white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.septemberCtaShort {
+  display: none;
+}
+
+/* Poniżej ~480px nie ma miejsca na logo + pełny tekst + hamburger naraz —
+   krótsza etykieta ratuje układ zamiast wypychać hamburger poza ekran. */
+@media (max-width: 480px) {
+  .septemberCta {
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 12px;
+  }
+
+  .septemberCtaFull {
+    display: none;
+  }
+
+  .septemberCtaShort {
+    display: inline;
+  }
+}
+
+/* Poniżej ~390px logo + przycisk + hamburger już się nie mieszczą nawet w
+   skróconej wersji — chowamy przycisk z paska (zostaje w menu hamburgera,
+   patrz .mobileExtra) zamiast wypychać hamburger poza ekran. */
+@media (max-width: 389px) {
+  .septemberCta {
+    display: none;
+  }
+}
+
 .menuToggle {
   display: flex;
   align-items: center;

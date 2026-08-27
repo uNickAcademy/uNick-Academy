@@ -8,9 +8,10 @@ import styles from "./Button.module.css";
  * onDark: set true when placed on a dark (navy) background
  * href: renders as a Link; omit to render a <button>
  */
+/**
+ * @param {{ href?: string | null, variant?: string, onDark?: boolean, small?: boolean, fullWidth?: boolean, className?: string, children?: import("react").ReactNode, [key: string]: any }} props
+ */
 export default function Button({
-  // Domyślne `null` (a nie brak wartości) — dzięki temu TypeScript widzi
-  // `href` jako opcjonalny, zgodnie z opisem powyżej.
   href = null,
   variant = "primary",
   onDark = false,

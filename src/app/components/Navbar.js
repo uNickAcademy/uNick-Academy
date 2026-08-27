@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Button from "./Button";
 import { getPrimaryNav, platformLinks, siteConfig } from "../lib/site-config";
+import { isFormOpen } from "@/lib/availability/window";
 
 import styles from "./Navbar.module.css";
 
@@ -76,6 +77,10 @@ export default function Navbar({ locale, dict }) {
   const pathname = usePathname();
   const primaryNav = getPrimaryNav(locale, dict);
   const homeHref = `/${locale}`;
+  // TYMCZASOWE (nabór wrzesień 2026) — formularz jest tylko po polsku, więc
+  // przycisk pokazuje się wyłącznie na /pl. Usuń razem z resztą naboru,
+  // patrz docs/FORMULARZ-DOSTEPNOSCI.md.
+  const showAvailabilityCta = locale === "pl" && isFormOpen();
 
   return (
     <header className={styles.header}>
@@ -135,6 +140,12 @@ export default function Navbar({ locale, dict }) {
           <Button href={platformLinks.signup.href} small className={styles.ctaDesktop}>
             {dict.common.buttons.signUpShort}
           </Button>
+          {showAvailabilityCta && (
+            <Button href="/pl/dostepnosc" small className={styles.septemberCta}>
+              <span className={styles.septemberCtaFull}>Zapisy na wrzesień</span>
+              <span className={styles.septemberCtaShort}>Wrzesień</span>
+            </Button>
+          )}
           <button
             className={styles.menuToggle}
             aria-expanded={open}
@@ -194,6 +205,14 @@ export default function Navbar({ locale, dict }) {
             );
           })}
           <div className={styles.mobileExtra}>
+            {/* TYMCZASOWE (nabór wrzesień 2026) — na najwęższych ekranach (<390px)
+                przycisk znika z górnego paska (patrz .septemberCta), więc zostaje
+                dostępny tu, w menu hamburgera. */}
+            {showAvailabilityCta && (
+              <Button href="/pl/dostepnosc" variant="secondary" fullWidth onClick={() => setOpen(false)}>
+                Zapisy na wrzesień
+              </Button>
+            )}
             <Link
               href={platformLinks.studentLogin.href}
               className={styles.mobileLink}
