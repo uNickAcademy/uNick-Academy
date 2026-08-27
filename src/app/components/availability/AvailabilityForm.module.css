@@ -90,6 +90,56 @@
 }
 
 /* ---------------------------------------------------------
+   Grupy checkboxów (tryb, forma zajęć — wybór wielokrotny)
+   --------------------------------------------------------- */
+
+.group {
+  display: grid;
+  gap: 7px;
+}
+
+.groupLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-warm-white);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color var(--transition-base), background-color var(--transition-base);
+}
+
+.choice:has(input:checked) {
+  border-color: var(--color-red);
+  background: var(--color-red-soft);
+}
+
+.choice input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--color-red);
+}
+
+/* ---------------------------------------------------------
    Dni tygodnia i przedziały godzinowe
    --------------------------------------------------------- */
 

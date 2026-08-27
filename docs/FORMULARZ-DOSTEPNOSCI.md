@@ -35,8 +35,8 @@ nie zostanie po niej martwy link w wynikach wyszukiwania.
 | dziecko           | `dziecko`          | `Zosia` |
 | wiek              | `wiek`           | `9` |
 | poziom            | `poziom`         | `Początkujący` |
-| tryb              | `tryb`           | `Grupowo` |
-| forma zajęć       | `forma`          | `W szkole dziecka` |
+| tryb              | `tryb`           | `Grupowo` (albo `Grupowo oraz Indywidualnie` — pole wielokrotnego wyboru) |
+| forma zajęć       | `forma`          | `W szkole dziecka` (albo kilka form połączonych „oraz” — też wielokrotny wybór) |
 | adres             | `adres`          | (pusty, gdy nie dotyczy) |
 | szkoła            | `szkola`         | `SP nr 1` |
 | miejscowość       | `miejscowosc`    | `Tarnowo Podgórne` |

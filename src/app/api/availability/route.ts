@@ -96,8 +96,11 @@ export async function POST(request: NextRequest) {
     dziecko: data.childName,
     wiek: data.childAge,
     poziom: O.labelOf(O.levelOptions, data.level),
-    tryb: O.labelOf(O.modeOptions, data.mode),
-    forma: O.labelOf(O.formatOptionsFor(data.mode), data.classFormat),
+    // Tryb i forma mogą mieć kilka zaznaczeń naraz (np. „Grupowo oraz
+    // indywidualnie") — łączymy etykiety w jedno czytelne pole, tak samo jak
+    // dostępność jest spłaszczana do jednego zdania.
+    tryb: data.mode.map((value) => O.labelOf(O.modeOptions, value)).join(' oraz '),
+    forma: data.classFormat.map((value) => O.labelOf(O.formatOptionsFor(data.mode), value)).join(' oraz '),
     adres: data.address,
     szkola: data.schoolName,
     miejscowosc: data.schoolCity,

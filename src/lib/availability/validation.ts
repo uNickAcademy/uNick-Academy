@@ -17,8 +17,8 @@ export type AvailabilitySubmission = {
   childName: string
   childAge: number
   level: string
-  mode: string
-  classFormat: string
+  mode: string[]
+  classFormat: string[]
   address: string
   schoolName: string
   schoolCity: string
@@ -32,6 +32,12 @@ type Result =
 
 const text = (value: unknown, max = 200) =>
   typeof value === 'string' ? value.trim().slice(0, max) : ''
+
+/** Odsiewa śmieci z zestawu checkboxów (tryb, forma zajęć) — bez duplikatów. */
+const stringSet = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.trim() !== '').map((item) => item.trim()))]
+    : []
 
 const DAY_KEYS = new Set<string>(DAYS.map((day) => day.key))
 
@@ -84,8 +90,8 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const childName = text(values.childName, 80)
   const childAge = Number(values.childAge)
   const level = text(values.level, 40)
-  const mode = text(values.mode, 40)
-  const classFormat = text(values.classFormat, 40)
+  const mode = stringSet(values.mode)
+  const classFormat = stringSet(values.classFormat)
   const address = text(values.address, 200)
   const schoolName = text(values.schoolName, 160)
   const schoolCity = text(values.schoolCity, 120)
@@ -103,15 +109,23 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   // Poziom jest opcjonalny — sprawdzamy tylko, czy nie przyszła obca wartość.
   if (level && !O.isOption(O.levelOptions, level)) errors.level = 'Wybierz poziom z listy.'
 
-  if (!O.isOption(O.modeOptions, mode)) {
-    errors.mode = 'Wybierz, czy zajęcia mają być grupowe czy indywidualne.'
-  } else if (!O.isOption(O.formatOptionsFor(mode), classFormat)) {
-    errors.classFormat = 'Wybierz formę zajęć.'
-  } else if (classFormat === O.FORMAT_NEEDING_ADDRESS && !address) {
-    errors.address = 'Podaj adres, pod który mamy dojeżdżać.'
-  } else if (classFormat === O.FORMAT_NEEDING_SCHOOL) {
-    if (!schoolName) errors.schoolName = 'Podaj nazwę szkoły.'
-    if (!schoolCity) errors.schoolCity = 'Podaj miejscowość szkoły.'
+  if (!mode.length || !O.isSubsetOf(O.modeOptions, mode)) {
+    errors.mode = 'Wybierz, czy zajęcia mają być grupowe czy indywidualne (można oba).'
+  } else {
+    const formatOptions = O.formatOptionsFor(mode)
+    if (!classFormat.length || !O.isSubsetOf(formatOptions, classFormat)) {
+      errors.classFormat = 'Wybierz przynajmniej jedną formę zajęć.'
+    } else {
+      // Warunkowe pola dotyczą wyboru niezależnie od tego, ile innych form
+      // zaznaczono obok — rodzic mógł zaznaczyć i „Online”, i „Z dojazdem”.
+      if (classFormat.includes(O.FORMAT_NEEDING_ADDRESS) && !address) {
+        errors.address = 'Podaj adres, pod który mamy dojeżdżać.'
+      }
+      if (classFormat.includes(O.FORMAT_NEEDING_SCHOOL)) {
+        if (!schoolName) errors.schoolName = 'Podaj nazwę szkoły.'
+        if (!schoolCity) errors.schoolCity = 'Podaj miejscowość szkoły.'
+      }
+    }
   }
 
   const availability = parseAvailability(values.availability)
@@ -139,9 +153,9 @@ export function validateAvailabilitySubmission(input: unknown): Result {
       classFormat,
       // Pola warunkowe zapisujemy tylko wtedy, gdy naprawdę dotyczą wyboru —
       // inaczej w arkuszu zostałby adres po zmianie zdania w formularzu.
-      address: classFormat === O.FORMAT_NEEDING_ADDRESS ? address : '',
-      schoolName: classFormat === O.FORMAT_NEEDING_SCHOOL ? schoolName : '',
-      schoolCity: classFormat === O.FORMAT_NEEDING_SCHOOL ? schoolCity : '',
+      address: classFormat.includes(O.FORMAT_NEEDING_ADDRESS) ? address : '',
+      schoolName: classFormat.includes(O.FORMAT_NEEDING_SCHOOL) ? schoolName : '',
+      schoolCity: classFormat.includes(O.FORMAT_NEEDING_SCHOOL) ? schoolCity : '',
       availability,
       notes,
     },

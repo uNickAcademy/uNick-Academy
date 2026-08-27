@@ -31,8 +31,29 @@ export const groupFormatOptions = [
 
 export type Mode = 'group' | 'individual'
 
-export function formatOptionsFor(mode: string) {
-  return mode === 'individual' ? individualFormatOptions : groupFormatOptions
+/**
+ * Niektóre rodziny chcą jednocześnie grupowo i indywidualnie (albo wahają się
+ * między lokalizacjami) — tryb i forma zajęć są więc zestawami wyboru, nie
+ * pojedynczą wartością. Forma zajęć to suma list obu zaznaczonych trybów
+ * (bez duplikatów): „Online” i „W Rumianku” występują w obu, więc przy
+ * zaznaczeniu obu trybów i tak pokazują się raz.
+ */
+export function formatOptionsFor(modes: readonly string[]) {
+  const seen = new Set<string>()
+  const combined: Option[] = []
+  const lists = [
+    modes.includes('individual') ? individualFormatOptions : [],
+    modes.includes('group') ? groupFormatOptions : [],
+  ]
+  for (const list of lists) {
+    for (const option of list) {
+      if (!seen.has(option.value)) {
+        seen.add(option.value)
+        combined.push(option)
+      }
+    }
+  }
+  return combined
 }
 
 /** „Z dojazdem” dopytuje o adres, „W szkole dziecka” o szkołę i miejscowość. */
@@ -47,6 +68,16 @@ export function labelOf(options: readonly Option[], value: string): string {
 
 export function isOption(options: readonly Option[], value: string): boolean {
   return options.some((option) => option.value === value)
+}
+
+export function optionValues(options: readonly Option[]): string[] {
+  return options.map((option) => option.value)
+}
+
+/** Czy każda z `values` (zaznaczonych checkboxów) jest jedną z `options`. */
+export function isSubsetOf(options: readonly Option[], values: readonly string[]): boolean {
+  const allowed = new Set(optionValues(options))
+  return values.every((value) => allowed.has(value))
 }
 
 export const MIN_AGE = 2

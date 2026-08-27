@@ -54,8 +54,8 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
   const slotId = useRef(0)
   const startedAt = useRef(0)
 
-  const [mode, setMode] = useState('')
-  const [classFormat, setClassFormat] = useState('')
+  const [modes, setModes] = useState<string[]>([])
+  const [classFormats, setClassFormats] = useState<string[]>([])
   const [slots, setSlots] = useState<SlotsByDay>(emptySlots)
   const [errors, setErrors] = useState<Errors>({})
   const [sending, setSending] = useState(false)
@@ -65,15 +65,27 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
     startedAt.current = Date.now()
   }, [])
 
-  const formatOptions = mode ? O.formatOptionsFor(mode) : []
-  const needsAddress = classFormat === O.FORMAT_NEEDING_ADDRESS
-  const needsSchool = classFormat === O.FORMAT_NEEDING_SCHOOL
+  const formatOptions = O.formatOptionsFor(modes)
+  const needsAddress = classFormats.includes(O.FORMAT_NEEDING_ADDRESS)
+  const needsSchool = classFormats.includes(O.FORMAT_NEEDING_SCHOOL)
 
-  const changeMode = (nextMode: string) => {
-    setMode(nextMode)
-    // „Online” i „W Rumianku” są w obu listach — nie każemy wybierać dwa razy.
-    setClassFormat((current) =>
-      current && O.isOption(O.formatOptionsFor(nextMode), current) ? current : ''
+  const toggleMode = (value: string) => {
+    setModes((current) => {
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
+      // Odznaczenie trybu chowa formy zajęć, które istniały tylko dzięki niemu
+      // (np. „Z dojazdem" znika po odznaczeniu „Indywidualnie") — inaczej
+      // zostałby zaznaczony wybór, którego formularz już nie pokazuje.
+      const allowed = new Set(O.optionValues(O.formatOptionsFor(next)))
+      setClassFormats((currentFormats) => currentFormats.filter((format) => allowed.has(format)))
+      return next
+    })
+  }
+
+  const toggleFormat = (value: string) => {
+    setClassFormats((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
     )
   }
 
@@ -115,8 +127,8 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       childName: form.get('childName'),
       childAge: Number(form.get('childAge')),
       level: form.get('level'),
-      mode,
-      classFormat,
+      mode: modes,
+      classFormat: classFormats,
       address: form.get('address') ?? '',
       schoolName: form.get('schoolName') ?? '',
       schoolCity: form.get('schoolCity') ?? '',
@@ -150,7 +162,11 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
         failWith(result.errors || { form: result.error || 'Nie udało się wysłać formularza. Spróbuj ponownie.' })
         return
       }
-      trackConversion('dostepnosc_wyslana', { metaEvent: 'Lead', tryb: mode, forma: classFormat })
+      trackConversion('dostepnosc_wyslana', {
+        metaEvent: 'Lead',
+        tryb: modes.join(','),
+        forma: classFormats.join(','),
+      })
       setDone(true)
     } catch {
       failWith({ form: 'Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.' })
@@ -253,34 +269,42 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
 
       <fieldset>
         <legend>Rodzaj zajęć</legend>
-        <label>
-          Grupowo czy indywidualnie? *
-          <select value={mode} onChange={(event) => changeMode(event.target.value)}>
-            <option value="">Wybierz</option>
+        <div className={styles.group}>
+          <p className={styles.groupLabel}>Grupowo czy indywidualnie? * (można zaznaczyć oba)</p>
+          <div className={styles.choices}>
             {O.modeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+              <label key={option.value} className={styles.choice}>
+                <input
+                  type="checkbox"
+                  checked={modes.includes(option.value)}
+                  onChange={() => toggleMode(option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
             ))}
-          </select>
+          </div>
           <FieldError name="mode" errors={errors} />
-        </label>
+        </div>
 
         {/* Pola warunkowe pojawiają się dopiero, gdy zaczynają mieć znaczenie —
             dzięki temu formularz na pierwszy rzut oka jest krótki. */}
-        {mode && (
-          <label>
-            Forma zajęć *
-            <select value={classFormat} onChange={(event) => setClassFormat(event.target.value)}>
-              <option value="">Wybierz</option>
+        {modes.length > 0 && (
+          <div className={styles.group}>
+            <p className={styles.groupLabel}>Forma zajęć * (można zaznaczyć kilka)</p>
+            <div className={styles.choices}>
               {formatOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+                <label key={option.value} className={styles.choice}>
+                  <input
+                    type="checkbox"
+                    checked={classFormats.includes(option.value)}
+                    onChange={() => toggleFormat(option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
               ))}
-            </select>
+            </div>
             <FieldError name="classFormat" errors={errors} />
-          </label>
+          </div>
         )}
 
         {needsAddress && (
