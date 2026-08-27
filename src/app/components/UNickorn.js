@@ -15,7 +15,9 @@ const ASSETS = {
  *  - "mark" / "wave" / "trophy"  the mascot peeking in, for hellos and small wins
  *  - "sign"                      the mascot holding a sign board (pass `signText`)
  */
-export default function UNickorn({ variant = "mark", signText, size = 96, className = "", float = false, href = null, ariaLabel }) {
+// `signText` i `ariaLabel` mają domyślne `null` (a nie brak wartości), żeby
+// TypeScript widział je jako opcjonalne, gdy maskotka jest używana z .tsx.
+export default function UNickorn({ variant = "mark", signText = null, size = 96, className = "", float = false, href = null, ariaLabel = null }) {
   const asset = variant === "sign" ? ASSETS.sign : ASSETS.peek;
   const height = Math.round((size * asset.height) / asset.width);
 

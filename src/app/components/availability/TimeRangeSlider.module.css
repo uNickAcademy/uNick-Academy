@@ -1,0 +1,101 @@
+.wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--color-blue);
+}
+
+.readoutTime {
+  font-variant-numeric: tabular-nums;
+}
+
+.readoutSeparator {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.track {
+  position: relative;
+  height: 46px;
+  cursor: pointer;
+  /* Gest poziomy prowadzi suwak, pionowy zostaje przeglądarce — dzięki temu
+     na telefonie da się przewinąć stronę palcem położonym na suwaku. */
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rail,
+.fill {
+  position: absolute;
+  top: 50%;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+.rail {
+  left: 0;
+  right: 0;
+  background: var(--color-cream-deep);
+  box-shadow: inset 0 1px 2px rgba(28, 43, 74, 0.08);
+}
+
+.fill {
+  background: var(--color-red);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 3px solid var(--color-red);
+  box-shadow: 0 4px 12px rgba(28, 43, 74, 0.22);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  /* Zdarzenia wskaźnika obsługuje tor — uchwyt jest tylko grafiką i celem
+     dla klawiatury, więc uchwyty nie „zasłaniają” się nawzajem przy dotyku. */
+  touch-action: none;
+}
+
+.thumb:hover {
+  transform: scale(1.08);
+}
+
+.thumbActive {
+  transform: scale(1.12);
+  box-shadow: 0 6px 18px rgba(192, 57, 43, 0.35);
+}
+
+.thumb:focus-visible {
+  outline: 3px solid var(--color-red-bright);
+  outline-offset: 3px;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}

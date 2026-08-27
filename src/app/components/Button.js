@@ -9,7 +9,9 @@ import styles from "./Button.module.css";
  * href: renders as a Link; omit to render a <button>
  */
 export default function Button({
-  href,
+  // Domyślne `null` (a nie brak wartości) — dzięki temu TypeScript widzi
+  // `href` jako opcjonalny, zgodnie z opisem powyżej.
+  href = null,
   variant = "primary",
   onDark = false,
   small = false,

@@ -1,0 +1,89 @@
+.hero {
+  padding: clamp(48px, 7vw, 96px) 0 clamp(24px, 4vw, 48px);
+  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-warm-white) 100%);
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(20px, 4vw, 56px);
+}
+
+.heroCopy {
+  display: grid;
+  gap: 16px;
+}
+
+.heroCopy h1 {
+  font-size: clamp(34px, 6vw, 60px);
+}
+
+.accent {
+  color: var(--color-red);
+}
+
+.lead {
+  max-width: 56ch;
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.7;
+  color: var(--color-ink-soft);
+}
+
+.meta {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.heroMascot {
+  justify-self: end;
+}
+
+.formSection {
+  padding-top: clamp(24px, 4vw, 48px);
+}
+
+.formWrap {
+  max-width: 820px;
+}
+
+.closed {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: clamp(28px, 5vw, 56px);
+  text-align: center;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.closed h2 {
+  font-size: clamp(24px, 4vw, 32px);
+}
+
+.closed p {
+  max-width: 52ch;
+  color: var(--color-ink-soft);
+  line-height: 1.7;
+}
+
+.closedActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 780px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroMascot {
+    justify-self: start;
+  }
+}

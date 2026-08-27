@@ -7,8 +7,14 @@ import MeetPeople from "../components/home/MeetPeople";
 import Stories from "../components/home/Stories";
 import Manifesto from "../components/home/Manifesto";
 import CTASection from "../components/CTASection";
+// TYMCZASOWE (nabór wrzesień 2026) — usuń ten import razem z <AvailabilityBanner/> poniżej.
+import AvailabilityBanner from "../components/availability/AvailabilityBanner";
 import LocationSection from "../components/LocationSection";
 import { getDictionary } from "../lib/dictionaries";
+
+// Strona jest prerenderowana, a tymczasowy pasek naboru ma zniknąć sam po
+// 7.09.2026 — bez odświeżania wisiałby dalej. Usuń razem z banerem.
+export const revalidate = 3600;
 
 export default async function HomePage({ params }) {
   const { locale } = await params;
@@ -16,6 +22,8 @@ export default async function HomePage({ params }) {
 
   return (
     <>
+      {/* TYMCZASOWE (nabór wrzesień 2026) — jedna linijka do skasowania. */}
+      <AvailabilityBanner locale={locale} />
       <Hero dict={dict} locale={locale} />
       <Founders dict={dict} locale={locale} />
       <Differentiators dict={dict} />

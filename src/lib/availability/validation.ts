@@ -1,0 +1,133 @@
+import * as O from './options'
+import {
+  DAYS,
+  MAX_SLOTS_PER_DAY,
+  countSlots,
+  isValidSlot,
+  type DayAvailability,
+  type DayKey,
+  type TimeSlot,
+} from './schedule'
+
+export type AvailabilitySubmission = {
+  parentName: string
+  contact: string
+  childName: string
+  childAge: number
+  level: string
+  mode: string
+  classFormat: string
+  address: string
+  schoolName: string
+  schoolCity: string
+  availability: DayAvailability[]
+  notes: string
+}
+
+type Result =
+  | { ok: true; data: AvailabilitySubmission }
+  | { ok: false; errors: Record<string, string> }
+
+const text = (value: unknown, max = 200) =>
+  typeof value === 'string' ? value.trim().slice(0, max) : ''
+
+const DAY_KEYS = new Set<string>(DAYS.map((day) => day.key))
+
+/** Odsiewa śmieci z ciała żądania i porządkuje dni w kolejności tygodnia. */
+function parseAvailability(value: unknown): DayAvailability[] {
+  if (!Array.isArray(value)) return []
+  const byDay = new Map<DayKey, TimeSlot[]>()
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue
+    const { day, slots } = entry as { day?: unknown; slots?: unknown }
+    if (typeof day !== 'string' || !DAY_KEYS.has(day) || !Array.isArray(slots)) continue
+
+    const parsed = slots
+      .filter((slot): slot is TimeSlot => {
+        if (!slot || typeof slot !== 'object') return false
+        const { start, end } = slot as { start?: unknown; end?: unknown }
+        return typeof start === 'number' && typeof end === 'number' && isValidSlot({ start, end })
+      })
+      .slice(0, MAX_SLOTS_PER_DAY)
+      .sort((a, b) => a.start - b.start)
+
+    if (parsed.length) byDay.set(day as DayKey, parsed)
+  }
+
+  return DAYS.filter((day) => byDay.has(day.key)).map((day) => ({
+    day: day.key,
+    slots: byDay.get(day.key) as TimeSlot[],
+  }))
+}
+
+export function validateAvailabilitySubmission(input: unknown): Result {
+  const values = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
+  const errors: Record<string, string> = {}
+
+  // Pułapka na boty: pole ukryte poza ekranem, którego człowiek nie wypełni.
+  if (text(values.website)) errors.form = 'Nie udało się wysłać formularza.'
+
+  const parentName = text(values.parentName, 120)
+  const contact = text(values.contact, 160)
+  const childName = text(values.childName, 80)
+  const childAge = Number(values.childAge)
+  const level = text(values.level, 40)
+  const mode = text(values.mode, 40)
+  const classFormat = text(values.classFormat, 40)
+  const address = text(values.address, 200)
+  const schoolName = text(values.schoolName, 160)
+  const schoolCity = text(values.schoolCity, 120)
+  const notes = text(values.notes, 2000)
+
+  if (!parentName) errors.parentName = 'Podaj imię i nazwisko.'
+  if (!contact) errors.contact = 'Podaj telefon i e-mail.'
+  if (!childName) errors.childName = 'Podaj imię dziecka.'
+  if (!Number.isInteger(childAge) || childAge < O.MIN_AGE || childAge > O.MAX_AGE) {
+    errors.childAge = `Podaj wiek dziecka (${O.MIN_AGE}–${O.MAX_AGE} lat).`
+  }
+  // Poziom jest opcjonalny — sprawdzamy tylko, czy nie przyszła obca wartość.
+  if (level && !O.isOption(O.levelOptions, level)) errors.level = 'Wybierz poziom z listy.'
+
+  if (!O.isOption(O.modeOptions, mode)) {
+    errors.mode = 'Wybierz, czy zajęcia mają być grupowe czy indywidualne.'
+  } else if (!O.isOption(O.formatOptionsFor(mode), classFormat)) {
+    errors.classFormat = 'Wybierz formę zajęć.'
+  } else if (classFormat === O.FORMAT_NEEDING_ADDRESS && !address) {
+    errors.address = 'Podaj adres, pod który mamy dojeżdżać.'
+  } else if (classFormat === O.FORMAT_NEEDING_SCHOOL) {
+    if (!schoolName) errors.schoolName = 'Podaj nazwę szkoły.'
+    if (!schoolCity) errors.schoolCity = 'Podaj miejscowość szkoły.'
+  }
+
+  const availability = parseAvailability(values.availability)
+  if (countSlots(availability) === 0) {
+    errors.availability = 'Zaznacz przynajmniej jeden przedział godzinowy w dowolnym dniu.'
+  }
+
+  if (values.consent !== true) {
+    errors.consent = 'Potrzebujemy zgody na przetwarzanie danych, żeby przyjąć zgłoszenie.'
+  }
+
+  if (Object.keys(errors).length) return { ok: false, errors }
+
+  return {
+    ok: true,
+    data: {
+      parentName,
+      contact,
+      childName,
+      childAge,
+      level,
+      mode,
+      classFormat,
+      // Pola warunkowe zapisujemy tylko wtedy, gdy naprawdę dotyczą wyboru —
+      // inaczej w arkuszu zostałby adres po zmianie zdania w formularzu.
+      address: classFormat === O.FORMAT_NEEDING_ADDRESS ? address : '',
+      schoolName: classFormat === O.FORMAT_NEEDING_SCHOOL ? schoolName : '',
+      schoolCity: classFormat === O.FORMAT_NEEDING_SCHOOL ? schoolCity : '',
+      availability,
+      notes,
+    },
+  }
+}

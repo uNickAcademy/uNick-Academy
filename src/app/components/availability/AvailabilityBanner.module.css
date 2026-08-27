@@ -1,0 +1,50 @@
+.banner {
+  background: var(--color-blue);
+  color: var(--color-warm-white);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 20px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.text {
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.text strong {
+  font-weight: 800;
+}
+
+.cta {
+  flex: 0 0 auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: var(--color-warm-white);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color var(--transition-base), transform var(--transition-base);
+}
+
+.cta:hover {
+  background: var(--color-red-bright);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .text {
+    font-size: 14px;
+  }
+}

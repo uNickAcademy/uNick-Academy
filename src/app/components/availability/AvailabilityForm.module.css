@@ -1,0 +1,294 @@
+.shell {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(20px, 4vw, 44px);
+  box-shadow: var(--shadow-card);
+}
+
+.shell fieldset {
+  display: grid;
+  gap: 18px;
+  margin: 0 0 28px;
+  padding: 0 0 28px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shell fieldset:last-of-type {
+  margin-bottom: 24px;
+}
+
+.shell legend {
+  margin-bottom: 14px;
+  padding: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(20px, 3vw, 24px);
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.shell label {
+  display: grid;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.shell input,
+.shell select,
+.shell textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-warm-white);
+  /* 16px minimum — poniżej tego iOS przybliża stronę przy wejściu w pole. */
+  font-size: 16px;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 500;
+  color: var(--color-ink);
+  transition: border-color var(--transition-base);
+}
+
+.shell input:focus,
+.shell select:focus,
+.shell textarea:focus {
+  border-color: var(--color-red);
+}
+
+.shell textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.shell small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.hint {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.sectionIntro {
+  margin-top: -6px;
+  font-size: 15px;
+  color: var(--color-ink-soft);
+  line-height: 1.6;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ---------------------------------------------------------
+   Dni tygodnia i przedziały godzinowe
+   --------------------------------------------------------- */
+
+.days {
+  display: grid;
+  gap: 14px;
+}
+
+.day {
+  padding: 16px 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-cream);
+}
+
+.dayHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.dayHeader h3 {
+  font-size: 17px;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 800;
+}
+
+.daySummary {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-red);
+  font-variant-numeric: tabular-nums;
+}
+
+.slot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+}
+
+.addFirst,
+.addMore,
+.remove {
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  transition: background-color var(--transition-base), color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.addFirst,
+.addMore {
+  /* 44px wysokości — wygodny cel dotykowy na telefonie. */
+  min-height: 44px;
+  padding: 11px 20px;
+  font-size: 14px;
+  color: var(--color-blue);
+  background: var(--color-white);
+  border: 1.5px dashed var(--color-blue);
+  justify-self: start;
+}
+
+.addFirst:hover,
+.addMore:hover {
+  background: var(--color-blue);
+  color: var(--color-warm-white);
+}
+
+.addMore {
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
+.remove {
+  min-height: 44px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--color-red);
+  background: transparent;
+  border: 1.5px solid transparent;
+}
+
+.remove:hover {
+  border-color: var(--color-red);
+  background: var(--color-red-soft);
+}
+
+/* ---------------------------------------------------------
+   Zgoda, błędy, stan po wysłaniu
+   --------------------------------------------------------- */
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+
+.consent input {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 0;
+  accent-color: var(--color-red);
+}
+
+.link {
+  color: var(--color-red);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.error {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-red);
+}
+
+.summary {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--color-red-soft);
+  color: #8b1a14;
+}
+
+.summary h3 {
+  font-size: 16px;
+  font-family: var(--font-body), sans-serif;
+  color: #8b1a14;
+  margin-bottom: 8px;
+}
+
+.summary ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.honeypot {
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+.success {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.success h2 {
+  font-size: clamp(24px, 4vw, 30px);
+}
+
+.success p {
+  max-width: 46ch;
+  color: var(--color-ink-soft);
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
+
+  .day {
+    padding: 14px;
+  }
+
+  .slot {
+    /* Na wąskim ekranie „Usuń” schodzi pod suwak — inaczej zjada mu szerokość.
+       Sam suwak zostaje na pełnej szerokości, żeby kwadranse dało się trafić. */
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 12px 14px;
+  }
+
+  .remove {
+    justify-self: end;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+}
