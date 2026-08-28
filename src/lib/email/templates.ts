@@ -790,6 +790,70 @@ export function comebackEmail(params: {
 }
 
 // ──────────────────────────────────────────
+// Formularz dostępności na wrzesień (/pl/dostepnosc) — tymczasowy nabór,
+// patrz docs/FORMULARZ-DOSTEPNOSCI.md.
+// ──────────────────────────────────────────
+//
+// Dane w parametrach pochodzą wprost z publicznego, niezalogowanego
+// formularza — w przeciwieństwie do comebackEmail/agentLowcaEmail (treść
+// zatwierdzona przez zespół albo wygenerowana przez model), więc uciekamy
+// HTML tak samo jak przy deklaracjach Fundacji (send.ts, `esc()`).
+function escapeHtmlAvailability(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+export function availabilityThankYouEmail(params: {
+  parentFirstName: string
+  childName: string
+  assignedReferralCode: string
+  appUrl: string
+}): { subject: string; html: string } {
+  const parentFirstName = escapeHtmlAvailability(params.parentFirstName)
+  const childName = escapeHtmlAvailability(params.childName)
+  const { assignedReferralCode, appUrl } = params
+
+  const content = `
+    <h2 style="font-family: ${FONT_HEAD}; font-size: 22px; font-weight: 700; color: ${BRAND.navy}; margin: 0 0 16px;">
+      Dziękujemy, ${parentFirstName}!
+    </h2>
+    <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+      Mamy dostępność ${childName} na nowy rok szkolny. Układamy teraz grafik zajęć tak, żeby dopasować się
+      do wszystkich zgłoszonych rodzin, i wrócimy do Was z propozycją terminu do
+      <strong style="color: ${BRAND.navy};">10 września</strong>.
+    </p>
+
+    <h3 style="font-family: ${FONT_HEAD}; font-size: 17px; font-weight: 600; color: ${BRAND.red}; margin: 28px 0 8px;">
+      Coś od nas, na już
+    </h3>
+    <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+      Zanim jeszcze zaczniecie zajęcia, dajemy Wam kod do poleceń. Podajcie go znajomym, którzy myślą
+      o nauce angielskiego:
+    </p>
+
+    <div style="background: ${BRAND.cream}; border-radius: 12px; padding: 18px; margin: 0 0 14px; text-align: center;">
+      <p style="font-family: ${FONT_HEAD}; color: ${BRAND.navy}; font-size: 12px; font-weight: 600; letter-spacing: 1px; margin: 0 0 6px;">WASZ KOD</p>
+      <p style="font-family: ${FONT_HEAD}; font-size: 22px; font-weight: 700; color: ${BRAND.red}; margin: 0; word-break: break-all;">${assignedReferralCode}</p>
+    </div>
+
+    <p style="font-size: 15px; line-height: 1.8; margin: 0 0 24px;">
+      Gdy ktoś zapisze się z tym kodem i opłaci pierwsze zajęcia,
+      <strong style="color: ${BRAND.navy};">oboje dostajecie po 50 zł</strong> zniżki na kolejne lekcje.
+    </p>
+
+    <div style="border-top: 1px solid ${BRAND.cream}; padding-top: 16px;">
+      <p style="font-size: 14px; line-height: 1.7; color: ${BRAND.muted}; margin: 0;">
+        Masz pytania? Zadzwoń: <a href="tel:${siteConfig.phone.e164}" style="color: ${BRAND.navy};">${siteConfig.phone.display}</a>.
+      </p>
+    </div>
+  `
+
+  return {
+    subject: 'Dziękujemy za zgłoszenie — wracamy do Was do 10 września',
+    html: brandWrap(content, appUrl),
+  }
+}
+
+// ──────────────────────────────────────────
 // Zapisy przez kreator /zapisy
 // ──────────────────────────────────────────
 

@@ -3,7 +3,8 @@ import * as O from '@/lib/availability/options'
 import { formatAvailability } from '@/lib/availability/schedule'
 import { validateAvailabilitySubmission } from '@/lib/availability/validation'
 import { FORM_CLOSES_LABEL, isFormOpen } from '@/lib/availability/window'
-import { notifySchoolEmail } from '@/lib/email/send'
+import { notifySchoolEmail, sendAvailabilityThankYou } from '@/lib/email/send'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
@@ -83,10 +84,62 @@ export async function POST(request: NextRequest) {
   if (!validation.ok) return NextResponse.json({ errors: validation.errors }, { status: 400 })
 
   const data = validation.data
+  const admin = createAdminClient()
+
+  // Kod, który TA rodzina dostaje do podania znajomym — ta sama funkcja, której
+  // używa reszta systemu (generate_referral_code), więc format i unikalność są
+  // spójne z prawdziwymi kodami uczniów. Generujemy po imieniu rodzica: to on
+  // wypełnia formularz i to on będzie dzielił się kodem ze swoimi znajomymi.
+  const { data: generatedCode, error: codeError } = await admin.rpc('generate_referral_code', {
+    p_name: data.parentFirstName,
+  })
+  if (codeError || !generatedCode) {
+    console.error('[Dostępność] Nie udało się wygenerować kodu polecenia:', codeError)
+    return NextResponse.json(
+      { error: 'Nie udało się zapisać zgłoszenia. Spróbuj ponownie.' },
+      { status: 500 }
+    )
+  }
+  const assignedReferralCode = generatedCode as string
+
   // Etykiety zamiast kluczy technicznych i dostępność spłaszczona do jednego
   // zdania — arkusz ma być czytelny dla człowieka układającego grafik, a każde
   // pole ma trafić dokładnie w jedną kolumnę.
   const availabilityText = formatAvailability(data.availability)
+  const trybLabel = data.mode.map((value) => O.labelOf(O.modeOptions, value)).join(' oraz ')
+  const formaLabel = data.classFormat.map((value) => O.labelOf(O.formatOptionsFor(data.mode), value)).join(' oraz ')
+
+  // Zapis do bazy jest teraz głównym źródłem prawdy — stąd widać zgłoszenia
+  // z poziomu admina (/admin/dostepnosc). Zapier i mail to dodatkowe kanały,
+  // nie jedyny zapis, więc ich ewentualna awaria już nie blokuje zgłoszenia.
+  const { error: dbError } = await admin.from('availability_declarations').insert({
+    parent_first_name: data.parentFirstName,
+    parent_last_name: data.parentLastName,
+    email: data.email,
+    phone: data.phone,
+    child_name: data.childName,
+    child_age: data.childAge,
+    level: data.level || null,
+    mode: data.mode,
+    class_format: data.classFormat,
+    address: data.address || null,
+    school_name: data.schoolName || null,
+    school_city: data.schoolCity || null,
+    availability: data.availability,
+    availability_text: availabilityText,
+    notes: data.notes || null,
+    referral_code: data.referralCode || null,
+    assigned_referral_code: assignedReferralCode,
+    consent: true,
+  })
+  if (dbError) {
+    console.error('[Dostępność] Zapis zgłoszenia nie powiódł się:', dbError)
+    return NextResponse.json(
+      { error: 'Nie udało się zapisać zgłoszenia. Spróbuj ponownie.' },
+      { status: 500 }
+    )
+  }
+
   const payload = {
     data_zgloszenia: warsawTimestamp(),
     imie_rodzica: data.parentFirstName,
@@ -96,22 +149,21 @@ export async function POST(request: NextRequest) {
     dziecko: data.childName,
     wiek: data.childAge,
     poziom: O.labelOf(O.levelOptions, data.level),
-    // Tryb i forma mogą mieć kilka zaznaczeń naraz (np. „Grupowo oraz
-    // indywidualnie") — łączymy etykiety w jedno czytelne pole, tak samo jak
-    // dostępność jest spłaszczana do jednego zdania.
-    tryb: data.mode.map((value) => O.labelOf(O.modeOptions, value)).join(' oraz '),
-    forma: data.classFormat.map((value) => O.labelOf(O.formatOptionsFor(data.mode), value)).join(' oraz '),
+    tryb: trybLabel,
+    forma: formaLabel,
     adres: data.address,
     szkola: data.schoolName,
     miejscowosc: data.schoolCity,
     dostepnosc: availabilityText,
     uwagi: data.notes,
+    kod_polecony_przez: data.referralCode,
+    kod_przyznany: assignedReferralCode,
   }
 
+  // Zapier i kopia mailem to dodatkowe kanały — najlepszy wysiłek, bo zapis w
+  // bazie (wyżej) już się udał i zgłoszenie na pewno nie przepadnie.
   const forwarded = await forwardToZapier(payload)
 
-  // Kopia mailem leci zawsze: to drugi, niezależny odbiornik na wypadek, gdyby
-  // Zap był wyłączony albo webhook jeszcze nie był wklejony.
   await notifySchoolEmail({
     title: `Dostępność na wrzesień: ${data.childName} (${data.childAge} l.)`,
     lines: [
@@ -120,24 +172,22 @@ export async function POST(request: NextRequest) {
       `Telefon: ${data.phone}`,
       `Dziecko: ${data.childName}, ${data.childAge} lat`,
       payload.poziom ? `Poziom: ${payload.poziom}` : '',
-      `Tryb: ${payload.tryb} — ${payload.forma}`,
+      `Tryb: ${trybLabel} — ${formaLabel}`,
       data.address ? `Adres: ${data.address}` : '',
       data.schoolName ? `Szkoła: ${data.schoolName}, ${data.schoolCity}` : '',
       `Dostępność: ${availabilityText}`,
       data.notes ? `Uwagi: ${data.notes}` : '',
+      data.referralCode ? `Kod polecony przez: ${data.referralCode}` : '',
+      `Przyznany kod polecenia: ${assignedReferralCode}`,
       forwarded ? '' : '⚠️ Nie udało się dopisać wiersza w arkuszu — przepisz ręcznie.',
     ].filter(Boolean),
   })
 
-  // Podziękowanie ma znaczyć „mamy to”. Jeśli ani arkusz, ani poczta nie są
-  // skonfigurowane, zgłoszenie przepadłoby — wtedy uczciwiej pokazać błąd.
-  if (!forwarded && !process.env.RESEND_API_KEY) {
-    console.error('[Dostępność] Zgłoszenie nie trafiło nigdzie — brak webhooka i RESEND_API_KEY.')
-    return NextResponse.json(
-      { error: 'Nie udało się zapisać zgłoszenia. Napisz do nas na hello@unick-academy.pl.' },
-      { status: 500 }
-    )
-  }
+  await sendAvailabilityThankYou(data.email, {
+    parentFirstName: data.parentFirstName,
+    childName: data.childName,
+    assignedReferralCode,
+  })
 
   return NextResponse.json({ success: true }, { status: 201 })
 }

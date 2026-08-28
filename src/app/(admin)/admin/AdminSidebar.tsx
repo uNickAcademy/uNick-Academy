@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X, AlertTriangle, Copy, HeartHandshake,
+  GraduationCap, CreditCard, Gift, LogOut, UsersRound, Tag, Megaphone, Building2, Target, BarChart3, Repeat, FileCheck, Inbox, Landmark, Bell, Menu, X, AlertTriangle, Copy, HeartHandshake, CalendarCheck,
 } from 'lucide-react'
 
 // adminOnly: pozycje konfiguracyjne niedostępne dla recepcji
@@ -15,6 +15,9 @@ const NAV = [
   { href: '/admin/grupy', label: 'Grupy', icon: UsersRound },
   { href: '/admin/duplikaty', label: 'Duplikaty', icon: Copy, adminOnly: true },
   { href: '/admin/zapisy', label: 'Prośby o zapis', icon: Inbox },
+  // TYMCZASOWE (nabór wrzesień 2026) — usuń razem z resztą naboru, patrz
+  // docs/FORMULARZ-DOSTEPNOSCI.md.
+  { href: '/admin/dostepnosc', label: 'Dostępność — wrzesień', icon: CalendarCheck },
   { href: '/admin/firmy', label: 'Firmy (B2B)', icon: Building2 },
   { href: '/admin/pipeline', label: 'Pipeline B2B', icon: Target, adminOnly: true },
   { href: '/admin/lekcje', label: 'Lekcje', icon: BookOpen },

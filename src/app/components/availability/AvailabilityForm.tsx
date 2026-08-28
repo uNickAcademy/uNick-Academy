@@ -30,6 +30,17 @@ const emptySlots = (): SlotsByDay =>
     return acc
   }, {} as SlotsByDay)
 
+// Kod z linku ?ref= to tylko wartość startowa — pole zostaje edytowalne, tak
+// samo jak w ConsultationModal.tsx (większość poleceń dzieje się ustnie).
+function readReferralCodeFromUrl(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    return new URLSearchParams(window.location.search).get('ref') || ''
+  } catch {
+    return ''
+  }
+}
+
 /**
  * Kolejne okno tego samego dnia proponujemy PO już zaznaczonych, żeby rodzic
  * nie musiał najpierw rozsuwać dwóch nakładających się suwaków.
@@ -57,6 +68,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
   const [modes, setModes] = useState<string[]>([])
   const [classFormats, setClassFormats] = useState<string[]>([])
   const [slots, setSlots] = useState<SlotsByDay>(emptySlots)
+  const [referralCode, setReferralCode] = useState(() => readReferralCodeFromUrl())
   const [errors, setErrors] = useState<Errors>({})
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -137,6 +149,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
         slots: slots[day.key].map(({ start, end }) => ({ start, end })),
       })).filter((day) => day.slots.length > 0),
       notes: form.get('notes') ?? '',
+      referralCode,
       consent: form.get('consent') === 'on',
       startedAt: startedAt.current,
     }
@@ -415,6 +428,18 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
             placeholder="Rodzeństwo w jednej grupie, dojazd z innej miejscowości, cokolwiek co pomoże nam ułożyć grafik…"
           />
           <FieldError name="notes" errors={errors} />
+        </label>
+
+        <label>
+          Kod polecenia (jeśli ktoś Was do nas skierował)
+          <input
+            name="referralCode"
+            maxLength={40}
+            value={referralCode}
+            onChange={(event) => setReferralCode(event.target.value)}
+            placeholder="np. uNickAnna8DJ9"
+          />
+          <small>Wpiszcie, jeśli ktoś polecił Wam uNick Academy — uwzględnimy to przy zapisie.</small>
         </label>
 
         <label className={styles.consent}>

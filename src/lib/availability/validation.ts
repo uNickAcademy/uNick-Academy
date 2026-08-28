@@ -24,6 +24,7 @@ export type AvailabilitySubmission = {
   schoolCity: string
   availability: DayAvailability[]
   notes: string
+  referralCode: string
 }
 
 type Result =
@@ -96,6 +97,9 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const schoolName = text(values.schoolName, 160)
   const schoolCity = text(values.schoolCity, 120)
   const notes = text(values.notes, 2000)
+  // Wolny tekst, tak samo jak w ConsultationModal — sprawdzany dopiero przy
+  // realnym zapisie (register_referral), nie tutaj.
+  const referralCode = text(values.referralCode, 40)
 
   if (!parentFirstName) errors.parentFirstName = 'Podaj imię.'
   if (!parentLastName) errors.parentLastName = 'Podaj nazwisko.'
@@ -158,6 +162,7 @@ export function validateAvailabilitySubmission(input: unknown): Result {
       schoolCity: classFormat.includes(O.FORMAT_NEEDING_SCHOOL) ? schoolCity : '',
       availability,
       notes,
+      referralCode,
     },
   }
 }

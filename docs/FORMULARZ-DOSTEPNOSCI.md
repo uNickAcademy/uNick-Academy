@@ -6,14 +6,52 @@ grafik na rok szkolny 2026/2027 pod prawdziwe terminy rodzin.
 - **Adres:** `/pl/dostepnosc` (tylko po polsku; `/en/dostepnosc` przekierowuje na PL)
 - **Krótki adres:** `unick-academy.pl/september` → przekierowuje na `/pl/dostepnosc` (do podyktowania, druku)
 - **Otwarty do:** 7.09.2026, 23:59 czasu polskiego
-- **Zapis:** webhook Zapiera → nowy wiersz w Google Sheets, plus kopia mailem
+- **Zapis:** tabela `availability_declarations` w Supabase (główne źródło prawdy,
+  widoczne w `/admin/dostepnosc`), plus webhook Zapiera → Google Sheets i kopia
+  mailem na `SCHOOL_NOTIFY_EMAIL` — dwa dodatkowe, niezależne kanały
+- **Po wysłaniu:** rodzic dostaje mailem podziękowanie + przyznany kod polecenia
+  (50 zł zniżki dla obu stron, patrz sekcja 2 niżej)
 
 Strona jest `noindex` i celowo nie ma jej w `src/app/sitemap.ts` — po usunięciu
 nie zostanie po niej martwy link w wynikach wyszukiwania.
 
 ---
 
-## 1. Podłączenie arkusza (Zapier)
+## 1. Zgłoszenia w panelu admina — `/admin/dostepnosc`
+
+Każde zgłoszenie zapisuje się w Supabase (tabela `availability_declarations`,
+migracja `supabase/migrations/20260828130737_availability_declarations.sql`)
+i od razu widać je w panelu, w zakładce **Dostępność — wrzesień** (widoczna
+dla admina i recepcji, tak jak „Prośby o zapis”). To jest teraz **główny
+zapis** — webhook Zapiera i mail to dodatkowe kanały, nie jedyny zapis, więc
+ich ewentualna awaria już nie blokuje zgłoszenia ani nie chowa go przed
+zespołem.
+
+Z panelu można oznaczyć zgłoszenie jako „Skontaktowano się” albo
+zarchiwizować, oraz wyeksportować wszystko do CSV (przycisk w nagłówku strony).
+
+## 2. Kod polecenia przy zgłoszeniu
+
+Każda zgłaszająca się rodzina dostaje mailem **własny kod polecenia**
+(wygenerowany funkcją `generate_referral_code()` — tą samą, której używa
+reszta systemu, więc format i unikalność są spójne z prawdziwymi kodami
+uczniów) do podania znajomym: kto zapisze się z tym kodem i opłaci pierwsze
+zajęcia, obie strony dostają po 50 zł zniżki.
+
+**Ważne zastrzeżenie techniczne:** ten kod jest *zarezerwowany* (nie
+koliduje z żadnym istniejącym `students.referral_code`), ale **nie jest
+jeszcze aktywny** w automatycznym mechanizmie `register_referral` — ten
+wymaga prawdziwego wiersza w `students`, którego zgłaszająca się osoba
+jeszcze nie ma (`students.profile_id` jest `NOT NULL` — wymaga konta, którego
+formularz dostępności nie zakłada). Innymi słowy: **jeśli znajomy zapisze się
+z tym kodem, zniżka nie naliczy się sama** — dopóki system nie zostanie o to
+rozszerzony, ktoś z zespołu musi przy zapisie tej rodziny ręcznie wpisać jej
+przyznany kod jako `referral_code` w profilu ucznia (widoczny w
+`/admin/dostepnosc` przy każdym zgłoszeniu, gotowy do skopiowania). Formularz
+ma też osobne pole „Kod polecenia” na dole (`referral_code` w tabeli) — to
+kod, który TA rodzina podała, bo ktoś polecił im nas.
+
+## 3. Podłączenie arkusza (Zapier)
 
 1. W Zapierze: **Create Zap → Trigger: Webhooks by Zapier → Catch Hook**.
 2. Skopiuj wygenerowany „Custom Webhook URL”.
@@ -57,24 +95,29 @@ podziękowania — nie chcemy dziękować za coś, czego nie zapisaliśmy.
 
 ---
 
-## 2. Co gdzie leży
+## 4. Co gdzie leży
 
 | Plik | Rola |
 | ---- | ---- |
 | `src/app/[locale]/dostepnosc/page.js` + `AvailabilityPage.module.css` | strona (hero, formularz, komunikat po zamknięciu) |
-| `src/app/components/availability/AvailabilityForm.tsx` + `.module.css` | formularz, logika warunkowa, przedziały godzinowe |
+| `src/app/components/availability/AvailabilityForm.tsx` + `.module.css` | formularz, logika warunkowa, przedziały godzinowe, pole kodu polecenia |
 | `src/app/components/availability/TimeRangeSlider.tsx` + `.module.css` | suwak zakresu z dwoma uchwytami |
 | `src/app/components/availability/AvailabilityBanner.js` + `.module.css` | pasek na stronie głównej |
 | `src/app/components/availability/AvailabilityPopup.tsx` + `.module.css` | popup na stronie głównej |
-| `src/app/api/availability/route.ts` | walidacja, wysyłka do Zapiera, kopia mailem |
+| `src/app/api/availability/route.ts` | walidacja, generowanie kodu, zapis do bazy, wysyłka do Zapiera, mail podziękowania i mail wewnętrzny |
 | `src/lib/availability/*` | stałe, listy wyboru, walidacja, data zamknięcia |
 | `public/availability/banner.jpg` | baner na górze strony |
+| `supabase/migrations/20260828130737_availability_declarations.sql` | tabela zgłoszeń + RLS |
+| `src/app/(admin)/admin/dostepnosc/page.tsx` + `AvailabilityInboxView.tsx` | panel admina — lista zgłoszeń |
+| `src/app/api/admin/availability/route.ts` | zmiana statusu zgłoszenia + eksport CSV |
+| `availabilityThankYouEmail` w `src/lib/email/templates.ts` + `sendAvailabilityThankYou` w `send.ts` | mail podziękowania z kodem polecenia |
 
-Poza tym dwa miejsca mają wklejone fragmenty, nie całe pliki — patrz krok 2 niżej:
-`src/app/[locale]/page.js` (banner + popup) i `src/app/components/Navbar.js` +
-`.module.css` (przycisk „Zapisy na wrzesień” w rogu każdej podstrony).
+Poza tym kilka miejsc ma wklejone fragmenty, nie całe pliki — patrz krok 6 niżej:
+`src/app/[locale]/page.js` (banner + popup), `src/app/components/Navbar.js` +
+`.module.css` (przycisk „Zapisy na wrzesień” w rogu każdej podstrony) oraz
+`src/app/(admin)/admin/AdminSidebar.tsx` (pozycja menu „Dostępność — wrzesień”).
 
-## 3. Po terminie — nic nie trzeba robić
+## 5. Po terminie — nic nie trzeba robić
 
 Po 7.09.2026 strona sama pokazuje komunikat „formularz zamknięty” z kontaktem,
 pasek na stronie głównej znika, a endpoint odrzuca spóźnione zgłoszenia (410).
@@ -85,10 +128,15 @@ Datę zmienia się w jednym miejscu: `FORM_CLOSES_AT` w
 `src/lib/availability/window.ts` (i `FORM_CLOSES_LABEL` obok, bo pojawia się
 w treści).
 
-## 4. Trwałe usunięcie
+## 6. Trwałe usunięcie
+
+Dane zgłoszeń (`availability_declarations`) mają wartość jako historyczny
+zapis preferencji rodzin — **nie trzeba** ich kasować razem z kodem. Jeśli
+mimo to chcesz sprzątnąć do końca, dorzuć krok 7.
 
 1. Skasuj katalogi `src/app/[locale]/dostepnosc/`,
    `src/app/components/availability/`, `src/app/api/availability/`,
+   `src/app/(admin)/admin/dostepnosc/`, `src/app/api/admin/availability/`,
    `src/lib/availability/` i `public/availability/`.
 2. W `src/app/[locale]/page.js` usuń importy `AvailabilityBanner` i
    `AvailabilityPopup`, obie linijki `<Availability… locale={locale} />` oraz
@@ -99,8 +147,16 @@ w treści).
    ekranach <390px, gdzie przycisk w pasku sam się chowa). W
    `Navbar.module.css` usuń `.septemberCta`, `.septemberCtaFull`,
    `.septemberCtaShort` i ich media queries.
-4. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
-5. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
-6. Skasuj ten plik.
+4. W `src/app/(admin)/admin/AdminSidebar.tsx` usuń pozycję `/admin/dostepnosc`
+   z listy `NAV` (i import ikony `CalendarCheck`, jeśli nieużywana gdzie indziej).
+5. W `src/lib/email/templates.ts` usuń `availabilityThankYouEmail` (i
+   `escapeHtmlAvailability`, jeśli nieużywane gdzie indziej), w `send.ts` usuń
+   `sendAvailabilityThankYou` i jej import.
+6. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
+7. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
+8. Skasuj ten plik.
+9. (Opcjonalnie, tylko jeśli naprawdę chcesz skasować dane) usuń tabelę:
+   `drop table public.availability_declarations;` — nową migracją, nie ręcznie
+   w konsoli Supabase, żeby historia migracji się zgadzała.
 
 W sitemapie nie ma nic do sprzątania — formularz nigdy tam nie był.

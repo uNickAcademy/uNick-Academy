@@ -13,6 +13,7 @@ import {
   monthlyPaymentEmail,
   internalNotificationEmail,
   comebackEmail,
+  availabilityThankYouEmail,
   agentLowcaEmail,
   groupReservationEmail,
   adviceReceivedEmail,
@@ -239,6 +240,18 @@ export async function sendComeback(to: string, params: {
   trackToken?: string
 }) {
   const { subject, html } = comebackEmail({
+    ...params,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
+  })
+  return send(to, subject, html)
+}
+
+export async function sendAvailabilityThankYou(to: string, params: {
+  parentFirstName: string
+  childName: string
+  assignedReferralCode: string
+}) {
+  const { subject, html } = availabilityThankYouEmail({
     ...params,
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
   })
