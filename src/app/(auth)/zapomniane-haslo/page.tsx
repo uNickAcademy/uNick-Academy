@@ -28,7 +28,15 @@ export default function ForgotPasswordPage() {
     setLoading(false)
 
     if (resetError) {
-      setError('Nie udało się wysłać linku. Spróbuj ponownie.')
+      // Limit wysyłki (429) oznacza, że link poszedł już chwilę wcześniej —
+      // to nie jest awaria. Pokazywanie ogólnego "spróbuj ponownie" zachęcało
+      // do natychmiastowego ponowienia, co od razu trafiało w ten sam limit
+      // i wyglądało jak pętla nieudanych prób, mimo że pierwszy mail doszedł.
+      if (resetError.status === 429) {
+        setSent(true)
+        return
+      }
+      setError('Nie udało się wysłać linku. Spróbuj ponownie za chwilę.')
       return
     }
 
@@ -56,9 +64,12 @@ export default function ForgotPasswordPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           {sent ? (
-            <p className="text-sm text-gray-600 text-center">
-              Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do ustawienia hasła. Sprawdź skrzynkę.
-            </p>
+            <div className="text-sm text-gray-600 text-center space-y-2">
+              <p>Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do ustawienia hasła. Sprawdź skrzynkę (również SPAM).</p>
+              <p className="text-gray-400">
+                Prosiłeś/aś o link wcześniej? Skorzystaj z najnowszej wiadomości — poprzednie już nie działają.
+              </p>
+            </div>
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
