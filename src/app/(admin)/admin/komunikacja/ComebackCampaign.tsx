@@ -113,11 +113,17 @@ export function ComebackCampaign() {
         wyslane += data.wyslano as number
         nieudane.push(...(data.nieudane as string[]))
         setPostep(`Wysłano ${wyslane} z ${preview.doWyslania}...`)
+        // Cała partia nieudana to zwykle limit u dostawcy poczty, a nie
+        // przypadek. Dalsze partie tylko powiększyłyby listę porażek, więc
+        // przerywamy i pokazujemy, co się stało. Nieudane adresy wracają na
+        // listę przy kolejnym podejściu.
+        if ((data.wyslano as number) === 0 && (data.nieudane as string[]).length > 0) break
         if ((data.zostalo as number) <= 0) break
       }
       setSendResult(
         `Wysłano: ${wyslane}. Nieudane: ${nieudane.length}` +
-        (nieudane.length ? ` (${nieudane.slice(0, 5).join(', ')}${nieudane.length > 5 ? ' i inne' : ''})` : '') + '.'
+        (nieudane.length ? ` (${nieudane.slice(0, 5).join(', ')}${nieudane.length > 5 ? ' i inne' : ''})` : '') + '.' +
+        (nieudane.length ? ' Nieudane adresy wracają na listę, spróbuj ponownie za jakiś czas.' : '')
       )
       setPreview(null)
     } catch (err) {

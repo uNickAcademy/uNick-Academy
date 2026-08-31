@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
   const dostaliPierwszy = new Set<string>()
   for (let od = 0; ; od += STRONA) {
     const { data: logRows, error: logCzytErr } = await admin
-      .from('email_campaign_log').select('campaign, email')
+      .from('email_campaign_log').select('campaign, email, error')
       .in('campaign', [kampania, PIERWSZA_KAMPANIA])
       .range(od, od + STRONA - 1)
 
@@ -248,6 +248,11 @@ export async function POST(req: NextRequest) {
     for (const r of logRows ?? []) {
       const adres = norm(r.email as string)
       if (!adres) continue
+      // Wiersz z zapisanym błędem znaczy, że wiadomość NIE wyszła — najczęściej
+      // przez limit wysyłki. Traktowanie go jak wysłanej wypaliłoby odbiorcę
+      // na zawsze: ani nie dostał maila, ani nie wróci na listę. Taki adres
+      // ma wrócić przy kolejnym podejściu.
+      if (r.error) continue
       if (r.campaign === kampania) wyslaneWTejKampanii.add(adres)
       if (r.campaign === PIERWSZA_KAMPANIA) dostaliPierwszy.add(adres)
     }
@@ -361,6 +366,8 @@ export async function POST(req: NextRequest) {
     if (wynik.ok) {
       sent++
     } else {
+      // Zapisujemy powód w tym samym wierszu, żeby kolejne uruchomienie
+      // wiedziało, że ten adres nadal czeka na wiadomość.
       console.error(`[Comeback] Błąd wysyłki do ${r.email}: ${wynik.blad}`)
       failed.push(r.email)
       await admin.from('email_campaign_log')
