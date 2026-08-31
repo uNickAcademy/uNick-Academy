@@ -661,8 +661,12 @@ export function comebackEmail(params: {
   referralCode: string
   appUrl: string
   trackToken?: string
+  // Druga tura do tych samych osób. Ten sam mail wysłany po raz drugi bez
+  // słowa wyjaśnienia czyta się jak pomyłka systemu, więc przypomnienie
+  // mówi wprost, że pisaliśmy już wcześniej.
+  przypomnienie?: boolean
 }): { subject: string; html: string } {
-  const { firstName, referralCode, appUrl, trackToken } = params
+  const { firstName, referralCode, appUrl, trackToken, przypomnienie } = params
 
   // Link opakowany w przekierowanie zliczające. Bez tokenu zwraca oryginał.
   const t = (url: string) =>
@@ -691,7 +695,9 @@ export function comebackEmail(params: {
     .join('')
 
   return {
-    subject: `${firstName}, mamy dla Ciebie nową platformę i kod na kolejne lekcje`,
+    subject: przypomnienie
+      ? `${firstName}, Twoje konto w uNick Academy wciąż czeka`
+      : `${firstName}, mamy dla Ciebie nową platformę i kod na kolejne lekcje`,
     html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -724,6 +730,16 @@ export function comebackEmail(params: {
         </tr>
       </table>
 
+      ${przypomnienie ? `
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 20px;">
+        pisaliśmy do Ciebie na początku sierpnia o naszej nowej platformie. Konto wciąż czeka
+        nieodebrane, więc przypominamy się raz jeszcze, bo wrzesień tuż-tuż.
+      </p>
+
+      <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
+        Wszystko jest w jednym miejscu: lekcje, terminy, postępy, rozliczenia. Wystarczy ustawić hasło,
+        zajmuje to chwilę.
+      </p>` : `
       <p style="font-size: 15px; line-height: 1.8; margin: 0 0 20px;">
         mamy nadzieję, że wakacje są dokładnie takie, jak powinny być. U nas trochę cicho bez uczniów,
         więc chętnie się przypomnimy, zanim wrócicie do zajęć.
@@ -732,7 +748,7 @@ export function comebackEmail(params: {
       <p style="font-size: 15px; line-height: 1.8; margin: 0 0 16px;">
         Zaczniemy od czegoś praktycznego. Przygotowaliśmy jedno miejsce na wszystko: lekcje, terminy,
         postępy, rozliczenia. Konto już na Ciebie czeka, wystarczy ustawić hasło.
-      </p>
+      </p>`}
 
       <div style="text-align: center; margin: 0 0 8px;">
         <a href="${t(`${appUrl}/zapomniane-haslo`)}" style="display: inline-block; padding: 14px 30px; background: #1E3282; color: #FFFFFF; font-family: 'Poppins', 'Trebuchet MS', Verdana, sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
@@ -778,7 +794,12 @@ export function comebackEmail(params: {
         <a href="tel:${siteConfig.phone.e164}" style="color: #1E3282; text-decoration: none;">${siteConfig.phone.display}</a>
       </p>
       <div style="margin: 12px 0;">${social}</div>
-      <p style="color: #6B7280; font-size: 11px; margin: 0 0 4px;">Nie chcesz takich wiadomości? Odpisz „rezygnuję”, usuniemy Cię z listy.</p>
+      <p style="color: #6B7280; font-size: 11px; margin: 0 0 4px;">
+        Nie chcesz takich wiadomości?
+        ${trackToken
+          ? `<a href="${appUrl}/wypisz-sie?t=${trackToken}" style="color: #6B7280; text-decoration: underline;">Wypisz się jednym kliknięciem</a>.`
+          : `Odpisz „rezygnuję”, usuniemy Cię z listy.`}
+      </p>
       ${trackToken ? `<p style="color: #9CA3AF; font-size: 10px; margin: 0;">Sprawdzamy, czy nasze wiadomości docierają i czy linki działają. Szczegóły w <a href="${t(`${appUrl}/polityka-prywatnosci`)}" style="color: #9CA3AF;">polityce prywatności</a>.</p>` : ''}
     </div>
 
