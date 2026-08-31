@@ -154,6 +154,23 @@ export async function billFamilies(
       })
     } catch (err) {
       console.error('[Billing] checkout rodzinny:', err)
+      // Bez linku do płatności rodzina i tak dostaje maila niżej — więc z ich
+      // strony wygląda to jak zwykły rachunek, nie jak awaria. Rachunek
+      // zostawał wtedy niezapłacony bez żadnego śladu w panelu, dopóki ktoś
+      // nie zadzwonił. To jedyne miejsce, które w ogóle wie, że coś poszło
+      // nie tak, więc musi to zgłosić samo — cichy console.error ginął
+      // w logach na tygodnie.
+      try {
+        await supabase.from('admin_notifications').insert({
+          kind: 'blad_platnosci',
+          title: `Nie udało się wystawić linku do płatności: ${billLabel(bill)}`,
+          body: `${monthLabel}, kwota ${bill.total.toFixed(2)} zł. Mail do rodziny poszedł bez linku płatności — `
+            + `${err instanceof Error ? err.message : String(err)}`,
+          student_id: bill.payerId,
+        })
+      } catch (notifyErr) {
+        console.error('[Billing] admin_notifications insert error:', notifyErr)
+      }
     }
 
     await deps.sendPayment(bill.email, {
