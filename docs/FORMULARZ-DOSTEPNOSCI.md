@@ -9,8 +9,10 @@ grafik na rok szkolny 2026/2027 pod prawdziwe terminy rodzin.
 - **Zapis:** tabela `availability_declarations` w Supabase (główne źródło prawdy,
   widoczne w `/admin/dostepnosc`), plus webhook Zapiera → Google Sheets i kopia
   mailem na `SCHOOL_NOTIFY_EMAIL` — dwa dodatkowe, niezależne kanały
-- **Po wysłaniu:** rodzic dostaje mailem podziękowanie + przyznany kod polecenia
-  (50 zł zniżki dla obu stron, patrz sekcja 2 niżej)
+- **Po wysłaniu:** zgłaszająca się osoba dostaje od razu prawdziwe konto (status
+  `trial`, częściowe dane już wpisane) i mail z podziękowaniem + przyznanym
+  kodem polecenia (50 zł zniżki dla obu stron) + linkiem do ustawienia hasła —
+  patrz sekcja 2 niżej
 
 Strona jest `noindex` i celowo nie ma jej w `src/app/sitemap.ts` — po usunięciu
 nie zostanie po niej martwy link w wynikach wyszukiwania.
@@ -30,26 +32,34 @@ zespołem.
 Z panelu można oznaczyć zgłoszenie jako „Skontaktowano się” albo
 zarchiwizować, oraz wyeksportować wszystko do CSV (przycisk w nagłówku strony).
 
-## 2. Kod polecenia przy zgłoszeniu
+## 2. Konto zakłada się od razu, z prawdziwym kodem polecenia
 
-Każda zgłaszająca się rodzina dostaje mailem **własny kod polecenia**
-(wygenerowany funkcją `generate_referral_code()` — tą samą, której używa
-reszta systemu, więc format i unikalność są spójne z prawdziwymi kodami
-uczniów) do podania znajomym: kto zapisze się z tym kodem i opłaci pierwsze
-zajęcia, obie strony dostają po 50 zł zniżki.
+Zgłoszenie od razu zakłada osobie wypełniającej formularz **prawdziwe konto**
+(status ucznia `trial`, dane rodzica/dziecka już wpisane) — dokładnie tym
+samym mechanizmem, którego używa reszta publicznych zapisów w tym systemie
+(`_booking_ensure_account` + `_booking_ensure_student`, przez nową funkcję
+`public_availability_declaration()`; ten sam wzorzec co ścieżka
+„doradztwo/zajęcia indywidualne” w `src/app/api/booking/route.ts`, gdzie
+komentarz w kodzie mówi wprost: „konto powstaje od razu, żeby klient nie
+musiał zakładać go osobno”).
 
-**Ważne zastrzeżenie techniczne:** ten kod jest *zarezerwowany* (nie
-koliduje z żadnym istniejącym `students.referral_code`), ale **nie jest
-jeszcze aktywny** w automatycznym mechanizmie `register_referral` — ten
-wymaga prawdziwego wiersza w `students`, którego zgłaszająca się osoba
-jeszcze nie ma (`students.profile_id` jest `NOT NULL` — wymaga konta, którego
-formularz dostępności nie zakłada). Innymi słowy: **jeśli znajomy zapisze się
-z tym kodem, zniżka nie naliczy się sama** — dopóki system nie zostanie o to
-rozszerzony, ktoś z zespołu musi przy zapisie tej rodziny ręcznie wpisać jej
-przyznany kod jako `referral_code` w profilu ucznia (widoczny w
-`/admin/dostepnosc` przy każdym zgłoszeniu, gotowy do skopiowania). Formularz
-ma też osobne pole „Kod polecenia” na dole (`referral_code` w tabeli) — to
-kod, który TA rodzina podała, bo ktoś polecił im nas.
+Dzięki temu przyznany kod polecenia to **prawdziwy `students.referral_code`**
+tego konta, nie osobno generowany, zarezerwowany napis — działa w
+`register_referral` **natychmiast**, bez żadnego ręcznego przepisywania. Kto
+zapisze się z tym kodem i opłaci pierwsze zajęcia, obie strony dostają po
+50 zł zniżki, w pełni automatycznie.
+
+Formularz ma też osobne pole „Kod polecenia” na dole (`referral_code` w
+tabeli) — to kod, który TA rodzina podała, bo ktoś polecił im nas. Jeśli go
+poda, `register_referral()` rejestruje tę relację od razu (świadczenie
+naliczy się dopiero po realnej wpłacie — ale nie trzeba już czekać na zapis
+ani ręcznie nic dopisywać).
+
+Mail podziękowania zawiera też **jednorazowy link do ustawienia hasła**
+(`createPasswordSetupLink`, ten sam co przy innych zapisach — przekierowuje na
+`/reset-haslo`). Rodzina nie musi go użyć od razu: konto i tak już istnieje z
+częściowymi danymi, więc gdy się zdecyduje, wystarczy ustawić hasło — bez
+wypełniania niczego od nowa.
 
 ## 3. Podłączenie arkusza (Zapier)
 
@@ -104,10 +114,11 @@ podziękowania — nie chcemy dziękować za coś, czego nie zapisaliśmy.
 | `src/app/components/availability/TimeRangeSlider.tsx` + `.module.css` | suwak zakresu z dwoma uchwytami |
 | `src/app/components/availability/AvailabilityBanner.js` + `.module.css` | pasek na stronie głównej |
 | `src/app/components/availability/AvailabilityPopup.tsx` + `.module.css` | popup na stronie głównej |
-| `src/app/api/availability/route.ts` | walidacja, generowanie kodu, zapis do bazy, wysyłka do Zapiera, mail podziękowania i mail wewnętrzny |
+| `src/app/api/availability/route.ts` | walidacja, wywołanie RPC (konto + zapis), link do ustawienia hasła, wysyłka do Zapiera, mail podziękowania i mail wewnętrzny |
 | `src/lib/availability/*` | stałe, listy wyboru, walidacja, data zamknięcia |
 | `public/availability/banner.jpg` | baner na górze strony |
 | `supabase/migrations/20260828130737_availability_declarations.sql` | tabela zgłoszeń + RLS |
+| `supabase/migrations/20260828173000_availability_declaration_account.sql` | kolumna `student_id` + funkcja `public_availability_declaration()` (konto, uczeń, zapis, kod polecenia, referral) |
 | `src/app/(admin)/admin/dostepnosc/page.tsx` + `AvailabilityInboxView.tsx` | panel admina — lista zgłoszeń |
 | `src/app/api/admin/availability/route.ts` | zmiana statusu zgłoszenia + eksport CSV |
 | `availabilityThankYouEmail` w `src/lib/email/templates.ts` + `sendAvailabilityThankYou` w `send.ts` | mail podziękowania z kodem polecenia |
@@ -131,8 +142,16 @@ w treści).
 ## 6. Trwałe usunięcie
 
 Dane zgłoszeń (`availability_declarations`) mają wartość jako historyczny
-zapis preferencji rodzin — **nie trzeba** ich kasować razem z kodem. Jeśli
-mimo to chcesz sprzątnąć do końca, dorzuć krok 7.
+zapis preferencji rodzin — **nie trzeba** ich kasować razem z kodem.
+
+**Uwaga:** od kroku z automatycznym zakładaniem konta (sekcja 2) usunięcie
+kodu formularza **nie** usuwa realnych kont — każde zgłoszenie zostawia
+prawdziwy wiersz w `auth.users`/`profiles`/`students` (status `trial`,
+`signup_source = 'formularz_dostepnosc'`). Te konta mają samodzielną wartość
+(rodzina może się nimi zalogować, gdy się zdecyduje) i **nie kasuje się ich**
+razem z resztą naboru — dotyczy to wyłącznie samego formularza i kodu wokół
+niego (kroki 1–8 niżej). Jeśli mimo to chcesz sprzątnąć dane zgłoszeń do
+końca, dorzuć krok 9; kont uczniów krok 9 celowo nie rusza.
 
 1. Skasuj katalogi `src/app/[locale]/dostepnosc/`,
    `src/app/components/availability/`, `src/app/api/availability/`,
@@ -155,8 +174,12 @@ mimo to chcesz sprzątnąć do końca, dorzuć krok 7.
 6. Usuń `ZAPIER_AVAILABILITY_WEBHOOK_URL` z `.env.example` i z Vercela.
 7. W `next.config.ts` usuń wpis `{ source: "/september", ... }` z `redirects()`.
 8. Skasuj ten plik.
-9. (Opcjonalnie, tylko jeśli naprawdę chcesz skasować dane) usuń tabelę:
-   `drop table public.availability_declarations;` — nową migracją, nie ręcznie
-   w konsoli Supabase, żeby historia migracji się zgadzała.
+9. (Opcjonalnie, tylko jeśli naprawdę chcesz skasować dane zgłoszeń) nową
+   migracją — nie ręcznie w konsoli Supabase, żeby historia migracji się
+   zgadzała — usuń funkcję i tabelę:
+   `drop function public.public_availability_declaration(text, text, text, text, text, integer, text, text[], text[], text, text, text, jsonb, text, text, text);`
+   `drop table public.availability_declarations;`
+   Konta (`auth.users`/`profiles`/`students`, `signup_source =
+   'formularz_dostepnosc'`) zostają — to osobna decyzja, patrz uwaga wyżej.
 
 W sitemapie nie ma nic do sprzątania — formularz nigdy tam nie był.

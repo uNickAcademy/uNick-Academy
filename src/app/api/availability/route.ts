@@ -4,6 +4,7 @@ import { formatAvailability } from '@/lib/availability/schedule'
 import { validateAvailabilitySubmission } from '@/lib/availability/validation'
 import { FORM_CLOSES_LABEL, isFormOpen } from '@/lib/availability/window'
 import { notifySchoolEmail, sendAvailabilityThankYou } from '@/lib/email/send'
+import { createPasswordSetupLink } from '@/lib/auth/password-link'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -86,22 +87,6 @@ export async function POST(request: NextRequest) {
   const data = validation.data
   const admin = createAdminClient()
 
-  // Kod, który TA rodzina dostaje do podania znajomym — ta sama funkcja, której
-  // używa reszta systemu (generate_referral_code), więc format i unikalność są
-  // spójne z prawdziwymi kodami uczniów. Generujemy po imieniu rodzica: to on
-  // wypełnia formularz i to on będzie dzielił się kodem ze swoimi znajomymi.
-  const { data: generatedCode, error: codeError } = await admin.rpc('generate_referral_code', {
-    p_name: data.parentFirstName,
-  })
-  if (codeError || !generatedCode) {
-    console.error('[Dostępność] Nie udało się wygenerować kodu polecenia:', codeError)
-    return NextResponse.json(
-      { error: 'Nie udało się zapisać zgłoszenia. Spróbuj ponownie.' },
-      { status: 500 }
-    )
-  }
-  const assignedReferralCode = generatedCode as string
-
   // Etykiety zamiast kluczy technicznych i dostępność spłaszczona do jednego
   // zdania — arkusz ma być czytelny dla człowieka układającego grafik, a każde
   // pole ma trafić dokładnie w jedną kolumnę.
@@ -112,33 +97,45 @@ export async function POST(request: NextRequest) {
   // Zapis do bazy jest teraz głównym źródłem prawdy — stąd widać zgłoszenia
   // z poziomu admina (/admin/dostepnosc). Zapier i mail to dodatkowe kanały,
   // nie jedyny zapis, więc ich ewentualna awaria już nie blokuje zgłoszenia.
-  const { error: dbError } = await admin.from('availability_declarations').insert({
-    parent_first_name: data.parentFirstName,
-    parent_last_name: data.parentLastName,
-    email: data.email,
-    phone: data.phone,
-    child_name: data.childName,
-    child_age: data.childAge,
-    level: data.level || null,
-    mode: data.mode,
-    class_format: data.classFormat,
-    address: data.address || null,
-    school_name: data.schoolName || null,
-    school_city: data.schoolCity || null,
-    availability: data.availability,
-    availability_text: availabilityText,
-    notes: data.notes || null,
-    referral_code: data.referralCode || null,
-    assigned_referral_code: assignedReferralCode,
-    consent: true,
+  //
+  // Jedno wywołanie RPC (public_availability_declaration) robi wszystko: od
+  // razu zakłada konto i ucznia (status trial) tym samym mechanizmem co reszta
+  // publicznych zapisów (_booking_ensure_account/_booking_ensure_student), więc
+  // przyznany kod polecenia to PRAWDZIWY students.referral_code — działa w
+  // register_referral natychmiast, bez ręcznego przepisywania przy zapisie.
+  const { data: rpcRows, error: dbError } = await admin.rpc('public_availability_declaration', {
+    p_parent_first_name: data.parentFirstName,
+    p_parent_last_name: data.parentLastName,
+    p_email: data.email,
+    p_phone: data.phone,
+    p_child_name: data.childName,
+    p_child_age: data.childAge,
+    p_level: data.level || null,
+    p_mode: data.mode,
+    p_class_format: data.classFormat,
+    p_address: data.address || null,
+    p_school_name: data.schoolName || null,
+    p_school_city: data.schoolCity || null,
+    p_availability: data.availability,
+    p_availability_text: availabilityText,
+    p_notes: data.notes || null,
+    p_referral: data.referralCode || null,
   })
-  if (dbError) {
+  const result = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
+  if (dbError || !result?.assigned_referral_code) {
     console.error('[Dostępność] Zapis zgłoszenia nie powiódł się:', dbError)
     return NextResponse.json(
       { error: 'Nie udało się zapisać zgłoszenia. Spróbuj ponownie.' },
       { status: 500 }
     )
   }
+  const assignedReferralCode = result.assigned_referral_code as string
+
+  // Konto już istnieje (RPC wyżej) — link jednorazowy do ustawienia hasła
+  // wchodzi od razu do maila podziękowania, tak samo jak przy zgłoszeniach
+  // „doradztwo”/„zajęcia indywidualne" (src/app/api/booking/route.ts). Rodzina
+  // nie musi go użyć teraz — przyda się, gdy się zdecyduje.
+  const passwordLink = await createPasswordSetupLink(admin, data.email)
 
   const payload = {
     data_zgloszenia: warsawTimestamp(),
@@ -187,6 +184,7 @@ export async function POST(request: NextRequest) {
     parentFirstName: data.parentFirstName,
     childName: data.childName,
     assignedReferralCode,
+    passwordLink,
   })
 
   return NextResponse.json({ success: true }, { status: 201 })

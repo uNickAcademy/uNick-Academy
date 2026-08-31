@@ -807,10 +807,11 @@ export function availabilityThankYouEmail(params: {
   childName: string
   assignedReferralCode: string
   appUrl: string
+  passwordLink?: string | null
 }): { subject: string; html: string } {
   const parentFirstName = escapeHtmlAvailability(params.parentFirstName)
   const childName = escapeHtmlAvailability(params.childName)
-  const { assignedReferralCode, appUrl } = params
+  const { assignedReferralCode, appUrl, passwordLink } = params
 
   const content = `
     <h2 style="font-family: ${FONT_HEAD}; font-size: 22px; font-weight: 700; color: ${BRAND.navy}; margin: 0 0 16px;">
@@ -839,6 +840,16 @@ export function availabilityThankYouEmail(params: {
       Gdy ktoś zapisze się z tym kodem i opłaci pierwsze zajęcia,
       <strong style="color: ${BRAND.navy};">oboje dostajecie po 50 zł</strong> zniżki na kolejne lekcje.
     </p>
+
+    ${passwordLink ? `
+    <div style="background: ${BRAND.cream}; border-radius: 12px; padding: 20px; margin: 0 0 24px; text-align: center;">
+      <p style="font-family: ${FONT_HEAD}; font-size: 14px; font-weight: 700; color: ${BRAND.navy}; margin: 0 0 6px;">Wasze konto już czeka</p>
+      <p style="font-size: 13px; line-height: 1.6; color: ${BRAND.muted}; margin: 0 0 14px;">
+        Założyliśmy je od razu, z Waszymi danymi — jeśli się zdecydujecie, wystarczy ustawić hasło,
+        żadnego wypełniania od nowa:
+      </p>
+      ${brandBtn('Ustawiam hasło', passwordLink)}
+    </div>` : ''}
 
     <div style="border-top: 1px solid ${BRAND.cream}; padding-top: 16px;">
       <p style="font-size: 14px; line-height: 1.7; color: ${BRAND.muted}; margin: 0;">

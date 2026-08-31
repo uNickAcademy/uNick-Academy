@@ -250,6 +250,7 @@ export async function sendAvailabilityThankYou(to: string, params: {
   parentFirstName: string
   childName: string
   assignedReferralCode: string
+  passwordLink?: string | null
 }) {
   const { subject, html } = availabilityThankYouEmail({
     ...params,
