@@ -14,8 +14,9 @@ export type AvailabilitySubmission = {
   parentLastName: string
   email: string
   phone: string
+  learnerType: 'self' | 'child'
   childName: string
-  childAge: number
+  childAge: number | null
   level: string
   mode: string[]
   classFormat: string[]
@@ -88,8 +89,12 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const parentLastName = text(values.parentLastName, 80)
   const email = text(values.email, 160)
   const phone = text(values.phone, 40)
+  const learnerType = values.learnerType === 'self' || values.learnerType === 'child' ? values.learnerType : null
   const childName = text(values.childName, 80)
-  const childAge = Number(values.childAge)
+  // Wiek pytamy tylko przy „dla dziecka" — przy „dla mnie" nie ma go czym
+  // sprawdzać (dorosłych planuje się osobno od grup dziecięcych, więc wiek
+  // niczego by nie zmienił), a kolumna w bazie jest teraz na to nullable.
+  const childAge = learnerType === 'child' ? Number(values.childAge) : null
   const level = text(values.level, 40)
   const mode = stringSet(values.mode)
   const classFormat = stringSet(values.classFormat)
@@ -106,8 +111,9 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   if (!email) errors.email = 'Podaj adres e-mail.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Podaj poprawny adres e-mail.'
   if (!phone) errors.phone = 'Podaj numer telefonu.'
-  if (!childName) errors.childName = 'Podaj imię dziecka.'
-  if (!Number.isInteger(childAge) || childAge < O.MIN_AGE || childAge > O.MAX_AGE) {
+  if (!learnerType) errors.learnerType = 'Wybierz, dla kogo są zajęcia.'
+  if (!childName) errors.childName = learnerType === 'self' ? 'Podaj imię i nazwisko.' : 'Podaj imię dziecka.'
+  if (learnerType === 'child' && (!Number.isInteger(childAge) || (childAge as number) < O.MIN_AGE || (childAge as number) > O.MAX_AGE)) {
     errors.childAge = `Podaj wiek dziecka (${O.MIN_AGE}–${O.MAX_AGE} lat).`
   }
   // Poziom jest opcjonalny — sprawdzamy tylko, czy nie przyszła obca wartość.
@@ -150,6 +156,7 @@ export function validateAvailabilitySubmission(input: unknown): Result {
       parentLastName,
       email,
       phone,
+      learnerType: learnerType as 'self' | 'child',
       childName,
       childAge,
       level,

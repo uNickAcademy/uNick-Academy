@@ -162,12 +162,14 @@ export async function POST(request: NextRequest) {
   const forwarded = await forwardToZapier(payload)
 
   await notifySchoolEmail({
-    title: `Dostępność na wrzesień: ${data.childName} (${data.childAge} l.)`,
+    title: `Dostępność na wrzesień: ${data.childName}${data.childAge != null ? ` (${data.childAge} l.)` : ''}`,
     lines: [
       `Rodzic: ${data.parentFirstName} ${data.parentLastName}`,
       `E-mail: ${data.email}`,
       `Telefon: ${data.phone}`,
-      `Dziecko: ${data.childName}, ${data.childAge} lat`,
+      data.learnerType === 'self'
+        ? `Zgłoszenie dla siebie: ${data.childName}`
+        : `Dziecko: ${data.childName}, ${data.childAge} lat`,
       payload.poziom ? `Poziom: ${payload.poziom}` : '',
       `Tryb: ${trybLabel} — ${formaLabel}`,
       data.address ? `Adres: ${data.address}` : '',

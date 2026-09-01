@@ -145,12 +145,14 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       parentLastName,
       email: form.get('email'),
       phone: form.get('phone'),
+      learnerType,
       // Dla zgłoszenia „dla mnie" nie pytamy o osobne imię — to ta sama osoba,
       // co w danych kontaktowych wyżej.
       childName: learnerType === 'self'
         ? `${parentFirstName ?? ''} ${parentLastName ?? ''}`.trim()
         : form.get('childName'),
-      childAge: Number(form.get('childAge')),
+      // Wiek pytamy tylko przy „dla dziecka" — patrz pole niżej w formularzu.
+      childAge: learnerType === 'self' ? null : Number(form.get('childAge')),
       level: form.get('level'),
       mode: modes,
       classFormat: classFormats,
@@ -329,17 +331,6 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       {learnerType === 'self' && (
         <fieldset>
           <legend>O Tobie</legend>
-          <label>
-            Twój wiek *
-            <input
-              name="childAge"
-              type="number"
-              inputMode="numeric"
-              min={O.MIN_AGE}
-              max={O.MAX_AGE}
-            />
-            <FieldError name="childAge" errors={errors} />
-          </label>
           {levelField}
         </fieldset>
       )}

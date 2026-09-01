@@ -17,7 +17,7 @@ export type AvailabilityRow = {
   email: string
   phone: string
   child_name: string
-  child_age: number
+  child_age: number | null
   level: string | null
   mode: string[]
   class_format: string[]
@@ -98,7 +98,7 @@ function AvailabilityCard({ r }: { r: AvailabilityRow }) {
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-gray-900 truncate">
               {r.child_name}
-              <span className="text-gray-400 font-normal"> · {r.child_age} lat</span>
+              {r.child_age != null && <span className="text-gray-400 font-normal"> · {r.child_age} lat</span>}
             </h3>
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${STATUS_STYLE[r.status] ?? 'bg-gray-100 text-gray-500'}`}>
               {STATUS_LABEL[r.status] ?? r.status}
