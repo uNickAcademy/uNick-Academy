@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, Phone, MapPin, Gift, CalendarClock } from 'lucide-react'
+import { Mail, Phone, MapPin, Gift, CalendarClock, GraduationCap } from 'lucide-react'
 import * as O from '@/lib/availability/options'
 
 // TYMCZASOWE (nabór wrzesień 2026) — usuń razem z resztą naboru, patrz
@@ -26,6 +26,7 @@ export type AvailabilityRow = {
   school_city: string | null
   availability_text: string
   notes: string | null
+  preferred_teacher: string | null
   referral_code: string | null
   assigned_referral_code: string
 }
@@ -132,6 +133,13 @@ function AvailabilityCard({ r }: { r: AvailabilityRow }) {
         <CalendarClock size={12} className="mt-0.5 flex-shrink-0" />
         {r.availability_text}
       </p>
+
+      {r.preferred_teacher && (
+        <p className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
+          <GraduationCap size={12} className="flex-shrink-0" />
+          Preferowany nauczyciel: <b>{r.preferred_teacher}</b>
+        </p>
+      )}
 
       {r.notes && <p className="text-xs text-gray-500 italic mb-2">„{r.notes}”</p>}
 

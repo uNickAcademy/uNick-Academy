@@ -78,9 +78,22 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
     startedAt.current = Date.now()
   }, [])
 
-  const formatOptions = O.formatOptionsFor(modes)
+  // „W szkole dziecka” nie ma sensu przy zgłoszeniu „dla mnie” — nie ma
+  // czyjejś szkoły, do której miałby dojechać nauczyciel.
+  const formatOptions = O.formatOptionsFor(modes).filter(
+    (option) => learnerType !== 'self' || option.value !== O.FORMAT_NEEDING_SCHOOL
+  )
   const needsAddress = classFormats.includes(O.FORMAT_NEEDING_ADDRESS)
   const needsSchool = classFormats.includes(O.FORMAT_NEEDING_SCHOOL)
+
+  const selectLearnerType = (value: 'self' | 'child') => {
+    setLearnerType(value)
+    // Odznacz „W szkole dziecka”, gdyby był już zaznaczony przed zmianą na
+    // „dla mnie” — inaczej formularz wysłałby wybór, którego już nie pokazuje.
+    if (value === 'self') {
+      setClassFormats((current) => current.filter((format) => format !== O.FORMAT_NEEDING_SCHOOL))
+    }
+  }
 
   const toggleMode = (value: string) => {
     setModes((current) => {
@@ -164,6 +177,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
         slots: slots[day.key].map(({ start, end }) => ({ start, end })),
       })).filter((day) => day.slots.length > 0),
       notes: form.get('notes') ?? '',
+      preferredTeacher: form.get('preferredTeacher') ?? '',
       referralCode,
       consent: form.get('consent') === 'on',
       startedAt: startedAt.current,
@@ -285,7 +299,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
                 type="radio"
                 name="learnerType"
                 checked={learnerType === 'self'}
-                onChange={() => setLearnerType('self')}
+                onChange={() => selectLearnerType('self')}
               />
               <span>Dla mnie</span>
             </label>
@@ -294,7 +308,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
                 type="radio"
                 name="learnerType"
                 checked={learnerType === 'child'}
-                onChange={() => setLearnerType('child')}
+                onChange={() => selectLearnerType('child')}
               />
               <span>Dla dziecka</span>
             </label>
@@ -474,6 +488,16 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
 
       <fieldset>
         <legend>Na koniec</legend>
+        <label>
+          Preferowany nauczyciel (niewymagane)
+          <input
+            name="preferredTeacher"
+            maxLength={120}
+            placeholder="np. pani Kasia — jeśli już Was ktoś uczył albo był polecony"
+          />
+          <small>Postaramy się dopasować, ale bez gwarancji — zależy od wolnych terminów.</small>
+        </label>
+
         <label>
           Dodatkowe uwagi
           <textarea

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   const columns = [
     'created_at', 'status', 'parent_first_name', 'parent_last_name', 'email', 'phone',
     'child_name', 'child_age', 'level', 'mode', 'class_format', 'address', 'school_name',
-    'school_city', 'availability_text', 'notes', 'referral_code', 'assigned_referral_code',
+    'school_city', 'availability_text', 'notes', 'preferred_teacher', 'referral_code', 'assigned_referral_code',
   ]
   const lines = [csvRow(columns), ...(data ?? []).map((row) => csvRow(columns.map((c) => row[c])))]
 

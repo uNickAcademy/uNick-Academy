@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
     p_availability: data.availability,
     p_availability_text: availabilityText,
     p_notes: data.notes || null,
+    p_preferred_teacher: data.preferredTeacher || null,
     p_referral: data.referralCode || null,
   })
   const result = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
@@ -153,6 +154,7 @@ export async function POST(request: NextRequest) {
     miejscowosc: data.schoolCity,
     dostepnosc: availabilityText,
     uwagi: data.notes,
+    preferowany_nauczyciel: data.preferredTeacher,
     kod_polecony_przez: data.referralCode,
     kod_przyznany: assignedReferralCode,
   }
@@ -176,6 +178,7 @@ export async function POST(request: NextRequest) {
       data.schoolName ? `Szkoła: ${data.schoolName}, ${data.schoolCity}` : '',
       `Dostępność: ${availabilityText}`,
       data.notes ? `Uwagi: ${data.notes}` : '',
+      data.preferredTeacher ? `Preferowany nauczyciel: ${data.preferredTeacher}` : '',
       data.referralCode ? `Kod polecony przez: ${data.referralCode}` : '',
       `Przyznany kod polecenia: ${assignedReferralCode}`,
       forwarded ? '' : '⚠️ Nie udało się dopisać wiersza w arkuszu — przepisz ręcznie.',

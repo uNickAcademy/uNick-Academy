@@ -25,6 +25,7 @@ export type AvailabilitySubmission = {
   schoolCity: string
   availability: DayAvailability[]
   notes: string
+  preferredTeacher: string
   referralCode: string
 }
 
@@ -102,6 +103,8 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   const schoolName = text(values.schoolName, 160)
   const schoolCity = text(values.schoolCity, 120)
   const notes = text(values.notes, 2000)
+  // Niewymagane, wolny tekst — sama nazwa/imię, nie realne dopasowanie.
+  const preferredTeacher = text(values.preferredTeacher, 120)
   // Wolny tekst, tak samo jak w ConsultationModal — sprawdzany dopiero przy
   // realnym zapisie (register_referral), nie tutaj.
   const referralCode = text(values.referralCode, 40)
@@ -122,7 +125,11 @@ export function validateAvailabilitySubmission(input: unknown): Result {
   if (!mode.length || !O.isSubsetOf(O.modeOptions, mode)) {
     errors.mode = 'Wybierz, czy zajęcia mają być grupowe czy indywidualne (można oba).'
   } else {
-    const formatOptions = O.formatOptionsFor(mode)
+    // „W szkole dziecka” nie ma sensu przy zgłoszeniu „dla mnie” — patrz ten
+    // sam wybór po stronie formularza (AvailabilityForm.tsx).
+    const formatOptions = O.formatOptionsFor(mode).filter(
+      (option) => learnerType !== 'self' || option.value !== O.FORMAT_NEEDING_SCHOOL
+    )
     if (!classFormat.length || !O.isSubsetOf(formatOptions, classFormat)) {
       errors.classFormat = 'Wybierz przynajmniej jedną formę zajęć.'
     } else {
@@ -169,6 +176,7 @@ export function validateAvailabilitySubmission(input: unknown): Result {
       schoolCity: classFormat.includes(O.FORMAT_NEEDING_SCHOOL) ? schoolCity : '',
       availability,
       notes,
+      preferredTeacher,
       referralCode,
     },
   }

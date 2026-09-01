@@ -9,7 +9,10 @@ grafik na rok szkolny 2026/2027 pod prawdziwe terminy rodzin.
 - **Dla kogo:** formularz pyta na wstępie „Dla mnie” czy „Dla dziecka” —
   przy „Dla mnie” nie pyta o osobne imię (to ta sama osoba co w danych
   kontaktowych) ani o wiek (nieistotny przy planowaniu zajęć dla dorosłych,
-  kolumna `child_age` jest na to nullable)
+  kolumna `child_age` jest na to nullable), a wśród form zajęć nie proponuje
+  „W szkole dziecka”
+- **Preferowany nauczyciel:** niewymagane pole na dole formularza — życzenie
+  do uwzględnienia przy grafiku, nie realne przypisanie
 - **Zapis:** tabela `availability_declarations` w Supabase (główne źródło prawdy,
   widoczne w `/admin/dostepnosc`), plus webhook Zapiera → Google Sheets i kopia
   mailem na `SCHOOL_NOTIFY_EMAIL` — dwa dodatkowe, niezależne kanały
@@ -124,6 +127,7 @@ podziękowania — nie chcemy dziękować za coś, czego nie zapisaliśmy.
 | `supabase/migrations/20260828130737_availability_declarations.sql` | tabela zgłoszeń + RLS |
 | `supabase/migrations/20260828173000_availability_declaration_account.sql` | kolumna `student_id` + funkcja `public_availability_declaration()` (konto, uczeń, zapis, kod polecenia, referral) |
 | `supabase/migrations/20260901120000_availability_child_age_optional.sql` | `child_age` bez `NOT NULL` — „dla mnie” nie pyta o wiek |
+| `supabase/migrations/20260901130000_availability_preferred_teacher.sql` | kolumna `preferred_teacher` + nadpisana `public_availability_declaration()` o ten parametr |
 | `src/app/(admin)/admin/dostepnosc/page.tsx` + `AvailabilityInboxView.tsx` | panel admina — lista zgłoszeń |
 | `src/app/api/admin/availability/route.ts` | zmiana statusu zgłoszenia + eksport CSV |
 | `availabilityThankYouEmail` w `src/lib/email/templates.ts` + `sendAvailabilityThankYou` w `send.ts` | mail podziękowania z kodem polecenia |
