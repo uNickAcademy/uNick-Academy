@@ -234,16 +234,30 @@ export async function sendProgressDigest(to: string, params: {
   await send(to, subject, html)
 }
 
+// Zwraca wprost, czy wiadomość poszła. Zwykłe send() połyka błędy, bo przy
+// pojedynczym mailu lepiej nie wywracać całej operacji — ale przy wysyłce do
+// setek osób cichy błąd oznacza raport „wysłano 260, nieudanych 0", mimo że
+// nic nie doszło. Kampania musi znać prawdę, żeby zapisać ją w logu.
 export async function sendComeback(to: string, params: {
   firstName: string
   referralCode: string
   trackToken?: string
-}) {
+  przypomnienie?: boolean
+}): Promise<{ ok: true } | { ok: false; blad: string }> {
+  const resend = getResend()
+  if (!resend) return { ok: false, blad: 'Brak RESEND_API_KEY' }
+
   const { subject, html } = comebackEmail({
     ...params,
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl',
   })
-  return send(to, subject, html)
+  try {
+    const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+    if (error) return { ok: false, blad: `${error.name}: ${error.message}` }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, blad: err instanceof Error ? err.message : String(err) }
+  }
 }
 
 export async function sendAvailabilityThankYou(to: string, params: {

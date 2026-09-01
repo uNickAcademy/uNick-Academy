@@ -3,12 +3,36 @@
 import { useState } from 'react'
 import { RotateCcw, Send, Mail } from 'lucide-react'
 
+type Tryb = 'pierwszy' | 'przypomnienie'
+
 type Preview = {
+  tryb: Tryb
   doWyslania: number
+  wTejPartii: number
   uwaga: string | null
-  pominieto: { b2b: number; majaZaplanowaneLekcje: number; brakMaila: number; juzWyslane: number }
+  pominieto: {
+    b2b: number
+    juzSieZalogowali: number
+    majaZaplanowaneLekcje: number
+    brakMaila: number
+    wypisaniZWysylek: number
+    juzWyslane: number
+    bezPierwszejWiadomosci: number
+    rodzenstwoPodTymSamymAdresem: number
+  }
   odbiorcy: { email: string; imie: string; kod: string }[]
   podgladTematu: string | null
+}
+
+const OPISY: Record<Tryb, { etykieta: string; opis: string }> = {
+  pierwszy: {
+    etykieta: 'Pierwsza wiadomość',
+    opis: 'Do osób, które nie dostały jeszcze od nas nic o nowej platformie.',
+  },
+  przypomnienie: {
+    etykieta: 'Przypomnienie',
+    opis: 'Do tych, którzy dostali pierwszą wiadomość i mimo to nigdy się nie zalogowali.',
+  },
 }
 
 async function callComeback(body: Record<string, unknown>) {
@@ -23,6 +47,8 @@ async function callComeback(body: Record<string, unknown>) {
 }
 
 export function ComebackCampaign() {
+  const [tryb, setTryb] = useState<Tryb>('pierwszy')
+
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [previewError, setPreviewError] = useState<string | null>(null)
@@ -32,12 +58,23 @@ export function ComebackCampaign() {
   const [testResult, setTestResult] = useState<string | null>(null)
 
   const [sendingAll, setSendingAll] = useState(false)
+  const [postep, setPostep] = useState<string | null>(null)
   const [sendResult, setSendResult] = useState<string | null>(null)
 
+  function zmienTryb(nowy: Tryb) {
+    setTryb(nowy)
+    // Podgląd dotyczy konkretnego trybu. Zostawiony na ekranie po przełączeniu
+    // pokazywałby liczby z poprzedniej listy, a przycisk wysyłki działałby już
+    // na innej — to najprostszy sposób, żeby wysłać nie to, co się widzi.
+    setPreview(null)
+    setSendResult(null)
+    setPostep(null)
+  }
+
   async function handlePreview() {
-    setLoadingPreview(true); setPreviewError(null); setSendResult(null)
+    setLoadingPreview(true); setPreviewError(null); setSendResult(null); setPostep(null)
     try {
-      const data = await callComeback({})
+      const data = await callComeback({ tryb })
       setPreview(data)
     } catch (err) {
       setPreviewError(err instanceof Error ? err.message : 'Błąd')
@@ -50,8 +87,8 @@ export function ComebackCampaign() {
     if (!testTo.trim()) { setTestResult('Podaj adres e-mail.'); return }
     setSendingTest(true); setTestResult(null)
     try {
-      const data = await callComeback({ testTo: testTo.trim() })
-      setTestResult(`✅ Wysłano na ${data.wyslanoNa} (kod testowy: ${data.uzytyKod}). Sprawdź skrzynkę.`)
+      const data = await callComeback({ testTo: testTo.trim(), tryb })
+      setTestResult(`Wysłano na ${data.wyslanoNa} (kod testowy: ${data.uzytyKod}). Sprawdź skrzynkę.`)
     } catch (err) {
       setTestResult('Błąd: ' + (err instanceof Error ? err.message : 'nie udało się'))
     } finally {
@@ -62,25 +99,71 @@ export function ComebackCampaign() {
   async function handleSendAll() {
     if (!preview) return
     if (!confirm(`Wysłać do ${preview.doWyslania} odbiorców? Tej operacji nie można cofnąć.`)) return
-    setSendingAll(true); setSendResult(null)
+
+    setSendingAll(true); setSendResult(null); setPostep(null)
+
+    // Serwer wysyła partiami, bo Resend ma limit wiadomości na sekundę,
+    // a funkcja na Vercelu limit czasu. Klikamy raz, a przeglądarka dowozi
+    // kolejne partie, aż lista się skończy.
+    let wyslane = 0
+    const nieudane: string[] = []
     try {
-      const data = await callComeback({ confirm: true })
-      setSendResult(`✅ Wysłano: ${data.wyslano}. Nieudane: ${data.nieudane.length}.`)
+      for (let partia = 0; partia < 30; partia++) {
+        const data = await callComeback({ confirm: true, tryb })
+        wyslane += data.wyslano as number
+        nieudane.push(...(data.nieudane as string[]))
+        setPostep(`Wysłano ${wyslane} z ${preview.doWyslania}...`)
+        // Cała partia nieudana to zwykle limit u dostawcy poczty, a nie
+        // przypadek. Dalsze partie tylko powiększyłyby listę porażek, więc
+        // przerywamy i pokazujemy, co się stało. Nieudane adresy wracają na
+        // listę przy kolejnym podejściu.
+        if ((data.wyslano as number) === 0 && (data.nieudane as string[]).length > 0) break
+        if ((data.zostalo as number) <= 0) break
+      }
+      setSendResult(
+        `Wysłano: ${wyslane}. Nieudane: ${nieudane.length}` +
+        (nieudane.length ? ` (${nieudane.slice(0, 5).join(', ')}${nieudane.length > 5 ? ' i inne' : ''})` : '') + '.' +
+        (nieudane.length ? ' Nieudane adresy wracają na listę, spróbuj ponownie za jakiś czas.' : '')
+      )
       setPreview(null)
     } catch (err) {
-      setSendResult('Błąd: ' + (err instanceof Error ? err.message : 'nie udało się'))
+      setSendResult(
+        `Przerwane po ${wyslane} wysłanych: ` + (err instanceof Error ? err.message : 'nie udało się') +
+        ' Kliknij „Podgląd odbiorców" i wyślij ponownie, żeby dokończyć resztę listy.'
+      )
     } finally {
+      setPostep(null)
       setSendingAll(false)
     }
   }
 
+  const p = preview?.pominieto
+
   return (
     <div className="mt-10 pt-8 border-t border-gray-200">
       <h2 className="text-lg font-black text-gray-900 flex items-center gap-2 mb-1"><RotateCcw size={18} />Kampania „powrót"</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Mail do nieaktywnych uczniów: nowa platforma + osobisty kod polecenia. Wysyła się tylko raz na osobę
-        (pomija już wysłanych, aktywnych i klientów B2B).
+      <p className="text-sm text-gray-500 mb-5">
+        Mail do nieaktywnych uczniów indywidualnych: nowa platforma i osobisty kod polecenia.
+        Jeden adres dostaje jedną wiadomość, nawet gdy ma u nas dwoje dzieci. Klienci B2B,
+        osoby już zalogowane i wypisane z wysyłek są pomijane zawsze.
       </p>
+
+      <div className="flex flex-wrap gap-2 mb-2">
+        {(Object.keys(OPISY) as Tryb[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => zmienTryb(t)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+              tryb === t
+                ? 'bg-[#1E3282] text-white border-[#1E3282]'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            {OPISY[t].etykieta}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-400 mb-6">{OPISY[tryb].opis}</p>
 
       <div className="space-y-4">
         <div className="flex gap-2">
@@ -90,14 +173,17 @@ export function ComebackCampaign() {
           </button>
         </div>
 
-        {previewError && <div className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{previewError}</div>}
+        {previewError && <div className="text-sm text-[#B4321E] bg-red-50 rounded-xl px-4 py-3">{previewError}</div>}
 
-        {preview && (
+        {preview && p && (
           <div className="text-sm text-[#1E3282] bg-[#EAF3FF] rounded-xl px-4 py-3 space-y-1">
-            <p>Do wysłania: <strong>{preview.doWyslania}</strong> odbiorców.</p>
+            <p>Do wysłania: <strong>{preview.doWyslania}</strong> adresów.</p>
             <p className="text-xs opacity-80">
-              Pominięci — B2B: {preview.pominieto.b2b}, aktywni: {preview.pominieto.majaZaplanowaneLekcje},
-              bez maila: {preview.pominieto.brakMaila}, już wysłane: {preview.pominieto.juzWyslane}.
+              Pominięci — B2B: {p.b2b}, już zalogowani: {p.juzSieZalogowali},
+              aktywni: {p.majaZaplanowaneLekcje}, bez maila: {p.brakMaila},
+              wypisani: {p.wypisaniZWysylek}, już wysłane: {p.juzWyslane},
+              rodzeństwo pod tym samym adresem: {p.rodzenstwoPodTymSamymAdresem}
+              {tryb === 'przypomnienie' ? `, bez pierwszej wiadomości: ${p.bezPierwszejWiadomosci}` : ''}.
             </p>
             {preview.uwaga && <p className="text-xs text-[#B4321E] font-semibold">{preview.uwaga}</p>}
             {preview.podgladTematu && <p className="text-xs opacity-80">Temat: „{preview.podgladTematu}"</p>}
@@ -120,7 +206,7 @@ export function ComebackCampaign() {
         {preview && (
           <button onClick={handleSendAll} disabled={sendingAll || preview.doWyslania === 0}
             className="w-full py-3 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
-            <Send size={16} />{sendingAll ? 'Wysyłanie...' : `Wyślij do wszystkich (${preview.doWyslania})`}
+            <Send size={16} />{sendingAll ? (postep ?? 'Wysyłanie...') : `Wyślij do wszystkich (${preview.doWyslania})`}
           </button>
         )}
         {sendResult && <div className="text-sm text-gray-700 bg-gray-50 rounded-xl px-4 py-3">{sendResult}</div>}

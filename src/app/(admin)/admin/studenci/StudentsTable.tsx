@@ -406,7 +406,7 @@ function BulkMessageModal({ channel, recipients, onClose, onSent }: {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
             {isSms ? <MessageSquare size={18} /> : <Mail size={18} />}
@@ -501,7 +501,7 @@ function AddStudentModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-black text-gray-900">Dodaj studenta</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
@@ -755,9 +755,15 @@ function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md my-8" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
+    // Okno nigdy nie może być wyższe niż ekran. Wcześniej przewijało się całe
+    // tło (overflow-y-auto na kontenerze) przy jednoczesnym centrowaniu przez
+    // flex — a wyśrodkowany element wyższy od kontenera wystaje ponad obszar
+    // przewijania i jego górna część staje się nieosiągalna. Stąd „ucina
+    // i nie mogę edytować tego, co jest na górze". Teraz przewija się sama
+    // środkowa część okna, a nagłówek i przyciski zostają na swoim miejscu.
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[calc(100dvh-2rem)] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
           <div>
             <h2 className="text-lg font-black text-gray-900">{row.name}</h2>
             <p className="text-xs text-gray-400">{row.email}</p>
@@ -768,7 +774,7 @@ function EditModal({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Poziom</label>
             <select value={level} onChange={(e) => setLevel(e.target.value as LanguageLevel)}
@@ -1003,22 +1009,27 @@ function EditModal({
           )}
         </div>
 
-        <p className="text-xs text-gray-400 mt-3">Saldo wyliczane jest z transakcji (zakładka Płatności).</p>
+        {/* Przyciski zostają na widoku niezależnie od tego, jak długa jest
+            treść wyżej: bez tego przy dłuższej kartotece trzeba było najpierw
+            doscrollować do „Zapisz". */}
+        <div className="shrink-0 border-t border-gray-100 px-6 pt-4 pb-6">
+          <p className="text-xs text-gray-400">Saldo wyliczane jest z transakcji (zakładka Płatności).</p>
 
-        {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+          {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
 
-        <div className="flex items-center gap-3 mt-6">
-          <button onClick={handleSave} disabled={saving}
-            className="px-5 py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
-            {saving ? 'Zapisywanie...' : 'Zapisz'}
-          </button>
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50">
-            Anuluj
-          </button>
-          <button onClick={softDelete} title="Przenieś do poczekalni"
-            className="ml-auto px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 flex items-center gap-1.5">
-            <Clock size={15} />Przenieś do poczekalni
-          </button>
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button onClick={handleSave} disabled={saving}
+              className="px-5 py-2.5 rounded-xl gradient-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
+              {saving ? 'Zapisywanie...' : 'Zapisz'}
+            </button>
+            <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50">
+              Anuluj
+            </button>
+            <button onClick={softDelete} title="Przenieś do poczekalni"
+              className="ml-auto px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 flex items-center gap-1.5">
+              <Clock size={15} />Przenieś do poczekalni
+            </button>
+          </div>
         </div>
       </div>
     </div>

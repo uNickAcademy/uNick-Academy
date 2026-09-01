@@ -69,7 +69,13 @@ export function AdminSidebar({ role, pendingRequests = 0, unreadNotifications = 
         // ignorujemy chwilowe błędy sieci — odśwież przy następnym ticku
       }
     }
-    const interval = setInterval(tick, 20000)
+    // Co 20s to zbędne obciążenie: to tylko liczby na dzwonku, nie coś, co
+    // musi być aktualne co do sekundy. Dwa zapytania z KAŻDEJ otwartej karty
+    // panelu co 20s to ciągłe tło na Supabase — a to zwykły plan darmowy,
+    // ten sam, który już raz się zaciął pod obciążeniem (login się wtedy
+    // zawiesił). 115 błędów timeout na tych dwóch trasach w ciągu 2 tygodni
+    // to w większości echo tego pollingu, nie osobna awaria.
+    const interval = setInterval(tick, 60000)
     return () => clearInterval(interval)
   }, [pathname])
 

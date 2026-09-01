@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, Users, Monitor, MapPin, MessageCircleQuestion, Building2 } from 'lucide-react'
+import { Bell, Users, Monitor, MapPin, MessageCircleQuestion, Building2, AlertTriangle } from 'lucide-react'
 
 type Item = {
   id: string
@@ -19,6 +19,7 @@ const KIND_META: Record<string, { icon: typeof Users; color: string; label: stri
   stationary: { icon: MapPin, color: 'text-emerald-600 bg-emerald-50', label: 'Stacjonarnie' },
   consultation: { icon: MessageCircleQuestion, color: 'text-amber-600 bg-amber-50', label: 'Konsultacja' },
   b2b: { icon: Building2, color: 'text-gray-600 bg-gray-100', label: 'B2B' },
+  blad_platnosci: { icon: AlertTriangle, color: 'text-red-600 bg-red-50', label: 'Błąd płatności' },
 }
 
 export function NotificationsView({ items }: { items: Item[] }) {
