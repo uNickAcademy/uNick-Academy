@@ -65,6 +65,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
   const slotId = useRef(0)
   const startedAt = useRef(0)
 
+  const [learnerType, setLearnerType] = useState<'' | 'self' | 'child'>('')
   const [modes, setModes] = useState<string[]>([])
   const [classFormats, setClassFormats] = useState<string[]>([])
   const [slots, setSlots] = useState<SlotsByDay>(emptySlots)
@@ -129,14 +130,26 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (learnerType !== 'self' && learnerType !== 'child') {
+      failWith({ learnerType: 'Wybierz, dla kogo są zajęcia.' })
+      return
+    }
+
     const form = new FormData(event.currentTarget)
+    const parentFirstName = form.get('parentFirstName')
+    const parentLastName = form.get('parentLastName')
 
     const payload = {
-      parentFirstName: form.get('parentFirstName'),
-      parentLastName: form.get('parentLastName'),
+      parentFirstName,
+      parentLastName,
       email: form.get('email'),
       phone: form.get('phone'),
-      childName: form.get('childName'),
+      // Dla zgłoszenia „dla mnie" nie pytamy o osobne imię — to ta sama osoba,
+      // co w danych kontaktowych wyżej.
+      childName: learnerType === 'self'
+        ? `${parentFirstName ?? ''} ${parentLastName ?? ''}`.trim()
+        : form.get('childName'),
       childAge: Number(form.get('childAge')),
       level: form.get('level'),
       mode: modes,
@@ -203,6 +216,21 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
 
   const errorList = Object.values(errors)
 
+  const levelField = (
+    <label>
+      Poziom angielskiego
+      <select name="level" defaultValue="">
+        <option value="">Wybierz (opcjonalnie)</option>
+        {O.levelOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <FieldError name="level" errors={errors} />
+    </label>
+  )
+
   return (
     <form className={styles.shell} onSubmit={submit} noValidate>
       <p className={styles.hint}>Pola oznaczone gwiazdką (*) są wymagane.</p>
@@ -247,15 +275,62 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       </fieldset>
 
       <fieldset>
-        <legend>Dziecko</legend>
-        <div className={styles.cols}>
+        <legend>Dla kogo są zajęcia? *</legend>
+        <div className={styles.group}>
+          <div className={styles.choices}>
+            <label className={styles.choice}>
+              <input
+                type="radio"
+                name="learnerType"
+                checked={learnerType === 'self'}
+                onChange={() => setLearnerType('self')}
+              />
+              <span>Dla mnie</span>
+            </label>
+            <label className={styles.choice}>
+              <input
+                type="radio"
+                name="learnerType"
+                checked={learnerType === 'child'}
+                onChange={() => setLearnerType('child')}
+              />
+              <span>Dla dziecka</span>
+            </label>
+          </div>
+          <FieldError name="learnerType" errors={errors} />
+        </div>
+      </fieldset>
+
+      {learnerType === 'child' && (
+        <fieldset>
+          <legend>Dziecko</legend>
+          <div className={styles.cols}>
+            <label>
+              Imię dziecka *
+              <input name="childName" maxLength={80} />
+              <FieldError name="childName" errors={errors} />
+            </label>
+            <label>
+              Wiek dziecka *
+              <input
+                name="childAge"
+                type="number"
+                inputMode="numeric"
+                min={O.MIN_AGE}
+                max={O.MAX_AGE}
+              />
+              <FieldError name="childAge" errors={errors} />
+            </label>
+          </div>
+          {levelField}
+        </fieldset>
+      )}
+
+      {learnerType === 'self' && (
+        <fieldset>
+          <legend>O Tobie</legend>
           <label>
-            Imię dziecka *
-            <input name="childName" maxLength={80} />
-            <FieldError name="childName" errors={errors} />
-          </label>
-          <label>
-            Wiek dziecka *
+            Twój wiek *
             <input
               name="childAge"
               type="number"
@@ -265,20 +340,9 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
             />
             <FieldError name="childAge" errors={errors} />
           </label>
-        </div>
-        <label>
-          Poziom angielskiego
-          <select name="level" defaultValue="">
-            <option value="">Wybierz (opcjonalnie)</option>
-            {O.levelOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <FieldError name="level" errors={errors} />
-        </label>
-      </fieldset>
+          {levelField}
+        </fieldset>
+      )}
 
       <fieldset>
         <legend>Rodzaj zajęć</legend>
@@ -348,9 +412,9 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
       <fieldset>
         <legend>Preferowane dni i godziny *</legend>
         <p className={styles.sectionIntro}>
-          Zaznacz, kiedy dziecko jest wolne. Przeciągnij oba końce suwaka, żeby ustawić godziny
-          co 15 minut. Jeśli danego dnia macie dwa osobne okna — rano i wieczorem — dodaj drugi
-          przedział.
+          Zaznacz, kiedy {learnerType === 'self' ? 'masz wolne' : 'dziecko jest wolne'}. Przeciągnij
+          oba końce suwaka, żeby ustawić godziny co 15 minut. Jeśli danego dnia macie dwa osobne
+          okna — rano i wieczorem — dodaj drugi przedział.
         </p>
         <FieldError name="availability" errors={errors} />
 
@@ -445,7 +509,7 @@ export default function AvailabilityForm({ locale }: { locale: string }) {
         <label className={styles.consent}>
           <input type="checkbox" name="consent" />
           <span>
-            Wyrażam zgodę na przetwarzanie moich danych osobowych oraz danych dziecka w celu
+            Wyrażam zgodę na przetwarzanie {learnerType === 'child' ? 'moich danych osobowych oraz danych dziecka' : 'moich danych osobowych'} w celu
             ustalenia grafiku zajęć i kontaktu w tej sprawie, zgodnie z{' '}
             <Link href={`/${locale}/privacy-policy`} target="_blank" className={styles.link}>
               Polityką Prywatności
