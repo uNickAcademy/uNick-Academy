@@ -19,8 +19,8 @@ export default function AvailabilityBanner({ locale }) {
     <aside className={styles.banner}>
       <div className={`container ${styles.inner}`}>
         <p className={styles.text}>
-          <strong>Układamy grafik na rok szkolny 2026/2027.</strong> Powiedz nam, kiedy Twoje
-          dziecko ma wolne — zbieramy terminy do {FORM_CLOSES_LABEL}.
+          <strong>Układamy grafik na rok szkolny 2026/2027.</strong> Powiedz nam, kiedy Ty lub
+          Twoje dziecko macie wolne — zbieramy terminy do {FORM_CLOSES_LABEL}.
         </p>
         <Link href="/pl/dostepnosc" className={styles.cta}>
           Wypełnij formularz

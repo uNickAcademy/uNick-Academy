@@ -17,7 +17,7 @@ import styles from "./AvailabilityPage.module.css";
 
 const TITLE = "Dostępność na nowy rok szkolny";
 const DESCRIPTION =
-  "Powiedz nam, kiedy Twoje dziecko ma wolne, a ułożymy grafik zajęć angielskiego pod prawdziwe terminy rodzin.";
+  "Powiedz nam, kiedy Ty lub Twoje dziecko macie wolne, a ułożymy grafik zajęć angielskiego pod prawdziwe terminy rodzin.";
 
 // Strona jest prerenderowana, a data zamknięcia to zwykłe porównanie czasu —
 // bez odświeżania wisiałby formularz jeszcze długo po terminie. Godzina to
@@ -71,8 +71,7 @@ export default async function AvailabilityPage({ params }) {
             </h1>
             <p className={styles.lead}>
               Układamy grafik na nowy rok szkolny i chcemy go dopasować do prawdziwych terminów
-              rodzin, a nie do tabelki. Zaznacz, w jakich godzinach dziecko jest wolne — resztę
-              policzymy sami.
+              rodzin, a nie do tabelki. Zaznacz, kiedy jesteście wolni — resztę policzymy sami.
             </p>
             <p className={styles.meta}>
               {open
@@ -96,8 +95,8 @@ export default async function AvailabilityPage({ params }) {
               <h2>Formularz jest już zamknięty</h2>
               <p>
                 Dziękujemy wszystkim, którzy podesłali swoje terminy — grafik na rok szkolny
-                2026/2027 jest już układany. Jeśli chcesz dopisać dziecko do zajęć, napisz albo
-                zadzwoń, a znajdziemy miejsce.
+                2026/2027 jest już układany. Jeśli chcesz zapisać siebie albo dziecko na zajęcia,
+                napisz albo zadzwoń, a znajdziemy miejsce.
               </p>
               <div className={styles.closedActions}>
                 <Button href={`mailto:${siteConfig.email}`}>Napisz do nas</Button>
