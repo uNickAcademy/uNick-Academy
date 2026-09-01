@@ -14,6 +14,7 @@
     "@imgly/background-removal": "^1.7.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "@vercel/analytics": "^2.0.1",
     "ai": "^4.3.19",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
