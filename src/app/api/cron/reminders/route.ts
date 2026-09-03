@@ -18,6 +18,18 @@ function computeBalance(txs: { type: string; amount: number }[]): number {
   return txs.reduce((acc, tx) => (tx.type === 'charge' ? acc - Number(tx.amount) : acc + Number(tx.amount)), 0)
 }
 
+// Wstrzymane na wyraźną prośbę: wrzesień 2026, część grup ma dopiero
+// tworzyć się z zapisów napływających do 7.09 — start_date w bazie jest
+// tymczasowym rusztowaniem semestru (patrz „zmień start grup na 7.09"
+// tego samego dnia), więc automatyczne „Twoje zajęcia zaczynają się za 3
+// dni" mijałoby się z tym, co faktycznie usłyszeli od nas rodzice. Obejmuje
+// codzienne przypomnienia o lekcjach (sekcja 1) i przypomnienie o starcie
+// grupy 3 dni przed pierwszymi zajęciami (sekcja 4b) — to jedyne dwie
+// wysyłki w tym pliku, które mówią komuś „Twoja lekcja/zajęcia są o [data]".
+// Reszta (obecności, odrabianie, windykacja, mail przygotowawczy, doliczenia)
+// leci dalej bez zmian.
+const LESSON_REMINDERS_PAUSED = true
+
 export async function GET(req: NextRequest) {
   // Zabezpieczenie – tylko Vercel Cron może wywołać
   const authHeader = req.headers.get('authorization')
@@ -69,25 +81,29 @@ export async function GET(req: NextRequest) {
   // ── 1. Przypomnienia o lekcjach (codziennie) ────────────────────────────
   // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
   // żeby każda lekcja dostała dokładnie jedno przypomnienie
-  const in24h = addHours(now, 24)
-  const window = addHours(now, 48)
-  const { data: upcomingLessons } = await supabase
-    .from('lessons')
-    .select(`*, student:students(*, profile:profiles(*)), teacher:teachers(*, profile:profiles(*))`)
-    .gte('starts_at', in24h.toISOString())
-    .lte('starts_at', window.toISOString())
+  let upcomingLessonsCount = 0
+  if (!LESSON_REMINDERS_PAUSED) {
+    const in24h = addHours(now, 24)
+    const window = addHours(now, 48)
+    const { data: upcomingLessons } = await supabase
+      .from('lessons')
+      .select(`*, student:students(*, profile:profiles(*)), teacher:teachers(*, profile:profiles(*))`)
+      .gte('starts_at', in24h.toISOString())
+      .lte('starts_at', window.toISOString())
+    upcomingLessonsCount = upcomingLessons?.length ?? 0
 
-  for (const lesson of upcomingLessons ?? []) {
-    if (!lesson.student?.profile?.email) continue
-    const startsAt = new Date(lesson.starts_at)
-    await sendLessonReminder(lesson.student.profile.email, {
-      studentName: lesson.student.profile.full_name,
-      teacherName: lesson.teacher?.profile?.full_name ?? 'Nauczyciel',
-      date: format(startsAt, 'EEEE, d MMMM', { locale: pl }),
-      time: format(startsAt, 'HH:mm'),
-      type: lesson.type,
-      meetLink: lesson.meeting_url ?? undefined,
-    })
+    for (const lesson of upcomingLessons ?? []) {
+      if (!lesson.student?.profile?.email) continue
+      const startsAt = new Date(lesson.starts_at)
+      await sendLessonReminder(lesson.student.profile.email, {
+        studentName: lesson.student.profile.full_name,
+        teacherName: lesson.teacher?.profile?.full_name ?? 'Nauczyciel',
+        date: format(startsAt, 'EEEE, d MMMM', { locale: pl }),
+        time: format(startsAt, 'HH:mm'),
+        type: lesson.type,
+        meetLink: lesson.meeting_url ?? undefined,
+      })
+    }
   }
 
   // ── 2. Przypomnienia o odrabianiu (codziennie) ──────────────────────────
@@ -270,37 +286,39 @@ export async function GET(req: NextRequest) {
 
   // 4b. Trzy dni przed pierwszymi zajęciami — do wszystkich zapisanych w grupie.
   let startReminders = 0
-  const targetDay = new Date(now)
-  targetDay.setDate(targetDay.getDate() + 3)
+  if (!LESSON_REMINDERS_PAUSED) {
+    const targetDay = new Date(now)
+    targetDay.setDate(targetDay.getDate() + 3)
 
-  const { data: startingGroups } = await supabase
-    .from('groups')
-    .select('id, name, format, schedule_text, day_of_week, start_date')
-    .eq('is_active', true)
-    .not('start_date', 'is', null)
+    const { data: startingGroups } = await supabase
+      .from('groups')
+      .select('id, name, format, schedule_text, day_of_week, start_date')
+      .eq('is_active', true)
+      .not('start_date', 'is', null)
 
-  for (const g of startingGroups ?? []) {
-    const first = groupFirstLesson(g.start_date as string | null, g.day_of_week as number | null)
-    if (!first || dayKey(first) !== dayKey(targetDay)) continue
+    for (const g of startingGroups ?? []) {
+      const first = groupFirstLesson(g.start_date as string | null, g.day_of_week as number | null)
+      if (!first || dayKey(first) !== dayKey(targetDay)) continue
 
-    const { data: members } = await supabase
-      .from('group_members')
-      .select('student:students(full_name, profile:profiles(full_name, email))')
-      .eq('group_id', g.id as string)
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('student:students(full_name, profile:profiles(full_name, email))')
+        .eq('group_id', g.id as string)
 
-    for (const m of members ?? []) {
-      const st = Array.isArray(m.student) ? m.student[0] : m.student
-      const prof = st ? (Array.isArray(st.profile) ? st.profile[0] : st.profile) : null
-      const email = prof?.email as string | undefined
-      if (!email) continue
-      await sendGroupStartReminder(email, {
-        studentName: (st?.full_name as string) || (prof?.full_name as string) || '',
-        groupName: g.name as string,
-        schedule: scheduleOf(g.day_of_week as number | null, g.schedule_text as string | null),
-        firstLessonDate: format(first, 'EEEE, d MMMM yyyy', { locale: pl }),
-        format: (g.format as 'online' | 'offline' | null) ?? null,
-      })
-      startReminders++
+      for (const m of members ?? []) {
+        const st = Array.isArray(m.student) ? m.student[0] : m.student
+        const prof = st ? (Array.isArray(st.profile) ? st.profile[0] : st.profile) : null
+        const email = prof?.email as string | undefined
+        if (!email) continue
+        await sendGroupStartReminder(email, {
+          studentName: (st?.full_name as string) || (prof?.full_name as string) || '',
+          groupName: g.name as string,
+          schedule: scheduleOf(g.day_of_week as number | null, g.schedule_text as string | null),
+          firstLessonDate: format(first, 'EEEE, d MMMM yyyy', { locale: pl }),
+          format: (g.format as 'online' | 'offline' | null) ?? null,
+        })
+        startReminders++
+      }
     }
   }
 
@@ -346,8 +364,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
+    lessonRemindersPaused: LESSON_REMINDERS_PAUSED,
     autoPresent: autoPresentCount,
-    reminders: upcomingLessons?.length ?? 0,
+    reminders: upcomingLessonsCount,
     makeupReminders,
     overdueNotifications,
     statusUpdates,
