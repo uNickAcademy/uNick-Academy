@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Copy, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays, CalendarPlus } from 'lucide-react'
+import { Plus, X, Trash2, UserPlus, UsersRound, Pencil, Copy, Monitor, MapPin, Clock, Flag, RotateCcw, CalendarDays, CalendarPlus, ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { LanguageLevel, LessonType } from '@/types'
 
@@ -190,7 +191,10 @@ export function GroupsView({
                 {g.members.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {g.members.map((m) => (
-                      <span key={m.id} className="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-lg">{m.name}</span>
+                      <Link key={m.id} href={`/admin/studenci/${m.id}`} title={`Otwórz profil: ${m.name}`}
+                        className="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-lg transition-colors hover:bg-[#EAF3FF] hover:text-[#23479E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23479E]">
+                        {m.name}
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -478,8 +482,14 @@ function MembersModal({ group, studentOptions, onClose, onChanged }: {
             <p className="text-sm text-gray-400 text-center py-3">Brak członków.</p>
           ) : members.map((m) => (
             <div key={m.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-              <span className="text-sm text-gray-700 flex-1">{m.name}</span>
-              <button onClick={() => removeMember(m.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={15} /></button>
+              {/* Nazwisko prowadzi do karty ucznia — z listy członków grupy
+                  najczęściej chce się sprawdzić właśnie jego profil. */}
+              <Link href={`/admin/studenci/${m.id}`} title={`Otwórz profil: ${m.name}`}
+                className="group/member flex flex-1 items-center gap-1.5 rounded text-sm text-gray-700 hover:text-[#23479E] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23479E]">
+                {m.name}
+                <ArrowUpRight size={13} className="text-gray-300 transition-colors group-hover/member:text-[#23479E]" />
+              </Link>
+              <button onClick={() => removeMember(m.id)} title="Usuń z grupy" className="text-gray-400 hover:text-red-500"><Trash2 size={15} /></button>
             </div>
           ))}
         </div>
