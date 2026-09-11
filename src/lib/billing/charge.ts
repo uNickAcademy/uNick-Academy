@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
-  computeMonthDue, chargeDescription, periodKey, periodLabel, periodFromDateString,
-  lessonsInPeriod, pickLessonRate,
+  computeMonthDue, chargeDescription, periodKey, periodLabel,
   type DueLine, type GroupInput, type LessonInput, type PlanInput, type Period,
 } from './engine'
 
@@ -168,45 +167,6 @@ export async function chargeStudentForPeriod(
 ): Promise<ChargeOutcome> {
   const [outcome] = await chargeStudentsForPeriod(supabase, [student], period, opts)
   return outcome
-}
-
-/**
- * Zapis na zajęcia indywidualne: przy rejestracji płatna jest sama pierwsza
- * lekcja. Resztę miesiąca dolicza `chargeStudentsForPeriod` po jej odbyciu —
- * naliczenie ląduje w tym samym okresie, więc różnica wyjdzie poprawna.
- */
-export async function chargeFirstLesson(
-  supabase: SupabaseClient,
-  student: BillableStudent,
-  firstLessonAt: string,
-): Promise<{ charged: number; description: string } | null> {
-  const period = periodFromDateString(firstLessonAt)
-  const key = periodKey(period)
-
-  const [plans, lessons, existing] = await Promise.all([
-    loadPricingPlans(supabase),
-    supabase.from('lessons').select('starts_at, group_id').eq('student_id', student.id).is('cancelled_at', null),
-    supabase.from('transactions').select('id').eq('student_id', student.id).eq('billing_period', key).limit(1),
-  ])
-
-  if (existing.data && existing.data.length > 0) return null // miesiąc już ruszony
-
-  const inMonth = lessonsInPeriod(
-    (lessons.data ?? []).filter((l) => !l.group_id).map((l) => ({ startsAt: l.starts_at })),
-    period,
-  )
-  const rate = student.customLessonPrice != null && Number(student.customLessonPrice) > 0
-    ? Math.round(Number(student.customLessonPrice))
-    : Math.round(pickLessonRate(plans, Math.max(1, inMonth.length)))
-  if (rate <= 0) return null
-
-  const description = `Pierwsza lekcja — ${periodLabel(period)}`
-  const { error } = await supabase.from('transactions').insert({
-    student_id: student.id, type: 'charge', amount: rate, description, billing_period: key,
-  })
-  if (error) throw new Error(`Nie udało się naliczyć pierwszej lekcji: ${error.message}`)
-
-  return { charged: rate, description }
 }
 
 /**

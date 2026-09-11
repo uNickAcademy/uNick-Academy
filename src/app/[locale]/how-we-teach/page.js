@@ -8,12 +8,10 @@ import CTASection from "../../components/CTASection";
 import PrincipleCard from "../../components/cards/PrincipleCard";
 import { getDictionary } from "../../lib/dictionaries";
 import { buildMetadata } from "../../lib/seo";
-import { getPublicGroups } from "@/lib/supabase/queries";
 import styles from "../../components/sections.module.css";
 
-// Sekcja z zajęciami pobiera aktywne grupy z bazy — musi być dynamiczna,
-// żeby zmiany z panelu admina były widoczne od razu.
-export const dynamic = "force-dynamic";
+// Sekcja zapisów osadza formularze ActiveNow, które wczytują się po stronie
+// przeglądarki, więc sama strona może być prerenderowana jak reszta marketingu.
 
 const ICONS = ["chat", "mic", "book", "spark", "globe", "target", "compass", "heart", "smile"];
 
@@ -27,10 +25,6 @@ export default async function HowWeTeachPage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.howWeTeach;
-
-  const allGroups = await getPublicGroups();
-  const stationary = allGroups.filter((g) => g.format === "offline");
-  const online = allGroups.filter((g) => g.format === "online");
 
   return (
     <>
@@ -87,7 +81,7 @@ export default async function HowWeTeachPage({ params }) {
         </div>
       </section>
 
-      <ClassesShowcase t={t.classes} locale={locale} stationary={stationary} online={online} />
+      <ClassesShowcase t={t.classes} />
 
       <CTASection
         title={t.finalCta.title}

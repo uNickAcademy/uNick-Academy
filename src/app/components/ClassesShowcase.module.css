@@ -15,196 +15,42 @@
   line-height: 1.5;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+/* Blok zapisu: nagłówek nad osadzonym formularzem ActiveNow. */
+.block {
+  max-width: 720px;
+  margin: 0 auto;
 }
-@media (max-width: 760px) {
-  .grid { grid-template-columns: 1fr; }
+.block + .block {
+  margin-top: 48px;
 }
 
-.col {
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 253, 249, 0.9);
+.blockHead {
+  margin-bottom: 16px;
+}
+.blockTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-blue);
+  margin: 0 0 6px;
+}
+.blockText {
+  margin: 0;
+  color: var(--color-ink-soft, #5b5f66);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Karta, w której siedzi formularz. Formularz przychodzi z ActiveNow z własnym
+   stylowaniem, więc dajemy mu tylko tło, ramkę i oddech. */
+.panel {
+  background: #fff;
   border: 1px solid rgba(28, 43, 74, 0.08);
   border-radius: var(--radius-lg);
   padding: 24px;
   box-shadow: var(--shadow-card);
+  /* Ich formularz bywa szerszy od kolumny na wąskich ekranach. */
+  overflow-x: auto;
 }
-.colHead { margin-bottom: 16px; }
-.colTitle {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--color-blue);
-  margin: 0;
+@media (max-width: 560px) {
+  .panel { padding: 16px; }
 }
-.colSub {
-  font-size: 13px;
-  color: var(--color-ink-soft, #7b7f86);
-}
-
-.list {
-  list-style: none;
-  margin: 0 0 20px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
-}
-.item {
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid rgba(28, 43, 74, 0.06);
-  overflow: hidden;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.itemOpen {
-  border-color: rgba(35, 71, 158, 0.35);
-  box-shadow: 0 4px 14px rgba(28, 43, 74, 0.08);
-}
-.itemBtn {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  background: transparent;
-  border: 0;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-}
-.chevron {
-  display: inline-block;
-  margin-left: 6px;
-  color: var(--color-blue);
-  font-weight: 900;
-  transform: rotate(90deg);
-  transition: transform 0.15s ease;
-}
-.chevronOpen { transform: rotate(-90deg); }
-.desc {
-  margin: 0;
-  padding: 0 14px 14px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--color-ink-soft, #5b5f66);
-}
-.itemMain { min-width: 0; }
-.itemName {
-  display: block;
-  font-weight: 700;
-  color: var(--color-ink, #23262b);
-  font-size: 15px;
-}
-.meta {
-  display: block;
-  font-size: 12.5px;
-  color: var(--color-ink-soft, #7b7f86);
-  margin-top: 2px;
-}
-.levels {
-  display: inline-flex;
-  gap: 4px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-.level {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-blue);
-  background: #EAF3FF;
-  padding: 1px 6px;
-  border-radius: 6px;
-}
-.itemSide {
-  text-align: right;
-  flex-shrink: 0;
-}
-.price {
-  display: block;
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--color-blue);
-}
-.spots {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #16794a;
-  background: #e7f6ee;
-  padding: 2px 7px;
-  border-radius: 999px;
-}
-.spotsFull {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #b42318;
-  background: #fdeceb;
-  padding: 2px 7px;
-  border-radius: 999px;
-}
-.empty {
-  flex: 1;
-  color: var(--color-ink-soft, #7b7f86);
-  font-size: 14px;
-  padding: 8px 0 20px;
-}
-
-.cta {
-  display: block;
-  text-align: center;
-  padding: 13px 20px;
-  border-radius: 999px;
-  background: var(--color-red, #c0392b);
-  color: #fff;
-  font-weight: 800;
-  font-size: 15px;
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-.cta:hover { opacity: 0.9; }
-
-.individual {
-  margin-top: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background: var(--color-blue, #23479E);
-  color: #fff;
-  border-radius: var(--radius-lg);
-  padding: 24px 28px;
-}
-.individualTitle {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 800;
-}
-.individualText {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14.5px;
-  max-width: 520px;
-}
-.individualCta {
-  flex-shrink: 0;
-  padding: 13px 22px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--color-blue, #23479E);
-  font-weight: 800;
-  font-size: 15px;
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-.individualCta:hover { opacity: 0.9; }

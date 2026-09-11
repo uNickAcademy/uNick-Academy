@@ -1,18 +1,13 @@
-import Link from "next/link";
-import ClassGroupItem from "./ClassGroupItem";
+import { ActiveNowForm } from "./ActiveNowForm";
 import styles from "./ClassesShowcase.module.css";
 
-function GroupList({ groups, locale, t }) {
-  return (
-    <ul className={styles.list}>
-      {groups.map((g) => (
-        <ClassGroupItem key={g.id} group={g} locale={locale} t={t} />
-      ))}
-    </ul>
-  );
-}
-
-export default function ClassesShowcase({ t, locale, stationary, online }) {
+/**
+ * Sekcja zapisów. Wcześniej wypisywała grupy pobrane z naszej bazy i odsyłała
+ * do własnego kreatora. Zajęcia i płatności prowadzimy teraz w ActiveNow, więc
+ * zamiast listy grup osadzamy wprost ich formularze zapisu: grupowy i
+ * indywidualny. Aktualne grupy i wolne miejsca pokazuje sam formularz.
+ */
+export default function ClassesShowcase({ t }) {
   return (
     <section className="section">
       <div className="container">
@@ -22,39 +17,24 @@ export default function ClassesShowcase({ t, locale, stationary, online }) {
           <p className={styles.subtitle}>{t.subtitle}</p>
         </div>
 
-        <div className={styles.grid}>
-          {/* Stacjonarne */}
-          <div className={styles.col}>
-            <div className={styles.colHead}>
-              <h3 className={styles.colTitle}>{t.stationaryTitle}</h3>
-              <span className={styles.colSub}>{t.stationarySubtitle}</span>
-            </div>
-            {stationary.length > 0
-              ? <GroupList groups={stationary} locale={locale} t={t} />
-              : <p className={styles.empty}>{t.emptyStationary}</p>}
-            <Link href="/zapisy?tryb=grupa&forma=offline" className={styles.cta}>{t.signUp}</Link>
+        <div className={styles.block}>
+          <div className={styles.blockHead}>
+            <h3 className={styles.blockTitle}>{t.groupTitle}</h3>
+            <p className={styles.blockText}>{t.groupText}</p>
           </div>
-
-          {/* Online */}
-          <div className={styles.col}>
-            <div className={styles.colHead}>
-              <h3 className={styles.colTitle}>{t.onlineTitle}</h3>
-              <span className={styles.colSub}>{t.onlineSubtitle}</span>
-            </div>
-            {online.length > 0
-              ? <GroupList groups={online} locale={locale} t={t} />
-              : <p className={styles.empty}>{t.emptyOnline}</p>}
-            <Link href="/zapisy?tryb=grupa&forma=online" className={styles.cta}>{t.signUp}</Link>
+          <div className={styles.panel}>
+            <ActiveNowForm form="grupowe" />
           </div>
         </div>
 
-        {/* Lekcje indywidualne */}
-        <div className={styles.individual}>
-          <div>
-            <h3 className={styles.individualTitle}>{t.individualTitle}</h3>
-            <p className={styles.individualText}>{t.individualText}</p>
+        <div className={styles.block}>
+          <div className={styles.blockHead}>
+            <h3 className={styles.blockTitle}>{t.individualTitle}</h3>
+            <p className={styles.blockText}>{t.individualText}</p>
           </div>
-          <Link href="/zapisy?tryb=indywidualnie" className={styles.individualCta}>{t.individualCta}</Link>
+          <div className={styles.panel}>
+            <ActiveNowForm form="indywidualne" />
+          </div>
         </div>
       </div>
     </section>

@@ -1,22 +1,6 @@
 import { Quote, Star } from 'lucide-react'
 import { TESTIMONIALS, type Testimonial } from '@/lib/social-proof'
 
-// Pojedyncza opinia w kreatorze. Świadomie mała i spokojna — ma dodać powód,
-// a nie odciągnąć uwagę od przycisku obok.
-export function ProofQuote({ t }: { t: Testimonial | null }) {
-  if (!t) return null
-  return (
-    <figure className="mt-5 rounded-2xl bg-[#FFF8F0] border border-amber-100 p-4">
-      <Quote size={16} className="text-amber-400 mb-1.5" aria-hidden="true" />
-      <blockquote className="text-xs text-gray-700 leading-relaxed">{t.quote}</blockquote>
-      <figcaption className="mt-2 text-[11px] text-gray-400">
-        <span className="font-semibold text-gray-500">{t.author}</span>
-        {' · '}opinia z Facebooka, {t.date}
-      </figcaption>
-    </figure>
-  )
-}
-
 // Pasek zaufania pod kreatorem. Pod, nie nad — nie chcemy spychać formularza
 // poniżej pierwszego ekranu na telefonie, ale chcemy, żeby ktoś, kto zawaha się
 // przed pierwszym kliknięciem, miał czego się złapać.

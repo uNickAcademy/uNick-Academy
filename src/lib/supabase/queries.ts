@@ -1076,63 +1076,8 @@ export async function getAllGroups(): Promise<Group[]> {
 }
 
 // ──────────────────────────────────────────
-// PUBLICZNE – KREATOR ZAPISÓW
+// PUBLICZNE
 // ──────────────────────────────────────────
-
-export type PublicGroup = {
-  id: string; name: string; level: string; levels: string[]; schedule_text: string; description: string
-  age_range: string; ageMin: number | null; ageMax: number | null
-  color: string; capacity: number; taken: number; spots: number
-  teacherName: string; teacherId: string; teacherPhoto: string | null
-  format: 'online' | 'offline' | null
-  pricePerMonth: number | null; dayOfWeek: number | null
-  startDate: string | null; endDate: string | null
-}
-
-// Aktywne grupy z liczbą wolnych miejsc (do publicznego zapisu).
-//
-// Liczba zajętych miejsc idzie przez RPC, nie przez zagnieżdżony odczyt
-// `group_members`: polityka RLS udostępnia członkostwa wyłącznie zalogowanym,
-// więc anonimowy gość dostawał pustą tablicę — bez błędu — i każda grupa
-// pokazywała komplet wolnych miejsc. Funkcja z migracji 120 zwraca same liczby,
-// bez danych osobowych.
-export async function getPublicGroups(): Promise<PublicGroup[]> {
-  const supabase = await createClient()
-  const [{ data }, { data: seatCounts }] = await Promise.all([
-    supabase
-      .from('groups')
-      .select(`id, name, level, levels, color, capacity, schedule_text, description, age_range, age_min, age_max, format, price_per_month, day_of_week, start_date, end_date,
-               teacher:teachers(id, photo_url, profile:profiles(full_name))`)
-      .eq('is_active', true),
-    supabase.rpc('public_group_seat_counts'),
-  ])
-  const takenByGroup = new Map<string, number>(
-    ((seatCounts as { group_id: string; taken: number }[] | null) ?? []).map((c) => [c.group_id, Number(c.taken)])
-  )
-  return (data ?? []).map((g) => {
-    const capacity = (g.capacity as number) ?? 0
-    const taken = takenByGroup.get(g.id as string) ?? 0
-    const teacher = g.teacher as { id?: string; photo_url?: string | null; profile?: { full_name?: string } } | null
-    const levels = Array.isArray(g.levels) ? (g.levels as string[]) : []
-    return {
-      id: g.id as string, name: g.name as string, level: g.level as string,
-      levels: levels.length > 0 ? levels : [g.level as string],
-      schedule_text: (g.schedule_text as string) ?? '', description: (g.description as string) ?? '',
-      age_range: (g.age_range as string) ?? '',
-      ageMin: g.age_min != null ? Number(g.age_min) : null,
-      ageMax: g.age_max != null ? Number(g.age_max) : null,
-      color: (g.color as string) ?? '#23479E',
-      capacity, taken, spots: Math.max(capacity - taken, 0),
-      teacherName: teacher?.profile?.full_name ?? '—', teacherId: teacher?.id ?? '',
-      teacherPhoto: teacher?.photo_url ?? null,
-      format: (g.format as 'online' | 'offline' | null) ?? null,
-      pricePerMonth: g.price_per_month != null ? Number(g.price_per_month) : null,
-      dayOfWeek: g.day_of_week != null ? Number(g.day_of_week) : null,
-      startDate: (g.start_date as string) ?? null,
-      endDate: (g.end_date as string) ?? null,
-    }
-  }).sort((a, b) => chronoKey(a.dayOfWeek, a.schedule_text) - chronoKey(b.dayOfWeek, b.schedule_text))
-}
 
 // Tygodniowa dostępność wszystkich nauczycieli (mapowanie teacherId → sloty)
 export async function getPublicAvailability(): Promise<Record<string, Availability[]>> {

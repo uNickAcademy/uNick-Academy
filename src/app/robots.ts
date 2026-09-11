@@ -30,7 +30,6 @@ const DISALLOW_PRIVATE = [
   '/platnosci',
   '/rozliczenia',
   '/profil',
-  '/kursy',
   '/zapisy',
   '/login',
   '/logowanie',
