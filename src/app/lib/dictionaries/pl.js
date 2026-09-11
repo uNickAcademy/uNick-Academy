@@ -103,8 +103,9 @@ const pl = {
       eyebrow: "uNick Academy",
       titleLine1: "Angielski to ludzie.",
       titleAccent: "Nie perfekcja.",
-      subtitle:
-        "Konwersacyjny angielski dla dzieci, młodzieży i dorosłych — z native speakerami i międzynarodowymi lektorami. Zajęcia stacjonarne w Rumianku, w gminie Tarnowo Podgórne, oraz online.",
+      subtitle: "Konwersacyjny angielski dla dzieci, młodzieży i dorosłych z native speakerami",
+      subtitleSmall:
+        "Zajęcia stacjonarne w Rumianku, z dojazdem na terenie gmin: Tarnowo Podgórne, Kaźmierz, Rokietnica, Dopiewo, Puszczykowo, Buk, Duszniki, Komorniki, miasta Poznań oraz online.",
       mediaCaption:
         "Materiał dokumentalny — prawdziwa lekcja, w trakcie rozmowy, spontanicznie i bez scenariusza",
     },
