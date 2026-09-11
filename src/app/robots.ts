@@ -12,6 +12,11 @@ import { siteConfig } from './lib/site-config'
 // wszystkich, ale nie blokujemy zasobów _next (CSS/JS/obrazy potrzebne do
 // prawidłowego renderowania i oceny strony).
 //
+// Zapisów (/zapisy i podstrony) tu NIE ma i być nie powinno: to strona, na
+// której ktoś się zapisuje na zajęcia, więc ma się wyszukiwać. Siedziała na
+// tej liście razem z panelami, przez co Google nie mógł wejść na jedyny adres
+// prowadzący do formularza.
+//
 // Na liście NIE ma starych adresów z WordPressa (/nauczyciele, /dla-firm,
 // /metoda...), które next.config.ts przekierowuje na nowe strony: bota nie
 // wolno blokować przed adresem, przez który ma przejść dalej — inaczej stare
@@ -30,7 +35,6 @@ const DISALLOW_PRIVATE = [
   '/platnosci',
   '/rozliczenia',
   '/profil',
-  '/zapisy',
   '/login',
   '/logowanie',
   '/reset-haslo',

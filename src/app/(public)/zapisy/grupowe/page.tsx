@@ -4,6 +4,7 @@ import { SignupLayout } from '../SignupLayout'
 export const metadata: Metadata = {
   title: 'Zapisy na zajęcia grupowe — uNick Academy',
   description: 'Zapisz się na zajęcia grupowe w Rumianku lub online. Wybierz grupę i termin, resztą zajmiemy się my.',
+  alternates: { canonical: '/zapisy/grupowe' },
 }
 
 export default function ZapisyGrupowePage() {

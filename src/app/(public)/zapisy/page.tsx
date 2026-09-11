@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowRight, UsersRound, User } from 'lucide-react'
@@ -25,6 +26,12 @@ const PATHS = [
     text: 'Lekcje jeden na jeden, w terminie dopasowanym do Ciebie.',
   },
 ]
+
+export const metadata: Metadata = {
+  title: 'Zapisz się na zajęcia — uNick Academy',
+  description: 'Zapisy na angielski w Rumianku koło Tarnowa Podgórnego i online. Zajęcia grupowe w małych grupach albo lekcje jeden na jeden.',
+  alternates: { canonical: '/zapisy' },
+}
 
 export default async function ZapisyPage({ searchParams }: {
   searchParams: Promise<{ tryb?: string }>

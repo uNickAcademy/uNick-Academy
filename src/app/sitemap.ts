@@ -30,6 +30,16 @@ const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
   { path: '/foundation/privacy', lastmod: '2026-08-04', priority: 0.2, changeFrequency: 'yearly' },
 ]
 
+// Zapisy żyją poza routingiem [locale] (są tylko po polsku), więc nie mają
+// pary hreflang i nie da się ich wrzucić do list wyżej. Formularze prowadzi
+// ActiveNow, ale same strony są nasze i mają się wyszukiwać: to na nie trafia
+// ktoś szukający zapisu na angielski.
+const SIGNUP_ROUTES: { path: string; lastmod: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
+  { path: '/zapisy', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/zapisy/grupowe', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/zapisy/indywidualne', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
+]
+
 // Lokalna strona docelowa ma inny slug w każdym języku, dlatego łączymy je
 // ręcznie jako parę hreflang.
 const LOCAL_LANDING = {
@@ -68,6 +78,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: route.changeFrequency,
       priority: route.priority,
       alternates: { languages: { pl: `${BASE}/pl${route.path}`, 'x-default': `${BASE}/pl${route.path}` } },
+    })
+  }
+
+  for (const route of SIGNUP_ROUTES) {
+    entries.push({
+      url: `${BASE}${route.path}`,
+      lastModified: route.lastmod,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
     })
   }
 
