@@ -25,7 +25,7 @@ export default async function MeetUsPage({ params }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
   const t = dict.meetUs;
-  const profiles = await getTeacherPublicProfiles();
+  const profiles = await getTeacherPublicProfiles(locale);
   const teachers = getTeachers(dict).map((teacher) => {
     const profile = profiles[teacher.id];
     return {

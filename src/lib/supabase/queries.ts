@@ -413,10 +413,12 @@ export type TeacherPublicProfile = { photo: string | null; bio: string; video: s
 // Mapuje aktywnych nauczycieli na dane potrzebne na stronie /meet-us (zdjęcie, bio,
 // dostępność, filmik), kluczowane prefiksem e-maila (np. "nick@unick-academy.pl" → "nick"),
 // żeby strona marketingowa mogła nadpisać statyczny opis tymi danymi z panelu nauczyciela.
-export async function getTeacherPublicProfiles(): Promise<Record<string, TeacherPublicProfile>> {
+// `bio_pl` to opcjonalne polskie tłumaczenie — gdy ustawione, wygrywa na /pl, w przeciwnym
+// razie (i zawsze na innych lokalizacjach) używamy zwykłego `bio`.
+export async function getTeacherPublicProfiles(locale: string): Promise<Record<string, TeacherPublicProfile>> {
   const supabase = await createClient()
   const [teachersRes, availRes] = await Promise.all([
-    supabase.from('teachers').select('id, bio, photo_url, video_url, profile:profiles(email)').eq('is_active', true),
+    supabase.from('teachers').select('id, bio, bio_pl, photo_url, video_url, profile:profiles(email)').eq('is_active', true),
     supabase.from('availability').select('*').eq('is_active', true),
   ])
 
@@ -431,9 +433,11 @@ export async function getTeacherPublicProfiles(): Promise<Record<string, Teacher
     const profile = rec.profile as { email?: string } | null
     const email = profile?.email
     if (!email) continue
+    const defaultBio = (rec.bio as string) ?? ''
+    const bioPl = rec.bio_pl as string | null
     map[email.split('@')[0].toLowerCase()] = {
       photo: (rec.photo_url as string) ?? null,
-      bio: (rec.bio as string) ?? '',
+      bio: locale === 'pl' ? bioPl || defaultBio : defaultBio,
       video: (rec.video_url as string) ?? null,
       availability: availByTeacher[rec.id as string] ?? [],
     }
