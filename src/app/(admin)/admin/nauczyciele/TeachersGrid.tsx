@@ -6,12 +6,14 @@ import { Star, Users, BookOpen, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CONTRACT_TYPE_LABELS } from '@/lib/payroll/pl-zlecenie'
 import type { TeacherContractType } from '@/types'
+import { PhotoUpload } from '@/app/(teacher)/nauczyciel/profil/PhotoUpload'
 
 type Card = {
   id: string
   name: string
   email: string
   color: string
+  photoUrl: string
   rating: number
   isActive: boolean
   hourlyRate: number | null
@@ -147,6 +149,8 @@ function EditModal({ t, onClose, onSaved }: { t: Card; onClose: () => void; onSa
         </div>
 
         <div className="space-y-4">
+          <PhotoUpload teacherId={t.id} photoUrl={t.photoUrl} />
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stawka indyw. (zł/h)</label>

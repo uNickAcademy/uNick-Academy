@@ -16,6 +16,7 @@ export default async function NauczycieleAdminPage() {
       name: t.profile?.full_name ?? '—',
       email: t.profile?.email ?? '',
       color: t.color,
+      photoUrl: t.photo_url ?? '',
       rating: t.rating,
       isActive: t.is_active,
       hourlyRate: t.hourly_rate ?? null,
