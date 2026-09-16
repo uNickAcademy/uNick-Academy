@@ -1,32 +1,58 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
+import UNickorn from '@/app/components/UNickorn'
 import { SignMeUpForm } from './SignMeUpForm'
-import { TrustStrip, FeaturedProof } from '../zapisy/SocialProof'
+import styles from './SignMeUp.module.css'
 
 export const metadata: Metadata = {
-  title: 'Zgłoś się na angielski — uNick Academy',
-  description: 'Zostaw imię i numer, oddzwonimy w ciągu jednego dnia roboczego. Angielski w Rumianku koło Tarnowa Podgórnego i online, dla dzieci, nastolatków, dorosłych i firm.',
+  title: 'Zgłoś chęć udziału w zajęciach — uNick Academy',
+  description: 'Powiedz nam, że chcecie chodzić na angielski, a my oddzwonimy i ustalimy resztę. Rumianek koło Tarnowa Podgórnego i online, dla dzieci, nastolatków, dorosłych i firm.',
   alternates: { canonical: '/sign-me-up' },
 }
 
 export default function SignMeUpPage() {
   return (
-    <div className="min-h-screen bg-[#FFF8F0] px-4 py-12">
-      <div className="mx-auto max-w-xl">
-        <div className="mb-8 text-center">
-          <h1 className="mb-3 text-3xl font-black text-gray-900 sm:text-4xl">
-            Zostaw numer, oddzwonimy
-          </h1>
-          <p className="text-base leading-relaxed text-gray-500">
-            Nie musisz teraz wybierać grupy, poziomu ani terminu. Powiedz nam, dla kogo
-            szukacie zajęć, a resztę ustalimy w rozmowie.
-          </p>
-        </div>
-
-        <SignMeUpForm />
-
-        <TrustStrip />
-        <FeaturedProof />
+    <div className={styles.page}>
+      <div className={styles.banner}>
+        <Image
+          src="/availability/banner.jpg"
+          alt="uNickorn, maskotka uNick Academy, w klasie językowej"
+          width={2172}
+          height={724}
+          priority
+          sizes="100vw"
+          className={styles.bannerImage}
+        />
       </div>
+
+      <section className={styles.hero}>
+        <div className={`${styles.container} ${styles.heroGrid}`}>
+          <div className={styles.heroCopy}>
+            <span className={styles.eyebrow}>Rok szkolny 2026/2027</span>
+            <h1 className={styles.title}>
+              Zgłoś chęć udziału <span className={styles.accent}>w zajęciach</span>
+            </h1>
+            <p className={styles.lead}>
+              Nie musisz teraz wybierać grupy, poziomu ani terminu. Daj nam znać, że
+              chcecie chodzić na angielski, a my oddzwonimy i ustalimy resztę w rozmowie.
+            </p>
+            <p className={styles.meta}>
+              Trzy pola wystarczą. Odezwiemy się w ciągu jednego dnia roboczego.
+            </p>
+          </div>
+          <div className={styles.mascot}>
+            <span className={styles.floating}>
+              <UNickorn variant="wave" size={170} />
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.formSection}>
+        <div className={styles.container}>
+          <SignMeUpForm />
+        </div>
+      </section>
     </div>
   )
 }

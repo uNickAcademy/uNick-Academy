@@ -1,0 +1,372 @@
+/* Strona zgłoszenia zbudowana na wzór /september (formularz dostępności).
+   Tokeny są tu wypisane wprost, a nie brane z marketing.css: ten arkusz
+   przestawia globalnie body, a, h1-h4 i p, więc wciągnięty do grupy (public)
+   rozjechałby tutejszą nawigację i stopkę. Wartości pochodzą z :root
+   w src/app/[locale]/marketing.css i mają tam zostać jedyną kopią prawdy. */
+
+.page {
+  --red: #C0392B;
+  --blue: #1C2B4A;
+  --cream: #FAF4EC;
+  --warm-white: #FFFDF9;
+  --ink: #25303F;
+  --ink-soft: #4E5867;
+  --muted: #767F8C;
+  --border: #E7DFD2;
+  --shadow-card: 0 14px 40px -20px rgba(28, 43, 74, 0.18);
+
+  background: var(--warm-white);
+  color: var(--ink);
+}
+
+.banner {
+  width: 100%;
+  max-height: min(34vh, 300px);
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.bannerImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Twarz maskotki siedzi w górnej połowie kadru — przy przycinaniu na
+     szerokich ekranach trzymamy ją w widoku zamiast centrować środek. */
+  object-position: center 30%;
+}
+
+.hero {
+  padding: clamp(36px, 6vw, 72px) 0 clamp(20px, 3vw, 36px);
+  background: linear-gradient(180deg, var(--cream) 0%, var(--warm-white) 100%);
+}
+
+.container {
+  width: min(100% - 40px, 820px);
+  margin-inline: auto;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 4vw, 48px);
+}
+
+.heroCopy {
+  display: grid;
+  gap: 14px;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(30px, 5.5vw, 52px);
+  line-height: 1.1;
+  color: var(--blue);
+  text-wrap: balance;
+}
+
+.accent {
+  color: var(--red);
+}
+
+.lead {
+  margin: 0;
+  max-width: 54ch;
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.meta {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.mascot {
+  justify-self: end;
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+.floating {
+  display: inline-block;
+  animation: gentleFloat 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating { animation: none; }
+}
+
+.formSection {
+  padding: clamp(20px, 3vw, 36px) 0 clamp(48px, 7vw, 96px);
+}
+
+@media (max-width: 780px) {
+  .heroGrid { grid-template-columns: 1fr; }
+  /* Na telefonie maskotka w pełnym rozmiarze spychała formularz poniżej
+     drugiego ekranu. Zostaje jako akcent, ale mniejszy i wyśrodkowany. */
+  .mascot { justify-self: center; }
+  .mascot img { width: 104px; height: auto; }
+}
+
+/* ── formularz ─────────────────────────────────────────────── */
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 36px;
+  box-shadow: var(--shadow-card);
+  padding: clamp(22px, 4vw, 40px);
+}
+
+.fields {
+  display: grid;
+  gap: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.optional {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 13px 16px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--muted);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(28, 43, 74, 0.12);
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.chipOn {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* ── rozwijane szczegóły ───────────────────────────────────── */
+
+.details {
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  background: var(--cream);
+  padding: 4px 18px;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue);
+  cursor: pointer;
+  list-style: none;
+}
+.summary::-webkit-details-marker { display: none; }
+
+.summaryHint {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.chevron {
+  transition: transform 0.2s;
+}
+.details[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.detailsBody {
+  display: grid;
+  gap: 18px;
+  padding: 4px 0 20px;
+}
+
+.twoUp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 540px) {
+  .twoUp { grid-template-columns: 1fr; }
+}
+
+/* ── zgody i wysyłka ───────────────────────────────────────── */
+
+.consents {
+  display: grid;
+  gap: 11px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.consent input {
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  accent-color: var(--blue);
+}
+
+.consent a {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.error {
+  margin: 0;
+  padding: 13px 16px;
+  font-size: 14px;
+  color: #8A2318;
+  background: #FBEDEA;
+  border: 1px solid #F0C8C0;
+  border-radius: 14px;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 17px 24px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--red);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.submit:hover:not(:disabled) { opacity: 0.9; }
+.submit:disabled { opacity: 0.6; cursor: default; }
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footnote {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── potwierdzenie ─────────────────────────────────────────── */
+
+.done {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: clamp(28px, 5vw, 56px);
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 36px;
+  box-shadow: var(--shadow-card);
+}
+
+.doneTitle {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(24px, 4vw, 32px);
+  color: var(--blue);
+}
+
+.doneText {
+  margin: 0;
+  max-width: 48ch;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
