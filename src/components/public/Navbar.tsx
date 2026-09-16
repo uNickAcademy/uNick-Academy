@@ -19,7 +19,7 @@ export function Navbar() {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-[#23479E] transition-colors">Zaloguj się</Link>
-          <Link href="/zapisy" className="px-4 py-2 text-sm font-semibold text-white rounded-full bg-[#D72614] hover:bg-[#B81E10] transition-colors">Zapisz się</Link>
+          <Link href="/sign-me-up" className="px-4 py-2 text-sm font-semibold text-white rounded-full bg-[#D72614] hover:bg-[#B81E10] transition-colors">Zapisy</Link>
         </div>
         <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
           {open ? <X size={24} /> : <Menu size={24} />}
@@ -31,7 +31,7 @@ export function Navbar() {
           <Link href="/pl/companies" className="font-medium text-gray-700" onClick={() => setOpen(false)}>Dla firm</Link>
           <Link href="/pl/meet-us" className="font-medium text-gray-700" onClick={() => setOpen(false)}>Nauczyciele</Link>
           <Link href="/login" className="font-medium text-gray-700" onClick={() => setOpen(false)}>Zaloguj się</Link>
-          <Link href="/zapisy" className="px-4 py-2 text-sm font-semibold text-white rounded-full bg-[#D72614] text-center" onClick={() => setOpen(false)}>Zapisz się</Link>
+          <Link href="/sign-me-up" className="px-4 py-2 text-sm font-semibold text-white rounded-full bg-[#D72614] text-center" onClick={() => setOpen(false)}>Zapisy</Link>
         </div>
       )}
     </nav>

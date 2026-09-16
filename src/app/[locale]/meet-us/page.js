@@ -113,7 +113,7 @@ export default async function MeetUsPage({ params }) {
       <CTASection
         title={t.finalCta.title}
         subtitle={t.finalCta.subtitle}
-        signupHref="/zapisy"
+        signupHref="/sign-me-up"
         signupLabel={dict.common.buttons.signUp}
       />
     </>

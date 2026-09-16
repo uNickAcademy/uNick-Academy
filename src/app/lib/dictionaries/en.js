@@ -49,7 +49,7 @@ const en = {
       meetWholeTeam: "Meet the whole team",
       seeADayInClass: "See a day in class",
       explore: "Explore",
-      signUp: "I want to sign up",
+      signUp: "Sign up",
       signUpShort: "Sign up",
       bookLesson: "Book a lesson",
       sendMessage: "Send message",

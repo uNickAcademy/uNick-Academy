@@ -24,7 +24,7 @@ export function Footer() {
             <li><Link href="/dla-siebie" className="hover:text-white transition-colors">Dla siebie</Link></li>
             <li><Link href="/pl/companies" className="hover:text-white transition-colors">Dla firm</Link></li>
             <li><Link href="/pl/meet-us" className="hover:text-white transition-colors">Nauczyciele</Link></li>
-            <li><Link href="/zapisy" className="hover:text-white transition-colors">Zapisz się</Link></li>
+            <li><Link href="/sign-me-up" className="hover:text-white transition-colors">Zapisy</Link></li>
           </ul>
         </div>
 

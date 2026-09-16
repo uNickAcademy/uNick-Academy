@@ -104,8 +104,8 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-400 mt-6">
           Nie masz konta?{' '}
-          <Link href="/zapisy" className="text-[#23479E] font-medium hover:underline">
-            Zapisz się
+          <Link href="/sign-me-up" className="text-[#23479E] font-medium hover:underline">
+            Zgłoś się na zajęcia
           </Link>
         </p>
       </div>

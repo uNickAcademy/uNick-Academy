@@ -100,7 +100,7 @@ export const platformLinks = {
   parentLogin: { href: "/login" },
   adminPanel: { href: "/admin/dashboard" },
   login: { href: "/login" },
-  signup: { href: "/zapisy" },
+  signup: { href: "/sign-me-up" },
 };
 
 const NAV_ROUTES = [
