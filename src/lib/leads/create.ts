@@ -15,6 +15,9 @@ export type LeadEntryPoint =
   | 'contact_form'
   | 'group_list_button'
   | 'advice'
+  // Krótkie zgłoszenie z /sign-me-up: imię, telefon i dla kogo. Reszta,
+  // czyli poziom, termin i grupa, ustala się w rozmowie, nie w formularzu.
+  | 'sign_me_up'
 
 export type LeadStudentType = 'child' | 'teen' | 'adult' | 'corporate'
 export type LeadLocation = 'rumianek' | 'online' | 'any'

@@ -35,6 +35,7 @@ const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
 // ActiveNow, ale same strony są nasze i mają się wyszukiwać: to na nie trafia
 // ktoś szukający zapisu na angielski.
 const SIGNUP_ROUTES: { path: string; lastmod: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
+  { path: '/sign-me-up', lastmod: '2026-09-16', priority: 1.0, changeFrequency: 'monthly' },
   { path: '/zapisy', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/grupowe', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/indywidualne', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
