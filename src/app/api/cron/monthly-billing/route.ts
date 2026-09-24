@@ -5,6 +5,7 @@ import { createCheckoutSession } from '@/lib/stripe/checkout'
 import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/charge'
 import { billFamilies } from '@/lib/billing/family'
 import { periodOf, periodLabel } from '@/lib/billing/engine'
+import { AUTOMATIC_MESSAGES_PAUSED } from '@/lib/messaging/automatic'
 
 // Cron 1. dnia miesiąca (vercel.json: "0 6 1 * *").
 //
@@ -34,14 +35,21 @@ export async function GET(req: NextRequest) {
   // (incydent 1.08 — sporne obciążenie w trakcie wyjaśniania), a computeMonthDue
   // strukturalnie zwraca 0 zł bez kursu w toku i bez lekcji w miesiącu, więc
   // oba zabezpieczenia z tamtego incydentu są tu zachowane.
-  const billed = await billFamilies(supabase, outcomes, label, {
-    createCheckout: (opts) => createCheckoutSession({
-      ...opts,
-      successUrl: `${base}/platnosci?success=true`,
-      cancelUrl: `${base}/platnosci?cancelled=true`,
-    }),
-    sendPayment: sendMonthlyPayment,
-  })
+  //
+  // Przy wstrzymanych wysyłkach naliczenia lecą dalej (księgi mają się zgadzać),
+  // ale rachunek z linkiem do płatności nie idzie do nikogo. billFamilies nic
+  // nie dopisuje do transakcji — zakłada tylko sesję Stripe i wysyła maila —
+  // więc pominięcie go nie rusza sald.
+  const billed = AUTOMATIC_MESSAGES_PAUSED
+    ? { families: 0, emailed: 0, total: 0 }
+    : await billFamilies(supabase, outcomes, label, {
+      createCheckout: (opts) => createCheckoutSession({
+        ...opts,
+        successUrl: `${base}/platnosci?success=true`,
+        cancelUrl: `${base}/platnosci?cancelled=true`,
+      }),
+      sendPayment: sendMonthlyPayment,
+    })
 
   const charged = outcomes.filter((o) => o.charged > 0).length
 
@@ -54,5 +62,6 @@ export async function GET(req: NextRequest) {
     emailed: billed.emailed,
     total: billed.total,
     skipped: outcomes.length - charged,
+    wysylkiWstrzymane: AUTOMATIC_MESSAGES_PAUSED,
   })
 }

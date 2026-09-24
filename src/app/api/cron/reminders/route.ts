@@ -6,6 +6,7 @@ import { chargeStudentsForPeriod, loadBillableStudents } from '@/lib/billing/cha
 import { periodOf, periodLabel } from '@/lib/billing/engine'
 import { billFamilies } from '@/lib/billing/family'
 import { activeStudentIds } from '@/lib/students/activity'
+import { AUTOMATIC_MESSAGES_PAUSED } from '@/lib/messaging/automatic'
 import { format, addHours } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
@@ -18,17 +19,10 @@ function computeBalance(txs: { type: string; amount: number }[]): number {
   return txs.reduce((acc, tx) => (tx.type === 'charge' ? acc - Number(tx.amount) : acc + Number(tx.amount)), 0)
 }
 
-// Wstrzymane na wyraźną prośbę: wrzesień 2026, część grup ma dopiero
-// tworzyć się z zapisów napływających do 7.09 — start_date w bazie jest
-// tymczasowym rusztowaniem semestru (patrz „zmień start grup na 7.09"
-// tego samego dnia), więc automatyczne „Twoje zajęcia zaczynają się za 3
-// dni" mijałoby się z tym, co faktycznie usłyszeli od nas rodzice. Obejmuje
-// codzienne przypomnienia o lekcjach (sekcja 1) i przypomnienie o starcie
-// grupy 3 dni przed pierwszymi zajęciami (sekcja 4b) — to jedyne dwie
-// wysyłki w tym pliku, które mówią komuś „Twoja lekcja/zajęcia są o [data]".
-// Reszta (obecności, odrabianie, windykacja, mail przygotowawczy, doliczenia)
-// leci dalej bez zmian.
-const LESSON_REMINDERS_PAUSED = true
+// Wszystkie wysyłki poniżej są bramkowane jedną flagą z
+// lib/messaging/automatic. Wcześniej stała tu LESSON_REMINDERS_PAUSED, która
+// wyciszała dwie wysyłki z siedmiu — reszta (odrabianie, windykacja,
+// podsumowania, mail przygotowawczy, rachunek) leciała dalej.
 
 export async function GET(req: NextRequest) {
   // Zabezpieczenie – tylko Vercel Cron może wywołać
@@ -82,7 +76,7 @@ export async function GET(req: NextRequest) {
   // Cron działa raz dziennie – obejmujemy pełną dobę „jutro” (24–48h w przód),
   // żeby każda lekcja dostała dokładnie jedno przypomnienie
   let upcomingLessonsCount = 0
-  if (!LESSON_REMINDERS_PAUSED) {
+  if (!AUTOMATIC_MESSAGES_PAUSED) {
     const in24h = addHours(now, 24)
     const window = addHours(now, 48)
     const { data: upcomingLessons } = await supabase
@@ -107,7 +101,11 @@ export async function GET(req: NextRequest) {
   }
 
   // ── 2. Przypomnienia o odrabianiu (codziennie) ──────────────────────────
-  const { data: excusedLessons } = await supabase
+  //
+  // Przy wstrzymanych wysyłkach nie ruszamy też `makeup_reminded`: gdyby
+  // zostało odhaczone bez wysłanego maila, po ponownym włączeniu nikt już nie
+  // dostałby przypomnienia o zaległym odrabianiu.
+  const { data: excusedLessons } = AUTOMATIC_MESSAGES_PAUSED ? { data: [] } : await supabase
     .from('lessons')
     .select('id, starts_at, student:students(id, profile:profiles(full_name, email))')
     .eq('attendance', 'excused')
@@ -139,7 +137,11 @@ export async function GET(req: NextRequest) {
   let statusUpdates = 0
   let progressDigests = 0
 
-  if (isMonday) {
+  // Windykacja i tygodniowe podsumowanie postępów to dwie wysyłki, więc przy
+  // wstrzymanych wiadomościach cały poniedziałkowy blok stoi. Razem z nimi
+  // stoi przestawianie statusu na „zaległość": ten status jest konsekwencją
+  // wezwania do zapłaty, a nie odwrotnie.
+  if (isMonday && !AUTOMATIC_MESSAGES_PAUSED) {
     // Studenci indywidualni (B2B rozlicza firma) – aktywni/próbni/zalegli
     const { data: students } = await supabase
       .from('students')
@@ -259,7 +261,7 @@ export async function GET(req: NextRequest) {
 
   // 4a. Dobę po rezerwacji: co zabrać / jak dojechać albo link i test połączenia.
   let prepEmails = 0
-  const { data: freshBookings } = await supabase
+  const { data: freshBookings } = AUTOMATIC_MESSAGES_PAUSED ? { data: [] } : await supabase
     .from('leads')
     .select('first_name, email, interested_group_id')
     .eq('entry_point', 'zapisy_wizard')
@@ -286,7 +288,7 @@ export async function GET(req: NextRequest) {
 
   // 4b. Trzy dni przed pierwszymi zajęciami — do wszystkich zapisanych w grupie.
   let startReminders = 0
-  if (!LESSON_REMINDERS_PAUSED) {
+  if (!AUTOMATIC_MESSAGES_PAUSED) {
     const targetDay = new Date(now)
     targetDay.setDate(targetDay.getDate() + 3)
 
@@ -352,8 +354,13 @@ export async function GET(req: NextRequest) {
     topUpTotal = outcomes.reduce((a, o) => a + o.charged, 0)
 
     // Rodzic dostaje jeden rachunek za wszystkie dzieci, nie osobny za każde.
+    //
+    // Przy wstrzymanych wysyłkach naliczenie w księgach zostaje, ale rachunek
+    // nie wychodzi: billFamilies tylko zakłada sesję płatności i wysyła maila,
+    // nic nie dopisuje do transakcji. Uwaga, to znaczy, że salda rosną w ciszy
+    // — patrz komentarz przy AUTOMATIC_MESSAGES_PAUSED.
     const base = process.env.NEXT_PUBLIC_APP_URL || ''
-    await billFamilies(supabase, outcomes, periodLabel(period), {
+    if (!AUTOMATIC_MESSAGES_PAUSED) await billFamilies(supabase, outcomes, periodLabel(period), {
       createCheckout: (opts) => createCheckoutSession({
         ...opts,
         successUrl: `${base}/platnosci?success=true`,
@@ -364,7 +371,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    lessonRemindersPaused: LESSON_REMINDERS_PAUSED,
+    wysylkiWstrzymane: AUTOMATIC_MESSAGES_PAUSED,
     autoPresent: autoPresentCount,
     reminders: upcomingLessonsCount,
     makeupReminders,
