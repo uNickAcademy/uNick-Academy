@@ -293,7 +293,7 @@ export default function BallForm() {
           <input type="checkbox" name="privacyAcknowledged" />
           <span>
             Zapoznałem/am się z{' '}
-            <a href="/pl/foundation/privacy" target="_blank" rel="noreferrer">informacją o przetwarzaniu danych</a>{' '}
+            <a href="/pl/foundation/bal-dane" target="_blank" rel="noreferrer">informacją o przetwarzaniu danych</a>{' '}
             przez UNICK ACADEMY FOUNDATION.
           </span>
         </label>
