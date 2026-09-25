@@ -103,6 +103,49 @@ const ballWrap = (body: string) => `<!doctype html><html lang="pl"><body style="
  * bez tego strona pokazywałaby „wysłaliśmy e-mail" także wtedy, gdy nic nie
  * wyszło, a gość zostałby bez numeru rachunku i bez wiedzy, że coś poszło źle.
  */
+/**
+ * Powiadomienie dla Fundacji o osiągnięciu progu frekwencji.
+ *
+ * Adres jest wpisany na sztywno, a nie brany z FOUNDATION_NOTIFY_EMAIL: to
+ * wiadomość zamówiona wprost na hello@unick-academy.pl i ma tam trafić
+ * niezależnie od tego, jak ustawione są zmienne powiadomień.
+ */
+export async function sendBallMilestone(to: string, p: {
+  threshold: number
+  seats: number
+  registrations: number
+  paidSeats: number
+}): Promise<boolean> {
+  const resend = getResend()
+  if (!resend) {
+    console.error('[Bal] Brak RESEND_API_KEY — powiadomienie o progu NIE zostało wysłane.')
+    return false
+  }
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://unick-academy.pl'}/admin/bal`
+  const html = ballWrap(
+    `<h2 style="margin-top:0">Mamy ${p.seats} zgłoszonych miejsc</h2>`
+    + `<p>Liczba zgłoszonych uczestników The uNickorn Ball przekroczyła ${p.threshold}.</p>`
+    + `<table style="width:100%;border-collapse:collapse;margin:22px 0;border-top:1px solid #e3dccd;border-bottom:1px solid #e3dccd">`
+    + `<tr><td style="padding:9px 0;color:#5b6675;font-size:13px">Zgłoszone miejsca</td><td style="padding:9px 0;font-weight:bold">${p.seats}</td></tr>`
+    + `<tr><td style="padding:9px 0;color:#5b6675;font-size:13px">W tym opłacone</td><td style="padding:9px 0;font-weight:bold">${p.paidSeats}</td></tr>`
+    + `<tr><td style="padding:9px 0;color:#5b6675;font-size:13px">Liczba zgłoszeń</td><td style="padding:9px 0;font-weight:bold">${p.registrations}</td></tr>`
+    + `</table>`
+    + `<p>To powiadomienie wychodzi tylko raz. Pełna lista jest w panelu: `
+    + `<a href="${url}" style="color:#8A6A28">${url}</a>.</p>`
+  )
+  try {
+    await resend.emails.send({
+      from: FOUNDATION_FROM, to,
+      subject: `The uNickorn Ball: ${p.seats} zgłoszonych miejsc`,
+      html,
+    })
+    return true
+  } catch (err) {
+    console.error('[Bal] Nie udało się wysłać powiadomienia o progu:', err)
+    return false
+  }
+}
+
 export async function sendBallRegistration(to: string, p: {
   reference: string
   contactName: string

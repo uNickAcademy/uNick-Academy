@@ -8,7 +8,7 @@ import { BALL, MAX_PER_KIND, summarise, type TicketCounts } from './event'
  * miejsc są LICZONE tutaj z wybranych biletów, a nie przyjmowane z żądania —
  * inaczej dałoby się zgłosić dziesięć miejsc za trzysta złotych.
  *
- * Wzorzec (honeypot `website` + minimalny czas wypełniania `startedAt`) jest
+ * Wzorzec (ukryta pułapka + minimalny czas wypełniania `startedAt`) jest
  * ten sam co w deklaracjach Fundacji, żeby oba formularze broniły się tak samo.
  */
 
@@ -50,10 +50,19 @@ export function validateBallRegistration(input: unknown): Result {
   const errors: Record<string, string> = {}
 
   // Pułapka na boty: pole ukryte przed człowiekiem, wypełniane przez skrypty.
-  if (text(values.website)) errors.form = 'Nie udało się wysłać zgłoszenia.'
+  //
+  // Nazwa jest celowo bez znaczenia. Wcześniej pole nazywało się „website"
+  // i Chrome autouzupełniał je adresem ze swojego profilu razem z resztą
+  // formularza — prawdziwe zgłoszenia leciały do kosza razem z botami.
+  //
+  // Komunikat podaje kontakt, bo gdyby pułapka kiedyś znowu zadziałała na
+  // człowieka, nie może zostawić go w ślepym zaułku.
+  const trap = 'Nie udało się wysłać zgłoszenia. Odśwież stronę i spróbuj ponownie, '
+    + 'a jeśli to nie pomoże, napisz na hello@unick-academy.pl.'
+  if (text(values.uniBallPotwierdzenie)) errors.form = trap
   const startedAt = Number(values.startedAt)
   if (!startedAt || Date.now() - startedAt < 2500 || Date.now() - startedAt > 86_400_000) {
-    errors.form = 'Odśwież stronę i spróbuj ponownie.'
+    errors.form = trap
   }
 
   const single = count(values.singleTickets)

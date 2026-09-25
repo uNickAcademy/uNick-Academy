@@ -83,7 +83,7 @@ export default function BallForm() {
           dietaryConsent: form.get('dietaryConsent') === 'on',
           termsAccepted: form.get('termsAccepted') === 'on',
           privacyAcknowledged: form.get('privacyAcknowledged') === 'on',
-          website: form.get('website'),
+          uniBallPotwierdzenie: form.get('uniBallPotwierdzenie'),
           startedAt: startedAt.current,
         }),
       })
@@ -146,8 +146,14 @@ export default function BallForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      {/* Pułapka na boty. Pole NIE może nazywać się „website", „email" ani
+          podobnie: Chrome ma dla takich nazw własne kategorie autouzupełniania
+          i wypełnia je nawet poza ekranem, przez co prawdziwy człowiek dostawał
+          odmowę razem z botami. Nazwa bez znaczenia semantycznego plus wyłączenie
+          menedżerów haseł. */}
       <div className={styles.honey} aria-hidden="true">
-        <input name="website" tabIndex={-1} autoComplete="off" />
+        <input name="uniBallPotwierdzenie" tabIndex={-1} autoComplete="off"
+          data-1p-ignore="true" data-lpignore="true" data-form-type="other" />
       </div>
 
       {/* ── bilety ── */}

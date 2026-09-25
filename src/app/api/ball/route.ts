@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateBallRegistration } from '@/lib/ball/validation'
-import { BALL, PAYMENT, ticketSummary, transferTitle } from '@/lib/ball/event'
+import { BALL, PAYMENT, SEATS_MILESTONE, ticketSummary, transferTitle } from '@/lib/ball/event'
 import { createAdminClient } from '@/lib/supabase/server'
-import { notifyFoundationEmail, sendBallRegistration } from '@/lib/email/send'
+import { notifyFoundationEmail, sendBallMilestone, sendBallRegistration } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
@@ -98,6 +98,12 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean),
   }).catch((err) => console.error('[Bal] Powiadomienie Fundacji:', err))
 
+  // Próg frekwencji: gdy liczba zgłoszonych miejsc przekroczy setkę, Fundacja
+  // dostaje o tym jednego maila. Że dokładnie jednego, pilnuje klucz główny
+  // w `ball_milestones` — przy dwóch zgłoszeniach w tej samej sekundzie drugie
+  // wstawienie odbija się od bazy i maila nie wysyła.
+  await checkMilestone(database).catch((err) => console.error('[Bal] Próg frekwencji:', err))
+
   return NextResponse.json({
     success: true,
     reference: row.reference,
@@ -114,4 +120,36 @@ export async function POST(request: NextRequest) {
       contactEmail: BALL.contactEmail,
     },
   }, { status: 201 })
+}
+
+/** Sumuje zgłoszone miejsca i przy przekroczeniu progu wysyła jedno powiadomienie. */
+async function checkMilestone(database: ReturnType<typeof createAdminClient>): Promise<void> {
+  const { data: rows, error } = await database
+    .from('ball_registrations')
+    .select('seats, status')
+    .neq('status', 'cancelled')
+  if (error || !rows) return
+
+  const seats = rows.reduce((sum, r) => sum + Number(r.seats), 0)
+  if (seats < SEATS_MILESTONE) return
+
+  // `ignoreDuplicates` sprawia, że `.select()` zwraca wiersz tylko wtedy, gdy
+  // ten próg faktycznie właśnie zajęliśmy. Przy powtórce lista jest pusta.
+  const { data: claimed } = await database
+    .from('ball_milestones')
+    .upsert({ threshold: SEATS_MILESTONE, seats_at_trigger: seats },
+      { onConflict: 'threshold', ignoreDuplicates: true })
+    .select('threshold')
+  if ((claimed?.length ?? 0) === 0) return
+
+  const paidSeats = rows
+    .filter((r) => r.status === 'paid')
+    .reduce((sum, r) => sum + Number(r.seats), 0)
+
+  await sendBallMilestone(BALL.contactEmail, {
+    threshold: SEATS_MILESTONE,
+    seats,
+    registrations: rows.length,
+    paidSeats,
+  })
 }

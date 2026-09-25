@@ -61,7 +61,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       consentDeclaration: form.get('consentDeclaration') === 'on',
       consentContact: form.get('consentContact') === 'on',
       privacyAcknowledged: form.get('privacyAcknowledged') === 'on',
-      website: form.get('website'),
+      uniBallPotwierdzenie: form.get('uniBallPotwierdzenie'),
       startedAt: startedAt.current,
     }
     const validation = validateFoundationInterest(payload)
@@ -103,7 +103,9 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       <h3>{copy.errorTitle}</h3>
       <ul>{Object.values(errors).map(error => <li key={error}>{error}</li>)}</ul>
     </div>}
-    <div className={styles.honey}><input name="website" tabIndex={-1} autoComplete="off"/></div>
+    {/* Pułapka na boty. Nazwa celowo bez znaczenia — pole nazwane „website"
+        Chrome autouzupełniał adresem z profilu i odrzucał prawdziwe zgłoszenia. */}
+    <div className={styles.honey} aria-hidden="true"><input name="uniBallPotwierdzenie" tabIndex={-1} autoComplete="off" data-1p-ignore="true" data-lpignore="true" data-form-type="other"/></div>
 
     <fieldset>
       <legend>{copy.sections.participant}</legend>

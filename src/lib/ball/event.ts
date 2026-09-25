@@ -39,6 +39,13 @@ export type TicketKind = keyof typeof TICKETS
 /** Ile biletów jednego rodzaju wolno wziąć w jednym zgłoszeniu. */
 export const MAX_PER_KIND = 20
 
+/**
+ * Po przekroczeniu tylu zgłoszonych miejsc Fundacja dostaje maila.
+ * Liczymy miejsca, nie zgłoszenia: bilet dla pary to dwoje uczestników.
+ * Wysyłka idzie raz — pilnuje tego klucz główny w `ball_milestones`.
+ */
+export const SEATS_MILESTONE = 100
+
 export const PAYMENT = {
   recipient: 'UNICK ACADEMY FOUNDATION',
   /** Rachunek Fundacji, nie spółki. */

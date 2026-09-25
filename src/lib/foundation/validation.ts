@@ -29,7 +29,7 @@ export function validateFoundationInterest(input: unknown): Result {
   const values = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
   const errors: Record<string, string> = {}
 
-  if (stringValue(values.website)) errors.form = 'Nie udało się wysłać formularza.'
+  if (stringValue(values.uniBallPotwierdzenie)) errors.form = 'Nie udało się wysłać formularza. Odśwież stronę i spróbuj ponownie, a jeśli to nie pomoże, napisz na hello@unick-academy.pl.'
   const startedAt = Number(values.startedAt)
   if (!startedAt || Date.now() - startedAt < 2500 || Date.now() - startedAt > 86400000) {
     errors.form = 'Odśwież stronę i spróbuj ponownie.'
