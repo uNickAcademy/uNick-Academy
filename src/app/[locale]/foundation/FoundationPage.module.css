@@ -70,3 +70,33 @@
 }
 @media(prefers-reduced-motion:reduce){.declaration{scroll-margin-top:75px}
 }
+
+/* ── The uNickorn Ball ──────────────────────────────────────────────
+   Kolory z plakatu: nocne niebo, świeca i złoto. Sekcja jest ciemna i
+   wyraźnie odcina się od reszty strony, bo to osobne wydarzenie, a nie
+   kolejny akapit o projekcie. Formularz zostaje na jasnej karcie. */
+.ball{position:relative;overflow:hidden;padding:clamp(56px,8vw,104px) 0;background:radial-gradient(ellipse at 22% 8%,rgba(184,151,90,.22),transparent 55%),linear-gradient(180deg,#0d1526 0%,#111d33 55%,#0d1526 100%);color:#F2E9D8}
+.ballGrid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:clamp(28px,5vw,64px);align-items:start}
+.ballPoster{margin:0;border-radius:20px;overflow:hidden;border:1px solid rgba(184,151,90,.45);box-shadow:0 30px 80px -30px rgba(0,0,0,.85)}
+.ballPoster img{display:block;width:100%;height:auto}
+.ballIntro{display:grid;gap:18px}
+.ballEyebrow{font-size:12px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#B8975A}
+.ballTitle{margin:0;font-size:clamp(2.4rem,5.5vw,4.2rem);line-height:1.02;letter-spacing:-.01em;color:#F7EFDE}
+.ballSubtitle{margin:0;font-size:clamp(1rem,1.6vw,1.2rem);letter-spacing:.14em;text-transform:uppercase;color:#9FB0C9}
+.ballLead{margin:0;max-width:56ch;font-size:clamp(1rem,1.5vw,1.12rem);line-height:1.75;color:#D9CFBD}
+.ballFacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:4px 0;background:rgba(184,151,90,.3);border:1px solid rgba(184,151,90,.3);border-radius:16px;overflow:hidden}
+.ballFact{display:grid;gap:3px;padding:14px 16px;background:rgba(13,21,38,.72)}
+.ballFact dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#B8975A}
+.ballFact dd{margin:0;font-size:15px;font-weight:600;color:#F2E9D8}
+.ballIncluded{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.ballIncluded li{padding:6px 14px;border:1px solid rgba(184,151,90,.4);border-radius:99px;font-size:13px;color:#D9CFBD}
+.ballPurpose{margin:0;padding:16px 18px;border-left:3px solid #B8975A;background:rgba(184,151,90,.1);font-size:14.5px;line-height:1.7;color:#D9CFBD}
+.ballTerms{margin:0;font-size:13.5px;color:#9FB0C9}
+.ballTerms a{color:#D8C28D;text-decoration:underline}
+.ballFormWrap{margin-top:clamp(36px,5vw,64px);max-width:760px;margin-inline:auto}
+.ballFormHead{margin-bottom:22px;text-align:center}
+.ballFormHead h3{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.2rem);color:#F7EFDE}
+.ballFormHead p{margin:0;color:#9FB0C9;font-size:15px;line-height:1.7}
+@media(max-width:860px){.ballGrid{grid-template-columns:1fr}
+.ballPoster{max-width:420px;margin-inline:auto}
+}

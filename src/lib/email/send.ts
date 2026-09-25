@@ -88,6 +88,74 @@ const foundationWrap=(body:string)=>`<!doctype html><html lang="pl"><body style=
 export async function sendFoundationInterestConfirmation(to:string,p:{contactName:string;participantFirstName:string}){await send(to,'Otrzymaliśmy deklarację zainteresowania — Kreatorzy Przyszłości',foundationWrap(`<h2>Dziękujemy za deklarację</h2><p>${esc(p.contactName.split(' ')[0])}, zapisaliśmy informację o zainteresowaniu zajęciami dla ${esc(p.participantFirstName)}.</p><div style="background:#edf7f5;padding:18px;border-left:4px solid #247e85"><b>To nie jest jeszcze formalny zapis.</b><p>Zajęcia powstaną tylko wtedy, gdy projekt otrzyma dofinansowanie. Deklaracja nie gwarantuje miejsca.</p></div><p>Dane wykorzystamy wyłącznie w sprawie projektu — nie trafią do newslettera ani oferty płatnych kursów.</p>`),FOUNDATION_FROM)}
 export async function notifyFoundationEmail(p:{title:string;lines:string[]}){const url=`${process.env.NEXT_PUBLIC_APP_URL||'https://unick-academy.pl'}/admin/fundacja`,html=foundationWrap(`<h2>${esc(p.title)}</h2>${p.lines.map(x=>`<p>${esc(x)}</p>`).join('')}<a href="${url}">Otwórz deklaracje</a>`);for(const to of FOUNDATION_NOTIFY_EMAIL.split(',').map(x=>x.trim()).filter(Boolean))await send(to,p.title,html,FOUNDATION_FROM)}
 
+// ──────────────────────────────────────────
+// The uNickorn Ball
+// ──────────────────────────────────────────
+
+// Osobna oprawa, bo stopka `foundationWrap` mówi wprost, że wiadomość dotyczy
+// projektu „Kreatorzy Przyszłości". Bal to inne wydarzenie tej samej Fundacji.
+const ballWrap = (body: string) => `<!doctype html><html lang="pl"><body style="margin:0;font-family:Georgia,'Times New Roman',serif;background:#0d1526;padding:24px 12px"><div style="max-width:560px;margin:auto;background:#fffdf9"><header style="background:#0d1526;color:#e8d9b0;padding:32px 24px;text-align:center;border-bottom:1px solid #b8975a"><div style="font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#b8975a">uNick Academy Foundation</div><div style="font-size:26px;margin-top:10px;letter-spacing:.02em">The uNickorn Ball</div><div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9fb0c9;margin-top:8px">27 listopada 2026</div></header><main style="padding:32px 28px;color:#25303f;font-size:15px;line-height:1.7">${body}</main><footer style="padding:20px;text-align:center;color:#64748b;background:#f4f0e8;font-size:12px;font-family:Arial,sans-serif">UNICK ACADEMY FOUNDATION · KRS 0001212961<br>Nowa 23, Rumianek, 62-080 Tarnowo Podgórne</footer></div></body></html>`
+
+/**
+ * Mail z danymi do wpłaty, wysyłany po zapisaniu zgłoszenia na bal.
+ *
+ * Inaczej niż reszta wysyłek w tym pliku ZWRACA wynik zamiast połykać błąd:
+ * bez tego strona pokazywałaby „wysłaliśmy e-mail" także wtedy, gdy nic nie
+ * wyszło, a gość zostałby bez numeru rachunku i bez wiedzy, że coś poszło źle.
+ */
+export async function sendBallRegistration(to: string, p: {
+  reference: string
+  contactName: string
+  ticketSummary: string
+  seats: number
+  amount: number
+  recipient: string
+  iban: string
+  transferTitle: string
+  hasTableRequest: boolean
+}): Promise<boolean> {
+  const resend = getResend()
+  if (!resend) {
+    console.error('[Bal] Brak RESEND_API_KEY — mail z danymi do wpłaty NIE został wysłany.')
+    return false
+  }
+
+  const row = (label: string, value: string, strong = false) =>
+    `<tr><td style="padding:9px 0;color:#5b6675;font-size:13px;width:44%;vertical-align:top">${esc(label)}</td>`
+    + `<td style="padding:9px 0;${strong ? 'font-weight:bold;font-size:17px;' : ''}color:#25303f">${esc(value)}</td></tr>`
+
+  const html = ballWrap(
+    `<p>Dziękujemy za zgłoszenie na The uNickorn Ball, który odbędzie się 27 listopada 2026 roku w Hotelu 500 w Tarnowie Podgórnym.</p>`
+    + `<table style="width:100%;border-collapse:collapse;margin:22px 0;border-top:1px solid #e3dccd;border-bottom:1px solid #e3dccd">`
+    + row('Numer zgłoszenia', p.reference)
+    + row('Zgłoszone miejsca', `${p.ticketSummary} (${p.seats} ${p.seats === 1 ? 'miejsce' : 'miejsca'})`)
+    + row('Kwota do wpłaty', `${p.amount} zł`, true)
+    + `</table>`
+    + `<div style="background:#f4f0e8;border-left:3px solid #b8975a;padding:18px 20px;margin:22px 0">`
+    + `<table style="width:100%;border-collapse:collapse">`
+    + row('Odbiorca', p.recipient)
+    + row('Numer rachunku', p.iban)
+    + row('Tytuł przelewu', p.transferTitle)
+    + `</table></div>`
+    + `<p>Prosimy o wpłatę w ciągu 48 godzin. Po jej zaksięgowaniu wyślemy potwierdzenie miejsc.`
+    + (p.hasTableRequest ? ` Prośbę dotyczącą stolika zapiszemy i postaramy się ją uwzględnić.` : '')
+    + `</p><p style="margin-top:24px">Do zobaczenia na balu!<br><strong>UNICK ACADEMY FOUNDATION</strong></p>`
+  )
+
+  try {
+    await resend.emails.send({
+      from: FOUNDATION_FROM,
+      to,
+      subject: 'Twoje zgłoszenie na The uNickorn Ball i dane do wpłaty',
+      html,
+    })
+    return true
+  } catch (err) {
+    console.error(`[Bal] Nie udało się wysłać maila do ${to}:`, err)
+    return false
+  }
+}
+
 // Powiadomienie e-mail do szkoły o nowym zapisie/zapytaniu — fire-and-forget,
 // nigdy nie blokuje odpowiedzi dla klienta (błąd wysyłki tylko logujemy).
 // Odpowiednik notifySchoolSms, ale mailem — SMS wymaga osobnego tokenu.
