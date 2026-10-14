@@ -3,12 +3,14 @@ import {redirect} from 'next/navigation'
 import {
   activityLabel,
   buildTeenageTalkStatistics,
+  dayLabel,
   type DistributionItem,
   type FoundationStatisticsRow,
   locationLabel,
   MAX_FOUNDATION_GROUP_SIZE,
 } from '@/lib/foundation/statistics'
 import {createClient} from '@/lib/supabase/server'
+import {readFoundationDetails} from '@/lib/foundation/record'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +19,7 @@ type FoundationRow = FoundationStatisticsRow & {
   status: string
   participant_first_name: string
   participant_age: number
+  municipality: string
   locality: string
   contact_name: string
   email: string
@@ -26,6 +29,7 @@ type FoundationRow = FoundationStatisticsRow & {
   available_days?: string[] | null
   earliest_start?: string | null
   organizational_needs?: string | null
+  consent_version: string
 }
 
 function Distribution({title, items, showGroups = false}: {
@@ -58,7 +62,8 @@ export default async function Page() {
   const {data, error} = await db
     .from('foundation_interest_declarations')
     .select('*')
-    .order('created_at', {ascending: false})
+    .order('created_at', {ascending: true})
+    .order('id', {ascending: true})
 
   const rows = (data ?? []) as FoundationRow[]
   const statistics = buildTeenageTalkStatistics(rows)
@@ -83,7 +88,7 @@ export default async function Page() {
       <div className="mb-4">
         <p className="text-xs font-bold uppercase text-teal-700">Statystyki zainteresowania</p>
         <h2 id="teenage-talk-statistics" className="text-xl font-black text-gray-900">Teenage Talk</h2>
-        <p className="text-sm text-gray-500">Preferencje lokalizacji mogą się nakładać, ponieważ formularz pozwala wybrać kilka odpowiedzi.</p>
+        <p className="text-sm text-gray-500">Statystyki pokazują gminę zamieszkania wskazaną w zgłoszeniu.</p>
       </div>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
@@ -103,7 +108,7 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Distribution title="Preferowane lokalizacje" items={statistics.locations} showGroups />
+        <Distribution title="Gminy zgłaszających" items={statistics.locations} showGroups />
         <Distribution title="Wiek uczestników" items={statistics.ages} />
       </div>
     </section>
@@ -113,18 +118,28 @@ export default async function Page() {
       <div className="space-y-3">
         {rows.length === 0
           ? <p className="rounded-xl bg-white p-8 text-gray-500">Brak deklaracji.</p>
-          : rows.map(row => <details key={row.id} className="rounded-xl border bg-white p-4">
+          : rows.map((row, index) => {
+            const details = readFoundationDetails(row.organizational_needs)
+            const residence = row.consent_version >= '2026-10-14'
+              ? locationLabel(row.municipality)
+              : row.locality
+            return <details key={row.id} className="rounded-xl border bg-white p-4">
             <summary className="cursor-pointer font-bold">
-              {row.participant_first_name}, {row.participant_age} lat · {row.locality}{' '}
+              #{index + 1} · {row.participant_first_name}, {row.participant_age} lat · {residence}{' '}
               <span className="text-gray-400">({row.status})</span>
             </summary>
             <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
               <p><b>Kontakt:</b> {row.contact_name}<br />{row.email}<br />{row.phone}</p>
-              <p><b>Zajęcia:</b> {row.activities?.map(activityLabel).join(', ')}<br />
-                <b>Lokalizacje:</b> {row.preferred_locations?.map(locationLabel).join(', ')}</p>
-              <p><b>Uwagi:</b> {row.organizational_needs || '—'}</p>
+              <p><b>Zajęcia:</b> {row.activities?.map(value => activityLabel(value, row.consent_version)).join(', ')}<br />
+                <b>Gmina:</b> {residence}</p>
+              <p><b>Data urodzenia:</b> {details.birthDate || 'brak w starszym zgłoszeniu'}<br />
+                <b>Zamieszkanie potwierdzone:</b> {details.residenceConfirmed ? 'tak' : 'brak w starszym zgłoszeniu'}</p>
+              <p><b>Dostępność:</b> {row.available_days?.map(dayLabel).join(', ') || '—'}<br />
+                <b>Godziny:</b> {row.earliest_start || '—'}</p>
+              <p><b>Potrzeby / uwagi:</b> {details.notes || '—'}</p>
             </div>
-          </details>)}
+          </details>
+          })}
       </div>
     </section>
   </div>

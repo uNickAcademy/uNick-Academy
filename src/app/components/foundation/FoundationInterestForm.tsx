@@ -11,31 +11,50 @@ import styles from './FoundationInterestForm.module.css'
 type Props = {copy: any; locale: string}
 type Errors = Record<string, string>
 
-const Choice = ({name, options, type = 'radio'}: {
+const Err = ({name, errors}: {name: string; errors: Errors}) => errors[name]
+  ? <p id={`${name}-error`} className={styles.error}>{errors[name]}</p>
+  : null
+
+const CheckboxChoices = ({name, options, selected, onChange}: {
   name: string
   options: readonly {value: string; label: string}[]
-  type?: 'radio' | 'checkbox'
+  selected: string[]
+  onChange: (values: string[]) => void
 }) => <div className={styles.choices}>{options.map(option => <label key={option.value}>
-  <input type={type} name={name} value={option.value}/>
+  <input
+    type="checkbox"
+    name={name}
+    value={option.value}
+    checked={selected.includes(option.value)}
+    onChange={event => onChange(event.target.checked
+      ? [...selected, option.value]
+      : selected.filter(value => value !== option.value))}
+  />
   <span>{option.label}</span>
 </label>)}</div>
-
-const Err = ({name, errors}: {name: string; errors: Errors}) => errors[name]
-  ? <p className={styles.error}>{errors[name]}</p>
-  : null
 
 export default function FoundationInterestForm({copy, locale}: Props) {
   const startedAt = useRef(0)
   const errorSummary = useRef<HTMLDivElement>(null)
-  const [age, setAge] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [municipality, setMunicipality] = useState('')
   const [activities, setActivities] = useState<string[]>([])
-  const [locations, setLocations] = useState<string[]>([])
-  const [motivations, setMotivations] = useState<string[]>([])
+  const [availableDays, setAvailableDays] = useState<string[]>([])
+  const [timeSlots, setTimeSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Errors>({})
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
+  const participantAge = O.calculateAgeOnDate(birthDate)
 
   useEffect(() => { startedAt.current = Date.now() }, [])
+
+  const keepEligibleActivities = (nextBirthDate: string, nextMunicipality: string) => {
+    const nextAge = O.calculateAgeOnDate(nextBirthDate)
+    const eligible = nextAge == null
+      ? []
+      : O.activitiesForParticipant(nextAge, nextMunicipality).map(activity => activity.value)
+    setActivities(current => current.filter(value => eligible.includes(value as never)))
+  }
 
   const readChecks = (form: FormData, name: string) => form.getAll(name).map(String)
 
@@ -43,17 +62,14 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const payload = {
-      respondentType: form.get('respondentType'),
       participantFirstName: form.get('participantFirstName'),
-      participantAge: form.get('participantAge'),
-      locality: form.get('locality'),
+      birthDate: form.get('birthDate'),
+      municipality: form.get('municipality'),
+      residenceConfirmed: form.get('residenceConfirmed') === 'on',
       activities: readChecks(form, 'activities'),
       primaryActivity: form.get('primaryActivity'),
-      attendanceCommitment: form.get('attendanceCommitment'),
-      preferredLocations: readChecks(form, 'preferredLocations'),
-      primaryLocation: form.get('primaryLocation'),
-      motivations: readChecks(form, 'motivations'),
-      motivationOther: form.get('motivationOther'),
+      availableDays: readChecks(form, 'availableDays'),
+      timeSlots: readChecks(form, 'timeSlots'),
       organizationalNeeds: form.get('organizationalNeeds'),
       contactName: form.get('contactName'),
       email: form.get('email'),
@@ -70,6 +86,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       requestAnimationFrame(() => errorSummary.current?.focus())
       return
     }
+
     setSending(true)
     setErrors({})
     try {
@@ -87,155 +104,173 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       }
     } catch {
       setErrors({form: copy.genericError})
+      requestAnimationFrame(() => errorSummary.current?.focus())
     } finally {
       setSending(false)
     }
   }
 
-  if (done) return <div className={`${styles.shell} ${styles.success}`} role="status">
+  const availabilityReason = (activity: typeof O.activityOptions[number]) => {
+    if (participantAge == null && !municipality) return 'Najpierw podaj datę urodzenia i gminę.'
+    if (participantAge == null) return 'Najpierw podaj datę urodzenia.'
+    if (!municipality) return 'Najpierw wybierz gminę.'
+    if (participantAge < activity.minAge || participantAge > activity.maxAge) {
+      return `Dostępne dla osób w wieku ${activity.minAge}–${activity.maxAge} lat.`
+    }
+    const municipalities: readonly string[] = activity.municipalities
+    if (!municipalities.includes(municipality)) {
+      return 'Te zajęcia nie są planowane w wybranej gminie.'
+    }
+    return 'Dostępne dla tego wieku i gminy.'
+  }
+
+  if (done) return <div className={`${styles.shell} ${styles.success}`} role="status" aria-live="polite">
+    <span className={styles.successMark} aria-hidden="true">✓</span>
     <h3>{copy.successTitle}</h3>
     <p>{copy.successText}</p>
   </div>
 
-  return <form className={styles.shell} onSubmit={submit} noValidate>
-    <p>{copy.requiredHint}</p>
+  return <form className={styles.shell} onSubmit={submit} noValidate aria-busy={sending}>
+    <p className={styles.requiredHint}>{copy.requiredHint}</p>
     {Object.keys(errors).length > 0 && <div ref={errorSummary} tabIndex={-1} role="alert" className={styles.summary}>
       <h3>{copy.errorTitle}</h3>
       <ul>{Object.values(errors).map(error => <li key={error}>{error}</li>)}</ul>
     </div>}
-    {/* Pułapka na boty. Nazwa celowo bez znaczenia — pole nazwane „website"
-        Chrome autouzupełniał adresem z profilu i odrzucał prawdziwe zgłoszenia. */}
-    <div className={styles.honey} aria-hidden="true"><input name="uniBallPotwierdzenie" tabIndex={-1} autoComplete="off" data-1p-ignore="true" data-lpignore="true" data-form-type="other"/></div>
 
-    <fieldset>
-      <legend>{copy.sections.participant}</legend>
-      <label className={styles.label}>Kto wypełnia formularz? *</label>
-      <Choice name="respondentType" options={O.respondentOptions}/>
-      <Err name="respondentType" errors={errors}/>
+    {/* Pułapka na boty. Nazwa celowo bez znaczenia — pole „website” było
+        autouzupełniane przez przeglądarki i odrzucało prawdziwe zgłoszenia. */}
+    <div className={styles.honey} aria-hidden="true">
+      <input name="uniBallPotwierdzenie" tabIndex={-1} autoComplete="off" data-1p-ignore="true" data-lpignore="true" data-form-type="other"/>
+    </div>
+
+    <fieldset disabled={sending}>
+      <legend>1. Uczestnik</legend>
       <div className={styles.cols}>
-        <label>Imię uczestnika *
-          <input name="participantFirstName" maxLength={80}/>
-          <small>Bez nazwiska niepełnoletniego uczestnika.</small>
+        <label>Imię i nazwisko uczestnika *
+          <input name="participantFirstName" maxLength={80} autoComplete="name" aria-invalid={Boolean(errors.participantFirstName)} aria-describedby="participantFirstName-error"/>
           <Err name="participantFirstName" errors={errors}/>
         </label>
-        <label>Wiek uczestnika *
-          <select name="participantAge" value={age} onChange={event => {
-            const selectedAge = event.target.value
-            setAge(selectedAge)
-            setActivities(current => current.filter(id => O.activitiesForAge(Number(selectedAge)).some(option => option.value === id)))
-          }}>
-            <option value="">Wybierz</option>
-            {Array.from({length: 10}, (_, index) => index + 9).map(value => <option key={value}>{value}</option>)}
-          </select>
-          <Err name="participantAge" errors={errors}/>
+        <label>Data urodzenia *
+          <input
+            name="birthDate"
+            type="date"
+            min="2007-11-02"
+            max="2016-11-01"
+            value={birthDate}
+            aria-invalid={Boolean(errors.birthDate)}
+            aria-describedby="birth-date-hint birthDate-error"
+            onChange={event => {
+              const value = event.target.value
+              setBirthDate(value)
+              keepEligibleActivities(value, municipality)
+            }}
+          />
+          <small id="birth-date-hint">Wiek liczymy na planowany start projektu w listopadzie 2026.{participantAge != null && ` Wtedy uczestnik będzie mieć ${participantAge} lat.`}</small>
+          <Err name="birthDate" errors={errors}/>
         </label>
       </div>
-      <label>Miejscowość zamieszkania *
-        <input name="locality" maxLength={120}/>
-        <Err name="locality" errors={errors}/>
+
+      <label>Gmina zamieszkania *
+        <select
+          name="municipality"
+          value={municipality}
+          aria-invalid={Boolean(errors.municipality)}
+          aria-describedby="municipality-error"
+          onChange={event => {
+            const value = event.target.value
+            setMunicipality(value)
+            keepEligibleActivities(birthDate, value)
+          }}
+        >
+          <option value="">Wybierz gminę</option>
+          {O.municipalityOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <Err name="municipality" errors={errors}/>
       </label>
+
+      <label className={styles.consent}>
+        <input type="checkbox" name="residenceConfirmed" aria-describedby="residenceConfirmed-error"/>
+        <span>Potwierdzam, że uczestnik mieszka w wybranej wyżej gminie. *</span>
+      </label>
+      <Err name="residenceConfirmed" errors={errors}/>
     </fieldset>
 
-    <fieldset>
-      <legend>{copy.sections.preferences}</legend>
-      <label className={styles.label}>Którymi zajęciami jest zainteresowany uczestnik? *</label>
-      <div className={styles.choices}>{O.activityOptions.map(option => {
-        const disabled = !age || Number(age) < option.minAge || Number(age) > option.maxAge
-        return <label key={option.value} className={disabled ? styles.disabled : ''}>
+    <fieldset disabled={sending}>
+      <legend>2. Zajęcia</legend>
+      <p className={styles.fieldHint}>Możesz wybrać więcej niż jedną opcję. Formularz od razu uwzględnia wiek i gminę.</p>
+      <div className={styles.courseGrid}>{O.activityOptions.map(activity => {
+        const eligible = participantAge != null
+          && O.activitiesForParticipant(participantAge, municipality).some(option => option.value === activity.value)
+        return <label key={activity.value} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
           <input
             type="checkbox"
             name="activities"
-            value={option.value}
-            disabled={disabled}
-            checked={activities.includes(option.value)}
+            value={activity.value}
+            disabled={!eligible}
+            checked={activities.includes(activity.value)}
             onChange={event => setActivities(current => event.target.checked
-              ? [...current, option.value]
-              : current.filter(value => value !== option.value))}
+              ? [...current, activity.value]
+              : current.filter(value => value !== activity.value))}
           />
-          <span>{option.label}</span>
+          <span><strong>{activity.label}</strong><small>{availabilityReason(activity)}</small></span>
         </label>
       })}</div>
       <Err name="activities" errors={errors}/>
+
       <label>Pierwszy wybór *
-        <select name="primaryActivity">
+        <select name="primaryActivity" aria-invalid={Boolean(errors.primaryActivity)} aria-describedby="primaryActivity-error">
           <option value="">Wybierz</option>
-          {O.activityOptions.filter(option => activities.includes(option.value)).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          {O.activityOptions.filter(option => activities.includes(option.value)).map(option =>
+            <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <Err name="primaryActivity" errors={errors}/>
       </label>
-      <label className={styles.label}>Gotowość do regularnego udziału 15.10.2026–15.04.2027 *</label>
-      <Choice name="attendanceCommitment" options={O.attendanceOptions}/>
-      <Err name="attendanceCommitment" errors={errors}/>
-      <label className={styles.label}>Co najbardziej zachęca uczestnika?</label>
-      <div onChange={(event: any) => {
-        if (event.target.name === 'motivations') setMotivations(current => event.target.checked
-          ? [...current, event.target.value]
-          : current.filter(value => value !== event.target.value))
-      }}>
-        <Choice name="motivations" options={O.motivationOptions} type="checkbox"/>
-      </div>
-      {motivations.includes('other') && <label>Inne
-        <input name="motivationOther" maxLength={300}/>
-        <Err name="motivationOther" errors={errors}/>
-      </label>}
-      <label>Uwagi
-        <textarea name="organizationalNeeds" maxLength={1500} rows={5}/>
-      </label>
     </fieldset>
 
-    <fieldset>
-      <legend>Lokalizacja</legend>
-      <label className={styles.label}>Preferowane lokalizacje *</label>
-      <div className={styles.choices}>{O.projectLocationOptions.map(option => <label key={option.value}>
-        <input
-          type="checkbox"
-          name="preferredLocations"
-          value={option.value}
-          checked={locations.includes(option.value)}
-          onChange={event => setLocations(current => event.target.checked
-            ? [...current, option.value]
-            : current.filter(value => value !== option.value))}
-        />
-        <span>{option.label}</span>
-      </label>)}</div>
-      <Err name="preferredLocations" errors={errors}/>
-      <label>Pierwszy wybór lokalizacji *
-        <select name="primaryLocation">
-          <option value="">Wybierz</option>
-          {O.projectLocationOptions.filter(option => locations.includes(option.value)).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-        <Err name="primaryLocation" errors={errors}/>
-      </label>
+    <fieldset disabled={sending}>
+      <legend>3. Kiedy możecie?</legend>
+      <p className={styles.fieldHint}>To pomoże nam ułożyć grupy. Na tym etapie nie wybierasz jeszcze ostatecznego terminu.</p>
+      <label className={styles.label}>Preferowane dni *</label>
+      <CheckboxChoices name="availableDays" options={O.dayOptions} selected={availableDays} onChange={setAvailableDays}/>
+      <Err name="availableDays" errors={errors}/>
+      <label className={styles.label}>Możliwe godziny *</label>
+      <CheckboxChoices name="timeSlots" options={O.timeSlotOptions} selected={timeSlots} onChange={setTimeSlots}/>
+      <Err name="timeSlots" errors={errors}/>
     </fieldset>
 
-    <fieldset>
-      <legend>{copy.sections.contact}</legend>
-      <label>Imię i nazwisko rodzica, opiekuna albo pełnoletniego uczestnika *
-        <input name="contactName" autoComplete="name"/>
+    <fieldset disabled={sending}>
+      <legend>4. Kontakt i dostępność</legend>
+      <label>Imię i nazwisko rodzica lub opiekuna *
+        <input name="contactName" autoComplete="name" maxLength={120} aria-invalid={Boolean(errors.contactName)} aria-describedby="contactName-error"/>
         <Err name="contactName" errors={errors}/>
       </label>
       <div className={styles.cols}>
         <label>Adres e-mail *
-          <input name="email" type="email" autoComplete="email"/>
+          <input name="email" type="email" autoComplete="email" maxLength={254} aria-invalid={Boolean(errors.email)} aria-describedby="email-error"/>
           <Err name="email" errors={errors}/>
         </label>
         <label>Numer telefonu *
-          <input name="phone" type="tel" autoComplete="tel" placeholder="666 661 750 lub +48…"/>
+          <input name="phone" type="tel" autoComplete="tel" placeholder="666 661 750 lub +48…" aria-invalid={Boolean(errors.phone)} aria-describedby="phone-error"/>
           <Err name="phone" errors={errors}/>
         </label>
       </div>
+      <label>Potrzeby szczególne lub dotyczące dostępności <span className={styles.optional}>(opcjonalnie)</span>
+        <textarea name="organizationalNeeds" maxLength={1500} rows={4} aria-describedby="needs-hint"/>
+        <small id="needs-hint">Napisz, co pomoże uczestnikowi czuć się bezpiecznie i swobodnie. Nie podawaj szczegółowych danych medycznych.</small>
+      </label>
     </fieldset>
 
-    <fieldset>
-      <legend>{copy.sections.consents}</legend>
+    <fieldset disabled={sending}>
+      <legend>5. Potwierdzenia i zgody</legend>
       {['consentDeclaration', 'consentContact', 'privacyAcknowledged'].map((name, index) => <div key={name}>
         <label className={styles.consent}>
-          <input type="checkbox" name={name}/>
-          <span>{copy.consents[index]} {index === 2 && <Link href={`/${locale}/foundation/privacy`} target="_blank">{copy.privacyLink}</Link>} *</span>
+          <input type="checkbox" name={name} aria-describedby={`${name}-error`}/>
+          <span>{copy.consents[index]} {index === 2 && <Link href={`/${locale}/foundation/privacy`} target="_blank">Przeczytaj informację o przetwarzaniu danych</Link>} *</span>
         </label>
         <Err name={name} errors={errors}/>
       </div>)}
     </fieldset>
+
     <Button href={null} type="submit" fullWidth disabled={sending}>{sending ? copy.submitting : copy.submit}</Button>
   </form>
 }

@@ -5,6 +5,7 @@ import {
   type FoundationStatisticsRow,
 } from '@/lib/foundation/statistics'
 import {createClient} from '@/lib/supabase/server'
+import {readFoundationDetails} from '@/lib/foundation/record'
 
 type FoundationExportRow = FoundationStatisticsRow & Record<string, unknown> & {
   activities?: string[] | null
@@ -33,7 +34,8 @@ export async function GET(request: NextRequest) {
   const {data, error} = await db
     .from('foundation_interest_declarations')
     .select('*')
-    .order('created_at', {ascending: false})
+    .order('created_at', {ascending: true})
+    .order('id', {ascending: true})
   if (error) return NextResponse.json({error: 'Błąd eksportu'}, {status: 500})
 
   const rows = (data ?? []) as FoundationExportRow[]
@@ -58,18 +60,27 @@ export async function GET(request: NextRequest) {
 
   const columns = [
     'created_at', 'status', 'respondent_type', 'participant_first_name',
-    'participant_age', 'locality', 'activities', 'activities_labels',
+    'participant_age', 'birth_date', 'municipality', 'residence_confirmed',
+    'activities', 'activities_labels',
     'primary_activity', 'primary_activity_label', 'attendance_commitment',
-    'preferred_locations', 'primary_location', 'motivations', 'motivation_other',
-    'organizational_needs', 'contact_name', 'email', 'phone', 'consent_version',
+    'available_days', 'preferred_hours', 'accessibility_notes',
+    'contact_name', 'email', 'phone', 'consent_version',
     'privacy_notice_version', 'consented_at',
   ]
 
-  const exportRows: Record<string, unknown>[] = rows.map(row => ({
-    ...row,
-    activities_labels: row.activities?.map(activityLabel) ?? [],
-    primary_activity_label: row.primary_activity ? activityLabel(row.primary_activity) : '',
-  }))
+  const exportRows: Record<string, unknown>[] = rows.map(row => {
+    const details = readFoundationDetails(row.organizational_needs)
+    const consentVersion = String(row.consent_version || '')
+    return {
+      ...row,
+      birth_date: details.birthDate,
+      residence_confirmed: details.residenceConfirmed ? 'tak' : '',
+      activities_labels: row.activities?.map(value => activityLabel(value, consentVersion)) ?? [],
+      primary_activity_label: row.primary_activity ? activityLabel(row.primary_activity, consentVersion) : '',
+      preferred_hours: row.earliest_start,
+      accessibility_notes: details.notes,
+    }
+  })
 
   lines.push(
     csvRow(columns),
