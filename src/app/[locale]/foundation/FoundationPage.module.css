@@ -18,8 +18,6 @@
 .projectCardMedia img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
 .projectCard:hover .projectCardMedia img{transform:scale(1.018)}
 .projectCardBody{display:flex;min-height:190px;flex-direction:column;padding:clamp(24px,4vw,36px)}
-.projectCardBodyCtaOnly{justify-content:center}
-.projectCardBodyCtaOnly .projectCardCta{margin-top:0}
 .projectCardBody_night{background:#101829;color:#f7efde}
 .projectCardBody_cream{background:#f3eadc;color:var(--color-blue)}
 .projectCardTitle{font-size:clamp(1.65rem,3vw,2.35rem);font-weight:750;line-height:1.08;letter-spacing:-.025em}
