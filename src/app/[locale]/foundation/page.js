@@ -111,11 +111,7 @@ export default async function Page({ params }) {
 
       <section className={styles.projectChooser} aria-labelledby="foundation-projects-title">
         <div className="container">
-          <Reveal className={styles.projectChooserHeading}>
-            <span className="eyebrow">Aktualne inicjatywy Fundacji</span>
-            <h2 id="foundation-projects-title">Wybierz projekt</h2>
-            <p>Każda inicjatywa ma własną stronę z pełnymi informacjami i właściwym formularzem.</p>
-          </Reveal>
+          <h2 id="foundation-projects-title" className="visually-hidden">Projekty Fundacji</h2>
           <div className={styles.projectCards}>
             {projects.map((project) => (
               <Reveal as="article" id={project.id} className={styles.projectCard} key={project.href}>

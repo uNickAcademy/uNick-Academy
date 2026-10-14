@@ -73,7 +73,7 @@ export default async function Page() {
       <div>
         <p className="text-xs font-bold uppercase text-teal-700">uNick Academy Foundation</p>
         <h1 className="text-2xl font-black">Kreatorzy Przyszłości</h1>
-        <p className="text-gray-500">Wstępne deklaracje — nie są zapisami ani leadami sprzedażowymi.</p>
+        <p className="text-gray-500">Zgłoszenia chęci udziału w bezpłatnych zajęciach — nie są leadami sprzedażowymi.</p>
       </div>
       <Link prefetch={false} href="/api/admin/foundation-interest?format=csv" className="mt-3 inline-block rounded-xl bg-gray-900 px-4 py-2 text-white">
         Eksportuj CSV ze statystykami

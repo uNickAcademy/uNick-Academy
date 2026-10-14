@@ -64,7 +64,7 @@ export function validateFoundationInterest(input: unknown): Result {
     errors.participantFirstName = 'Podaj imię i nazwisko uczestnika.'
   }
   if (participantAge == null || participantAge < 10 || participantAge > 18) {
-    errors.birthDate = 'W dniu planowanego startu uczestnik powinien mieć od 10 do 18 lat.'
+    errors.birthDate = 'Uczestnik powinien mieć od 10 do 18 lat.'
   }
   if (!validOption(municipality, O.municipalityOptions)) {
     errors.municipality = 'Wybierz gminę zamieszkania.'

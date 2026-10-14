@@ -119,7 +119,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     }
     const municipalities: readonly string[] = activity.municipalities
     if (!municipalities.includes(municipality)) {
-      return 'Te zajęcia nie są planowane w wybranej gminie.'
+      return 'Te zajęcia nie są dostępne w wybranej gminie.'
     }
     return 'Dostępne dla tego wieku i gminy.'
   }
@@ -165,7 +165,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
               keepEligibleActivities(value, municipality)
             }}
           />
-          <small id="birth-date-hint">Wiek liczymy na planowany start projektu w listopadzie 2026.{participantAge != null && ` Wtedy uczestnik będzie mieć ${participantAge} lat.`}</small>
+          <small id="birth-date-hint">Na potrzeby doboru zajęć wiek liczymy na 1 listopada 2026 r.{participantAge != null && ` Wtedy uczestnik będzie mieć ${participantAge} lat.`}</small>
           <Err name="birthDate" errors={errors}/>
         </label>
       </div>

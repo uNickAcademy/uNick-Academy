@@ -2,7 +2,7 @@
 
 ## Cel
 
-Formularz na `/creators#deklaracja` przyjmuje wstępne, niewiążące zgłoszenia uczestników w wieku 10–18 lat. Lista zajęć jest automatycznie ograniczana według wieku obliczonego na 1 listopada 2026 r., a gmina jest sprawdzana względem czterech uprawnionych gmin. Konfiguracja nie przypisuje kursów do konkretnych gmin, dopóki organizator nie potwierdzi takiego podziału.
+Formularz na `/creators#deklaracja` przyjmuje zgłoszenia chęci udziału w bezpłatnych zajęciach dla osób w wieku 10–18 lat. Uczestnik musi mieszkać w gminie Tarnowo Podgórne, Rokietnica, Kaźmierz lub Szamotuły. Lista zajęć jest automatycznie ograniczana według wieku obliczonego na 1 listopada 2026 r. Wysłanie formularza nie gwarantuje miejsca.
 
 ## Przepływ danych
 

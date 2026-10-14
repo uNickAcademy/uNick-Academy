@@ -10,7 +10,7 @@ import { siteConfig } from '../../lib/site-config'
 import styles from '../../[locale]/foundation/FoundationPage.module.css'
 
 const title = 'Kreatorzy Przyszłości – bezpłatne zajęcia dla młodzieży'
-const description = 'Wstępna rejestracja do bezpłatnego projektu dla dzieci i młodzieży 10–18 lat z gmin Tarnowo Podgórne, Rokietnica, Kaźmierz i Szamotuły.'
+const description = 'Zgłoś chęć udziału w bezpłatnych zajęciach dla dzieci i młodzieży 10–18 lat z gmin Tarnowo Podgórne, Rokietnica, Kaźmierz i Szamotuły.'
 
 export const metadata = {
   title,
@@ -39,16 +39,6 @@ function Activity({ activity, index }) {
       <h3>{activity.title}</h3>
       {activity.subtitle && <h4>{activity.subtitle}</h4>}
       <p className={styles.intro}>{activity.intro}</p>
-      {activity.bullets && <ul>{activity.bullets.map((item) => <li key={item}>{item}</li>)}</ul>}
-      {activity.roles && <p><strong>Możliwe role:</strong> {activity.roles.join(', ')}.</p>}
-      {activity.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-      {activity.facts && (
-        <div className={styles.activityFacts}>
-          <strong>Najważniejsze informacje</strong>
-          <ul>{activity.facts.map((item) => <li key={item}>{item}</li>)}</ul>
-        </div>
-      )}
-      <aside><strong>Cel społeczny</strong><p>{activity.socialGoal}</p></aside>
     </Reveal>
   )
 }
@@ -89,12 +79,12 @@ export default function CreatorsPage() {
             <h1>{copy.projects.title}</h1>
             <p className={styles.creatorsLead}>{copy.projects.subtitle}</p>
             <p>
-              Bezpłatny projekt dla dzieci i młodzieży w wieku 10–18 lat z gmin Tarnowo Podgórne,
-              Rokietnica, Kaźmierz i Szamotuły. Zajęcia będą prowadzone po angielsku przez osoby z zagranicy.
+              Zajęcia są prowadzone po angielsku przez osoby z zagranicy. Angielski służy tu do rozmowy,
+              współpracy i tworzenia — nie jest szkolnym przedmiotem ani egzaminem.
             </p>
-            <p className={styles.preliminaryNote}>
-              To wstępna rejestracja. Projekt planujemy rozpocząć w listopadzie 2026 r., po finalizacji
-              formalnych ustaleń dotyczących dofinansowania. Zgłoszenie nie zobowiązuje jeszcze do udziału.
+            <p className={styles.eligibilityNote}>
+              <strong>Warunek udziału:</strong> dziecko musi mieszkać w gminie Tarnowo Podgórne,
+              Rokietnica, Kaźmierz lub Szamotuły.
             </p>
             <Button href="#deklaracja">{copy.projects.interestButton}</Button>
           </Reveal>
@@ -103,40 +93,6 @@ export default function CreatorsPage() {
 
       <section className={`section ${styles.project}`}>
         <div className="container">
-          <div className={styles.split}>
-            <div>
-              {copy.project.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              <p><strong>{copy.project.fundingOutcome}</strong></p>
-            </div>
-            <aside className={styles.facts}>
-              <small>{copy.project.periodLabel}</small>
-              <strong>{copy.project.period}</strong>
-              <small>{copy.project.locationsLabel}</small>
-              <strong>{copy.project.locations.join(' · ')}</strong>
-              <small>Planowana wielkość grup</small>
-              <strong>{copy.project.groupSize}</strong>
-              <p>{copy.project.groupNote}</p>
-            </aside>
-          </div>
-          <ul className={styles.highlights}>{copy.project.highlights.map((item) => <li key={item}>{item}</li>)}</ul>
-          <aside className={styles.funding}>
-            <small>Informacja formalna</small>
-            <h2>{copy.project.funding.title}</h2>
-            {copy.project.funding.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-            <strong>{copy.project.funding.disclaimer}</strong>
-          </aside>
-          <div className={styles.roles}>
-            <div>
-              <small>Organizator i wnioskodawca</small>
-              <h3>uNick Academy Foundation</h3>
-              <p>Fundacja odpowiada za projekt, wniosek o dofinansowanie i działalność społeczną.</p>
-            </div>
-            <div>
-              <small>Planowany podmiot prowadzący zajęcia</small>
-              <h3>uNick Academy</h3>
-              <p>Szkoła wnosi doświadczenie edukacyjne i kadrę prowadzącą zajęcia w języku angielskim.</p>
-            </div>
-          </div>
           <SectionHeading
             eyebrow={copy.activities.eyebrow}
             title={copy.activities.title}
@@ -153,7 +109,7 @@ export default function CreatorsPage() {
       <section className={`section ${styles.declaration}`} id="deklaracja">
         <div className="container">
           <header className={styles.declarationIntro}>
-            <span className="eyebrow">Wstępna rejestracja</span>
+            <span className="eyebrow">Zgłoszenie chęci udziału</span>
             <h2>{copy.form.title}</h2>
             {copy.form.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           </header>
