@@ -43,13 +43,14 @@ const projects = [
   {
     id: 'deklaracja',
     href: '/creators',
-    image: '/foundation/kreatorzy-przyszlosci-2026.png',
+    image: '/foundation/kreatorzy-przyszlosci-card.png',
     width: 1122,
     height: 1402,
-    alt: 'Plakat projektu Kreatorzy Przyszłości',
+    alt: 'Kreatorzy Przyszłości – bezpłatny projekt',
     title: 'Kreatorzy Przyszłości',
     subtitle: 'Bezpłatne zajęcia dla młodzieży',
     tone: 'cream',
+    imageOnly: true,
   },
 ]
 
@@ -125,13 +126,19 @@ export default async function Page({ params }) {
                       sizes="(max-width: 760px) 92vw, 46vw"
                     />
                   </span>
-                  <span className={`${styles.projectCardBody} ${styles[`projectCardBody_${project.tone}`]}`}>
-                    <span className={styles.projectCardTitle}>{project.title}</span>
-                    <span className={styles.projectCardSubtitle}>{project.subtitle}</span>
-                    <span className={styles.projectCardCta}>
-                      Dowiedz się więcej <span aria-hidden="true">→</span>
+                  {project.imageOnly ? (
+                    <span className={`${styles.projectCardBody} ${styles.projectCardBody_cream} ${styles.projectCardBodyCtaOnly}`}>
+                      <span className={styles.projectCardCta}>Dowiedz się więcej</span>
                     </span>
-                  </span>
+                  ) : (
+                    <span className={`${styles.projectCardBody} ${styles[`projectCardBody_${project.tone}`]}`}>
+                      <span className={styles.projectCardTitle}>{project.title}</span>
+                      <span className={styles.projectCardSubtitle}>{project.subtitle}</span>
+                      <span className={styles.projectCardCta}>
+                        Dowiedz się więcej <span aria-hidden="true">→</span>
+                      </span>
+                    </span>
+                  )}
                 </Link>
               </Reveal>
             ))}
