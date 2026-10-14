@@ -835,10 +835,10 @@ const pl = {
     ] },
     projects: { eyebrow: "Projekty Fundacji", title: "Kreatorzy Przyszłości", subtitle: "Bezpłatne zajęcia dla dzieci i młodzieży w wieku 10–18 lat", interestButton: "Zgłoś chęć udziału" },
     activities: { eyebrow: "Bezpłatne zajęcia", title: "Wybierz to, co najbardziej ciekawi Twoje dziecko", languageNote: "Zajęcia odbywają się po angielsku, ale nie wymagamy konkretnego poziomu języka. Prowadzący dostosują sposób komunikacji do wieku i możliwości grupy.", items: [
-      { id: "teenpreneurs", title: "Teenpreneurs", age: "13–18 lat", intro: "Od pomysłu do działania: współpraca, inicjatywa i tworzenie własnych projektów." },
-      { id: "podcasts_audio_video", title: "Podcasts", age: "10–16 lat", subtitle: "Rozmowa, kamera i wspólne tworzenie", intro: "Nagrywanie rozmów i wywiadów, tworzenie materiałów audio i video oraz poznawanie storytellingu." },
-      { id: "art_performance_9_13", title: "Art & Creative Performance", age: "10–16 lat", intro: "Improwizacja, teatr, ruch, muzyka, ekspresja i kreatywne projekty bez oceniania." },
-      { id: "teenage_talk", title: "Teenage Talk", age: "13–18 lat", subtitle: "Rozmowy, relacje i odwaga do zabierania głosu", intro: "Spotkania oparte na rozmowie, grach komunikacyjnych i tematach ważnych dla nastolatków." },
+      { id: "teenpreneurs", title: "Teenpreneurs", age: "13–18 lat", intro: "Uczestnicy zamienią własne pomysły w małe projekty i nauczą się działać zespołowo. Poćwiczą inicjatywę, podejmowanie decyzji i prezentowanie swoich pomysłów." },
+      { id: "podcasts_audio_video", title: "Podcasts", age: "10–16 lat", subtitle: "Rozmowa, kamera i wspólne tworzenie", intro: "Uczestnicy stworzą własne rozmowy, wywiady i krótkie materiały audio lub video. Poznają podstawy storytellingu, pracy z mikrofonem i współpracy w zespole." },
+      { id: "art_performance_9_13", title: "Art & Creative Performance", age: "10–16 lat", intro: "Zajęcia łączą improwizację, teatr, ruch, muzykę i kreatywne projekty. Pomagają swobodnie wyrażać siebie, nabierać odwagi i dobrze czuć się w grupie." },
+      { id: "teenage_talk", title: "Teenage Talk", age: "13–18 lat", subtitle: "Rozmowy, relacje i odwaga do zabierania głosu", intro: "Bezpieczna przestrzeń do rozmów o sprawach ważnych dla nastolatków — po angielsku, bez oceniania. Uczestnicy ćwiczą wyrażanie własnego zdania, słuchanie innych i pewność siebie." },
     ] },
     form: {
       title: "Zgłoszenie chęci udziału", paragraphs: ["Wypełnij formularz, jeśli Twoje dziecko chce wziąć udział w bezpłatnych zajęciach.", "Warunek udziału: dziecko musi mieszkać w gminie Tarnowo Podgórne, Rokietnica, Kaźmierz lub Szamotuły.", "Wybierz interesujące zajęcia oraz dni i godziny, które Wam odpowiadają. Skontaktujemy się w sprawie dostępnych miejsc i harmonogramu."],
