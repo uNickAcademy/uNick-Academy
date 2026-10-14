@@ -71,7 +71,7 @@ function DropdownItem({ item, pathname, onNavigate }) {
   );
 }
 
-export default function Navbar({ locale, dict }) {
+export default function Navbar({ locale, dict, hideLanguageSwitcher = false }) {
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(null);
   const pathname = usePathname();
@@ -114,7 +114,7 @@ export default function Navbar({ locale, dict }) {
         </nav>
 
         <div className={styles.actions}>
-          <div className={styles.langSwitcher} aria-label={dict.common.languageSwitcher.label}>
+          {!hideLanguageSwitcher && <div className={styles.langSwitcher} aria-label={dict.common.languageSwitcher.label}>
             <Link
               href={switchLocalePath(pathname, "en")}
               className={`${styles.flagLink} ${"en" === locale ? styles.flagActive : ""}`}
@@ -133,7 +133,7 @@ export default function Navbar({ locale, dict }) {
             >
               <Image src="/flags/pl.svg" alt="" width={22} height={16} aria-hidden="true" />
             </Link>
-          </div>
+          </div>}
           <Link href="/login" className={styles.loginLink}>
             {dict.common.nav.login}
           </Link>
@@ -224,7 +224,7 @@ export default function Navbar({ locale, dict }) {
               {dict.common.buttons.signUpShort}
             </Button>
           </div>
-          <div className={styles.mobileLangSwitcher}>
+          {!hideLanguageSwitcher && <div className={styles.mobileLangSwitcher}>
             <Link
               href={switchLocalePath(pathname, "en")}
               className={`${styles.flagLink} ${"en" === locale ? styles.flagActive : ""}`}
@@ -245,7 +245,7 @@ export default function Navbar({ locale, dict }) {
               <Image src="/flags/pl.svg" alt="" width={26} height={19} aria-hidden="true" />
               <span>Polski</span>
             </Link>
-          </div>
+          </div>}
         </div>
       )}
       <span className="visually-hidden">{siteConfig.name}</span>

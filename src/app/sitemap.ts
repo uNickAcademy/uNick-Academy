@@ -26,19 +26,19 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
 ]
 
 const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
-  { path: '/foundation', lastmod: '2026-08-04', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/foundation', lastmod: '2026-10-14', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/foundation/privacy', lastmod: '2026-08-04', priority: 0.2, changeFrequency: 'yearly' },
 ]
 
-// Zapisy żyją poza routingiem [locale] (są tylko po polsku), więc nie mają
-// pary hreflang i nie da się ich wrzucić do list wyżej. Formularze prowadzi
-// ActiveNow, ale same strony są nasze i mają się wyszukiwać: to na nie trafia
-// ktoś szukający zapisu na angielski.
-const SIGNUP_ROUTES: { path: string; lastmod: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
+// Te polskojęzyczne strony żyją poza routingiem [locale], więc nie mają pary
+// hreflang. Obejmuje to zapisy do szkoły oraz osobne strony projektów Fundacji.
+const UNLOCALIZED_PUBLIC_ROUTES: { path: string; lastmod: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
   { path: '/sign-me-up', lastmod: '2026-09-16', priority: 1.0, changeFrequency: 'monthly' },
   { path: '/zapisy', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/grupowe', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/indywidualne', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/ball', lastmod: '2026-10-14', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/creators', lastmod: '2026-10-14', priority: 0.9, changeFrequency: 'monthly' },
 ]
 
 // Lokalna strona docelowa ma inny slug w każdym języku, dlatego łączymy je
@@ -82,7 +82,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   }
 
-  for (const route of SIGNUP_ROUTES) {
+  for (const route of UNLOCALIZED_PUBLIC_ROUTES) {
     entries.push({
       url: `${BASE}${route.path}`,
       lastModified: route.lastmod,

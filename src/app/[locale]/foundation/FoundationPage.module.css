@@ -8,6 +8,26 @@
 .brandAccent{color:var(--color-red)}
 .hero p,.project p,.declaration p{line-height:1.7;color:var(--color-ink-soft)}
 .lead{font-size:clamp(1.2rem,2vw,1.6rem)}
+.projectChooser{padding:clamp(64px,9vw,112px) 0;background:#fffdf8}
+.projectChooserHeading{max-width:680px;margin-bottom:clamp(30px,5vw,52px)}
+.projectChooserHeading h2{margin:8px 0 12px;font-size:clamp(2.25rem,5vw,4.2rem);line-height:1.04;letter-spacing:-.035em;color:var(--color-blue)}
+.projectChooserHeading p{margin:0;color:var(--color-ink-soft);line-height:1.65}
+.projectCards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(20px,4vw,40px)}
+.projectCard{scroll-margin-top:110px;min-width:0;border-radius:28px;overflow:hidden;background:white;box-shadow:0 24px 70px rgba(30,52,73,.12);transition:transform .25s ease,box-shadow .25s ease}
+.projectCard:hover{transform:translateY(-4px);box-shadow:0 32px 78px rgba(30,52,73,.17)}
+.projectCardLink{display:grid;height:100%;color:inherit;text-decoration:none}
+.projectCardLink:focus-visible{outline:4px solid var(--color-gold);outline-offset:-5px;border-radius:28px}
+.projectCardMedia{display:block;aspect-ratio:4/5;overflow:hidden;background:#101829}
+.projectCardMedia img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.projectCard:hover .projectCardMedia img{transform:scale(1.018)}
+.projectCardBody{display:flex;min-height:190px;flex-direction:column;padding:clamp(24px,4vw,36px)}
+.projectCardBody_night{background:#101829;color:#f7efde}
+.projectCardBody_cream{background:#f3eadc;color:var(--color-blue)}
+.projectCardTitle{font-size:clamp(1.65rem,3vw,2.35rem);font-weight:750;line-height:1.08;letter-spacing:-.025em}
+.projectCardSubtitle{margin-top:8px;font-size:clamp(1rem,1.7vw,1.18rem);opacity:.78}
+.projectCardCta{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:24px;font-size:.88rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.projectCardCta span{font-size:1.35rem;transition:transform .2s ease}
+.projectCard:hover .projectCardCta span{transform:translateX(4px)}
 .identity,.facts{padding:30px;border-radius:22px;background:white;box-shadow:0 20px 55px rgba(30,52,73,.1)}
 .identity{width:100%;font-size:.875rem;font-weight:400}
 .identity small,.identity h3,.identity dt,.identity dd,.identity p{font-weight:400}
@@ -50,6 +70,19 @@
 .declarationIntro{width:100%;margin-bottom:clamp(32px,5vw,56px)}
 .declarationIntro p{max-width:none}
 .foundationDetails{padding:0 0 clamp(45px,7vw,80px);background:#fffdf8}
+.creatorsHero{padding:clamp(56px,8vw,96px) 0;background:radial-gradient(circle at 82% 16%,rgba(241,181,63,.18),transparent 30%),var(--color-cream)}
+.creatorsHeroGrid{display:grid;grid-template-columns:minmax(280px,390px) minmax(0,1fr);gap:clamp(36px,7vw,92px);align-items:center}
+.creatorsPoster{border-radius:24px;overflow:hidden;box-shadow:0 32px 76px rgba(30,52,73,.2)}
+.creatorsPoster img{display:block;width:100%;height:auto}
+.creatorsHeroCopy{max-width:720px}
+.creatorsHeroCopy h1{margin:10px 0 14px;font-size:clamp(2.7rem,6vw,5.6rem);line-height:.98;letter-spacing:-.052em;color:var(--color-blue)}
+.creatorsHeroCopy>p{line-height:1.72;color:var(--color-ink-soft)}
+.creatorsLead{font-size:clamp(1.18rem,2vw,1.5rem)}
+.preliminaryNote{margin:24px 0;padding:18px 20px;border-left:4px solid var(--color-gold);border-radius:0 14px 14px 0;background:rgba(255,255,255,.72)}
+.backLink,.backLinkLight{display:flex;width:max-content;align-items:center;margin-bottom:28px;font-size:.88rem;font-weight:750;text-decoration:none}
+.backLink{color:#d8c28d}
+.backLinkLight{color:var(--color-teal)}
+.backLink:hover,.backLinkLight:hover{text-decoration:underline}
 .privacy{padding:80px 0;background:var(--color-cream)}
 .privacy article{max-width:800px;margin:auto;padding:clamp(25px,6vw,60px);border-radius:24px;background:white}
 .privacy h1{font-size:clamp(2.2rem,5vw,4rem);color:var(--color-blue)}
@@ -60,15 +93,21 @@
 .heroMascot{width:min(70vw,300px);margin-top:8px}
 .areas{grid-template-columns:1fr 1fr}
 .identity dl{grid-template-columns:repeat(2,1fr)}
+.creatorsHeroGrid{grid-template-columns:1fr}
+.creatorsPoster{width:min(86vw,430px);margin-inline:auto}
 }
-@media(max-width:650px){.areas,.activities,.roles,.highlights{grid-template-columns:1fr}
+@media(max-width:650px){.areas,.activities,.roles,.highlights,.projectCards{grid-template-columns:1fr}
 .projectHead{align-items:start;flex-direction:column}
 .projectHead a{width:100%;text-align:center}
+.projectCardBody{min-height:172px}
 .identity{padding:22px}
 .identity dl{grid-template-columns:1fr;gap:12px}
 .identity dl div{grid-template-columns:110px 1fr;border-left:0;border-top:1px solid #e5e7eb;padding:12px 0 0}
 }
 @media(prefers-reduced-motion:reduce){.declaration{scroll-margin-top:75px}
+.projectCard,.projectCardMedia img,.projectCardCta span{transition:none}
+.projectCard:hover{transform:none}
+.projectCard:hover .projectCardMedia img{transform:none}
 }
 
 /* ── The uNickorn Ball ──────────────────────────────────────────────
@@ -95,7 +134,7 @@
 .ballTerms a{color:#D8C28D;text-decoration:underline}
 .ballFormWrap{margin-top:clamp(36px,5vw,64px);max-width:760px;margin-inline:auto}
 .ballFormHead{margin-bottom:22px;text-align:center}
-.ballFormHead h3{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.2rem);color:#F7EFDE}
+.ballFormHead h2,.ballFormHead h3{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.2rem);color:#F7EFDE}
 .ballFormHead p{margin:0;color:#9FB0C9;font-size:15px;line-height:1.7}
 @media(max-width:860px){.ballGrid{grid-template-columns:1fr}
 .ballPoster{max-width:420px;margin-inline:auto}
