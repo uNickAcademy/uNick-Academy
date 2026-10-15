@@ -3,13 +3,6 @@ export const FOUNDATION_PRIVACY_NOTICE_VERSION = '2026-10-14'
 export const PROJECT_START_DATE = '2026-11-01'
 
 const option = (value: string, label: string) => ({value, label})
-const eligibleMunicipalities = [
-  'tarnowo_podgorne',
-  'rokietnica',
-  'kazmierz',
-  'szamotuly',
-] as const
-
 export const municipalityOptions = [
   option('tarnowo_podgorne', 'Tarnowo Podgórne'),
   option('rokietnica', 'Rokietnica'),
@@ -25,21 +18,21 @@ export const activityOptions = [
     label: 'Teenpreneurs, 13–18 lat',
     minAge: 13,
     maxAge: 18,
-    municipalities: eligibleMunicipalities,
+    municipalities: ['tarnowo_podgorne', 'kazmierz'],
   },
   {
     value: 'podcasts_audio_video',
     label: 'Podcasts, 10–16 lat',
     minAge: 10,
     maxAge: 16,
-    municipalities: eligibleMunicipalities,
+    municipalities: ['rokietnica', 'kazmierz', 'szamotuly'],
   },
   {
     value: 'teenage_talk',
     label: 'Teenage Talk, 13–18 lat',
     minAge: 13,
     maxAge: 18,
-    municipalities: eligibleMunicipalities,
+    municipalities: ['rokietnica', 'szamotuly'],
   },
   {
     // The existing database identifier is retained so no production migration
@@ -48,7 +41,7 @@ export const activityOptions = [
     label: 'Art & Creative Performance, 10–16 lat',
     minAge: 10,
     maxAge: 16,
-    municipalities: eligibleMunicipalities,
+    municipalities: ['tarnowo_podgorne'],
   },
 ] as const satisfies readonly {
   value: string
