@@ -18,7 +18,7 @@ export const activityOptions = [
     label: 'Teenpreneurs, 13–18 lat',
     minAge: 13,
     maxAge: 18,
-    municipalities: ['tarnowo_podgorne', 'kazmierz'],
+    municipalities: ['tarnowo_podgorne'],
   },
   {
     value: 'podcasts_audio_video',
@@ -32,7 +32,7 @@ export const activityOptions = [
     label: 'Teenage Talk, 13–18 lat',
     minAge: 13,
     maxAge: 18,
-    municipalities: ['rokietnica', 'szamotuly'],
+    municipalities: ['rokietnica', 'kazmierz', 'szamotuly'],
   },
   {
     // The existing database identifier is retained so no production migration

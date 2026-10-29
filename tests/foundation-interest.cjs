@@ -22,6 +22,7 @@ function load(file, mocks = {}) {
 }
 
 const options = load('src/lib/foundation/options.ts')
+const schedule = load('src/lib/foundation/schedule.ts')
 const validation = load('src/lib/foundation/validation.ts', {'./options': options})
 const record = load('src/lib/foundation/record.ts')
 const statistics = load('src/lib/foundation/statistics.ts', {'./options': options})
@@ -52,10 +53,19 @@ assert.equal(options.calculateAgeOnDate('2012-02-29'), 14)
 assert.equal(options.calculateAgeOnDate('2012-02-30'), null)
 console.log('OK: birthdays and leap days')
 
+const coursesByMunicipality = {
+  tarnowo_podgorne: ['teenpreneurs', 'art_performance_9_13'],
+  kazmierz: ['teenage_talk', 'podcasts_audio_video'],
+  rokietnica: ['podcasts_audio_video', 'teenage_talk'],
+  szamotuly: ['podcasts_audio_video', 'teenage_talk'],
+}
+
 for (const municipality of options.municipalityOptions.map(item => item.value)) {
   for (let age = 10; age <= 18; age += 1) {
     const eligible = options.activitiesForParticipant(age, municipality)
-    const expected = options.activityOptions.filter(activity => age >= activity.minAge && age <= activity.maxAge)
+    const expected = options.activityOptions.filter(activity =>
+      coursesByMunicipality[municipality].includes(activity.value)
+      && age >= activity.minAge && age <= activity.maxAge)
     assert.deepEqual(eligible.map(activity => activity.value), expected.map(activity => activity.value), `${municipality}, ${age}: unexpected location filter`)
     assert.ok(eligible.length > 0, `${municipality}, ${age}: no eligible course`)
     for (const activity of eligible) {
@@ -71,6 +81,14 @@ for (const municipality of options.municipalityOptions.map(item => item.value)) 
   }
 }
 console.log('OK: all municipalities, ages and eligible courses')
+
+assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazmierz', activities: ['teenage_talk'], primaryActivity: 'teenage_talk'}).ok, true)
+assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazmierz', activities: ['teenpreneurs'], primaryActivity: 'teenpreneurs'}).ok, false)
+assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazmierz', birthDate: birthDateForAge(12), activities: ['teenage_talk'], primaryActivity: 'teenage_talk'}).ok, false)
+assert.equal(schedule.courseScheduleDescription('rokietnica', 'podcasts_audio_video'), 'Czwartki, godz. 16:30. Sala OSP, ul. Szkolna 18B, 62-090 Rokietnica.')
+assert.equal(schedule.courseScheduleDescription('kazmierz', 'teenpreneurs'), null)
+assert.equal(schedule.courseScheduleDescription('szamotuly', 'teenage_talk'), 'Poniedziałki po południu. Godziny i adres podamy po potwierdzeniu sali.')
+console.log('OK: revised Kaźmierz registration, confirmed timetable and unconfirmed Szamotuły venue')
 
 const forgedAge = validation.validateFoundationInterest({...base, birthDate: birthDateForAge(10), participantAge: 18, activities: ['art_performance_9_13'], primaryActivity: 'art_performance_9_13'})
 assert.equal(forgedAge.ok, true)

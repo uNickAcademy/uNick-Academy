@@ -16,5 +16,6 @@ Formularz na `/creators#deklaracja` przyjmuje zgłoszenia chęci udziału w bezp
 ## Rozszerzanie
 
 - Zajęcia, przedziały wiekowe, gminy, dni i godziny są konfigurowane w `src/lib/foundation/options.ts`.
+- Potwierdzone terminy i adresy są w `src/lib/foundation/schedule.ts`. Ten sam harmonogram zasila stronę `/creators` i opisy kursów w formularzu. Brak potwierdzenia sali lub godziny pozostaje jawny; nie zastępujemy go zgadywanym adresem. Powiązania kursów z gminami w `options.ts` muszą odpowiadać temu harmonogramowi.
 - Nowy format szczegółów zgłoszenia wymaga nowej wartości `FOUNDATION_RECORD_SCHEMA` i zgodnego odczytu poprzednich wersji w `src/lib/foundation/record.ts`.
 - Jeśli zakres rekrutacji zacznie wymagać nowych zapytań lub raportów, należy dodać osobne kolumny w kontrolowanej migracji zamiast rozszerzać kopertę JSON.

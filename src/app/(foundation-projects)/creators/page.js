@@ -7,6 +7,7 @@ import Reveal from '../../components/Reveal'
 import SectionHeading from '../../components/SectionHeading'
 import { getDictionary } from '../../lib/dictionaries'
 import { siteConfig } from '../../lib/site-config'
+import { projectSchedule } from '@/lib/foundation/schedule'
 import styles from '../../[locale]/foundation/FoundationPage.module.css'
 
 const title = 'Kreatorzy Przyszłości – bezpłatne zajęcia dla dzieci i młodzieży'
@@ -40,13 +41,6 @@ const quickFacts = [
   ['4 gminy', 'lokalne grupy'],
   ['0 zł', 'udział bezpłatny'],
   ['ok. 6 miesięcy', 'czas programu'],
-]
-
-const locations = [
-  ['Tarnowo Podgórne', 'Teenpreneurs, Art & Creative Performance'],
-  ['Rokietnica', 'Teenage Talk, Podcasts'],
-  ['Kaźmierz', 'Teenpreneurs, Podcasts'],
-  ['Szamotuły', 'Podcasts, Teenage Talk'],
 ]
 
 const audiencePoints = [
@@ -196,16 +190,36 @@ export default function CreatorsPage() {
         <div className="container">
           <SectionHeading
             eyebrow="Blisko domu"
-            title="Gdzie odbywać się będą zajęcia?"
-            subtitle="W każdej z czterech gmin planujemy uruchomić dwie grupy."
+            title="Kiedy i gdzie się spotykamy?"
+            subtitle="Wybierz swoją gminę i sprawdź termin oraz miejsce zajęć."
           />
-          <Reveal className={styles.creatorLocationTableWrap}>
-            <table className={styles.creatorLocationTable}>
-              <thead><tr><th scope="col">Gmina</th><th scope="col">Zajęcia</th></tr></thead>
-              <tbody>{locations.map(([municipality, courses]) => <tr key={municipality}><th scope="row">{municipality}</th><td>{courses}</td></tr>)}</tbody>
-            </table>
-          </Reveal>
-          <p className={styles.creatorLocationNote}>Każda grupa będzie liczyć maksymalnie <strong>12 uczestników</strong>. Dokładne lokalizacje i godziny zajęć zostaną podane po zakończeniu przygotowań organizacyjnych.</p>
+          <div className={styles.creatorLocationGrid}>
+            {projectSchedule.map(location => (
+              <Reveal as="article" className={styles.creatorLocationCard} key={location.municipality}>
+                <header>
+                  <h3>{location.name}</h3>
+                  <p className={styles.creatorLocationDay}>{location.day}</p>
+                </header>
+                <ul className={styles.creatorLocationCourses}>
+                  {location.courses.map(course => (
+                    <li key={course.activity}>
+                      <span>{course.title}</span>
+                      {course.time ? <time>{course.time}</time> : <small>Godzina do potwierdzenia</small>}
+                    </li>
+                  ))}
+                </ul>
+                {location.venue && location.address ? (
+                  <address className={styles.creatorLocationAddress}>
+                    <strong>{location.venue}</strong>
+                    <span>{location.address}</span>
+                  </address>
+                ) : (
+                  <p className={styles.creatorLocationPending}>Adres sali i dokładne godziny podamy po ich potwierdzeniu.</p>
+                )}
+              </Reveal>
+            ))}
+          </div>
+          <p className={styles.creatorLocationNote}>Każda grupa liczy maksymalnie <strong>12 uczestników</strong>. Udział w zajęciach jest całkowicie bezpłatny.</p>
         </div>
       </section>
 

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {FormEvent, useEffect, useRef, useState} from 'react'
 import Button from '../Button'
 import * as O from '@/lib/foundation/options'
+import {courseScheduleDescription} from '@/lib/foundation/schedule'
 import {validateFoundationInterest} from '@/lib/foundation/validation'
 import styles from './FoundationInterestForm.module.css'
 
@@ -121,7 +122,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     if (!municipalities.includes(municipality)) {
       return 'Te zajęcia nie są dostępne w wybranej gminie.'
     }
-    return 'Dostępne dla tego wieku i gminy.'
+    return courseScheduleDescription(municipality, activity.value) || 'Dostępne dla tego wieku i gminy.'
   }
 
   if (done) return <div className={`${styles.shell} ${styles.success}`} role="status" aria-live="polite">
@@ -229,7 +230,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
 
     <fieldset disabled={sending}>
       <legend>3. Kiedy możecie?</legend>
-      <p className={styles.fieldHint}>To pomoże nam ułożyć grupy. Na tym etapie nie wybierasz jeszcze ostatecznego terminu.</p>
+      <p className={styles.fieldHint}>Terminy konkretnych zajęć znajdziesz przy wyborze kursu. Zaznacz dni i przedziały godzinowe, w których możecie uczestniczyć.</p>
       <label className={styles.label}>Preferowane dni *</label>
       <CheckboxChoices name="availableDays" options={O.dayOptions} selected={availableDays} onChange={setAvailableDays}/>
       <Err name="availableDays" errors={errors}/>
