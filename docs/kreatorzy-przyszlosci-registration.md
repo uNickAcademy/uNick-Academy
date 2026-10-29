@@ -13,7 +13,13 @@ Formularz na `/creators#deklaracja` przyjmuje zgłoszenia chęci udziału w bezp
 - Istniejący panel `/admin/fundacja` i eksport CSV pokazują kolejność zgłoszeń, dane rekrutacyjne oraz preferowaną dostępność.
 - Potwierdzenia i powiadomienia korzystają z istniejącego mechanizmu e-mail; brak konfiguracji e-mail nie blokuje bezpiecznego zapisu zgłoszenia.
 
-## Rozszerzanie
+## Statystyki administracyjne
+
+Panel `/admin/fundacja` i CSV używają wspólnego `buildFoundationStatistics`: liczba zgłoszeń jest oddzielna od liczby wskazań zajęć, ponieważ jedno zgłoszenie może wskazać kilka kursów. Każdy kurs ma osobny licznik zainteresowania i pierwszego wyboru. Statystyki lokalizacji odnoszą się do pola gminy zamieszkania, nie do preferowanego miejsca zajęć. Brak danych pozostaje osobną kategorią.
+
+`listFoundationDeclarations` pobiera wszystkie strony danych w stabilnej kolejności. Błąd dowolnej strony przerywa odczyt zamiast pokazywać niepełne wyniki. Panel odświeża się co minutę przy widocznej zakładce, po powrocie do niej i ręcznie. Limit 12 osób w grupie nie oznacza przydzielenia miejsc: deklarowane zainteresowanie nie jest potwierdzeniem konkretnej grupy.
+
+## Rozszerzanie konfiguracji
 
 - Zajęcia, przedziały wiekowe, gminy, dni i godziny są konfigurowane w `src/lib/foundation/options.ts`.
 - Potwierdzone terminy i adresy są w `src/lib/foundation/schedule.ts`. Ten sam harmonogram zasila stronę `/creators` i opisy kursów w formularzu. Brak potwierdzenia sali lub godziny pozostaje jawny; nie zastępujemy go zgadywanym adresem. Powiązania kursów z gminami w `options.ts` muszą odpowiadać temu harmonogramowi.

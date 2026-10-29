@@ -1,11 +1,13 @@
 import {NextRequest, NextResponse} from 'next/server'
 import {
   activityLabel,
-  buildTeenageTalkStatistics,
+  buildFoundationStatistics,
+  MAX_FOUNDATION_GROUP_SIZE,
   type FoundationStatisticsRow,
 } from '@/lib/foundation/statistics'
 import {createClient} from '@/lib/supabase/server'
 import {readFoundationDetails} from '@/lib/foundation/record'
+import {listFoundationDeclarations} from '@/lib/foundation/declarations'
 
 type FoundationExportRow = FoundationStatisticsRow & Record<string, unknown> & {
   activities?: string[] | null
@@ -31,25 +33,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({error: 'Nieobsługiwany format'}, {status: 400})
   }
 
-  const {data, error} = await db
-    .from('foundation_interest_declarations')
-    .select('*')
-    .order('created_at', {ascending: true})
-    .order('id', {ascending: true})
+  const {data, error} = await listFoundationDeclarations(db)
   if (error) return NextResponse.json({error: 'Błąd eksportu'}, {status: 500})
 
   const rows = (data ?? []) as FoundationExportRow[]
-  const statistics = buildTeenageTalkStatistics(rows)
+  const statistics = buildFoundationStatistics(rows)
   const lines: string[] = [
-    csvRow(['STATYSTYKI TEENAGE TALK']),
+    csvRow(['STATYSTYKI WSZYSTKICH ZGŁOSZEŃ']),
     csvRow(['metryka', 'wartość']),
-    csvRow(['wszystkie deklaracje zainteresowania', statistics.totalInterest]),
-    csvRow(['Teenage Talk jako pierwszy wybór', statistics.firstChoice]),
-    csvRow(['orientacyjna liczba grup (maks. 16 osób)', statistics.estimatedGroups]),
+    csvRow(['zgłoszenia łącznie', statistics.totalDeclarations]),
+    csvRow(['wskazania zajęć (można wskazać kilka)', statistics.activitySelections]),
+    csvRow(['maks. osób w grupie', MAX_FOUNDATION_GROUP_SIZE]),
     '',
-    csvRow(['ZAINTERESOWANIE WEDŁUG LOKALIZACJI']),
-    csvRow(['lokalizacja', 'deklaracje', 'orientacyjna liczba grup']),
-    ...statistics.locations.map(item => csvRow([item.label, item.count, item.estimatedGroups ?? 0])),
+    csvRow(['ZAINTERESOWANIE POSZCZEGÓLNYMI ZAJĘCIAMI']),
+    csvRow(['zajęcia', 'zgłoszenia zainteresowania', 'pierwszy wybór']),
+    ...statistics.courses.map(course => csvRow([course.label, course.count, course.firstChoice])),
+    '',
+    csvRow(['GMINA ZAMIESZKANIA — WSZYSTKIE ZGŁOSZENIA']),
+    csvRow(['gmina', 'zgłoszenia']),
+    ...statistics.locations.map(item => csvRow([item.label, item.count])),
     '',
     csvRow(['ZAINTERESOWANIE WEDŁUG WIEKU']),
     csvRow(['wiek', 'deklaracje']),
