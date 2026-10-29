@@ -2,7 +2,7 @@ import Link from 'next/link'
 import {redirect} from 'next/navigation'
 import {
   activityLabel,
-  buildTeenageTalkStatistics,
+  buildFoundationStatistics,
   dayLabel,
   type DistributionItem,
   type FoundationStatisticsRow,
@@ -11,6 +11,8 @@ import {
 } from '@/lib/foundation/statistics'
 import {createClient} from '@/lib/supabase/server'
 import {readFoundationDetails} from '@/lib/foundation/record'
+import {listFoundationDeclarations} from '@/lib/foundation/declarations'
+import RefreshStatistics from './RefreshStatistics'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,10 +35,9 @@ type FoundationRow = FoundationStatisticsRow & {
   consent_version: string
 }
 
-function Distribution({title, items, showGroups = false}: {
+function Distribution({title, items}: {
   title: string
   items: DistributionItem[]
-  showGroups?: boolean
 }) {
   return <section className="rounded-2xl border border-gray-200 bg-white p-5">
     <h3 className="mb-4 font-bold text-gray-900">{title}</h3>
@@ -45,7 +46,6 @@ function Distribution({title, items, showGroups = false}: {
         <dt className="text-gray-600">{item.label}</dt>
         <dd className="font-bold text-gray-900">
           {item.count}
-          {showGroups && <span className="ml-2 font-normal text-gray-400">({item.estimatedGroups ?? 0} grup)</span>}
         </dd>
       </div>)}
     </dl>
@@ -60,14 +60,13 @@ export default async function Page() {
   const {data: profile} = await db.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/admin/dashboard')
 
-  const {data, error} = await db
-    .from('foundation_interest_declarations')
-    .select('*')
-    .order('created_at', {ascending: true})
-    .order('id', {ascending: true})
+  const {data, error} = await listFoundationDeclarations(db)
 
   const rows = (data ?? []) as FoundationRow[]
-  const statistics = buildTeenageTalkStatistics(rows)
+  const statistics = buildFoundationStatistics(rows)
+  const updatedAt = new Intl.DateTimeFormat('pl-PL', {
+    timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).format(new Date())
 
   return <div className="mx-auto max-w-6xl p-4 md:p-6">
     <header className="mb-6 md:flex md:items-end md:justify-between">
@@ -76,48 +75,58 @@ export default async function Page() {
         <h1 className="text-2xl font-black">Kreatorzy Przyszłości</h1>
         <p className="text-gray-500">Zgłoszenia chęci udziału w bezpłatnych zajęciach — nie są leadami sprzedażowymi.</p>
       </div>
-      <Link prefetch={false} href="/api/admin/foundation-interest?format=csv" className="mt-3 inline-block rounded-xl bg-gray-900 px-4 py-2 text-white">
-        Eksportuj CSV ze statystykami
-      </Link>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <RefreshStatistics />
+        <Link prefetch={false} href="/api/admin/foundation-interest?format=csv" className="inline-block rounded-xl bg-gray-900 px-4 py-2 text-white">
+          Eksportuj CSV ze statystykami
+        </Link>
+      </div>
     </header>
 
     {error && <p role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
       Nie udało się pobrać deklaracji. Odśwież stronę lub spróbuj ponownie później.
     </p>}
 
-    <section aria-labelledby="teenage-talk-statistics" className="mb-8">
+    {!error && <section aria-labelledby="foundation-statistics" className="mb-8">
       <div className="mb-4">
         <p className="text-xs font-bold uppercase text-teal-700">Statystyki zainteresowania</p>
-        <h2 id="teenage-talk-statistics" className="text-xl font-black text-gray-900">Teenage Talk</h2>
-        <p className="text-sm text-gray-500">Statystyki pokazują gminę zamieszkania wskazaną w zgłoszeniu.</p>
+        <h2 id="foundation-statistics" className="text-xl font-black text-gray-900">Wszystkie zgłoszenia i zajęcia</h2>
+        <p className="text-sm text-gray-500">Dane z {updatedAt}. Odświeżanie co minutę i po powrocie do zakładki.</p>
       </div>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
         <article className="rounded-2xl bg-teal-700 p-5 text-white">
-          <p className="text-sm text-teal-100">Wszystkie deklaracje</p>
-          <strong className="text-3xl">{statistics.totalInterest}</strong>
+          <p className="text-sm text-teal-100">Zgłoszenia łącznie</p>
+          <strong className="text-3xl">{statistics.totalDeclarations}</strong>
         </article>
         <article className="rounded-2xl bg-gray-900 p-5 text-white">
-          <p className="text-sm text-gray-300">Pierwszy wybór</p>
-          <strong className="text-3xl">{statistics.firstChoice}</strong>
+          <p className="text-sm text-gray-300">Wskazania zajęć</p>
+          <strong className="text-3xl">{statistics.activitySelections}</strong>
         </article>
         <article className="rounded-2xl bg-amber-100 p-5 text-amber-950">
-          <p className="text-sm">Orientacyjna liczba grup</p>
-          <strong className="text-3xl">{statistics.estimatedGroups}</strong>
-          <p className="text-xs">przy maks. {MAX_FOUNDATION_GROUP_SIZE} osobach</p>
+          <p className="text-sm">Maks. osób w grupie</p>
+          <strong className="text-3xl">{MAX_FOUNDATION_GROUP_SIZE}</strong>
         </article>
       </div>
 
+      <p className="mb-4 text-sm text-gray-600">Jedno zgłoszenie może wskazywać kilka zajęć. To deklaracje zainteresowania, a nie potwierdzone miejsca w konkretnych grupach.</p>
+      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {statistics.courses.map(course => <article key={course.value} className="rounded-2xl border border-gray-200 bg-white p-5">
+          <h3 className="font-bold text-gray-900">{course.label}</h3>
+          <p className="mt-3 text-3xl font-black text-teal-700">{course.count}</p>
+          <p className="text-sm text-gray-600">W tym pierwszy wybór: <strong>{course.firstChoice}</strong></p>
+        </article>)}
+      </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <Distribution title="Gminy zgłaszających" items={statistics.locations} showGroups />
+        <Distribution title="Gmina zamieszkania — wszystkie zgłoszenia" items={statistics.locations} />
         <Distribution title="Wiek uczestników" items={statistics.ages} />
       </div>
-    </section>
+    </section>}
 
     <section aria-labelledby="foundation-declarations">
       <h2 id="foundation-declarations" className="mb-4 text-xl font-black text-gray-900">Wszystkie deklaracje</h2>
       <div className="space-y-3">
-        {rows.length === 0
+        {error ? <p className="rounded-xl bg-white p-8 text-gray-500">Lista nie jest dostępna. Użyj przycisku „Odśwież dane”.</p> : rows.length === 0
           ? <p className="rounded-xl bg-white p-8 text-gray-500">Brak deklaracji.</p>
           : rows.map((row, index) => {
             const details = readFoundationDetails(row.organizational_needs)

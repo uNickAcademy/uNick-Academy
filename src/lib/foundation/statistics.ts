@@ -1,12 +1,10 @@
 import {
   activityOptions,
-  dayOptions,
   projectLocationOptions,
-  timeSlotOptions,
+  dayOptions,
 } from './options'
 
-export const TEENAGE_TALK_ACTIVITY_ID = 'teenage_talk'
-export const MAX_FOUNDATION_GROUP_SIZE = 16
+export const MAX_FOUNDATION_GROUP_SIZE = 12
 
 export type FoundationStatisticsRow = {
   activities?: string[] | null
@@ -16,17 +14,14 @@ export type FoundationStatisticsRow = {
   available_days?: string[] | null
   earliest_start?: string | null
   consent_version?: string | null
+  municipality?: string | null
 }
 
 export type DistributionItem = {
   value: string
   label: string
   count: number
-  estimatedGroups?: number
 }
-
-const countGroups = (count: number) =>
-  count === 0 ? 0 : Math.ceil(count / MAX_FOUNDATION_GROUP_SIZE)
 
 const labelFor = (options: readonly {value: string; label: string}[], value: string) =>
   options.find(option => option.value === value)?.label ?? value
@@ -48,49 +43,50 @@ export const locationLabel = (value: string) => labelFor(projectLocationOptions,
 export const dayLabel = (value: string) => labelFor(dayOptions, value)
 export const earliestStartLabel = (value: string) => value
 
-export function buildTeenageTalkStatistics(rows: FoundationStatisticsRow[]) {
-  const interestedRows = rows.filter(row =>
-    row.activities?.includes(TEENAGE_TALK_ACTIVITY_ID),
-  )
-
+export function buildFoundationStatistics(rows: FoundationStatisticsRow[]) {
   const distribution = (
     values: readonly {value: string; label: string}[],
-    selected: (row: FoundationStatisticsRow) => string[],
-    includeEstimatedGroups = false,
+    selected: (row: FoundationStatisticsRow) => string | null,
   ): DistributionItem[] => values.map(option => {
-    const count = interestedRows.filter(row => selected(row).includes(option.value)).length
+    const count = rows.filter(row => selected(row) === option.value).length
     return {
       value: option.value,
       label: option.label,
       count,
-      ...(includeEstimatedGroups ? {estimatedGroups: countGroups(count)} : {}),
     }
   })
 
-  const ageOptions = Array.from({length: 6}, (_, index) => {
-    const age = index + 13
+  const ageOptions = Array.from({length: 9}, (_, index) => {
+    const age = index + 10
     return {value: String(age), label: `${age} lat`}
   })
 
+  const currentActivities = activityOptions.map(activity => activity.value as string)
+  const historicalIds = [...new Set(rows.flatMap(row => row.activities ?? []))]
+    .filter(value => !currentActivities.includes(value))
+  const courses = [...currentActivities, ...historicalIds].map(value => ({
+    value,
+    label: historicalIds.includes(value) ? historicalActivities[value] ?? value : activityLabel(value),
+    count: rows.filter(row => row.activities?.includes(value)).length,
+    firstChoice: rows.filter(row => row.primary_activity === value).length,
+  }))
+
+  const residence = (row: FoundationStatisticsRow) =>
+    projectLocationOptions.some(option => option.value === row.municipality)
+      ? row.municipality!
+      : 'unknown'
+
   return {
-    totalInterest: interestedRows.length,
-    firstChoice: interestedRows.filter(
-      row => row.primary_activity === TEENAGE_TALK_ACTIVITY_ID,
-    ).length,
-    estimatedGroups: countGroups(interestedRows.length),
+    totalDeclarations: rows.length,
+    activitySelections: courses.reduce((sum, course) => sum + course.count, 0),
+    courses,
     locations: distribution(
-      projectLocationOptions,
-      row => row.preferred_locations ?? [],
-      true,
+      [...projectLocationOptions, {value: 'unknown', label: 'Brak danych o gminie'}],
+      residence,
     ),
     ages: distribution(
       ageOptions,
-      row => row.participant_age == null ? [] : [String(row.participant_age)],
-    ),
-    days: distribution(dayOptions, row => row.available_days ?? []),
-    earliestStarts: distribution(
-      timeSlotOptions,
-      row => row.earliest_start ? row.earliest_start.split(',').map(value => value.trim()) : [],
+      row => row.participant_age == null ? null : String(row.participant_age),
     ),
   }
 }

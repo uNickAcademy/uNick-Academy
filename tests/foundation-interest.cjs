@@ -26,6 +26,49 @@ const schedule = load('src/lib/foundation/schedule.ts')
 const validation = load('src/lib/foundation/validation.ts', {'./options': options})
 const record = load('src/lib/foundation/record.ts')
 const statistics = load('src/lib/foundation/statistics.ts', {'./options': options})
+const declarations = load('src/lib/foundation/declarations.ts')
+
+// Reproduce the reported panel: 27 declarations, 30 course indications,
+// but only one Teenage Talk indication. None of these are real applicant data.
+const statisticsRows = [
+  ...Array.from({length: 13}, () => ({activities: ['art_performance_9_13'], primary_activity: 'art_performance_9_13'})),
+  ...Array.from({length: 11}, () => ({activities: ['teenpreneurs'], primary_activity: 'teenpreneurs'})),
+  ...Array.from({length: 2}, () => ({activities: ['podcasts_audio_video'], primary_activity: 'podcasts_audio_video'})),
+  {activities: ['teenage_talk'], primary_activity: 'teenage_talk'},
+].map(row => ({...row, municipality: 'tarnowo_podgorne', preferred_locations: ['szamotuly'], participant_age: 14}))
+statisticsRows[0].activities.push('teenpreneurs')
+statisticsRows[1].activities.push('teenpreneurs')
+statisticsRows[2].activities.push('podcasts_audio_video')
+statisticsRows[0].participant_age = 10
+const allStatistics = statistics.buildFoundationStatistics(statisticsRows)
+assert.equal(allStatistics.totalDeclarations, 27)
+assert.equal(allStatistics.activitySelections, 30)
+assert.deepEqual(allStatistics.courses.map(course => [course.value, course.count, course.firstChoice]), [
+  ['teenpreneurs', 13, 11], ['podcasts_audio_video', 3, 2],
+  ['teenage_talk', 1, 1], ['art_performance_9_13', 13, 13],
+])
+assert.equal(allStatistics.locations.find(item => item.value === 'tarnowo_podgorne').count, 27)
+assert.equal(allStatistics.locations.find(item => item.value === 'szamotuly').count, 0)
+assert.equal(allStatistics.ages.find(item => item.value === '10').count, 1)
+assert.equal(statistics.MAX_FOUNDATION_GROUP_SIZE, 12)
+const legacyStatistics = statistics.buildFoundationStatistics([{activities: ['creative_diy']}])
+assert.equal(legacyStatistics.totalDeclarations, 1)
+assert.equal(legacyStatistics.courses.find(course => course.value === 'creative_diy').count, 1)
+assert.equal(legacyStatistics.locations.find(item => item.value === 'unknown').count, 1)
+console.log('OK: all 27 declarations, separate course interests, 10–18 ages and actual residence')
+
+const mockDeclarationReader = (records, failAtOffset = null) => ({
+  from: () => {
+    const query = {
+      select: () => query,
+      order: () => query,
+      range: async (from, to) => from === failAtOffset
+        ? {data: null, error: {message: 'simulated read error'}}
+        : {data: records.slice(from, to + 1), error: null},
+    }
+    return query
+  },
+})
 
 const birthDateForAge = age => `${2026 - age}-01-01`
 const base = {
@@ -176,6 +219,36 @@ const request = payload => ({
 })
 
 ;(async () => {
+  const manyDeclarations = Array.from({length: 1205}, (_, index) => ({id: String(index)}))
+  assert.equal((await declarations.listFoundationDeclarations(mockDeclarationReader(manyDeclarations))).data.length, 1205)
+  const partialFailure = await declarations.listFoundationDeclarations(mockDeclarationReader(manyDeclarations, 500))
+  assert.equal(partialFailure.data, null)
+  assert.ok(partialFailure.error)
+  console.log('OK: all pages loaded; partial failure never becomes misleading statistics')
+
+  const exportClient = {
+    ...mockDeclarationReader(statisticsRows),
+    auth: {getUser: async () => ({data: {user: {id: 'admin-test'}}})},
+    from: table => table === 'profiles'
+      ? {select: () => ({eq: () => ({single: async () => ({data: {role: 'admin'}})})})}
+      : mockDeclarationReader(statisticsRows).from(table),
+  }
+  const exportRoute = load('src/app/api/admin/foundation-interest/route.ts', {
+    'next/server': next,
+    '@/lib/foundation/statistics': statistics,
+    '@/lib/foundation/record': record,
+    '@/lib/foundation/declarations': declarations,
+    '@/lib/supabase/server': {createClient: async () => exportClient},
+  })
+  const csvResponse = await exportRoute.GET({nextUrl: new URL('https://example.test/api/admin/foundation-interest?format=csv')})
+  assert.equal(csvResponse.status, 200)
+  const csv = await csvResponse.text()
+  assert.ok(csv.includes('"zgłoszenia łącznie";"27"'))
+  assert.ok(csv.includes('"Teenpreneurs, 13–18 lat";"13";"11"'))
+  assert.ok(!csv.includes('STATYSTYKI TEENAGE TALK'))
+  assert.ok(!csv.includes('maks. 16 osób'))
+  console.log('OK: admin CSV exports the same complete statistics as the panel')
+
   const response = await route.POST(request(base))
   assert.equal(response.status, 201)
   assert.equal(inserted.participant_first_name, 'Jan Kowalski')
