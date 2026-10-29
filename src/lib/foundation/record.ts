@@ -1,11 +1,15 @@
 import type {FoundationInterestDeclaration} from './validation'
+import type {FoundationGroupSelection} from './groups'
 
-export const FOUNDATION_RECORD_SCHEMA = 'kreatorzy-2026-10'
+export const FOUNDATION_RECORD_SCHEMA = 'kreatorzy-2026-10-v2'
+const LEGACY_FOUNDATION_RECORD_SCHEMA = 'kreatorzy-2026-10'
 
 export type FoundationRecordDetails = {
   birthDate: string
   residenceConfirmed: boolean
   notes: string | null
+  selectedGroups: FoundationGroupSelection[]
+  primaryGroup: string | null
 }
 
 export function toFoundationRecord(data: FoundationInterestDeclaration) {
@@ -14,6 +18,8 @@ export function toFoundationRecord(data: FoundationInterestDeclaration) {
     birthDate: data.birthDate,
     residenceConfirmed: data.residenceConfirmed,
     notes: data.organizationalNeeds,
+    selectedGroups: data.selectedGroups,
+    primaryGroup: data.primaryGroup,
   }
 
   return {
@@ -27,7 +33,9 @@ export function toFoundationRecord(data: FoundationInterestDeclaration) {
     attendance_commitment: 'not_collected',
     available_days: data.availableDays,
     earliest_start: data.timeSlots.join(', '),
-    preferred_locations: [data.courseMunicipality],
+    preferred_locations: data.selectedGroups.length
+      ? [...new Set(data.selectedGroups.map(group => group.municipality))]
+      : [data.courseMunicipality],
     primary_location: data.courseMunicipality,
     travel_flexibility: 'not_collected',
     alternative_locations: [],
@@ -50,19 +58,29 @@ export function toFoundationRecord(data: FoundationInterestDeclaration) {
 
 export function readFoundationDetails(value: unknown): FoundationRecordDetails {
   const legacyNotes = typeof value === 'string' && value.trim() ? value.trim() : null
-  if (!legacyNotes) return {birthDate: '', residenceConfirmed: false, notes: null}
+  const fallback = {birthDate: '', residenceConfirmed: false, notes: legacyNotes, selectedGroups: [], primaryGroup: null}
+  if (!legacyNotes) return fallback
 
   try {
     const parsed = JSON.parse(legacyNotes) as Record<string, unknown>
-    if (parsed.schema !== FOUNDATION_RECORD_SCHEMA) {
-      return {birthDate: '', residenceConfirmed: false, notes: legacyNotes}
+    if (parsed.schema !== FOUNDATION_RECORD_SCHEMA && parsed.schema !== LEGACY_FOUNDATION_RECORD_SCHEMA) {
+      return fallback
     }
+    const selectedGroups = Array.isArray(parsed.selectedGroups)
+      ? parsed.selectedGroups.filter((group): group is FoundationGroupSelection =>
+        group != null && typeof group === 'object'
+        && typeof group.id === 'string' && typeof group.activity === 'string'
+        && typeof group.municipality === 'string' && typeof group.label === 'string')
+      : []
     return {
       birthDate: typeof parsed.birthDate === 'string' ? parsed.birthDate : '',
       residenceConfirmed: parsed.residenceConfirmed === true,
       notes: typeof parsed.notes === 'string' && parsed.notes.trim() ? parsed.notes.trim() : null,
+      selectedGroups,
+      primaryGroup: typeof parsed.primaryGroup === 'string' && selectedGroups.some(group => group.id === parsed.primaryGroup)
+        ? parsed.primaryGroup : null,
     }
   } catch {
-    return {birthDate: '', residenceConfirmed: false, notes: legacyNotes}
+    return fallback
   }
 }

@@ -8,8 +8,10 @@ Formularz na `/creators#deklaracja` przyjmuje zgłoszenia chęci udziału w bezp
 
 - `FoundationInterestForm` zbiera dane i wysyła je do `/api/foundation-interest`.
 - API ponownie oblicza wiek i waliduje gminę, zajęcia, zgody oraz pola antyspamowe.
-- Gmina zamieszkania i gmina zajęć są niezależne. W punkcie 2 rodzic może wybrać inną gminę; kursy i terminy zależą od gminy zajęć oraz wieku, a prawo udziału nadal wymaga zamieszkania w jednej z czterech gmin.
-- `municipality` zachowuje gminę zamieszkania, natomiast istniejące `primary_location` i `preferred_locations` przechowują wybrane miejsce zajęć. Panel szczegółów i CSV pokazują oba pola oddzielnie. Brak nowego pola w żądaniu ze starszej otwartej karty zachowuje dotychczasowe znaczenie (zajęcia w gminie zamieszkania); jawnie pusty lub nieprawidłowy wybór jest odrzucany.
+- Punkt 2 pokazuje od razu wszystkie osiem grup, z podziałem na miejscowości oraz z dniem, godziną i adresem. Nie wymaga wyboru gminy zajęć z listy. Można zaznaczać grupy w różnych gminach; jedynym filtrem grup jest wiek, a zamieszkanie w jednej z czterech gmin pozostaje osobnym warunkiem udziału.
+- `src/lib/foundation/groups.ts` tworzy stabilne identyfikatory grup z pary gmina/kurs na podstawie wspólnego harmonogramu. Serwer sprawdza każdą grupę i pierwszy wybór, sam wyprowadza zajęcia i miejsca, nie ufa przesłanym etykietom ani starszym polom formularza.
+- `municipality` zachowuje zamieszkanie, `primary_location` miejsce pierwszego wyboru, a `preferred_locations` wszystkie wskazane miejsca. Dokładne pary kurs/miejsce wraz z kopią oferowanego terminu i adresu są zachowane w szczegółach zgłoszenia v2 i pokazywane w panelu oraz CSV. To wybór zainteresowania, nie automatyczne przyjęcie do grupy.
+- Starsze otwarte formularze nadal są obsługiwane. Ich zgłoszeniom nie przypisujemy wstecz potwierdzenia konkretnych grup. Odczyt obsługuje zarówno szczegóły v1, v2, jak i starsze zwykłe notatki.
 - Zgłoszenie trafia do istniejącej tabeli `foundation_interest_declarations`; nie jest potrzebna migracja ani usuwanie danych historycznych.
 - Data urodzenia, potwierdzenie miejsca zamieszkania i potrzeby dostępności są zapisane w wersjonowanej kopercie kompatybilności. Starsze zwykłe notatki pozostają czytelne.
 - Istniejący panel `/admin/fundacja` i eksport CSV pokazują kolejność zgłoszeń, dane rekrutacyjne oraz preferowaną dostępność.
@@ -27,3 +29,4 @@ Panel `/admin/fundacja` i CSV używają wspólnego `buildFoundationStatistics`: 
 - Potwierdzone terminy i adresy są w `src/lib/foundation/schedule.ts`. Ten sam harmonogram zasila stronę `/creators` i opisy kursów w formularzu. Brak potwierdzenia sali lub godziny pozostaje jawny; nie zastępujemy go zgadywanym adresem. Powiązania kursów z gminami w `options.ts` muszą odpowiadać temu harmonogramowi.
 - Nowy format szczegółów zgłoszenia wymaga nowej wartości `FOUNDATION_RECORD_SCHEMA` i zgodnego odczytu poprzednich wersji w `src/lib/foundation/record.ts`.
 - Jeśli zakres rekrutacji zacznie wymagać nowych zapytań lub raportów, należy dodać osobne kolumny w kontrolowanej migracji zamiast rozszerzać kopertę JSON.
+- Formalne potwierdzanie miejsc, limity i raporty według grup powinny otrzymać osobny model przydziału do grup; obecny wybór nie rezerwuje miejsc i nie zmienia kolejności wcześniejszych zgłoszeń.

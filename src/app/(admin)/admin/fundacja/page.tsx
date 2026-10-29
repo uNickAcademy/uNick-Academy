@@ -142,7 +142,15 @@ export default async function Page() {
               <p><b>Kontakt:</b> {row.contact_name}<br />{row.email}<br />{row.phone}</p>
               <p><b>Zajęcia:</b> {row.activities?.map(value => activityLabel(value, row.consent_version)).join(', ')}<br />
                 <b>Gmina zamieszkania:</b> {residence}<br />
-                <b>Gmina zajęć:</b> {locationLabel(row.primary_location)}</p>
+                <b>Gminy zajęć:</b> {row.preferred_locations?.map(locationLabel).join(', ') || locationLabel(row.primary_location)}</p>
+              <div>
+                <b>Wybrane grupy:</b>
+                {details.selectedGroups.length ? <ul className="mt-1 space-y-2">
+                  {details.selectedGroups.map(group => <li key={group.id}>
+                    {group.label}{group.id === details.primaryGroup && <strong> (pierwszy wybór)</strong>}
+                  </li>)}
+                </ul> : <p>Nie wskazano konkretnych grup w starszym zgłoszeniu.</p>}
+              </div>
               <p><b>Data urodzenia:</b> {details.birthDate || 'brak w starszym zgłoszeniu'}<br />
                 <b>Zamieszkanie potwierdzone:</b> {details.residenceConfirmed ? 'tak' : 'brak w starszym zgłoszeniu'}</p>
               <p><b>Dostępność:</b> {row.available_days?.map(dayLabel).join(', ') || '—'}<br />

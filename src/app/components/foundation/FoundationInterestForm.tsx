@@ -5,7 +5,8 @@ import Link from 'next/link'
 import {FormEvent, useEffect, useRef, useState} from 'react'
 import Button from '../Button'
 import * as O from '@/lib/foundation/options'
-import {courseScheduleDescription} from '@/lib/foundation/schedule'
+import {projectSchedule} from '@/lib/foundation/schedule'
+import {foundationGroupOptions, groupsForParticipant} from '@/lib/foundation/groups'
 import {validateFoundationInterest} from '@/lib/foundation/validation'
 import styles from './FoundationInterestForm.module.css'
 
@@ -39,9 +40,8 @@ export default function FoundationInterestForm({copy, locale}: Props) {
   const errorSummary = useRef<HTMLDivElement>(null)
   const [birthDate, setBirthDate] = useState('')
   const [municipality, setMunicipality] = useState('')
-  const [chosenCourseMunicipality, setChosenCourseMunicipality] = useState<string | null>(null)
-  const courseMunicipality = chosenCourseMunicipality ?? municipality
-  const [activities, setActivities] = useState<string[]>([])
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [primaryGroup, setPrimaryGroup] = useState('')
   const [availableDays, setAvailableDays] = useState<string[]>([])
   const [timeSlots, setTimeSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Errors>({})
@@ -51,12 +51,19 @@ export default function FoundationInterestForm({copy, locale}: Props) {
 
   useEffect(() => { startedAt.current = Date.now() }, [])
 
-  const keepEligibleActivities = (nextBirthDate: string, nextMunicipality: string) => {
+  const keepEligibleGroups = (nextBirthDate: string) => {
     const nextAge = O.calculateAgeOnDate(nextBirthDate)
     const eligible = nextAge == null
       ? []
-      : O.activitiesForParticipant(nextAge, nextMunicipality).map(activity => activity.value)
-    setActivities(current => current.filter(value => eligible.includes(value as never)))
+      : groupsForParticipant(nextAge).map(group => group.id)
+    setSelectedGroups(current => current.filter(value => eligible.includes(value)))
+    setPrimaryGroup(current => eligible.includes(current) ? current : '')
+  }
+
+  const toggleGroup = (groupId: string, checked: boolean) => {
+    const next = checked ? [...selectedGroups, groupId] : selectedGroups.filter(value => value !== groupId)
+    setSelectedGroups(next)
+    setPrimaryGroup(current => next.length === 1 ? next[0] : next.includes(current) ? current : '')
   }
 
   const readChecks = (form: FormData, name: string) => form.getAll(name).map(String)
@@ -68,10 +75,9 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       participantFirstName: form.get('participantFirstName'),
       birthDate: form.get('birthDate'),
       municipality: form.get('municipality'),
-      courseMunicipality: form.get('courseMunicipality'),
       residenceConfirmed: form.get('residenceConfirmed') === 'on',
-      activities: readChecks(form, 'activities'),
-      primaryActivity: form.get('primaryActivity'),
+      selectedGroups: readChecks(form, 'selectedGroups'),
+      primaryGroup: form.get('primaryGroup'),
       availableDays: readChecks(form, 'availableDays'),
       timeSlots: readChecks(form, 'timeSlots'),
       organizationalNeeds: form.get('organizationalNeeds'),
@@ -114,20 +120,6 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     }
   }
 
-  const availabilityReason = (activity: typeof O.activityOptions[number]) => {
-    if (participantAge == null && !courseMunicipality) return 'Najpierw podaj datę urodzenia i wybierz gminę zajęć.'
-    if (participantAge == null) return 'Najpierw podaj datę urodzenia.'
-    if (!courseMunicipality) return 'Najpierw wybierz gminę zajęć.'
-    if (participantAge < activity.minAge || participantAge > activity.maxAge) {
-      return `Dostępne dla osób w wieku ${activity.minAge}–${activity.maxAge} lat.`
-    }
-    const municipalities: readonly string[] = activity.municipalities
-    if (!municipalities.includes(courseMunicipality)) {
-      return 'Ten kurs odbywa się w innej gminie — możesz zmienić gminę zajęć powyżej.'
-    }
-    return courseScheduleDescription(courseMunicipality, activity.value) || 'Dostępne dla tego wieku i wybranego miejsca zajęć.'
-  }
-
   if (done) return <div className={`${styles.shell} ${styles.success}`} role="status" aria-live="polite">
     <span className={styles.successMark} aria-hidden="true">✓</span>
     <h3>{copy.successTitle}</h3>
@@ -166,7 +158,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
             onChange={event => {
               const value = event.target.value
               setBirthDate(value)
-              keepEligibleActivities(value, courseMunicipality)
+              keepEligibleGroups(value)
             }}
           />
           <small id="birth-date-hint">Na potrzeby doboru zajęć wiek liczymy na 1 listopada 2026 r.{participantAge != null && ` Wtedy uczestnik będzie mieć ${participantAge} lat.`}</small>
@@ -183,7 +175,6 @@ export default function FoundationInterestForm({copy, locale}: Props) {
           onChange={event => {
             const value = event.target.value
             setMunicipality(value)
-            keepEligibleActivities(birthDate, chosenCourseMunicipality ?? value)
           }}
         >
           <option value="">Wybierz gminę</option>
@@ -201,52 +192,43 @@ export default function FoundationInterestForm({copy, locale}: Props) {
 
     <fieldset disabled={sending}>
       <legend>2. Zajęcia</legend>
-      <p className={styles.fieldHint}>Możesz chodzić na zajęcia w dowolnej z czterech gmin, niezależnie od gminy zamieszkania. Wybierz miejsce zajęć, a potem interesujące kursy.</p>
-      <label>Gmina zajęć *
-        <select
-          name="courseMunicipality"
-          value={courseMunicipality}
-          aria-invalid={Boolean(errors.courseMunicipality)}
-          aria-describedby="course-municipality-hint courseMunicipality-error"
-          onChange={event => {
-            const value = event.target.value
-            setChosenCourseMunicipality(value)
-            keepEligibleActivities(birthDate, value)
-          }}
-        >
-          <option value="">Wybierz gminę zajęć</option>
-          {O.projectLocationOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-        <small id="course-municipality-hint">Domyślnie podpowiadamy gminę zamieszkania. Możesz wybrać inną.</small>
-        <Err name="courseMunicipality" errors={errors}/>
-      </label>
-      <p className={styles.fieldHint}>Możesz zaznaczyć więcej niż jeden kurs. Dostępność zależy od wieku uczestnika i miejsca zajęć.</p>
-      <div className={styles.courseGrid}>{O.activityOptions.map(activity => {
-        const eligible = participantAge != null
-          && O.activitiesForParticipant(participantAge, courseMunicipality).some(option => option.value === activity.value)
-        return <label key={activity.value} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
-          <input
-            type="checkbox"
-            name="activities"
-            value={activity.value}
-            disabled={!eligible}
-            checked={activities.includes(activity.value)}
-            onChange={event => setActivities(current => event.target.checked
-              ? [...current, activity.value]
-              : current.filter(value => value !== activity.value))}
-          />
-          <span><strong>{activity.label}</strong><small>{availabilityReason(activity)}</small></span>
-        </label>
-      })}</div>
-      <Err name="activities" errors={errors}/>
+      <p className={styles.fieldHint}>Poniżej są wszystkie grupy. Możesz zaznaczyć więcej niż jedną — także w różnych gminach, niezależnie od miejsca zamieszkania.</p>
+      {participantAge == null && <p className={styles.fieldHint}>Najpierw podaj datę urodzenia w punkcie 1, aby zaznaczyć grupy odpowiednie dla wieku uczestnika.</p>}
+      {projectSchedule.map(location => <section key={location.municipality} className={styles.groupLocation} aria-labelledby={`groups-${location.municipality}`}>
+        <header>
+          <h3 id={`groups-${location.municipality}`}>{location.name} · {location.day}</h3>
+          <p>{location.venue && location.address
+            ? `${location.venue}, ${location.address}`
+            : 'Sala i dokładne godziny do potwierdzenia.'}</p>
+        </header>
+        <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.municipality === location.municipality).map(group => {
+          const eligible = participantAge != null && participantAge >= group.minAge && participantAge <= group.maxAge
+          return <label key={group.id} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
+            <input
+              type="checkbox"
+              name="selectedGroups"
+              value={group.id}
+              aria-label={`${group.label}, ${group.age}`}
+              disabled={!eligible}
+              checked={selectedGroups.includes(group.id)}
+              onChange={event => toggleGroup(group.id, event.target.checked)}
+            />
+            <span>
+              <strong>{group.title}</strong>
+              <small>{group.age} · {group.time ? `godz. ${group.time}` : 'godzina do potwierdzenia'}</small>
+            </span>
+          </label>
+        })}</div>
+      </section>)}
+      <Err name="selectedGroups" errors={errors}/>
 
       <label>Pierwszy wybór *
-        <select name="primaryActivity" aria-invalid={Boolean(errors.primaryActivity)} aria-describedby="primaryActivity-error">
-          <option value="">Wybierz</option>
-          {O.activityOptions.filter(option => activities.includes(option.value)).map(option =>
-            <option key={option.value} value={option.value}>{option.label}</option>)}
+        <select name="primaryGroup" value={primaryGroup} onChange={event => setPrimaryGroup(event.target.value)} aria-invalid={Boolean(errors.primaryGroup)} aria-describedby="primaryGroup-error">
+          <option value="">Wybierz spośród zaznaczonych grup</option>
+          {foundationGroupOptions.filter(group => selectedGroups.includes(group.id)).map(group =>
+            <option key={group.id} value={group.id}>{group.label}</option>)}
         </select>
-        <Err name="primaryActivity" errors={errors}/>
+        <Err name="primaryGroup" errors={errors}/>
       </label>
     </fieldset>
 

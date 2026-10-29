@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
     'participant_age', 'birth_date', 'municipality', 'primary_location', 'residence_confirmed',
     'activities', 'activities_labels',
     'primary_activity', 'primary_activity_label', 'attendance_commitment',
+    'selected_groups', 'selected_groups_labels', 'primary_group', 'primary_group_label',
     'available_days', 'preferred_hours', 'accessibility_notes',
     'contact_name', 'email', 'phone', 'consent_version',
     'privacy_notice_version', 'consented_at',
@@ -79,6 +80,10 @@ export async function GET(request: NextRequest) {
       residence_confirmed: details.residenceConfirmed ? 'tak' : '',
       activities_labels: row.activities?.map(value => activityLabel(value, consentVersion)) ?? [],
       primary_activity_label: row.primary_activity ? activityLabel(row.primary_activity, consentVersion) : '',
+      selected_groups: details.selectedGroups.map(group => group.id),
+      selected_groups_labels: details.selectedGroups.map(group => group.label),
+      primary_group: details.primaryGroup,
+      primary_group_label: details.selectedGroups.find(group => group.id === details.primaryGroup)?.label || '',
       preferred_hours: row.earliest_start,
       accessibility_notes: details.notes,
     }

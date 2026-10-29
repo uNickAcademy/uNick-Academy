@@ -8,6 +8,7 @@
 
 .shell fieldset {
   display: grid;
+  min-width: 0;
   gap: 16px;
   margin: 0 0 30px;
   padding: 0 0 30px;
@@ -24,6 +25,7 @@
 
 .shell label {
   display: grid;
+  min-width: 0;
   gap: 7px;
   font-weight: 700;
   color: var(--color-blue);
@@ -33,6 +35,8 @@
 .shell select,
 .shell textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 12px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
@@ -94,6 +98,28 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.groupLocation {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.groupLocation h3 {
+  margin: 0;
+  color: var(--color-blue);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.groupLocation header p {
+  margin: 5px 0 0;
+  color: #52677a;
+  font-size: .88rem;
+  line-height: 1.55;
 }
 
 .course {

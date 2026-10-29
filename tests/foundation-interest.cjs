@@ -23,7 +23,8 @@ function load(file, mocks = {}) {
 
 const options = load('src/lib/foundation/options.ts')
 const schedule = load('src/lib/foundation/schedule.ts')
-const validation = load('src/lib/foundation/validation.ts', {'./options': options})
+const groups = load('src/lib/foundation/groups.ts', {'./options': options, './schedule': schedule})
+const validation = load('src/lib/foundation/validation.ts', {'./options': options, './groups': groups})
 const record = load('src/lib/foundation/record.ts')
 const statistics = load('src/lib/foundation/statistics.ts', {'./options': options})
 const declarations = load('src/lib/foundation/declarations.ts')
@@ -163,6 +164,47 @@ assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload,
 assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, activities: ['teenpreneurs'], primaryActivity: 'teenpreneurs'}).ok, false)
 console.log('OK: all residence/venue combinations; separate storage; age and offered-course restrictions preserved')
 
+assert.equal(groups.foundationGroupOptions.length, 8)
+assert.equal(new Set(groups.foundationGroupOptions.map(group => group.id)).size, 8)
+const mixedGroupsPayload = {
+  ...base,
+  selectedGroups: ['tarnowo_podgorne:teenpreneurs', 'rokietnica:teenage_talk'],
+  primaryGroup: 'rokietnica:teenage_talk',
+  // Group choices, not untrusted legacy fields, determine the saved activities.
+  activities: ['creative_diy'], primaryActivity: 'creative_diy', courseMunicipality: 'kazmierz',
+}
+const mixedGroups = validation.validateFoundationInterest(mixedGroupsPayload)
+assert.equal(mixedGroups.ok, true)
+assert.deepEqual(mixedGroups.data.activities, ['teenpreneurs', 'teenage_talk'])
+assert.equal(mixedGroups.data.primaryActivity, 'teenage_talk')
+assert.equal(mixedGroups.data.courseMunicipality, 'rokietnica')
+const mixedRecord = record.toFoundationRecord(mixedGroups.data)
+assert.deepEqual(mixedRecord.preferred_locations, ['tarnowo_podgorne', 'rokietnica'])
+assert.equal(mixedRecord.primary_location, 'rokietnica')
+const mixedDetails = record.readFoundationDetails(mixedRecord.organizational_needs)
+assert.equal(mixedDetails.primaryGroup, 'rokietnica:teenage_talk')
+assert.deepEqual(mixedDetails.selectedGroups.map(group => group.id), mixedGroupsPayload.selectedGroups)
+assert.ok(mixedDetails.selectedGroups[0].label.includes('16:30'))
+assert.ok(mixedDetails.selectedGroups[1].label.includes('Szkolna 18B'))
+const sameCourseDifferentPlaces = validation.validateFoundationInterest({
+  ...base,
+  selectedGroups: ['kazmierz:podcasts_audio_video', 'rokietnica:podcasts_audio_video'],
+  primaryGroup: 'kazmierz:podcasts_audio_video',
+})
+assert.equal(sameCourseDifferentPlaces.ok, true)
+assert.deepEqual(sameCourseDifferentPlaces.data.activities, ['podcasts_audio_video'])
+assert.equal(sameCourseDifferentPlaces.data.selectedGroups.length, 2)
+for (const invalidGroups of [[], ['other:teenpreneurs'], ['tarnowo_podgorne:teenpreneurs', 'fake'], ['rokietnica:teenage_talk', {}], null]) {
+  assert.equal(validation.validateFoundationInterest({...mixedGroupsPayload, selectedGroups: invalidGroups}).ok, false)
+}
+assert.equal(validation.validateFoundationInterest({...mixedGroupsPayload, primaryGroup: 'kazmierz:teenage_talk'}).ok, false)
+assert.equal(validation.validateFoundationInterest({...mixedGroupsPayload, municipality: 'other'}).ok, false)
+assert.equal(validation.validateFoundationInterest({...mixedGroupsPayload, birthDate: birthDateForAge(12)}).ok, false)
+assert.equal(validation.validateFoundationInterest({...base, birthDate: birthDateForAge(18), selectedGroups: ['rokietnica:podcasts_audio_video'], primaryGroup: 'rokietnica:podcasts_audio_video'}).ok, false)
+assert.equal(record.readFoundationDetails(JSON.stringify({schema: 'kreatorzy-2026-10', birthDate: '2012-01-01', residenceConfirmed: true, notes: 'Starsza uwaga'})).birthDate, '2012-01-01')
+assert.deepEqual(record.readFoundationDetails(JSON.stringify({schema: 'kreatorzy-2026-10', birthDate: '2012-01-01'})).selectedGroups, [])
+console.log('OK: eight groups; mixed venues; snapshots; invalid and age-ineligible groups rejected; legacy details readable')
+
 const forgedAge = validation.validateFoundationInterest({...base, birthDate: birthDateForAge(10), participantAge: 18, activities: ['art_performance_9_13'], primaryActivity: 'art_performance_9_13'})
 assert.equal(forgedAge.ok, true)
 assert.equal(forgedAge.data.participantAge, 10)
@@ -247,6 +289,7 @@ const request = payload => ({
   assert.ok(csv.includes('"Teenpreneurs, 13–18 lat";"13";"11"'))
   assert.ok(!csv.includes('STATYSTYKI TEENAGE TALK'))
   assert.ok(!csv.includes('maks. 16 osób'))
+  assert.ok(csv.includes('"selected_groups_labels"'))
   console.log('OK: admin CSV exports the same complete statistics as the panel')
 
   const response = await route.POST(request(base))
@@ -258,6 +301,11 @@ const request = payload => ({
   assert.equal(inserted.municipality, 'tarnowo_podgorne')
   assert.equal(inserted.primary_location, 'rokietnica')
   assert.equal(notificationCount, 4)
+
+  assert.equal((await route.POST(request(mixedGroupsPayload))).status, 201)
+  assert.deepEqual(inserted.preferred_locations, ['tarnowo_podgorne', 'rokietnica'])
+  assert.equal(record.readFoundationDetails(inserted.organizational_needs).selectedGroups.length, 2)
+  assert.equal(notificationCount, 6)
 
   const crossSite = request(base)
   crossSite.headers.get = name => name === 'sec-fetch-site' ? 'cross-site' : null

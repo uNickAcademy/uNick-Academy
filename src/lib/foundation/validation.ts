@@ -1,4 +1,5 @@
 import * as O from './options'
+import {foundationGroupOptions, type FoundationGroupSelection} from './groups'
 
 export type FoundationInterestDeclaration = {
   respondentType: 'parent_guardian'
@@ -7,6 +8,8 @@ export type FoundationInterestDeclaration = {
   participantAge: number
   municipality: string
   courseMunicipality: string
+  selectedGroups: FoundationGroupSelection[]
+  primaryGroup: string | null
   residenceConfirmed: true
   activities: string[]
   primaryActivity: string
@@ -60,10 +63,16 @@ export function validateFoundationInterest(input: unknown): Result {
   const birthDate = stringValue(values.birthDate, 10)
   const participantAge = O.calculateAgeOnDate(birthDate)
   const municipality = stringValue(values.municipality)
-  // Older browser tabs did not send this field; preserve their original location.
-  const courseMunicipality = values.courseMunicipality === undefined
-    ? municipality
-    : stringValue(values.courseMunicipality)
+  const usesGroupChoices = values.selectedGroups !== undefined
+  const selectedGroupIds = arrayValue(values.selectedGroups)
+  const selectedGroups = foundationGroupOptions.filter(group => selectedGroupIds.includes(group.id))
+  const primaryGroupId = stringValue(values.primaryGroup)
+  const primaryGroup = selectedGroups.find(group => group.id === primaryGroupId)
+  // Keep older open forms working without treating their preferences as an
+  // explicit choice of a particular group.
+  const courseMunicipality = usesGroupChoices
+    ? primaryGroup?.municipality ?? ''
+    : values.courseMunicipality === undefined ? municipality : stringValue(values.courseMunicipality)
 
   if (participantFirstName.split(/\s+/).filter(Boolean).length < 2) {
     errors.participantFirstName = 'Podaj imię i nazwisko uczestnika.'
@@ -74,22 +83,35 @@ export function validateFoundationInterest(input: unknown): Result {
   if (!validOption(municipality, O.municipalityOptions)) {
     errors.municipality = 'Wybierz gminę zamieszkania.'
   }
-  if (!validOption(courseMunicipality, O.projectLocationOptions)) {
+  if (!usesGroupChoices && !validOption(courseMunicipality, O.projectLocationOptions)) {
     errors.courseMunicipality = 'Wybierz gminę, w której mają odbywać się zajęcia.'
   }
   if (values.residenceConfirmed !== true) {
     errors.residenceConfirmed = 'Potwierdź zamieszkanie w wybranej gminie.'
   }
 
-  const activities = arrayValue(values.activities)
+  const activities = usesGroupChoices
+    ? [...new Set(selectedGroups.map(group => group.activity))]
+    : arrayValue(values.activities)
   const eligibleActivities = participantAge == null
     ? []
     : O.activitiesForParticipant(participantAge, courseMunicipality).map(activity => activity.value)
-  const primaryActivity = stringValue(values.primaryActivity)
-  if (!activities.length || activities.some(value => !eligibleActivities.includes(value as never))) {
+  const primaryActivity = usesGroupChoices ? primaryGroup?.activity ?? '' : stringValue(values.primaryActivity)
+  if (usesGroupChoices && (
+    !Array.isArray(values.selectedGroups)
+    || values.selectedGroups.some(value => typeof value !== 'string' || !value.trim())
+    || !selectedGroups.length || selectedGroups.length !== selectedGroupIds.length
+    || selectedGroups.some(group => participantAge == null || participantAge < group.minAge || participantAge > group.maxAge)
+  )) {
+    errors.selectedGroups = 'Wybierz co najmniej jedną grupę odpowiednią dla wieku uczestnika.'
+  }
+  if (usesGroupChoices && !primaryGroup) {
+    errors.primaryGroup = 'Wybierz pierwszy wybór spośród zaznaczonych grup.'
+  }
+  if (!usesGroupChoices && (!activities.length || activities.some(value => !eligibleActivities.includes(value as never)))) {
     errors.activities = 'Wybierz co najmniej jedne zajęcia dostępne dla tego wieku w wybranej gminie zajęć.'
   }
-  if (!activities.includes(primaryActivity)) {
+  if (!usesGroupChoices && !activities.includes(primaryActivity)) {
     errors.primaryActivity = 'Wybierz pierwszy wybór spośród zaznaczonych zajęć.'
   }
 
@@ -126,6 +148,8 @@ export function validateFoundationInterest(input: unknown): Result {
       participantAge,
       municipality,
       courseMunicipality,
+      selectedGroups: selectedGroups.map(group => group.selection),
+      primaryGroup: primaryGroup?.id ?? null,
       residenceConfirmed: true,
       activities,
       primaryActivity,
