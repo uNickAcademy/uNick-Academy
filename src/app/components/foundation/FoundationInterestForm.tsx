@@ -39,6 +39,8 @@ export default function FoundationInterestForm({copy, locale}: Props) {
   const errorSummary = useRef<HTMLDivElement>(null)
   const [birthDate, setBirthDate] = useState('')
   const [municipality, setMunicipality] = useState('')
+  const [chosenCourseMunicipality, setChosenCourseMunicipality] = useState<string | null>(null)
+  const courseMunicipality = chosenCourseMunicipality ?? municipality
   const [activities, setActivities] = useState<string[]>([])
   const [availableDays, setAvailableDays] = useState<string[]>([])
   const [timeSlots, setTimeSlots] = useState<string[]>([])
@@ -66,6 +68,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       participantFirstName: form.get('participantFirstName'),
       birthDate: form.get('birthDate'),
       municipality: form.get('municipality'),
+      courseMunicipality: form.get('courseMunicipality'),
       residenceConfirmed: form.get('residenceConfirmed') === 'on',
       activities: readChecks(form, 'activities'),
       primaryActivity: form.get('primaryActivity'),
@@ -112,17 +115,17 @@ export default function FoundationInterestForm({copy, locale}: Props) {
   }
 
   const availabilityReason = (activity: typeof O.activityOptions[number]) => {
-    if (participantAge == null && !municipality) return 'Najpierw podaj datę urodzenia i gminę.'
+    if (participantAge == null && !courseMunicipality) return 'Najpierw podaj datę urodzenia i wybierz gminę zajęć.'
     if (participantAge == null) return 'Najpierw podaj datę urodzenia.'
-    if (!municipality) return 'Najpierw wybierz gminę.'
+    if (!courseMunicipality) return 'Najpierw wybierz gminę zajęć.'
     if (participantAge < activity.minAge || participantAge > activity.maxAge) {
       return `Dostępne dla osób w wieku ${activity.minAge}–${activity.maxAge} lat.`
     }
     const municipalities: readonly string[] = activity.municipalities
-    if (!municipalities.includes(municipality)) {
-      return 'Te zajęcia nie są dostępne w wybranej gminie.'
+    if (!municipalities.includes(courseMunicipality)) {
+      return 'Ten kurs odbywa się w innej gminie — możesz zmienić gminę zajęć powyżej.'
     }
-    return courseScheduleDescription(municipality, activity.value) || 'Dostępne dla tego wieku i gminy.'
+    return courseScheduleDescription(courseMunicipality, activity.value) || 'Dostępne dla tego wieku i wybranego miejsca zajęć.'
   }
 
   if (done) return <div className={`${styles.shell} ${styles.success}`} role="status" aria-live="polite">
@@ -163,7 +166,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
             onChange={event => {
               const value = event.target.value
               setBirthDate(value)
-              keepEligibleActivities(value, municipality)
+              keepEligibleActivities(value, courseMunicipality)
             }}
           />
           <small id="birth-date-hint">Na potrzeby doboru zajęć wiek liczymy na 1 listopada 2026 r.{participantAge != null && ` Wtedy uczestnik będzie mieć ${participantAge} lat.`}</small>
@@ -180,7 +183,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
           onChange={event => {
             const value = event.target.value
             setMunicipality(value)
-            keepEligibleActivities(birthDate, value)
+            keepEligibleActivities(birthDate, chosenCourseMunicipality ?? value)
           }}
         >
           <option value="">Wybierz gminę</option>
@@ -198,10 +201,29 @@ export default function FoundationInterestForm({copy, locale}: Props) {
 
     <fieldset disabled={sending}>
       <legend>2. Zajęcia</legend>
-      <p className={styles.fieldHint}>Możesz wybrać więcej niż jedną opcję. Formularz od razu uwzględnia wiek i gminę.</p>
+      <p className={styles.fieldHint}>Możesz chodzić na zajęcia w dowolnej z czterech gmin, niezależnie od gminy zamieszkania. Wybierz miejsce zajęć, a potem interesujące kursy.</p>
+      <label>Gmina zajęć *
+        <select
+          name="courseMunicipality"
+          value={courseMunicipality}
+          aria-invalid={Boolean(errors.courseMunicipality)}
+          aria-describedby="course-municipality-hint courseMunicipality-error"
+          onChange={event => {
+            const value = event.target.value
+            setChosenCourseMunicipality(value)
+            keepEligibleActivities(birthDate, value)
+          }}
+        >
+          <option value="">Wybierz gminę zajęć</option>
+          {O.projectLocationOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <small id="course-municipality-hint">Domyślnie podpowiadamy gminę zamieszkania. Możesz wybrać inną.</small>
+        <Err name="courseMunicipality" errors={errors}/>
+      </label>
+      <p className={styles.fieldHint}>Możesz zaznaczyć więcej niż jeden kurs. Dostępność zależy od wieku uczestnika i miejsca zajęć.</p>
       <div className={styles.courseGrid}>{O.activityOptions.map(activity => {
         const eligible = participantAge != null
-          && O.activitiesForParticipant(participantAge, municipality).some(option => option.value === activity.value)
+          && O.activitiesForParticipant(participantAge, courseMunicipality).some(option => option.value === activity.value)
         return <label key={activity.value} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
           <input
             type="checkbox"

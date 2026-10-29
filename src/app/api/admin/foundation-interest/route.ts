@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
   const columns = [
     'created_at', 'status', 'respondent_type', 'participant_first_name',
-    'participant_age', 'birth_date', 'municipality', 'residence_confirmed',
+    'participant_age', 'birth_date', 'municipality', 'primary_location', 'residence_confirmed',
     'activities', 'activities_labels',
     'primary_activity', 'primary_activity_label', 'attendance_commitment',
     'available_days', 'preferred_hours', 'accessibility_notes',

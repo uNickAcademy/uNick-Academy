@@ -8,6 +8,8 @@ Formularz na `/creators#deklaracja` przyjmuje zgłoszenia chęci udziału w bezp
 
 - `FoundationInterestForm` zbiera dane i wysyła je do `/api/foundation-interest`.
 - API ponownie oblicza wiek i waliduje gminę, zajęcia, zgody oraz pola antyspamowe.
+- Gmina zamieszkania i gmina zajęć są niezależne. W punkcie 2 rodzic może wybrać inną gminę; kursy i terminy zależą od gminy zajęć oraz wieku, a prawo udziału nadal wymaga zamieszkania w jednej z czterech gmin.
+- `municipality` zachowuje gminę zamieszkania, natomiast istniejące `primary_location` i `preferred_locations` przechowują wybrane miejsce zajęć. Panel szczegółów i CSV pokazują oba pola oddzielnie. Brak nowego pola w żądaniu ze starszej otwartej karty zachowuje dotychczasowe znaczenie (zajęcia w gminie zamieszkania); jawnie pusty lub nieprawidłowy wybór jest odrzucany.
 - Zgłoszenie trafia do istniejącej tabeli `foundation_interest_declarations`; nie jest potrzebna migracja ani usuwanie danych historycznych.
 - Data urodzenia, potwierdzenie miejsca zamieszkania i potrzeby dostępności są zapisane w wersjonowanej kopercie kompatybilności. Starsze zwykłe notatki pozostają czytelne.
 - Istniejący panel `/admin/fundacja` i eksport CSV pokazują kolejność zgłoszeń, dane rekrutacyjne oraz preferowaną dostępność.

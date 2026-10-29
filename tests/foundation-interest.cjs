@@ -90,6 +90,36 @@ assert.equal(schedule.courseScheduleDescription('kazmierz', 'teenpreneurs'), nul
 assert.equal(schedule.courseScheduleDescription('szamotuly', 'teenage_talk'), 'Poniedziałki po południu. Godziny i adres podamy po potwierdzeniu sali.')
 console.log('OK: revised Kaźmierz registration, confirmed timetable and unconfirmed Szamotuły venue')
 
+for (const residence of options.municipalityOptions.map(item => item.value)) {
+  for (const courseMunicipality of options.projectLocationOptions.map(item => item.value)) {
+    for (let age = 10; age <= 18; age += 1) {
+      for (const activity of options.activitiesForParticipant(age, courseMunicipality)) {
+        assert.equal(validation.validateFoundationInterest({
+          ...base, municipality: residence, courseMunicipality,
+          birthDate: birthDateForAge(age), activities: [activity.value], primaryActivity: activity.value,
+        }).ok, true, `${residence} → ${courseMunicipality}, age ${age}, ${activity.value}`)
+      }
+    }
+  }
+}
+const crossMunicipalityPayload = {
+  ...base, municipality: 'tarnowo_podgorne', courseMunicipality: 'rokietnica',
+  activities: ['teenage_talk'], primaryActivity: 'teenage_talk',
+}
+const crossMunicipality = validation.validateFoundationInterest(crossMunicipalityPayload)
+assert.equal(crossMunicipality.ok, true)
+const crossRecord = record.toFoundationRecord(crossMunicipality.data)
+assert.equal(crossRecord.municipality, 'tarnowo_podgorne')
+assert.equal(crossRecord.primary_location, 'rokietnica')
+assert.deepEqual(crossRecord.preferred_locations, ['rokietnica'])
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, municipality: 'other'}).ok, false)
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, courseMunicipality: ''}).ok, false)
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, courseMunicipality: 'other'}).ok, false)
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, courseMunicipality: null}).ok, false)
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, birthDate: birthDateForAge(12)}).ok, false)
+assert.equal(validation.validateFoundationInterest({...crossMunicipalityPayload, activities: ['teenpreneurs'], primaryActivity: 'teenpreneurs'}).ok, false)
+console.log('OK: all residence/venue combinations; separate storage; age and offered-course restrictions preserved')
+
 const forgedAge = validation.validateFoundationInterest({...base, birthDate: birthDateForAge(10), participantAge: 18, activities: ['art_performance_9_13'], primaryActivity: 'art_performance_9_13'})
 assert.equal(forgedAge.ok, true)
 assert.equal(forgedAge.data.participantAge, 10)
@@ -150,6 +180,11 @@ const request = payload => ({
   assert.equal(response.status, 201)
   assert.equal(inserted.participant_first_name, 'Jan Kowalski')
   assert.equal(notificationCount, 2)
+
+  assert.equal((await route.POST(request(crossMunicipalityPayload))).status, 201)
+  assert.equal(inserted.municipality, 'tarnowo_podgorne')
+  assert.equal(inserted.primary_location, 'rokietnica')
+  assert.equal(notificationCount, 4)
 
   const crossSite = request(base)
   crossSite.headers.get = name => name === 'sec-fetch-site' ? 'cross-site' : null

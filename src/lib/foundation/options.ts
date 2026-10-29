@@ -84,12 +84,12 @@ export function calculateAgeOnDate(birthDate: string, onDate = PROJECT_START_DAT
   return year - birthYear - (month < birthMonth || (month === birthMonth && day < birthDay) ? 1 : 0)
 }
 
-export function activitiesForParticipant(age: number, municipality: string) {
+export function activitiesForParticipant(age: number, courseMunicipality: string) {
   return activityOptions.filter(activity => {
     const municipalities: readonly string[] = activity.municipalities
     return age >= activity.minAge
       && age <= activity.maxAge
-      && municipalities.includes(municipality)
+      && municipalities.includes(courseMunicipality)
   })
 }
 

@@ -6,6 +6,7 @@ export type FoundationInterestDeclaration = {
   birthDate: string
   participantAge: number
   municipality: string
+  courseMunicipality: string
   residenceConfirmed: true
   activities: string[]
   primaryActivity: string
@@ -59,6 +60,10 @@ export function validateFoundationInterest(input: unknown): Result {
   const birthDate = stringValue(values.birthDate, 10)
   const participantAge = O.calculateAgeOnDate(birthDate)
   const municipality = stringValue(values.municipality)
+  // Older browser tabs did not send this field; preserve their original location.
+  const courseMunicipality = values.courseMunicipality === undefined
+    ? municipality
+    : stringValue(values.courseMunicipality)
 
   if (participantFirstName.split(/\s+/).filter(Boolean).length < 2) {
     errors.participantFirstName = 'Podaj imię i nazwisko uczestnika.'
@@ -69,6 +74,9 @@ export function validateFoundationInterest(input: unknown): Result {
   if (!validOption(municipality, O.municipalityOptions)) {
     errors.municipality = 'Wybierz gminę zamieszkania.'
   }
+  if (!validOption(courseMunicipality, O.projectLocationOptions)) {
+    errors.courseMunicipality = 'Wybierz gminę, w której mają odbywać się zajęcia.'
+  }
   if (values.residenceConfirmed !== true) {
     errors.residenceConfirmed = 'Potwierdź zamieszkanie w wybranej gminie.'
   }
@@ -76,10 +84,10 @@ export function validateFoundationInterest(input: unknown): Result {
   const activities = arrayValue(values.activities)
   const eligibleActivities = participantAge == null
     ? []
-    : O.activitiesForParticipant(participantAge, municipality).map(activity => activity.value)
+    : O.activitiesForParticipant(participantAge, courseMunicipality).map(activity => activity.value)
   const primaryActivity = stringValue(values.primaryActivity)
   if (!activities.length || activities.some(value => !eligibleActivities.includes(value as never))) {
-    errors.activities = 'Wybierz co najmniej jedne zajęcia dostępne dla tego wieku i gminy.'
+    errors.activities = 'Wybierz co najmniej jedne zajęcia dostępne dla tego wieku w wybranej gminie zajęć.'
   }
   if (!activities.includes(primaryActivity)) {
     errors.primaryActivity = 'Wybierz pierwszy wybór spośród zaznaczonych zajęć.'
@@ -117,6 +125,7 @@ export function validateFoundationInterest(input: unknown): Result {
       birthDate,
       participantAge,
       municipality,
+      courseMunicipality,
       residenceConfirmed: true,
       activities,
       primaryActivity,

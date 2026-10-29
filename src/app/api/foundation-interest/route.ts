@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }),
     notifyFoundationEmail({
       title: `Nowa deklaracja: ${data.participantFirstName}, ${data.participantAge} lat`,
-      lines: [`Gmina: ${locationLabel(data.municipality)}`, `Kontakt: ${data.contactName}, ${data.email}, ${data.phone}`],
+      lines: [`Gmina zamieszkania: ${locationLabel(data.municipality)}`, `Gmina zajęć: ${locationLabel(data.courseMunicipality)}`, `Kontakt: ${data.contactName}, ${data.email}, ${data.phone}`],
     }),
   ])
 

@@ -26,6 +26,7 @@ type FoundationRow = FoundationStatisticsRow & {
   phone: string
   activities: string[]
   preferred_locations: string[]
+  primary_location: string
   available_days?: string[] | null
   earliest_start?: string | null
   organizational_needs?: string | null
@@ -131,7 +132,8 @@ export default async function Page() {
             <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
               <p><b>Kontakt:</b> {row.contact_name}<br />{row.email}<br />{row.phone}</p>
               <p><b>Zajęcia:</b> {row.activities?.map(value => activityLabel(value, row.consent_version)).join(', ')}<br />
-                <b>Gmina:</b> {residence}</p>
+                <b>Gmina zamieszkania:</b> {residence}<br />
+                <b>Gmina zajęć:</b> {locationLabel(row.primary_location)}</p>
               <p><b>Data urodzenia:</b> {details.birthDate || 'brak w starszym zgłoszeniu'}<br />
                 <b>Zamieszkanie potwierdzone:</b> {details.residenceConfirmed ? 'tak' : 'brak w starszym zgłoszeniu'}</p>
               <p><b>Dostępność:</b> {row.available_days?.map(dayLabel).join(', ') || '—'}<br />
