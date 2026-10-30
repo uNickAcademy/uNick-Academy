@@ -131,8 +131,15 @@ assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazm
 assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazmierz', birthDate: birthDateForAge(12), activities: ['teenage_talk'], primaryActivity: 'teenage_talk'}).ok, false)
 assert.equal(schedule.courseScheduleDescription('rokietnica', 'podcasts_audio_video'), 'Czwartki, godz. 16:30. Sala OSP, ul. Szkolna 18B, 62-090 Rokietnica.')
 assert.equal(schedule.courseScheduleDescription('kazmierz', 'teenpreneurs'), null)
-assert.equal(schedule.courseScheduleDescription('szamotuly', 'teenage_talk'), 'Poniedziałki po południu. Godziny i adres podamy po potwierdzeniu sali.')
-console.log('OK: revised Kaźmierz registration, confirmed timetable and unconfirmed Szamotuły venue')
+assert.equal(schedule.courseScheduleDescription('szamotuly', 'teenage_talk'), 'Poniedziałki, godz. 16:30. ul. Długa 28, 64-514 Przecław.')
+assert.equal(schedule.courseScheduleDescription('szamotuly', 'podcasts_audio_video'), 'Poniedziałki, godz. 17:30. ul. Długa 28, 64-514 Przecław.')
+for (const [id, time] of [['szamotuly:teenage_talk', '16:30'], ['szamotuly:podcasts_audio_video', '17:30']]) {
+  const group = groups.foundationGroupOptions.find(item => item.id === id)
+  assert.ok(group.selection.label.includes('Przecław (gmina Szamotuły)'))
+  assert.ok(group.selection.label.includes(time))
+  assert.ok(group.selection.label.includes('ul. Długa 28, 64-514 Przecław'))
+}
+console.log('OK: confirmed timetable and Przecław address in both Szamotuły group snapshots')
 
 for (const residence of options.municipalityOptions.map(item => item.value)) {
   for (const courseMunicipality of options.projectLocationOptions.map(item => item.value)) {

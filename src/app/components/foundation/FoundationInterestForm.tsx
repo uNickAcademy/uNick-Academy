@@ -197,8 +197,8 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       {projectSchedule.map(location => <section key={location.municipality} className={styles.groupLocation} aria-labelledby={`groups-${location.municipality}`}>
         <header>
           <h3 id={`groups-${location.municipality}`}>{location.name} · {location.day}</h3>
-          <p>{location.venue && location.address
-            ? `${location.venue}, ${location.address}`
+          <p>{location.address
+            ? [location.venue, location.address].filter(Boolean).join(', ')
             : 'Sala i dokładne godziny do potwierdzenia.'}</p>
         </header>
         <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.municipality === location.municipality).map(group => {

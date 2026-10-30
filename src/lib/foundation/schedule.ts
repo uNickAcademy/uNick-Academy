@@ -48,13 +48,13 @@ export const projectSchedule: readonly ProjectLocation[] = [
   },
   {
     municipality: 'szamotuly',
-    name: 'Szamotuły',
-    day: 'Poniedziałki po południu',
+    name: 'Przecław (gmina Szamotuły)',
+    day: 'Poniedziałki',
     venue: null,
-    address: null,
+    address: 'ul. Długa 28, 64-514 Przecław',
     courses: [
-      {activity: 'podcasts_audio_video', title: 'Podcasts', time: null},
-      {activity: 'teenage_talk', title: 'Teenage Talk', time: null},
+      {activity: 'teenage_talk', title: 'Teenage Talk', time: '16:30'},
+      {activity: 'podcasts_audio_video', title: 'Podcasts', time: '17:30'},
     ],
   },
 ]
@@ -63,8 +63,9 @@ export function courseScheduleDescription(municipality: string, activity: string
   const location = projectSchedule.find(item => item.municipality === municipality)
   const course = location?.courses.find(item => item.activity === activity)
   if (!location || !course) return null
-  if (!course.time || !location.venue || !location.address) {
+  if (!course.time || !location.address) {
     return `${location.day}. Godziny i adres podamy po potwierdzeniu sali.`
   }
-  return `${location.day}, godz. ${course.time}. ${location.venue}, ${location.address}.`
+  const address = [location.venue, location.address].filter(Boolean).join(', ')
+  return `${location.day}, godz. ${course.time}. ${address}.`
 }

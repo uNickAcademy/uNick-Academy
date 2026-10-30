@@ -208,9 +208,9 @@ export default function CreatorsPage() {
                     </li>
                   ))}
                 </ul>
-                {location.venue && location.address ? (
+                {location.address ? (
                   <address className={styles.creatorLocationAddress}>
-                    <strong>{location.venue}</strong>
+                    {location.venue && <strong>{location.venue}</strong>}
                     <span>{location.address}</span>
                   </address>
                 ) : (
