@@ -17,24 +17,6 @@ const Err = ({name, errors}: {name: string; errors: Errors}) => errors[name]
   ? <p id={`${name}-error`} className={styles.error}>{errors[name]}</p>
   : null
 
-const CheckboxChoices = ({name, options, selected, onChange}: {
-  name: string
-  options: readonly {value: string; label: string}[]
-  selected: string[]
-  onChange: (values: string[]) => void
-}) => <div className={styles.choices}>{options.map(option => <label key={option.value}>
-  <input
-    type="checkbox"
-    name={name}
-    value={option.value}
-    checked={selected.includes(option.value)}
-    onChange={event => onChange(event.target.checked
-      ? [...selected, option.value]
-      : selected.filter(value => value !== option.value))}
-  />
-  <span>{option.label}</span>
-</label>)}</div>
-
 export default function FoundationInterestForm({copy, locale}: Props) {
   const startedAt = useRef(0)
   const errorSummary = useRef<HTMLDivElement>(null)
@@ -42,8 +24,6 @@ export default function FoundationInterestForm({copy, locale}: Props) {
   const [municipality, setMunicipality] = useState('')
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
   const [primaryGroup, setPrimaryGroup] = useState('')
-  const [availableDays, setAvailableDays] = useState<string[]>([])
-  const [timeSlots, setTimeSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Errors>({})
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -78,8 +58,6 @@ export default function FoundationInterestForm({copy, locale}: Props) {
       residenceConfirmed: form.get('residenceConfirmed') === 'on',
       selectedGroups: readChecks(form, 'selectedGroups'),
       primaryGroup: form.get('primaryGroup'),
-      availableDays: readChecks(form, 'availableDays'),
-      timeSlots: readChecks(form, 'timeSlots'),
       organizationalNeeds: form.get('organizationalNeeds'),
       contactName: form.get('contactName'),
       email: form.get('email'),
@@ -233,18 +211,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     </fieldset>
 
     <fieldset disabled={sending}>
-      <legend>3. Kiedy możecie?</legend>
-      <p className={styles.fieldHint}>Terminy konkretnych zajęć znajdziesz przy wyborze kursu. Zaznacz dni i przedziały godzinowe, w których możecie uczestniczyć.</p>
-      <label className={styles.label}>Preferowane dni *</label>
-      <CheckboxChoices name="availableDays" options={O.dayOptions} selected={availableDays} onChange={setAvailableDays}/>
-      <Err name="availableDays" errors={errors}/>
-      <label className={styles.label}>Możliwe godziny *</label>
-      <CheckboxChoices name="timeSlots" options={O.timeSlotOptions} selected={timeSlots} onChange={setTimeSlots}/>
-      <Err name="timeSlots" errors={errors}/>
-    </fieldset>
-
-    <fieldset disabled={sending}>
-      <legend>4. Kontakt i dostępność</legend>
+      <legend>3. Kontakt i dostępność</legend>
       <label>Imię i nazwisko rodzica lub opiekuna *
         <input name="contactName" autoComplete="name" maxLength={120} aria-invalid={Boolean(errors.contactName)} aria-describedby="contactName-error"/>
         <Err name="contactName" errors={errors}/>
@@ -266,7 +233,7 @@ export default function FoundationInterestForm({copy, locale}: Props) {
     </fieldset>
 
     <fieldset disabled={sending}>
-      <legend>5. Potwierdzenia i zgody</legend>
+      <legend>4. Potwierdzenia i zgody</legend>
       {['consentDeclaration', 'consentContact', 'privacyAcknowledged'].map((name, index) => <div key={name}>
         <label className={styles.consent}>
           <input type="checkbox" name={name} aria-describedby={`${name}-error`}/>

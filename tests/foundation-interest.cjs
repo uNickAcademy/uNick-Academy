@@ -212,6 +212,32 @@ assert.equal(record.readFoundationDetails(JSON.stringify({schema: 'kreatorzy-202
 assert.deepEqual(record.readFoundationDetails(JSON.stringify({schema: 'kreatorzy-2026-10', birthDate: '2012-01-01'})).selectedGroups, [])
 console.log('OK: eight groups; mixed venues; snapshots; invalid and age-ineligible groups rejected; legacy details readable')
 
+const fixedSchedulePayload = {
+  ...base,
+  selectedGroups: ['szamotuly:teenage_talk', 'szamotuly:podcasts_audio_video'],
+  primaryGroup: 'szamotuly:teenage_talk',
+}
+delete fixedSchedulePayload.availableDays
+delete fixedSchedulePayload.timeSlots
+const fixedSchedule = validation.validateFoundationInterest(fixedSchedulePayload)
+assert.equal(fixedSchedule.ok, true)
+assert.deepEqual(fixedSchedule.data.availableDays, ['monday'])
+assert.deepEqual(fixedSchedule.data.timeSlots, ['16:30', '17:30'])
+const fixedRecord = record.toFoundationRecord(fixedSchedule.data)
+assert.deepEqual(fixedRecord.available_days, ['monday'])
+assert.equal(fixedRecord.earliest_start, '16:30, 17:30')
+const forgedAvailability = validation.validateFoundationInterest({
+  ...fixedSchedulePayload, availableDays: ['saturday'], timeSlots: ['sobota 9:00–12:00'],
+})
+assert.equal(forgedAvailability.ok, true)
+assert.deepEqual(forgedAvailability.data.availableDays, ['monday'])
+assert.deepEqual(forgedAvailability.data.timeSlots, ['16:30', '17:30'])
+assert.deepEqual(mixedGroups.data.availableDays, ['wednesday', 'thursday'])
+assert.deepEqual(mixedGroups.data.timeSlots, ['16:30', '17:30'])
+assert.equal(validation.validateFoundationInterest({...base, availableDays: []}).ok, false)
+assert.equal(validation.validateFoundationInterest({...base, timeSlots: []}).ok, false)
+console.log('OK: no availability questions; schedules derived from trusted groups; legacy open forms remain compatible')
+
 const forgedAge = validation.validateFoundationInterest({...base, birthDate: birthDateForAge(10), participantAge: 18, activities: ['art_performance_9_13'], primaryActivity: 'art_performance_9_13'})
 assert.equal(forgedAge.ok, true)
 assert.equal(forgedAge.data.participantAge, 10)
@@ -313,6 +339,12 @@ const request = payload => ({
   assert.deepEqual(inserted.preferred_locations, ['tarnowo_podgorne', 'rokietnica'])
   assert.equal(record.readFoundationDetails(inserted.organizational_needs).selectedGroups.length, 2)
   assert.equal(notificationCount, 6)
+
+  assert.equal((await route.POST(request(fixedSchedulePayload))).status, 201)
+  assert.deepEqual(inserted.available_days, ['monday'])
+  assert.equal(inserted.earliest_start, '16:30, 17:30')
+  assert.equal(record.readFoundationDetails(inserted.organizational_needs).selectedGroups.length, 2)
+  assert.equal(notificationCount, 8)
 
   const crossSite = request(base)
   crossSite.headers.get = name => name === 'sec-fetch-site' ? 'cross-site' : null

@@ -21,6 +21,7 @@ export const foundationGroupOptions = projectSchedule.flatMap(location =>
       age: `${activity.minAge}–${activity.maxAge} lat`,
       minAge: activity.minAge,
       maxAge: activity.maxAge,
+      dayOfWeek: location.dayOfWeek,
       time: course.time,
       label,
       selection: {

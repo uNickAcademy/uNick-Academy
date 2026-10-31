@@ -115,12 +115,18 @@ export function validateFoundationInterest(input: unknown): Result {
     errors.primaryActivity = 'Wybierz pierwszy wybór spośród zaznaczonych zajęć.'
   }
 
-  const availableDays = arrayValue(values.availableDays)
-  const timeSlots = arrayValue(values.timeSlots)
-  if (!availableDays.length || availableDays.some(value => !validOption(value, O.dayOptions))) {
+  // Fixed group schedules replace availability questions. Derive these legacy
+  // database fields from trusted group definitions, never from client input.
+  const availableDays = usesGroupChoices
+    ? [...new Set(selectedGroups.map(group => group.dayOfWeek))]
+    : arrayValue(values.availableDays)
+  const timeSlots = usesGroupChoices
+    ? [...new Set(selectedGroups.map(group => group.time).filter((time): time is string => time !== null))]
+    : arrayValue(values.timeSlots)
+  if (!usesGroupChoices && (!availableDays.length || availableDays.some(value => !validOption(value, O.dayOptions)))) {
     errors.availableDays = 'Wybierz co najmniej jeden możliwy dzień.'
   }
-  if (!timeSlots.length || timeSlots.some(value => !validOption(value, O.timeSlotOptions))) {
+  if (!usesGroupChoices && (!timeSlots.length || timeSlots.some(value => !validOption(value, O.timeSlotOptions)))) {
     errors.timeSlots = 'Wybierz co najmniej jeden możliwy przedział godzinowy.'
   }
 
