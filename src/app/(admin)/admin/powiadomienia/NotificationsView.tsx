@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, Users, Monitor, MapPin, MessageCircleQuestion, Building2, AlertTriangle } from 'lucide-react'
+import { Bell, Users, Monitor, MapPin, MessageCircleQuestion, Building2, AlertTriangle, Mail } from 'lucide-react'
 
 type Item = {
   id: string
@@ -20,6 +20,7 @@ const KIND_META: Record<string, { icon: typeof Users; color: string; label: stri
   consultation: { icon: MessageCircleQuestion, color: 'text-amber-600 bg-amber-50', label: 'Konsultacja' },
   b2b: { icon: Building2, color: 'text-gray-600 bg-gray-100', label: 'B2B' },
   blad_platnosci: { icon: AlertTriangle, color: 'text-red-600 bg-red-50', label: 'Błąd płatności' },
+  skrzynka: { icon: Mail, color: 'text-blue-600 bg-blue-50', label: 'Skrzynka' },
 }
 
 export function NotificationsView({ items }: { items: Item[] }) {
@@ -40,6 +41,7 @@ export function NotificationsView({ items }: { items: Item[] }) {
             // reszta — do profilu ucznia, jeśli jest z czym go powiązać.
             const href = n.kind === 'online' ? '/admin/zapisy#online'
               : n.kind === 'stationary' ? '/admin/zapisy#stacjonarne'
+              : n.kind === 'skrzynka' ? '/admin/skrzynka'
               : n.studentId ? `/admin/studenci/${n.studentId}`
               : null
             const card = (

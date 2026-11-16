@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/monthly-billing",
       "schedule": "0 6 1 * *"
+    },
+    {
+      "path": "/api/cron/inbox-agent",
+      "schedule": "30 6 * * *"
     }
   ]
 }

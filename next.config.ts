@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   // (błąd edge_invalid_api). W Node.js runtime problem znika.
   // nodeMiddleware działa w runtime Next 15.5, ale nie ma go jeszcze w typach.
   experimental: { nodeMiddleware: true } as NextConfig["experimental"],
+  // Biblioteki pocztowe Agenta Skrzynki (IMAP/SMTP/parser MIME) ładujemy
+  // natywnie z node_modules zamiast przepuszczać przez bundler: korzystają
+  // z gniazd TCP i dynamicznych require, których webpack nie lubi.
+  serverExternalPackages: ["imapflow", "mailparser", "nodemailer"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "xkydfgunafxfuzsggmca.supabase.co" },
