@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Mail, Play, Loader2, Send, FolderInput, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp,
-  Trash2, Plus, BookOpen, Settings, History, HelpCircle, ShieldAlert, Sparkles,
+  Trash2, Plus, BookOpen, Settings, History, HelpCircle, ShieldAlert, Sparkles, GraduationCap,
 } from 'lucide-react'
 
 export type PendingItem = {
@@ -129,6 +129,36 @@ export function InboxAgentView(props: Props) {
     router.refresh()
   }
 
+  // Akcja celowana: tylko aplikacje nauczycieli, do folderu, który już jest
+  // w skrzynce. Reszta poczty zostaje na miejscu.
+  const sweepApplications = async () => {
+    setNotice(null)
+    let moved = 0
+    let scanned = 0
+    let beforeUid: number | undefined
+    for (let round = 1; round <= 60; round++) {
+      setRunning(`Szukam aplikacji nauczycieli. Przejrzane maile: ${scanned}, przeniesione: ${moved}`)
+      const { ok, data } = await call({ action: 'sweep', category: 'rekrutacja', beforeUid })
+      if (!ok || typeof data.error === 'string' || typeof data.skipped === 'string') {
+        setNotice({ kind: 'err', text: String(data.error ?? data.skipped ?? 'Nie udało się uruchomić agenta.') })
+        break
+      }
+      moved += Number(data.moved ?? 0)
+      scanned += Number(data.scanned ?? 0)
+      if (typeof data.nextBeforeUid !== 'number') {
+        const failed = Number(data.errors ?? 0)
+        setNotice({
+          kind: 'ok',
+          text: `Gotowe. Przejrzane maile w odbiorczej: ${scanned}, przeniesione do „${data.folder}": ${moved}.${failed > 0 ? ` Nie udało się sprawdzić: ${failed}, uruchom jeszcze raz.` : ''}`,
+        })
+        break
+      }
+      beforeUid = data.nextBeforeUid
+    }
+    setRunning(null)
+    router.refresh()
+  }
+
   const tabs: { key: Tab; label: string; icon: typeof Mail }[] = [
     { key: 'pending', label: `Do decyzji (${props.pending.length})`, icon: HelpCircle },
     { key: 'history', label: 'Historia', icon: History },
@@ -159,6 +189,14 @@ export function InboxAgentView(props: Props) {
             className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-40"
           >
             <FolderInput size={16} />Uporządkuj całą skrzynkę
+          </button>
+          <button
+            onClick={sweepApplications}
+            disabled={!ready || !!running}
+            title="Przenosi z odbiorczej tylko aplikacje o pracę do istniejącego folderu Teachers Applications. Reszta poczty zostaje na miejscu."
+            className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-40"
+          >
+            <GraduationCap size={16} />Przenieś aplikacje nauczycieli
           </button>
         </div>
       </div>

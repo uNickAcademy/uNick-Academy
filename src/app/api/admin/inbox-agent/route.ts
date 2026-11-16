@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { runInboxAgent } from '@/lib/inbox-agent/run'
+import { runInboxAgent, sweepCategory } from '@/lib/inbox-agent/run'
+import { CATEGORY_KEYS, type CategoryKey } from '@/lib/inbox-agent/config'
 import { approveAndSend, dismiss } from '@/lib/inbox-agent/actions'
 import { saveState } from '@/lib/inbox-agent/knowledge'
 
@@ -32,6 +33,12 @@ export async function POST(req: NextRequest) {
     case 'run': {
       const summary = await runInboxAgent(admin, { relearn: body.relearn === true })
       return NextResponse.json(summary)
+    }
+    case 'sweep': {
+      const category = String(body.category ?? '') as CategoryKey
+      if (!CATEGORY_KEYS.includes(category)) return NextResponse.json({ error: 'Nieznana kategoria.' }, { status: 400 })
+      const beforeUid = Number.isInteger(body.beforeUid) && body.beforeUid > 0 ? (body.beforeUid as number) : undefined
+      return NextResponse.json(await sweepCategory(admin, { category, beforeUid }))
     }
     case 'send': {
       const result = await approveAndSend(admin, {

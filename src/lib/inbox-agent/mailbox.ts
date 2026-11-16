@@ -83,7 +83,10 @@ export async function ensureFolders(client: ImapFlow): Promise<FolderMap> {
   for (const name of wanted) {
     const existing = byPath()
     const nested = `INBOX${delimiter}${name}`
+    // Folder, który już istnieje pod tą nazwą (gdziekolwiek w drzewie), ma
+    // pierwszeństwo: nie tworzymy obok niego duplikatu.
     const found = existing.get(nested.toLowerCase()) ?? existing.get(name.toLowerCase())
+      ?? list.find((m) => m.name.trim().toLowerCase() === name.toLowerCase())?.path
     if (found) {
       resolved.set(name, found)
       continue
@@ -125,6 +128,15 @@ export async function ensureFolders(client: ImapFlow): Promise<FolderMap> {
     review: resolved.get(REVIEW_FOLDER)!,
     categories,
   }
+}
+
+// Szuka istniejącego folderu po nazwie, bez tworzenia czegokolwiek.
+export async function findFolder(client: ImapFlow, name: string): Promise<{ inbox: string; path: string | null; allNames: string[] }> {
+  const list = await client.list()
+  const wanted = name.trim().toLowerCase()
+  const inbox = list.find((m) => m.path.toUpperCase() === 'INBOX')?.path ?? 'INBOX'
+  const match = list.find((m) => m.name.trim().toLowerCase() === wanted) ?? list.find((m) => m.path.toLowerCase() === wanted)
+  return { inbox, path: match?.path ?? null, allNames: list.map((m) => m.name) }
 }
 
 export async function listUids(client: ImapFlow, folder: string): Promise<number[]> {

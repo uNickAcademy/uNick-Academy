@@ -6,6 +6,7 @@ import {
   MAX_SORT_ONLY_PER_RUN,
   REPLY_WINDOW_DAYS,
   RUN_TIME_BUDGET_MS,
+  SWEEP_PER_CALL,
   TRIAGE_BATCH_SIZE,
   categoryFolder,
   getInboxConfig,
@@ -17,6 +18,7 @@ import {
   composeReplyText,
   ensureFolders,
   fetchMails,
+  findFolder,
   listUids,
   markAnswered,
   moveMail,
@@ -508,4 +510,118 @@ async function recordFailure(admin: SupabaseClient, mail: FetchedMail, category:
     },
     { onConflict: 'message_id' },
   )
+}
+
+// ── Akcja celowana: przenieś z odbiorczej tylko jedną kategorię ─────────────
+//
+// Przegląda odbiorczą porcjami (od najnowszych) i przenosi do wskazanego,
+// ISTNIEJĄCEGO folderu wyłącznie maile z jednej kategorii, np. aplikacje
+// nauczycieli. Reszta poczty zostaje nietknięta, nic nie jest tworzone ani
+// wysyłane. Panel wywołuje to w pętli, podając `beforeUid` z poprzedniej porcji.
+
+export type SweepSummary = {
+  ok: boolean
+  skipped?: string
+  error?: string
+  folder: string
+  scanned: number
+  moved: number
+  errors: number
+  leftToScan: number
+  nextBeforeUid: number | null
+  costUsd: number
+  durationMs: number
+}
+
+export async function sweepCategory(
+  admin: SupabaseClient,
+  opts: { category: CategoryKey; beforeUid?: number },
+): Promise<SweepSummary> {
+  const startedAt = Date.now()
+  const folderName = categoryFolder(opts.category)
+  const summary: SweepSummary = { ok: true, folder: folderName, scanned: 0, moved: 0, errors: 0, leftToScan: 0, nextBeforeUid: null, costUsd: 0, durationMs: 0 }
+  const finish = (patch: Partial<SweepSummary>): SweepSummary => ({ ...summary, ...patch, durationMs: Date.now() - startedAt })
+
+  const cfg = getInboxConfig()
+  if (!cfg) return finish({ ok: false, skipped: 'Brak danych logowania do skrzynki (INBOX_USER / INBOX_PASSWORD).' })
+  if (!isBrainConfigured()) return finish({ ok: false, skipped: 'Brak klucza ANTHROPIC_API_KEY.' })
+  const state = await loadState(admin)
+  if (!state.enabled) return finish({ skipped: 'Agent jest wyłączony w panelu.' })
+  if (!(await acquireLock(admin))) return finish({ skipped: 'Inny przebieg agenta właśnie trwa.' })
+
+  let client: ImapFlow | null = null
+  try {
+    client = await openMailbox(cfg)
+    const target = await findFolder(client, folderName)
+    if (!target.path) {
+      return finish({
+        ok: false,
+        error: `Nie widzę w skrzynce folderu „${folderName}". Foldery, które widzę: ${target.allNames.join(', ')}.`,
+      })
+    }
+
+    const all = await listUids(client, target.inbox)
+    const pendingUids = opts.beforeUid ? all.filter((u) => u < opts.beforeUid!) : all
+    const chunk = pendingUids.slice(0, SWEEP_PER_CALL)
+    const mails = await fetchMails(client, target.inbox, chunk, 24 * 1024, cfg.user)
+    summary.scanned = chunk.length
+    summary.leftToScan = pendingUids.length - chunk.length
+    summary.nextBeforeUid = summary.leftToScan > 0 && chunk.length > 0 ? Math.min(...chunk) : null
+
+    const batches: FetchedMail[][] = []
+    for (let i = 0; i < mails.length; i += TRIAGE_BATCH_SIZE) batches.push(mails.slice(i, i + TRIAGE_BATCH_SIZE))
+    const hits: { mail: FetchedMail; item: TriageItem }[] = []
+    await pool(batches, 4, async (batch) => {
+      const t0 = Date.now()
+      try {
+        const { items, usage } = await triage(batch)
+        summary.costUsd += usage.costUsd
+        await logUsage(admin, usage, t0)
+        for (const item of items) {
+          const mail = batch[item.index]
+          if (mail && item.category === opts.category) hits.push({ mail, item })
+        }
+      } catch (err) {
+        summary.errors += batch.length
+        console.error('[AgentSkrzynki] Błąd sortowania paczki:', (err as Error).message)
+      }
+    })
+
+    // Wpisów o mailach, na które odpowiedź wyszła lub czeka na decyzję, nie nadpisujemy.
+    const keep = new Set<string>()
+    if (hits.length > 0) {
+      const { data: rows } = await admin.from('inbox_agent_messages').select('message_id, status').in('message_id', hits.map((h) => h.mail.messageId))
+      for (const r of rows ?? []) if (!['sorted', 'error'].includes(r.status as string)) keep.add(r.message_id as string)
+    }
+
+    for (const { mail, item } of hits) {
+      if (Date.now() - startedAt > RUN_TIME_BUDGET_MS) {
+        // Zabrakło czasu: następne wywołanie zacznie od tej samej porcji.
+        summary.nextBeforeUid = opts.beforeUid ?? null
+        summary.leftToScan = pendingUids.length
+        break
+      }
+      try {
+        await moveMail(client, target.inbox, mail.uid, target.path)
+        summary.moved++
+        if (!keep.has(mail.messageId)) {
+          await admin.from('inbox_agent_messages').upsert(
+            { ...baseRow(mail), category: opts.category, folder: folderName, summary: item.summary, needs_reply: item.needs_reply, status: 'sorted', error: null },
+            { onConflict: 'message_id' },
+          )
+        }
+      } catch (err) {
+        summary.errors++
+        console.error(`[AgentSkrzynki] Nie udało się przenieść „${mail.subject}":`, (err as Error).message)
+      }
+    }
+    return finish({ ok: true })
+  } catch (err) {
+    const message = (err as Error).message || 'Nieznany błąd'
+    console.error('[AgentSkrzynki] Przenoszenie kategorii przerwane:', message)
+    return finish({ ok: false, error: message })
+  } finally {
+    if (client) await closeMailbox(client)
+    await admin.from('inbox_agent_state').update({ run_started_at: null }).eq('id', true)
+  }
 }

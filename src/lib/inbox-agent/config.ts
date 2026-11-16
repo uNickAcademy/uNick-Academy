@@ -68,9 +68,15 @@ export const CATEGORIES = [
     description: 'uNick Academy Foundation, granty, projekty (np. Kreatorzy Przyszłości), bal charytatywny, darczyńcy, partnerzy projektów.',
   },
   {
+    key: 'rekrutacja',
+    // Folder, który szkoła już ma w skrzynce: agent go nie tworzy, tylko używa.
+    folder: 'Teachers Applications',
+    description: 'Aplikacje o pracę od nauczycieli i lektorów (często po angielsku): CV, resume, list motywacyjny, „application for a teaching position", zgłoszenia z portali z ofertami pracy, pytania kandydatów o rekrutację.',
+  },
+  {
     key: 'kadra',
-    folder: 'Nauczyciele i rekrutacja',
-    description: 'Lektorzy i współpracownicy: CV, rekrutacja, grafiki, rozliczenia z nauczycielami, sprawy kadrowe.',
+    folder: 'Nauczyciele i kadra',
+    description: 'Sprawy z nauczycielami i współpracownikami, którzy już u nas pracują: grafiki, zastępstwa, rozliczenia, umowy, sprawy kadrowe. NIE aplikacje o pracę.',
   },
   {
     key: 'urzedy',
@@ -118,5 +124,8 @@ export const MAX_REPLY_CANDIDATES_PER_RUN = 12
 export const MAX_SORT_ONLY_PER_RUN = 120
 export const TRIAGE_BATCH_SIZE = 20
 export const RUN_TIME_BUDGET_MS = 230_000
+
+// Ile maili z odbiorczej przegląda jedno wywołanie akcji „przenieś kategorię".
+export const SWEEP_PER_CALL = 160
 
 export const AGENT_HEADER = 'X-uNick-Inbox-Agent'
