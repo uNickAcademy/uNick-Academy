@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
@@ -7,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "../../lib/dictionaries";
 import { buildMetadata } from "../../lib/seo";
 import styles from "../../components/sections.module.css";
+import materialsStyles from "../../components/lesson-materials.module.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -55,6 +57,30 @@ export default async function TeachersZonePage({ params, searchParams }) {
           </h1>
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
         </Reveal>
+        <Link
+          href={locale === "pl" ? "/meterials" : "/en/meterials"}
+          className={materialsStyles.feature}
+        >
+          <div className={materialsStyles.featureArt} aria-hidden="true">
+            <div className={materialsStyles.samplePicture}>
+              <Image
+                src="/lesson-materials/previews/actions.webp"
+                alt=""
+                width={360}
+                height={180}
+                unoptimized
+              />
+            </div>
+            <div className={materialsStyles.sampleWord}>jump</div>
+          </div>
+          <div className={materialsStyles.featureBody}>
+            <div>
+              <span className={materialsStyles.featureTitle}>{dict.lessonMaterials.title}</span>
+              <span className={materialsStyles.featureHint}>{dict.lessonMaterials.heroHint}</span>
+            </div>
+            <span className={materialsStyles.featureArrow} aria-hidden="true">→</span>
+          </div>
+        </Link>
       </div>
 
       <section className={`container ${styles.section}`}>

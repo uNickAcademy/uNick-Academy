@@ -603,6 +603,14 @@ const pl = {
   },
 
 
+  lessonMaterials: {
+    title: "Materiały do zajęć",
+    description: "Fiszki z angielskim słownictwem do druku. Wybierz temat, aby otworzyć zestaw.",
+    heroHint: "Fiszki PDF do druku",
+    openPdf: "Otwórz PDF",
+    newTab: "w nowej karcie",
+  },
+
   teachersZone: {
     meta: {
       title: "Strefa nauczyciela — uNick Academy",

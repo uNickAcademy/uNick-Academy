@@ -603,6 +603,14 @@ const en = {
   },
 
 
+  lessonMaterials: {
+    title: "Lesson Materials",
+    description: "Printable English vocabulary flashcards. Choose a topic to open its set.",
+    heroHint: "Printable PDF flashcards",
+    openPdf: "Open PDF",
+    newTab: "in a new tab",
+  },
+
   teachersZone: {
     meta: {
       title: "Teachers Zone — uNick Academy",
