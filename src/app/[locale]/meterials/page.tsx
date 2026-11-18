@@ -3,7 +3,12 @@ import Link from "next/link"
 import { getDictionary } from "../../lib/dictionaries"
 import { lessonMaterials } from "../../lib/lesson-materials"
 import { buildMetadata } from "../../lib/seo"
+import MaterialsAccessForm from "../../components/MaterialsAccessForm"
+import { hasMaterialsAccess } from "@/lib/lesson-materials/access"
+import { materialsCopy } from "@/lib/lesson-materials/copy"
 import styles from "../../components/lesson-materials.module.css"
+
+export const dynamic = 'force-dynamic'
 
 type PageProps = {
   params: Promise<{ locale: string }>
@@ -18,6 +23,8 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function LessonMaterialsPage({ params }: PageProps) {
   const { locale } = await params
   const language = locale === "pl" ? "pl" : "en"
+  const access = await hasMaterialsAccess()
+  const copy = materialsCopy[language]
   const { lessonMaterials: t, teachersZone } = getDictionary(language)
 
   return (
@@ -30,13 +37,15 @@ export default async function LessonMaterialsPage({ params }: PageProps) {
         <p>{t.description}</p>
       </header>
 
+      {access ? <p className={styles.accessReady}>{copy.accessReady}</p> : <MaterialsAccessForm language={language} />}
+
       <ul className={styles.grid}>
         {lessonMaterials.map(({ slug, title }) => (
           <li key={slug}>
             <a
               className={styles.tile}
-              href={`/lesson-materials/${slug}.pdf`}
-              target="_blank"
+              href={access ? `/lesson-materials/${slug}.pdf?lang=${language}` : `/${language}/meterials/${slug}`}
+              target={access ? "_blank" : undefined}
               rel="noopener"
             >
               <Image
@@ -50,9 +59,9 @@ export default async function LessonMaterialsPage({ params }: PageProps) {
               <div className={styles.tileContent}>
                 <h2>{title[language]}</h2>
                 <span className={styles.tileAction}>
-                  {t.openPdf}
+                  {access ? t.openPdf : copy.preview}
                   <span aria-hidden="true">↗</span>
-                  <span className="visually-hidden"> ({t.newTab})</span>
+                  {access && <span className="visually-hidden"> ({t.newTab})</span>}
                 </span>
               </div>
             </a>

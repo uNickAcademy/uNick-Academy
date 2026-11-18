@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getAllGroups } from '@/lib/supabase/queries'
 import { isEmailConfigured } from '@/lib/email/send'
 import { isWhatsAppConfigured } from '@/lib/whatsapp/send'
@@ -19,6 +20,7 @@ export default async function KomunikacjaPage() {
         smsConfigured={isSmsConfigured()}
       />
       <div className="max-w-3xl mx-auto px-8">
+        <p className="my-6"><Link className="text-blue-800 underline" href="/admin/komunikacja/materialy">Kontakty z biblioteki fiszek</Link></p>
         <ComebackCampaign />
       </div>
     </>

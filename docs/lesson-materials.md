@@ -1,10 +1,58 @@
-# Materiały do zajęć
+# Lesson materials
 
-Publiczna biblioteka fiszek z linkiem ze Strefy nauczyciela. Krótki adres
-`/meterials` prowadzi do wersji polskiej, a `/en/meterials` do angielskiej.
-Obie wersje otwierają te same fiszki z angielskim słownictwem.
+## Purpose
 
-Aby dodać temat, wpisz jego slug i nazwy PL/EN w
-`src/app/lib/lesson-materials.ts`. Umieść plik PDF w `public/lesson-materials`,
-a odpowiadający mu podgląd WebP (360 × 180) w podkatalogu `previews`.
-Oba pliki mają tę samą nazwę bazową co slug i są publikowane razem ze stroną.
+The bilingual public library at `/meterials` and `/en/meterials` shows topic
+thumbnails and one sample page per deck. Email verification unlocks all PDFs
+without creating a school account. The access cookie lasts 30 days.
+
+## Data and delivery
+
+`POST /api/lesson-materials/request` validates email, language and optional
+newsletter consent. A database reservation enforces per-address, per-client and
+global delivery limits. Resend sends a single-use link that expires in 30 minutes.
+The secret is held in the URL fragment, so email scanners do not consume access
+with a GET request. The recipient confirms with a button. Confirmation atomically
+marks the request used and creates or updates the contact.
+
+Tables `lesson_material_access_requests` and `lesson_material_contacts` have RLS
+enabled with access limited to the server service role. Requests store hashed
+tokens and keyed client-IP hashes. This flow does not add contacts to the sales
+lead workflow or trigger course messages.
+
+Optional marketing consent is confirmed only when the recipient verifies their
+email. A later access request without consent preserves previous preferences.
+`materialsUnsubscribeUrl(contact.id, locale)` generates the unsubscribe link
+required for future newsletter emails. Eligible subscribers have a non-null
+`newsletter_opted_in_at` later than `newsletter_unsubscribed_at`, or no unsubscribe.
+No newsletter campaign is sent by this feature.
+
+The existing daily reminders cron calls `prune_lesson_material_contacts`.
+Pending requests are deleted after 24 hours. Contacts without active newsletter
+consent are deleted after 90 days from the latest access verification or
+unsubscribe. The bilingual privacy notice documents these periods and providers.
+
+## PDF access and additions
+
+The authoritative catalogue is `src/app/lib/lesson-materials.ts`. Add each topic
+there and upload its PDF to the private Supabase bucket `lesson-material-pdfs`.
+Publish its thumbnail as `public/lesson-materials/previews/<slug>.webp` and a
+sample A4 page as `public/lesson-materials/samples/<slug>.webp`.
+
+PDFs live outside the public site/repository. The legacy
+`/lesson-materials/<slug>.pdf` route validates the cookie and issues a five-minute
+signed Storage URL. Visitors without access go to the topic preview.
+Existing files in the public Git history and previously downloaded copies remain
+outside this access control.
+
+## Configuration and maintenance
+
+Uses existing `RESEND_API_KEY`, Supabase server credentials and the canonical
+`siteConfig.url`. Optional `LESSON_MATERIALS_SECRET` provides a dedicated signing
+key. Its fallback is the existing service-role secret. Rotating the signing key
+expires access cookies and outstanding unsubscribe URLs.
+
+The communication page links to an administrator-only contact list with separate
+download-access and newsletter status. Export includes unsubscribe links for
+eligible newsletter subscribers. A future newsletter sender must check consent
+again at send time and attach the recipient's unsubscribe link.

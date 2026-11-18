@@ -193,3 +193,72 @@
     transition: border-color 180ms ease, box-shadow 180ms ease;
   }
 }
+
+.access {
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  margin-bottom: 32px;
+  scroll-margin-top: 120px;
+}
+.access h2 { font-size: clamp(26px, 3vw, 34px); }
+.access p { line-height: 1.65; color: var(--color-ink-soft); }
+.accessForm { margin-top: 22px; }
+.accessForm > label { display: block; margin-bottom: 8px; font-weight: 600; }
+.emailRow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; }
+.emailRow input {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font: inherit;
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+.accessButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #a93226;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.accessButton:disabled { opacity: .6; cursor: wait; }
+.accessForm > .newsletter {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 18px;
+  font-weight: 400;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+.newsletter input { flex: none; width: 19px; height: 19px; margin-top: 3px; accent-color: #a93226; }
+.optional { color: var(--color-ink-soft); }
+.access .privacy { margin-top: 12px; font-size: .82rem; }
+.privacy a { text-decoration: underline; text-underline-offset: 3px; color: #a93226; }
+.access .formError, .formError { color: #99261e; margin-top: 12px; line-height: 1.6; }
+.success { margin-top: 18px; border-left: 3px solid #347453; padding: 10px 16px; background: #f0f7f2; }
+.success p { margin-top: 6px; }
+.accessReady { margin-bottom: 28px; color: #2f6347; }
+.previewLayout { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 56px); align-items: start; }
+.fullSample { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 12px; }
+.previewLayout .access { position: sticky; top: 110px; }
+.previewDownload p { margin-bottom: 20px; }
+.accessButton:focus-visible, .accessForm input:focus-visible, .privacy a:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 4px; }
+
+@media (max-width: 760px) {
+  .previewLayout { grid-template-columns: 1fr; }
+  .previewLayout .access { position: static; }
+  .emailRow .accessButton { width: 100%; }
+}
