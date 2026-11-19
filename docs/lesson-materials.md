@@ -39,6 +39,13 @@ there and upload its PDF to the private Supabase bucket `lesson-material-pdfs`.
 Publish its thumbnail as `public/lesson-materials/previews/<slug>.webp` and a
 sample A4 page as `public/lesson-materials/samples/<slug>.webp`.
 
+The catalogue order is the shared Polish/English teaching progression. It starts
+with concrete basics (colours, numbers, shapes, animals and toys), moves through
+everyday vocabulary and sentence-building, and finishes with more specific
+practical and seasonal topics. Keep the order explicit here; do not sort topics
+alphabetically. This is a suggested learning sequence, not a CEFR assessment or
+a strict ranking of individual word frequencies.
+
 PDFs live outside the public site/repository. The legacy
 `/lesson-materials/<slug>.pdf` route validates the cookie and issues a five-minute
 signed Storage URL. Visitors without access go to the topic preview.
