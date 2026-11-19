@@ -8,6 +8,7 @@ export const lessonMaterials: readonly LessonMaterial[] = [
   { slug: "actions", title: { pl: "Czynności", en: "Actions" } },
   { slug: "daily-routines", title: { pl: "Codzienne czynności", en: "Daily Routines" } },
   { slug: "free-time-activities", title: { pl: "Czas wolny", en: "Free Time Activities" } },
+  { slug: "sports", title: { pl: "Sport", en: "Sports" } },
   { slug: "feelings", title: { pl: "Uczucia", en: "Feelings" } },
   { slug: "family", title: { pl: "Rodzina", en: "Family" } },
   { slug: "classroom-language", title: { pl: "Zwroty w klasie", en: "Classroom Language" } },

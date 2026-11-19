@@ -1,7 +1,9 @@
+import { lessonMaterials } from "@/app/lib/lesson-materials"
+
 export const materialsCopy = {
   pl: {
     accessTitle: 'Fiszki gotowe na Twoją lekcję',
-    accessIntro: 'Podaj adres e-mail. Wyślemy Ci link do wszystkich 23 zestawów do druku.',
+    accessIntro: `Podaj adres e-mail. Wyślemy Ci link do wszystkich ${lessonMaterials.length} zestawów do druku.`,
     email: 'Adres e-mail',
     submit: 'Wyślij mi link do materiałów',
     sending: 'Wysyłam…',
@@ -27,7 +29,7 @@ export const materialsCopy = {
   },
   en: {
     accessTitle: 'Flashcards ready for your lesson',
-    accessIntro: 'Enter your email. We’ll send you a link to all 23 printable sets.',
+    accessIntro: `Enter your email. We’ll send you a link to all ${lessonMaterials.length} printable sets.`,
     email: 'Email address',
     submit: 'Email me the materials link',
     sending: 'Sending…',
