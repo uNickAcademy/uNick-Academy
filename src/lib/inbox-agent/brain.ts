@@ -81,6 +81,8 @@ function mailHeader(m: FetchedMail): string {
     `Data: ${m.date.toISOString().slice(0, 16).replace('T', ' ')}`,
     m.automated ? `Sygnał techniczny: ${m.automatedReason}` : null,
     m.attachmentNames.length ? `Załączniki: ${m.attachmentNames.join(', ')}` : null,
+    m.videoAttachments.length ? `Załączniki wideo: ${m.videoAttachments.join(', ')}` : null,
+    m.videoLinks.length ? `Linki do nagrań w treści: ${m.videoLinks.join(' , ')}` : null,
   ].filter(Boolean).join('\n')
 }
 
@@ -126,7 +128,7 @@ const replySchema = z.object({
   can_answer_fully: z.boolean().describe('true tylko wtedy, gdy KAŻDĄ informację w odpowiedzi da się oprzeć na bazie wiedzy lub historii korespondencji'),
   confidence: z.enum(['high', 'medium', 'low']).describe('Pewność, że odpowiedź jest poprawna i że szkoła odpisałaby tak samo'),
   sensitive: z.boolean().describe('true dla reklamacji, sporów, rezygnacji, zwrotów, negocjacji cen, spraw prawnych lub urzędowych, mediów, sytuacji emocjonalnie trudnych oraz wszystkiego, co wiąże szkołę zobowiązaniem'),
-  reply_body: z.string().describe('Proponowana treść odpowiedzi, bez powitalnego nagłówka mailowego w stylu „Temat:" i bez podpisu. Pusty tekst, jeśli odpowiedź nie jest potrzebna.'),
+  reply_body: z.string().describe('Proponowana treść odpowiedzi: powitanie, treść i krótkie pozdrowienie, bez nagłówka w stylu „Temat:" i bez podpisu z nazwą szkoły. Pusty tekst, jeśli odpowiedź nie jest potrzebna.'),
   question_for_owner: z.string().describe('Jeśli nie możesz odpowiedzieć w pełni: konkretne pytanie do zespołu, czego Ci brakuje. W przeciwnym razie pusty tekst.'),
   reusable_topic: z.string().describe('Krótka nazwa tematu pytania (np. „Cena lekcji indywidualnej online"), przydatna do zapamiętania odpowiedzi na przyszłość. Pusty tekst, jeśli mail jest jednorazowy.'),
 })
@@ -160,7 +162,8 @@ STYL ODPOWIEDZI
 - Język taki sam jak w mailu przychodzącym (polski albo angielski).
 - Ciepło, naturalnie, po ludzku i konkretnie. Bez języka korporacyjnego, bez nachalnej sprzedaży, bez szkolnego tonu.
 - Forma zwracania się taka, jakiej szkoła używa w historii korespondencji z tą osobą. Jeśli historii nie ma, trzymaj się stylu z bazy wiedzy.
-- Zacznij od zwykłego powitania (np. „Dzień dobry," albo „Cześć Aniu,"). Nie dodawaj podpisu ani formułki pożegnalnej z nazwą szkoły: podpis dokleja system.
+- Zacznij od zwykłego powitania (np. „Dzień dobry," albo „Cześć Aniu,").
+- Zakończ krótkim pozdrowieniem w języku maila, np. „Pozdrawiamy serdecznie," albo „Best regards,". Nie dopisuj pod nim nazwy szkoły, zespołu ani danych kontaktowych: podpis „uNick Academy Team" z logo i linkami dokleja system.
 - Nie używaj długiego myślnika (—). Pisz zwykłym zdaniem albo dwukropkiem.
 - Krótko: tyle, ile trzeba, żeby odpowiedzieć na pytanie i wskazać następny krok.
 - Nie wspominaj, że jesteś automatem, AI ani agentem, i nie pisz o „bazie wiedzy".
@@ -199,10 +202,9 @@ ${input.mail.text.slice(0, 12000) || '(brak treści tekstowej, być może sam za
 
 const profileSchema = z.object({
   profile: z.string().describe('Notatka dla agenta, po polsku, w punktach'),
-  signature: z.string().describe('Podpis, którym szkoła najczęściej kończy maile, dokładnie w tej formie (kilka linii). Pusty tekst, jeśli nie ma stałego podpisu.'),
 })
 
-export async function distillSentHistory(sent: FetchedMail[]): Promise<{ profile: string; signature: string; usage: Usage }> {
+export async function distillSentHistory(sent: FetchedMail[]): Promise<{ profile: string; usage: Usage }> {
   const system = `Dostajesz maile WYSŁANE ze skrzynki uNick Academy, szkoły języka angielskiego. Przygotuj z nich notatkę dla asystenta, który będzie odpisywał w imieniu szkoły.
 
 W polu profile zapisz, w punktach:
@@ -217,5 +219,38 @@ Zapisuj tylko to, co faktycznie widać w mailach. Niczego nie dopowiadaj. Pomiń
     .join('\n\n')
 
   const { output, usage } = await ask({ schema: profileSchema, system, user, effort: 'medium', maxTokens: 16000 })
-  return { profile: output.profile.trim(), signature: output.signature.trim(), usage }
+  return { profile: output.profile.trim(), usage }
+}
+
+// ── 4. Wideo od nauczycieli ─────────────────────────────────────────────────
+
+const videoSchema = z.object({
+  items: z.array(z.object({
+    index: z.number().describe('Numer maila z listy'),
+    is_teacher_video: z.boolean(),
+    reason: z.string().describe('Bardzo krótko, po polsku, dlaczego tak'),
+  })),
+})
+
+export type VideoVerdict = z.infer<typeof videoSchema>['items'][number]
+
+export async function classifyTeacherVideos(mails: FetchedMail[]): Promise<{ items: VideoVerdict[]; usage: Usage }> {
+  const system = `Przeglądasz maile szkoły języka angielskiego uNick Academy. Dla każdego maila ustal, czy to wiadomość od nauczyciela, lektora albo kandydata na nauczyciela, w której przysyła SWOJE nagranie wideo: intro, przedstawienie się, lekcję pokazową lub próbkę prowadzenia zajęć. Nagranie może być w załączniku albo jako link (YouTube, Vimeo, Loom, Google Drive, Dropbox, WeTransfer i podobne).
+
+is_teacher_video = true tylko wtedy, gdy oba warunki są spełnione:
+1. nadawcą jest nauczyciel lub kandydat (albo agencja przesyłająca materiały konkretnego kandydata),
+2. w mailu jest jego nagranie (załącznik wideo albo link, który z treści wygląda na nagranie tej osoby).
+
+is_teacher_video = false dla: newsletterów, reklam, powiadomień z serwisów (YouTube, Google, Loom itp.), zaproszeń na spotkania online (Zoom, Meet, Teams), filmów od uczniów lub rodziców, materiałów do lekcji, ofert firm, linków w stopkach i do mediów społecznościowych, a także zwykłych aplikacji z samym CV bez nagrania. Link do Google Drive lub Dropbox liczy się tylko wtedy, gdy z treści wynika, że prowadzi do nagrania, a nie do CV czy dokumentów.
+
+${UNTRUSTED_RULE}
+
+Zwróć wpis dla każdego maila z listy, z tym samym numerem index.`
+
+  const user = mails
+    .map((m, i) => `=== MAIL ${i} ===\n${mailHeader(m)}\nPoczątek treści:\n${m.text.slice(0, 1500) || '(brak treści tekstowej)'}`)
+    .join('\n\n')
+
+  const { output, usage } = await ask({ schema: videoSchema, system, user, effort: 'low', maxTokens: 8000 })
+  return { items: output.items, usage }
 }

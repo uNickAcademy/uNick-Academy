@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { runInboxAgent, sweepCategory } from '@/lib/inbox-agent/run'
+import { runInboxAgent, sweepCategory, sweepTeacherVideos } from '@/lib/inbox-agent/run'
 import { CATEGORY_KEYS, type CategoryKey } from '@/lib/inbox-agent/config'
 import { approveAndSend, dismiss } from '@/lib/inbox-agent/actions'
 import { saveState } from '@/lib/inbox-agent/knowledge'
@@ -39,6 +39,13 @@ export async function POST(req: NextRequest) {
       if (!CATEGORY_KEYS.includes(category)) return NextResponse.json({ error: 'Nieznana kategoria.' }, { status: 400 })
       const beforeUid = Number.isInteger(body.beforeUid) && body.beforeUid > 0 ? (body.beforeUid as number) : undefined
       return NextResponse.json(await sweepCategory(admin, { category, beforeUid }))
+    }
+    case 'sweep_videos': {
+      const c = body.cursor
+      const cursor = c && Number.isInteger(c.f) && c.f >= 0
+        ? { f: c.f as number, u: Number.isInteger(c.u) && c.u > 0 ? (c.u as number) : null }
+        : undefined
+      return NextResponse.json(await sweepTeacherVideos(admin, { cursor }))
     }
     case 'send': {
       const result = await approveAndSend(admin, {

@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Mail, Play, Loader2, Send, FolderInput, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp,
-  Trash2, Plus, BookOpen, Settings, History, HelpCircle, ShieldAlert, Sparkles, GraduationCap,
+  Trash2, Plus, BookOpen, Settings, History, HelpCircle, ShieldAlert, Sparkles, GraduationCap, Video,
 } from 'lucide-react'
+import { signatureHtml } from '@/lib/inbox-agent/signature'
 
 export type PendingItem = {
   id: string
@@ -159,6 +160,40 @@ export function InboxAgentView(props: Props) {
     router.refresh()
   }
 
+  // Wideo od nauczycieli: przegląda odbiorczą i foldery agenta (głównie
+  // „Teachers Applications"), przenosi tylko nagrania nauczycieli i kandydatów.
+  const sweepVideos = async () => {
+    setNotice(null)
+    let moved = 0
+    let checked = 0
+    let failed = 0
+    let cursor: unknown = undefined
+    const from: Record<string, number> = {}
+    for (let round = 1; round <= 80; round++) {
+      setRunning(`Szukam nagrań nauczycieli. Sprawdzone maile z wideo lub linkiem: ${checked}, przeniesione: ${moved}`)
+      const { ok, data } = await call({ action: 'sweep_videos', cursor })
+      if (!ok || typeof data.error === 'string' || typeof data.skipped === 'string') {
+        setNotice({ kind: 'err', text: String(data.error ?? data.skipped ?? 'Nie udało się uruchomić agenta.') })
+        break
+      }
+      moved += Number(data.moved ?? 0)
+      checked += Number(data.checked ?? 0)
+      failed += Number(data.errors ?? 0)
+      for (const [k, v] of Object.entries((data.movedFrom ?? {}) as Record<string, number>)) from[k] = (from[k] ?? 0) + v
+      if (!data.next) {
+        const where = Object.entries(from).map(([k, v]) => `${k}: ${v}`).join(', ')
+        setNotice({
+          kind: 'ok',
+          text: `Gotowe. Sprawdzone maile z wideo lub linkiem: ${checked}, przeniesione do „${data.folder}": ${moved}${where ? ` (${where})` : ''}.${failed > 0 ? ` Nie udało się ocenić: ${failed}, uruchom jeszcze raz.` : ''}`,
+        })
+        break
+      }
+      cursor = data.next
+    }
+    setRunning(null)
+    router.refresh()
+  }
+
   const tabs: { key: Tab; label: string; icon: typeof Mail }[] = [
     { key: 'pending', label: `Do decyzji (${props.pending.length})`, icon: HelpCircle },
     { key: 'history', label: 'Historia', icon: History },
@@ -197,6 +232,14 @@ export function InboxAgentView(props: Props) {
             className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-40"
           >
             <GraduationCap size={16} />Przenieś aplikacje nauczycieli
+          </button>
+          <button
+            onClick={sweepVideos}
+            disabled={!ready || !!running}
+            title="Przenosi do folderu Teachers Videos maile, w których nauczyciel lub kandydat przysyła swoje nagranie (załącznik albo link). Przegląda odbiorczą i foldery agenta, w tym Teachers Applications."
+            className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-40"
+          >
+            <Video size={16} />Przenieś wideo nauczycieli
           </button>
         </div>
       </div>
@@ -615,11 +658,13 @@ function SettingsTab({ settings, replyWindowDays, onChanged }: { settings: Props
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <p className="font-bold text-gray-900 text-sm">Podpis pod odpowiedziami</p>
-        <p className="text-xs text-gray-500 mt-1 mb-3">Doklejany pod każdą odpowiedzią wysłaną przez agenta lub z tego panelu.</p>
+        <p className="text-xs text-gray-500 mt-1 mb-3">
+          Nazwa w podpisie (pierwsza linia pogrubiona, kolejne pod nią). Logo, stronę, telefon i ikony mediów społecznościowych system dokłada sam.
+        </p>
         <textarea
           value={signature}
           onChange={(e) => setSignature(e.target.value)}
-          rows={5}
+          rows={2}
           className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#23479E]/30"
         />
         <button
@@ -629,6 +674,8 @@ function SettingsTab({ settings, replyWindowDays, onChanged }: { settings: Props
         >
           Zapisz podpis
         </button>
+        <p className="text-xs font-semibold text-gray-500 mt-5 mb-2">Podgląd</p>
+        <div className="border border-gray-100 rounded-xl p-4 overflow-x-auto bg-white" dangerouslySetInnerHTML={{ __html: signatureHtml(signature, '') }} />
       </div>
 
       {msg && <p className="text-sm text-gray-600">{msg}</p>}

@@ -1,8 +1,9 @@
-import { ImapFlow } from 'imapflow'
+import { ImapFlow, type MessageStructureObject } from 'imapflow'
 import { simpleParser } from 'mailparser'
 import nodemailer from 'nodemailer'
 import MailComposer from 'nodemailer/lib/mail-composer'
-import { AGENT_HEADER, CATEGORIES, REVIEW_FOLDER, type CategoryKey, type InboxConfig } from './config'
+import { escapeHtml, signatureHtml, signatureText } from './signature'
+import { AGENT_HEADER, CATEGORIES, CREATE_NEXT_TO, REVIEW_FOLDER, type CategoryKey, type InboxConfig } from './config'
 
 // Warstwa pocztowa Agenta Skrzynki: IMAP (czytanie, foldery, przenoszenie)
 // i SMTP (wysyłka odpowiedzi z tej samej skrzynki, żeby szły z właściwego
@@ -26,6 +27,10 @@ export type FetchedMail = {
   inReplyTo: string | null
   references: string[]
   attachmentNames: string[]
+  // Załączniki wideo rozpoznane ze struktury MIME (bez pobierania samego
+  // nagrania) oraz linki do nagrań znalezione w treści.
+  videoAttachments: string[]
+  videoLinks: string[]
   // Wiadomość z automatu (newsletter, no-reply, autoresponder, lista
   // mailingowa, nasz własny agent). Na takie nigdy nie odpowiadamy sami.
   automated: boolean
@@ -92,7 +97,15 @@ export async function ensureFolders(client: ImapFlow): Promise<FolderMap> {
       continue
     }
     let createdPath: string | null = null
-    for (const candidate of [nested, name]) {
+    const candidates = [nested, name]
+    const siblingName = CREATE_NEXT_TO[name]
+    const sibling = siblingName ? list.find((m) => m.name.trim().toLowerCase() === siblingName.toLowerCase()) : undefined
+    if (sibling) {
+      const d = sibling.delimiter || delimiter
+      const parent = sibling.path.includes(d) ? sibling.path.slice(0, sibling.path.lastIndexOf(d)) : ''
+      candidates.unshift(parent ? `${parent}${d}${name}` : name)
+    }
+    for (const candidate of candidates) {
       try {
         const res = await client.mailboxCreate(candidate)
         createdPath = res.path
@@ -192,6 +205,80 @@ function cleanText(raw: string): string {
     .trim()
 }
 
+// ── Wykrywanie nagrań wideo ─────────────────────────────────────────────────
+
+const VIDEO_EXT = /\.(mp4|m4v|mov|avi|wmv|webm|mkv|3gp|mpe?g|flv)$/i
+
+// Serwisy, przez które kandydaci zwykle przysyłają swoje nagrania.
+const VIDEO_HOSTS = [
+  'youtube.com', 'youtu.be', 'vimeo.com', 'loom.com', 'drive.google.com', 'dropbox.com',
+  'wetransfer.com', 'we.tl', '1drv.ms', 'onedrive.live.com', 'sharepoint.com', 'icloud.com',
+  'streamable.com', 'wistia.com', 'vidyard.com', 'screencast.com', 'tiktok.com', 'veed.io',
+]
+
+// Fragmenty, po których serwer poczty wyszukuje kandydatów (wyszukiwanie po
+// stronie serwera, bez pobierania wiadomości).
+const VIDEO_SEARCH_TERMS = [
+  'youtu', 'vimeo.com', 'loom.com', 'drive.google.com', 'dropbox.com', 'wetransfer', 'we.tl/',
+  '1drv.ms', 'onedrive', 'streamable.com', 'wistia', 'vidyard', 'intro video', 'video intro',
+  'introduction video', 'video introduction', 'introductory video', 'demo lesson', 'demo video',
+  'nagranie', 'filmik', 'wideo',
+]
+
+export function videoParts(node: MessageStructureObject | undefined): string[] {
+  const out: string[] = []
+  const walk = (n: MessageStructureObject | undefined) => {
+    if (!n) return
+    const name = n.dispositionParameters?.filename || n.parameters?.name || ''
+    if ((n.type || '').toLowerCase().startsWith('video/') || VIDEO_EXT.test(name)) {
+      out.push(name || n.type)
+    }
+    for (const c of n.childNodes ?? []) walk(c)
+  }
+  walk(node)
+  return out
+}
+
+export function extractVideoLinks(text: string): string[] {
+  const urls = text.match(/https?:\/\/[^\s<>"')\]]+/gi) ?? []
+  const found = new Set<string>()
+  for (const raw of urls) {
+    const url = raw.replace(/[.,;:!?]+$/, '')
+    let host = ''
+    try {
+      host = new URL(url).hostname.toLowerCase().replace(/^www\./, '')
+    } catch {
+      continue
+    }
+    if (VIDEO_HOSTS.some((h) => host === h || host.endsWith(`.${h}`)) || VIDEO_EXT.test(new URL(url).pathname)) {
+      found.add(url.length > 200 ? `${url.slice(0, 200)}…` : url)
+    }
+    if (found.size >= 8) break
+  }
+  return [...found]
+}
+
+// Maile w folderze, w których może być nagranie: wyszukiwanie po treści na
+// serwerze plus struktura MIME (sam opis części, bez pobierania nagrań).
+export async function findVideoCandidates(client: ImapFlow, folder: string): Promise<number[]> {
+  const lock = await client.getMailboxLock(folder)
+  try {
+    const exists = client.mailbox && typeof client.mailbox === 'object' ? client.mailbox.exists : 0
+    if (!exists) return []
+    const uids = new Set<number>()
+    const byText = await client.search(
+      { or: [...VIDEO_SEARCH_TERMS.map((t) => ({ body: t })), { subject: 'video' }, { subject: 'intro' }] },
+      { uid: true },
+    )
+    for (const u of byText || []) uids.add(u)
+    const structures = await client.fetchAll('1:*', { uid: true, bodyStructure: true })
+    for (const m of structures) if (videoParts(m.bodyStructure).length > 0) uids.add(m.uid)
+    return [...uids].sort((a, b) => b - a)
+  } finally {
+    lock.release()
+  }
+}
+
 // Pobiera wiadomości z folderu. `maxBytes` ucina źródło: do samego sortowania
 // wystarcza początek treści, a załączników i tak nie analizujemy.
 export async function fetchMails(
@@ -206,7 +293,7 @@ export async function fetchMails(
   try {
     const raw = await client.fetchAll(
       uids.join(','),
-      { uid: true, flags: true, internalDate: true, envelope: true, source: { start: 0, maxLength: maxBytes } },
+      { uid: true, flags: true, internalDate: true, envelope: true, bodyStructure: true, source: { start: 0, maxLength: maxBytes } },
       { uid: true },
     )
     const out: FetchedMail[] = []
@@ -239,6 +326,8 @@ export async function fetchMails(
           inReplyTo: parsed.inReplyTo || null,
           references: Array.isArray(refs) ? refs : refs ? [refs] : [],
           attachmentNames: (parsed.attachments || []).map((a) => a.filename || 'załącznik').slice(0, 10),
+          videoAttachments: videoParts(msg.bodyStructure).slice(0, 10),
+          videoLinks: extractVideoLinks(`${parsed.text || ''}\n${typeof parsed.html === 'string' ? parsed.html : ''}`),
           automated: automatedReason !== null,
           automatedReason,
         })
@@ -314,6 +403,7 @@ export type OutgoingReply = {
   to: string
   subject: string
   text: string
+  html: string
   inReplyTo: string | null
   references: string[]
 }
@@ -324,6 +414,7 @@ function buildRaw(cfg: InboxConfig, reply: OutgoingReply): Promise<Buffer> {
     to: reply.to,
     subject: reply.subject,
     text: reply.text,
+    html: reply.html,
     inReplyTo: reply.inReplyTo ?? undefined,
     references: reply.references.length ? reply.references : undefined,
     headers: { [AGENT_HEADER]: '1' },
@@ -358,11 +449,34 @@ export function replySubject(subject: string): string {
 }
 
 // Treść odpowiedzi z podpisem i cytatem oryginału, jak w zwykłej odpowiedzi
-// pisanej z programu pocztowego.
-export function composeReplyText(body: string, signature: string, original: { from: MailAddress; date: Date; text: string }): string {
-  const when = original.date.toLocaleString('pl-PL', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Warsaw' })
+// pisanej z programu pocztowego. Dwie wersje: HTML (z podpisem marki: logo,
+// strona, media społecznościowe) i zwykły tekst.
+export function composeReply(
+  body: string,
+  signatureName: string,
+  original: { from: MailAddress; date: Date; text: string },
+): { text: string; html: string } {
+  const trimmed = body.trim()
+  // Odpowiedź po polsku dostaje polski nagłówek cytatu, każda inna angielski.
+  const polish = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(trimmed)
+  const when = original.date.toLocaleString(polish ? 'pl-PL' : 'en-GB', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Warsaw' })
   const who = original.from.name ? `${original.from.name} <${original.from.address}>` : original.from.address
-  const quoted = original.text.slice(0, 6000).split('\n').map((l) => `> ${l}`).join('\n')
-  const sig = signature.trim()
-  return `${body.trim()}${sig ? `\n\n${sig}` : ''}\n\nW dniu ${when} ${who} napisał(a):\n${quoted}\n`
+  const quoteHeader = polish ? `W dniu ${when} ${who} napisał(a):` : `On ${when}, ${who} wrote:`
+  const originalText = original.text.slice(0, 6000)
+
+  const text = `${trimmed}\n\n${signatureText(signatureName)}\n\n${quoteHeader}\n${originalText.split('\n').map((l) => `> ${l}`).join('\n')}\n`
+
+  const paragraphs = trimmed
+    .split(/\n{2,}/)
+    .map((p) => `<p style="margin:0 0 14px;">${escapeHtml(p.trim()).replace(/\n/g, '<br>')}</p>`)
+    .join('')
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#1f2937;">
+${paragraphs}
+${signatureHtml(signatureName)}
+<div style="margin-top:26px;font-size:13px;color:#6b7280;">${escapeHtml(quoteHeader)}</div>
+<blockquote style="margin:6px 0 0;padding:0 0 0 12px;border-left:3px solid #e5e7eb;color:#6b7280;font-size:13px;">${escapeHtml(originalText).replace(/\n/g, '<br>')}</blockquote>
+</div></body></html>`
+
+  return { text, html }
 }

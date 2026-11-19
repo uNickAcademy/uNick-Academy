@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getInboxConfig, type CategoryKey } from './config'
 import {
   closeMailbox,
-  composeReplyText,
+  composeReply,
   ensureFolders,
   findByMessageId,
   markAnswered,
@@ -81,7 +81,7 @@ export async function approveAndSend(
     await sendReply(client, cfg, folders, {
       to: row.reply_to_address || row.from_address,
       subject: replySubject(row.subject ?? ''),
-      text: composeReplyText(body, state.signature || defaultSignature(), original),
+      ...composeReply(body, state.signature || defaultSignature(), original),
       inReplyTo: hasRealId ? row.message_id : null,
       references: hasRealId ? [...(row.references_ids ?? []), row.message_id] : [],
     })

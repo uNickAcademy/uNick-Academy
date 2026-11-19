@@ -68,10 +68,15 @@ export const CATEGORIES = [
     description: 'uNick Academy Foundation, granty, projekty (np. Kreatorzy Przyszłości), bal charytatywny, darczyńcy, partnerzy projektów.',
   },
   {
+    key: 'wideo',
+    folder: 'Teachers Videos',
+    description: 'Maile od nauczycieli lub kandydatów na nauczycieli z ich nagraniem wideo (intro, przedstawienie się, lekcja pokazowa) w załączniku albo jako link (YouTube, Vimeo, Loom, Google Drive, Dropbox, WeTransfer itp.). Ma pierwszeństwo przed kategorią rekrutacja.',
+  },
+  {
     key: 'rekrutacja',
     // Folder, który szkoła już ma w skrzynce: agent go nie tworzy, tylko używa.
     folder: 'Teachers Applications',
-    description: 'Aplikacje o pracę od nauczycieli i lektorów (często po angielsku): CV, resume, list motywacyjny, „application for a teaching position", zgłoszenia z portali z ofertami pracy, pytania kandydatów o rekrutację.',
+    description: 'Aplikacje o pracę od nauczycieli i lektorów (często po angielsku): CV, resume, list motywacyjny, „application for a teaching position", zgłoszenia z portali z ofertami pracy, pytania kandydatów o rekrutację. Jeśli kandydat dołącza swoje wideo, wybierz kategorię wideo.',
   },
   {
     key: 'kadra',
@@ -124,6 +129,15 @@ export const MAX_REPLY_CANDIDATES_PER_RUN = 12
 export const MAX_SORT_ONLY_PER_RUN = 120
 export const TRIAGE_BATCH_SIZE = 20
 export const RUN_TIME_BUDGET_MS = 230_000
+
+// Folder, którego brakuje, tworzymy obok wskazanego istniejącego folderu,
+// żeby foldery rekrutacyjne leżały razem.
+export const CREATE_NEXT_TO: Record<string, string> = {
+  'Teachers Videos': 'Teachers Applications',
+}
+
+// Ile maili-kandydatów sprawdza jedno wywołanie akcji „przenieś wideo".
+export const VIDEO_SWEEP_PER_CALL = 60
 
 // Ile maili z odbiorczej przegląda jedno wywołanie akcji „przenieś kategorię".
 export const SWEEP_PER_CALL = 160

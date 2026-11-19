@@ -1,12 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ImapFlow } from 'imapflow'
-import { siteConfig } from '@/app/lib/site-config'
+import { DEFAULT_SIGNATURE_NAME } from './signature'
 import {
   MAX_REPLY_CANDIDATES_PER_RUN,
   MAX_SORT_ONLY_PER_RUN,
   REPLY_WINDOW_DAYS,
   RUN_TIME_BUDGET_MS,
   SWEEP_PER_CALL,
+  VIDEO_SWEEP_PER_CALL,
+  CATEGORIES,
   TRIAGE_BATCH_SIZE,
   categoryFolder,
   getInboxConfig,
@@ -15,10 +17,11 @@ import {
 } from './config'
 import {
   closeMailbox,
-  composeReplyText,
+  composeReply,
   ensureFolders,
   fetchMails,
   findFolder,
+  findVideoCandidates,
   listUids,
   markAnswered,
   moveMail,
@@ -29,7 +32,7 @@ import {
   type FetchedMail,
   type FolderMap,
 } from './mailbox'
-import { distillSentHistory, draftReply, isBrainConfigured, triage, type ReplyDecision, type TriageItem, type Usage } from './brain'
+import { classifyTeacherVideos, distillSentHistory, draftReply, isBrainConfigured, triage, type ReplyDecision, type TriageItem, type Usage } from './brain'
 import { buildKnowledgeBlock, describeSender, loadKnowledge, loadState, saveState, type AgentState } from './knowledge'
 
 // Jeden przebieg Agenta Skrzynki. Kolejka pracy to sama skrzynka odbiorcza:
@@ -58,7 +61,7 @@ const LARGE_FETCH_BYTES = 96 * 1024
 const SMALL_FETCH_BYTES = 16 * 1024
 
 export function defaultSignature(): string {
-  return `Pozdrawiamy serdecznie\nZespół uNick Academy\ntel. ${siteConfig.phone.display}\n${siteConfig.url.replace('https://', '')}`
+  return DEFAULT_SIGNATURE_NAME
 }
 
 function emptySummary(): RunSummary {
@@ -212,11 +215,10 @@ async function refreshLearnedProfile(ctx: Ctx, force: boolean): Promise<void> {
   const sent = (await recentSent(ctx.client, ctx.folders.sent, { limit: 70, maxBytes: SMALL_FETCH_BYTES }, ctx.cfg.user))
     .filter((m) => m.text.length > 40)
   if (sent.length < 3) return
-  const { profile, signature, usage } = await distillSentHistory(sent)
+  const { profile, usage } = await distillSentHistory(sent)
   ctx.summary.costUsd += usage.costUsd
   await logUsage(ctx.admin, usage, startedAt)
   const patch: Partial<AgentState> = { learned_profile: profile, learned_profile_at: new Date().toISOString() }
-  if (!ctx.state.signature.trim() && signature) patch.signature = signature
   await saveState(ctx.admin, patch)
   Object.assign(ctx.state, patch)
   ctx.summary.learnedProfile = true
@@ -281,7 +283,7 @@ async function handleReplyCandidate(ctx: Ctx, mail: FetchedMail, decision: Reply
 
   const replyTo = mail.replyTo?.address ?? mail.from.address
   if (autoSendAllowed(state, mail, decision) && !(await recentlyAutoReplied(admin, mail.from.address))) {
-    const text = composeReplyText(decision.reply_body, state.signature || defaultSignature(), mail)
+    const composed = composeReply(decision.reply_body, state.signature || defaultSignature(), mail)
     // Wpis „sending" powstaje PRZED wysyłką: gdyby coś padło zaraz po niej,
     // następny przebieg zobaczy go i nie wyśle tej samej odpowiedzi drugi raz.
     await admin.from('inbox_agent_messages').upsert({ ...row, status: 'sending' }, { onConflict: 'message_id' })
@@ -289,7 +291,7 @@ async function handleReplyCandidate(ctx: Ctx, mail: FetchedMail, decision: Reply
       await sendReply(client, cfg, folders, {
         to: replyTo,
         subject: replySubject(mail.subject),
-        text,
+        ...composed,
         inReplyTo: mail.messageId,
         references: [...mail.references, mail.messageId],
       })
@@ -619,6 +621,140 @@ export async function sweepCategory(
   } catch (err) {
     const message = (err as Error).message || 'Nieznany błąd'
     console.error('[AgentSkrzynki] Przenoszenie kategorii przerwane:', message)
+    return finish({ ok: false, error: message })
+  } finally {
+    if (client) await closeMailbox(client)
+    await admin.from('inbox_agent_state').update({ run_started_at: null }).eq('id', true)
+  }
+}
+
+// ── Akcja celowana: wideo od nauczycieli do „Teachers Videos" ───────────────
+//
+// Skrzynka jest już uporządkowana, więc nagrania leżą głównie w folderach
+// (najczęściej w „Teachers Applications"). Akcja przegląda odbiorczą i foldery
+// kategorii agenta, a w nich tylko maile z załącznikiem wideo lub z linkiem /
+// wzmianką o nagraniu (wyszukiwanie po stronie serwera). Każdego kandydata
+// ocenia Claude: przenosimy wyłącznie nagrania nauczycieli i kandydatów.
+//
+// Nie dotyka: „Do decyzji", Wysłanych, folderów utworzonych ręcznie przez
+// szkołę (poza „Teachers Applications"). Niczego nie wysyła ani nie usuwa.
+// Panel wywołuje akcję w pętli z kursorem { f: indeks folderu, u: UID }.
+
+export type VideoCursor = { f: number; u: number | null }
+
+export type VideoSweepSummary = {
+  ok: boolean
+  skipped?: string
+  error?: string
+  folder: string
+  checked: number
+  moved: number
+  movedFrom: Record<string, number>
+  errors: number
+  foldersTotal: number
+  next: VideoCursor | null
+  costUsd: number
+  durationMs: number
+}
+
+export async function sweepTeacherVideos(admin: SupabaseClient, opts: { cursor?: VideoCursor }): Promise<VideoSweepSummary> {
+  const startedAt = Date.now()
+  const target = categoryFolder('wideo')
+  const summary: VideoSweepSummary = { ok: true, folder: target, checked: 0, moved: 0, movedFrom: {}, errors: 0, foldersTotal: 0, next: null, costUsd: 0, durationMs: 0 }
+  const finish = (patch: Partial<VideoSweepSummary>): VideoSweepSummary => ({ ...summary, ...patch, durationMs: Date.now() - startedAt })
+
+  const cfg = getInboxConfig()
+  if (!cfg) return finish({ ok: false, skipped: 'Brak danych logowania do skrzynki (INBOX_USER / INBOX_PASSWORD).' })
+  if (!isBrainConfigured()) return finish({ ok: false, skipped: 'Brak klucza ANTHROPIC_API_KEY.' })
+  const state = await loadState(admin)
+  if (!state.enabled) return finish({ skipped: 'Agent jest wyłączony w panelu.' })
+  if (!(await acquireLock(admin))) return finish({ skipped: 'Inny przebieg agenta właśnie trwa.' })
+
+  let client: ImapFlow | null = null
+  try {
+    client = await openMailbox(cfg)
+    // Tworzy „Teachers Videos", jeśli go nie ma (obok „Teachers Applications").
+    const folders = await ensureFolders(client)
+    const targetPath = folders.categories.wideo
+    const sources = [...new Set([
+      folders.inbox,
+      ...CATEGORIES.filter((c) => c.key !== 'wideo').map((c) => folders.categories[c.key]),
+    ])].filter((p) => p && p !== targetPath && p !== folders.review && p !== folders.sent)
+    summary.foldersTotal = sources.length
+
+    let f = opts.cursor?.f ?? 0
+    let beforeUid = opts.cursor?.u ?? null
+    let budget = VIDEO_SWEEP_PER_CALL
+
+    while (f < sources.length) {
+      if (budget <= 0 || Date.now() - startedAt > RUN_TIME_BUDGET_MS - 60_000) {
+        summary.next = { f, u: beforeUid }
+        break
+      }
+      const source = sources[f]
+      const all = (await findVideoCandidates(client, source)).filter((u) => beforeUid === null || u < beforeUid)
+      const chunk = all.slice(0, budget)
+      budget -= chunk.length
+
+      const mails = (await fetchMails(client, source, chunk, 64 * 1024, cfg.user))
+        // Biuletyny i powiadomienia z automatu nie są nagraniami nauczycieli.
+        .filter((m) => !m.automated)
+      summary.checked += chunk.length
+
+      const batches: FetchedMail[][] = []
+      for (let i = 0; i < mails.length; i += 15) batches.push(mails.slice(i, i + 15))
+      const confirmed: { mail: FetchedMail; reason: string }[] = []
+      await pool(batches, 4, async (batch) => {
+        const t0 = Date.now()
+        try {
+          const { items, usage } = await classifyTeacherVideos(batch)
+          summary.costUsd += usage.costUsd
+          await logUsage(admin, usage, t0)
+          for (const item of items) {
+            const mail = batch[item.index]
+            if (mail && item.is_teacher_video) confirmed.push({ mail, reason: item.reason })
+          }
+        } catch (err) {
+          summary.errors += batch.length
+          console.error('[AgentSkrzynki] Błąd oceny wideo:', (err as Error).message)
+        }
+      })
+
+      const sourceName = source.split(/[./]/).pop() || source
+      for (const { mail, reason } of confirmed) {
+        try {
+          await moveMail(client, source, mail.uid, targetPath)
+          summary.moved++
+          summary.movedFrom[sourceName] = (summary.movedFrom[sourceName] ?? 0) + 1
+          const { data: existing } = await admin.from('inbox_agent_messages').select('id').eq('message_id', mail.messageId).maybeSingle()
+          if (existing) {
+            await admin.from('inbox_agent_messages')
+              .update({ category: 'wideo', folder: target, updated_at: new Date().toISOString() })
+              .eq('id', existing.id)
+          } else {
+            await admin.from('inbox_agent_messages').upsert(
+              { ...baseRow(mail), category: 'wideo', folder: target, summary: reason, needs_reply: false, status: 'sorted' },
+              { onConflict: 'message_id' },
+            )
+          }
+        } catch (err) {
+          summary.errors++
+          console.error(`[AgentSkrzynki] Nie udało się przenieść „${mail.subject}":`, (err as Error).message)
+        }
+      }
+
+      if (chunk.length < all.length) {
+        // W tym folderze zostały jeszcze starsze maile do sprawdzenia.
+        summary.next = { f, u: Math.min(...chunk) }
+        break
+      }
+      f++
+      beforeUid = null
+    }
+    return finish({ ok: true })
+  } catch (err) {
+    const message = (err as Error).message || 'Nieznany błąd'
+    console.error('[AgentSkrzynki] Przenoszenie wideo przerwane:', message)
     return finish({ ok: false, error: message })
   } finally {
     if (client) await closeMailbox(client)
