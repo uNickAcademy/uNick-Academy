@@ -1,0 +1,264 @@
+.feature {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+.featureArt {
+  display: grid;
+  place-content: center;
+  grid-template-columns: repeat(2, minmax(0, 135px));
+  align-items: center;
+  padding: clamp(28px, 5vw, 48px);
+  background: var(--color-cream);
+}
+
+.samplePicture,
+.sampleWord {
+  display: grid;
+  aspect-ratio: 1;
+  min-width: 0;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+.samplePicture {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transform: translateX(5px) rotate(-8deg);
+}
+
+.samplePicture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sampleWord {
+  color: var(--color-blue);
+  font-size: clamp(19px, 4vw, 29px);
+  font-weight: 700;
+  transform: translate(-5px, 5px) rotate(8deg);
+}
+
+.featureBody {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 19px clamp(16px, 4vw, 26px);
+}
+
+.featureTitle {
+  display: block;
+  color: var(--color-blue);
+  font: 700 clamp(22px, 3.5vw, 28px)/1.18 var(--font-display), Georgia, serif;
+}
+
+.featureHint {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-ink-soft);
+  font-size: .875rem;
+}
+
+.featureArrow {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-red-soft);
+  color: var(--color-red);
+  font-size: 1.35rem;
+}
+
+.library {
+  padding-top: clamp(40px, 6vw, 76px);
+  padding-bottom: var(--section-padding-y);
+}
+
+.libraryHeader {
+  margin-bottom: clamp(26px, 5vw, 42px);
+}
+
+.back {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+  margin-bottom: 14px;
+  color: var(--color-red);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.libraryHeader h1 {
+  font-size: clamp(36px, 6vw, 58px);
+}
+
+.libraryHeader p {
+  margin-top: 12px;
+  color: var(--color-ink-soft);
+  font-size: clamp(17px, 2vw, 19px);
+  line-height: 1.65;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 222px), 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid li {
+  min-width: 0;
+}
+
+.tile {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.tileImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 156px;
+  padding: 10px;
+  object-fit: contain;
+}
+
+.tileContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 17px 17px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tileContent h2 {
+  font-size: clamp(20px, 2.5vw, 23px);
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.tileAction {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: auto;
+  color: var(--color-red);
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.feature:hover,
+.tile:hover {
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-card);
+}
+
+.feature:focus-visible,
+.tile:focus-visible,
+.back:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .feature,
+  .tile {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+}
+
+.access {
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  margin-bottom: 32px;
+  scroll-margin-top: 120px;
+}
+.access h2 { font-size: clamp(26px, 3vw, 34px); }
+.access p { line-height: 1.65; color: var(--color-ink-soft); }
+.accessForm { margin-top: 22px; }
+.accessForm > label { display: block; margin-bottom: 8px; font-weight: 600; }
+.emailRow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; }
+.emailRow input {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font: inherit;
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+.accessButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #a93226;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.accessButton:disabled { opacity: .6; cursor: wait; }
+.accessForm > .newsletter {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 18px;
+  font-weight: 400;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+.newsletter input { flex: none; width: 19px; height: 19px; margin-top: 3px; accent-color: #a93226; }
+.optional { color: var(--color-ink-soft); }
+.access .privacy { margin-top: 12px; font-size: .82rem; }
+.privacy a { text-decoration: underline; text-underline-offset: 3px; color: #a93226; }
+.access .formError, .formError { color: #99261e; margin-top: 12px; line-height: 1.6; }
+.success { margin-top: 18px; border-left: 3px solid #347453; padding: 10px 16px; background: #f0f7f2; }
+.success p { margin-top: 6px; }
+.accessReady { margin-bottom: 28px; color: #2f6347; }
+.previewLayout { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 56px); align-items: start; }
+.fullSample { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 12px; }
+.previewLayout .access { position: sticky; top: 110px; }
+.previewDownload p { margin-bottom: 20px; }
+.accessButton:focus-visible, .accessForm input:focus-visible, .privacy a:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 4px; }
+
+@media (max-width: 760px) {
+  .previewLayout { grid-template-columns: 1fr; }
+  .previewLayout .access { position: static; }
+  .emailRow .accessButton { width: 100%; }
+}

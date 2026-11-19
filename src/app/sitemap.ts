@@ -20,7 +20,8 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/meet-us', lastmod: '2026-07-22', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/contact', lastmod: '2026-07-22', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/meet-unickorn', lastmod: '2026-07-22', priority: 0.6, changeFrequency: 'monthly' },
-  { path: '/teachers-zone', lastmod: '2026-07-22', priority: 0.5, changeFrequency: 'monthly' },
+  { path: '/teachers-zone', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
+  { path: '/meterials', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/privacy-policy', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/terms-of-service', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
 ]

@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createAdminClient()
+  const { error: materialsCleanupError } = await supabase.rpc('prune_lesson_material_contacts')
+  if (materialsCleanupError) console.error('Lesson materials retention cleanup failed', materialsCleanupError.code)
   const now = new Date()
   const isMonday = now.getDay() === 1
 

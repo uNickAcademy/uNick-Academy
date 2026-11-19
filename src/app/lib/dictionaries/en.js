@@ -603,6 +603,14 @@ const en = {
   },
 
 
+  lessonMaterials: {
+    title: "Lesson Materials",
+    description: "Printable English vocabulary flashcards. Browse samples and get access to the full library.",
+    heroHint: "Printable PDF flashcards",
+    openPdf: "Open PDF",
+    newTab: "in a new tab",
+  },
+
   teachersZone: {
     meta: {
       title: "Teachers Zone — uNick Academy",
@@ -882,7 +890,7 @@ const en = {
     },
     privacyPolicy: {
       title: "Privacy Policy",
-      lastUpdated: "Last updated: 23 June 2026",
+      lastUpdated: "Last updated 19 November 2026",
       controller: "Data Controller",
       controllerText: "The data controller within the meaning of Regulation (EU) 2016/679 (GDPR) depends on which service your data relates to. Classes for children, teenagers and adults (private individuals): UNICK ACADEMY INTERNATIONAL SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0001093339, NIP 7812067015, REGON 528044862. Corporate language training: UNICK ACADEMY SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, Poland, KRS 0000934614, NIP 7812028328, REGON 520523959. In both cases contact: hello@unick-academy.pl.",
       whatWeCollect: "What data we collect",

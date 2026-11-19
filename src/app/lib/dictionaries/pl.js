@@ -603,6 +603,14 @@ const pl = {
   },
 
 
+  lessonMaterials: {
+    title: "Materiały do zajęć",
+    description: "Fiszki z angielskim słownictwem do druku. Zobacz podglądy i odbierz dostęp do pełnej biblioteki.",
+    heroHint: "Fiszki PDF do druku",
+    openPdf: "Otwórz PDF",
+    newTab: "w nowej karcie",
+  },
+
   teachersZone: {
     meta: {
       title: "Strefa nauczyciela — uNick Academy",
@@ -925,7 +933,7 @@ const pl = {
     },
     privacyPolicy: {
       title: "Polityka Prywatności",
-      lastUpdated: "Ostatnia aktualizacja: 23 czerwca 2026",
+      lastUpdated: "Ostatnia aktualizacja 19 listopada 2026",
       controller: "Administrator danych",
       controllerText: "Administrator danych osobowych w rozumieniu Rozporządzenia (UE) 2016/679 (RODO) zależy od tego, której usługi dotyczą Twoje dane. Zajęcia dla dzieci, młodzieży i dorosłych (osoby prywatne): UNICK ACADEMY INTERNATIONAL SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, KRS 0001093339, NIP 7812067015, REGON 528044862. Szkolenia językowe dla firm: UNICK ACADEMY SP. Z O.O., ul. Nowa 23, 62-080 Rumianek, KRS 0000934614, NIP 7812028328, REGON 520523959. W obu przypadkach kontakt: hello@unick-academy.pl.",
       whatWeCollect: "Jakie dane zbieramy",

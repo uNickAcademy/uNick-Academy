@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
 import { getDictionary } from "../../lib/dictionaries";
 import { buildMetadata } from "../../lib/seo";
+import { materialsCopy } from "@/lib/lesson-materials/copy";
 import styles from "../../components/sections.module.css";
 
 export async function generateMetadata({ params }) {
@@ -20,7 +21,9 @@ export default async function PrivacyPolicyPage({ params }) {
   const dict = getDictionary(locale);
   const t = dict.legal.privacyPolicy;
 
+  const materials = materialsCopy[locale === "en" ? "en" : "pl"];
   const sections = [
+    { id: "lesson-materials", heading: materials.privacyTitle, text: materials.privacyText },
     { heading: t.controller, text: t.controllerText },
     { heading: t.whatWeCollect, text: t.whatWeCollectText },
     { heading: t.whyWeCollect, text: t.whyWeCollectText },
@@ -39,9 +42,10 @@ export default async function PrivacyPolicyPage({ params }) {
         <h1 className={styles.title}>{t.title}</h1>
         <p style={{ color: "var(--color-muted)", fontSize: 14, marginBottom: 40 }}>{t.lastUpdated}</p>
         {sections.map((s) => (
-          <div key={s.heading} style={{ marginBottom: 32 }}>
+          <div id={s.id} key={s.heading} style={{ marginBottom: 32 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--color-blue)", marginBottom: 8 }}>{s.heading}</h2>
             <p style={{ color: "var(--color-ink-soft)", lineHeight: 1.75, fontSize: 15 }}>{s.text}</p>
+            {s.id === "lesson-materials" && <p><a href="https://supabase.com/legal/dpa">Supabase DPA</a> · <a href="https://resend.com/legal/dpa">Resend DPA</a></p>}
           </div>
         ))}
       </Reveal>
