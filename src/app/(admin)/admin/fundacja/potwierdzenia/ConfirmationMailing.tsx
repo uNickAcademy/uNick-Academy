@@ -101,7 +101,6 @@ export default function ConfirmationMailing() {
           ["Zapisane dane rodzin", detailsCount],
         ].map(([label, count]) => (
           <div key={label} className="rounded-xl border p-4">
-            {busy&&<button className="rounded-xl border px-5 py-3" onClick={()=>{cancel.current=true;setMessage('Zatrzymamy wysyłkę po bieżącej wiadomości.')}}>Zatrzymaj wysyłkę po bieżącej wiadomości</button>}
       <p className="text-sm text-stone-600">{label}</p>
             <strong className="text-2xl">{count}</strong>
           </div>
@@ -113,6 +112,7 @@ export default function ConfirmationMailing() {
         </p>
       )}
       {message && <p role="status">{message}</p>}
+      {busy&&<button className="rounded-xl border px-5 py-3" onClick={()=>{cancel.current=true;setMessage('Zatrzymamy wysyłkę po bieżącej wiadomości.')}}>Zatrzymaj wysyłkę po bieżącej wiadomości</button>}
       <div className="flex flex-wrap gap-3">
         <button
           disabled={busy || loading || !pending}
