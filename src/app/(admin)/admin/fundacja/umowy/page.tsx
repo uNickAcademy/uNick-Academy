@@ -29,6 +29,7 @@ export default async function Page() {
       <Link href="/admin/fundacja" className="text-sm text-teal-700">
         ← Fundacja
       </Link>
+      <p className="mt-4"><Link href="/admin/fundacja/potwierdzenia" className="text-teal-800 underline">Aktualne potwierdzenia i dane do umów →</Link></p>
       <h1 className="mt-4 text-3xl font-bold">
         Potwierdzenia i umowy uczestników
       </h1>

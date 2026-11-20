@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       );
     const { db, invite } = context;
     const { data, error } = await db
-      .from("foundation_contract_submissions")
-      .select("id")
+      .from("foundation_participant_details")
+      .select("invite_id")
       .eq("invite_id", invite.id)
       .maybeSingle();
     if (error)
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       groups: invite.groups,
       firstSupport: invite.first_support,
       lastSupport: invite.last_support,
-      documents: invite.documents,
+      documents: { contact: invite.documents.contact },
       submitted: Boolean(data),
       choice: response?.choice ?? null,
     });

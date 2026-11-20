@@ -10,6 +10,7 @@ await db.exec(
 for (const name of [
   "20261113213234_foundation_participant_contracts",
   "20261120165847_foundation_confirmation_responses",
+  "20261120231307_foundation_participant_details_and_mailings",
 ])
   await db.exec(await fs.readFile(`supabase/migrations/${name}.sql`, "utf8"));
 const invitation = "33333333-3333-4333-8333-333333333333",
@@ -22,9 +23,9 @@ async function invite(id, declaration, tokenHash) {
 }
 await invite(invitation, "22222222-2222-4222-8222-222222222222", hash);
 await db.exec("set role anon");
-for (const table of ["invites", "responses", "submissions", "settings"])
+for (const table of ["invites", "responses", "submissions", "settings", "mailings"])
   await assert.rejects(
-    () => db.query(`select * from public.foundation_contract_${table}`),
+    () => db.query(`select * from public.${table==='mailings'?'foundation_confirmation_mailings':'foundation_contract_'+table}`),
     /permission denied/,
   );
 await db.exec("reset role;set role authenticated;set test.user_role='student'");
@@ -62,6 +63,11 @@ await assert.rejects(
   () => db.query("update public.foundation_contract_responses set choice='no'"),
   /permission denied/,
 );
+const saveDetails=()=>db.query(`select public.foundation_save_participant_details($1,'{"participantFirstName":"Jan","address":"ul. Testowa 1, 62-090 Rokietnica"}',false) as id`,[hash]);
+const [detail1,detail2]=await Promise.all([saveDetails(),saveDetails()]);assert.equal(detail1.rows[0].id,detail2.rows[0].id);
+assert.equal((await db.query('select * from public.foundation_participant_details')).rows.length,1);
+assert.equal((await db.query('select count(*) as n from public.foundation_contract_submissions')).rows[0].n,0);
+await assert.rejects(()=>db.query(`insert into public.foundation_participant_details(invite_id,participant) values($1,'{"participationAccepted":true}')`,[invitation]),/check constraint/);
 const [a, b] = await Promise.all([submit(), submit()]);
 assert.equal(a.rows[0].id, b.rows[0].id);
 assert.equal(

@@ -1,3 +1,15 @@
+# Aktualny etap — potwierdzenia i dane (21.11.2026)
+
+Rodzic potwierdza termin i uzupełnia dane uczestnika oraz rodzica/opiekuna. Pełny adres zastępuje pole miejscowości. Formularz nie zbiera zgód ani akceptacji umowy, nie zapisuje ich domyślnie i nie generuje PDF. Jedyna informacja pod przyciskiem: „Na podstawie tych danych zostanie sporządzona umowa.” Pełna informacja o danych jest dostępna pod oddzielnym linkiem w stopce. Pełnoletni uczestnik podaje własny kontakt. Poprawki nazwiska lub wieku zapisują się do wyjaśnienia, bez automatycznego odrzucania wcześniej przydzielonej osoby.
+
+Dane trafiają do `foundation_participant_details`, oddzielnie od historycznych umów. Nie zapisujemy daty urodzenia po wyliczeniu wieku, PESEL-u ani fikcyjnych zgód. Ponowienie zapisu jest idempotentne; administrator pobiera dane do umów w CSV.
+
+Panel `/admin/fundacja/potwierdzenia` zawiera kampanię `preliminary-2026-11-21-v1` przygotowaną z aktualnych list grup. Dedupikacja następuje po uczestniku i zgłoszeniu, a nie po adresie rodzica; rodzeństwo otrzymuje odrębne linki. Nadawca jest wymuszony po stronie serwera: `uNick Academy Foundation <hello@unick-academy.pl>`. Wysyłka korzysta z istniejącej konfiguracji Resend, rejestruje ID przyjętej wiadomości, atomowo oznacza rozpoczęcie i nie ponawia samoczynnie wyniku niepewnego. Sekrety linków nie trafiają do rejestru wysyłki. Nowe zaproszenie zastępuje wcześniejszy test dla Bena, zachowując historię.
+
+Nowa migracja: `20261120231307_foundation_participant_details_and_mailings.sql`. Sprawdzenia: `node tests/foundation-confirmation.cjs`, test bazy poniżej, TypeScript, lint i produkcyjny build. Komponent formularza nie wyświetla komunikatu o brakującym numerze grantu. Właściwy etap umów pozostaje do późniejszego uruchomienia; opis poniżej dokumentuje wcześniejszą wersję.
+
+---
+
 # Potwierdzenia i umowy — Kreatorzy Przyszłości
 
 Panel: `/admin/fundacja/umowy`; formularz rodzica: `/uczestnictwo#token=…`.
