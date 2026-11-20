@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/kontakt", destination: "/pl/contact", permanent: false },
       { source: "/meterials", destination: "/pl/meterials", permanent: false },
+      { source: "/karty-do-rozmowy", destination: "/pl/conversation-cards", permanent: false },
       { source: "/polityka-prywatnosci", destination: "/pl/privacy-policy", permanent: false },
       { source: "/regulamin", destination: "/pl/terms-of-service", permanent: false },
 

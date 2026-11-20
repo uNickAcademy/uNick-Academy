@@ -174,6 +174,7 @@ export function getFooterNav(locale, dict) {
         },
         { label: dict.common.nav.contact, href: `/${locale}/contact` },
         { label: dict.common.nav.teachersZone, href: `/${locale}/teachers-zone` },
+        { label: locale === "en" ? "Conversation Cards" : "Karty do rozmowy", href: `/${locale}/conversation-cards` },
         { label: dict.common.platformLinks.studentLogin, href: platformLinks.studentLogin.href },
       ],
     },

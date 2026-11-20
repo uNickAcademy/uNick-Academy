@@ -22,6 +22,7 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/meet-unickorn', lastmod: '2026-07-22', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/teachers-zone', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/meterials', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
+  { path: '/conversation-cards', lastmod: '2026-11-20', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/privacy-policy', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/terms-of-service', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
 ]
