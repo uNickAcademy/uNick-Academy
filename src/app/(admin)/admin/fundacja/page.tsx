@@ -77,6 +77,7 @@ export default async function Page() {
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <RefreshStatistics />
+        <Link href="/admin/fundacja/umowy" className="rounded-xl bg-teal-800 px-4 py-2 text-white">Potwierdzenia i umowy</Link>
         <Link prefetch={false} href="/api/admin/foundation-interest?format=csv" className="inline-block rounded-xl bg-gray-900 px-4 py-2 text-white">
           Eksportuj CSV ze statystykami
         </Link>

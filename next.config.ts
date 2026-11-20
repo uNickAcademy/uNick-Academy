@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
   // natywnie z node_modules zamiast przepuszczać przez bundler: korzystają
   // z gniazd TCP i dynamicznych require, których webpack nie lubi.
   serverExternalPackages: ["imapflow", "mailparser", "nodemailer"],
+  outputFileTracingIncludes: {'/api/admin/foundation-contracts/preview':['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf'], '/api/foundation-contract/submit': ['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf']},
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "xkydfgunafxfuzsggmca.supabase.co" },
