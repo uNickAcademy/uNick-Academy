@@ -32,12 +32,14 @@ export async function appendLgdForm(
     const linesFor = (fontSize: number) => {
       const lines: string[] = [];
       let line = "";
-      for (const character of value.replace(/[\r\n\t]/g, " ")) {
-        if (font.widthOfTextAtSize(line + character, fontSize) > width) {
-          lines.push(line);
-          line = "";
+      for (const word of value.replace(/[\r\n\t]/g, " ").split(/\s+/)) {
+        const next=line?line+" "+word:word;
+        if(font.widthOfTextAtSize(next,fontSize)<=width){line=next;continue}
+        if(line){lines.push(line);line=""}
+        for(const character of word){
+          if(font.widthOfTextAtSize(line+character,fontSize)>width){lines.push(line);line=""}
+          line+=character;
         }
-        line += character;
       }
       if (line) lines.push(line);
       return lines;

@@ -217,8 +217,8 @@ export async function generateContractPdf(
     for (const page of doc.getPages())
       page.drawText("PODGLĄD — DANE FIKCYJNE — NIE PODPISYWAĆ", {
         x: 44,
-        y: 10,
-        size: 8,
+        y: page.getHeight()-16,
+        size: 6,
         font,
         color: rgb(0.65, 0.15, 0.1),
       });
