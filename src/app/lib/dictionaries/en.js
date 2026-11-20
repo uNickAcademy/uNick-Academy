@@ -605,7 +605,7 @@ const en = {
 
   lessonMaterials: {
     title: "Lesson Materials",
-    description: "Printable English vocabulary flashcards. Browse samples and get access to the full library.",
+    description: "English flashcards and conversation cards. Browse samples and unlock the library, online and in print.",
     heroHint: "Printable PDF flashcards",
     openPdf: "Open PDF",
     newTab: "in a new tab",

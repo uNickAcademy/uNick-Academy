@@ -605,7 +605,7 @@ const pl = {
 
   lessonMaterials: {
     title: "Materiały do zajęć",
-    description: "Fiszki z angielskim słownictwem do druku. Zobacz podglądy i odbierz dostęp do pełnej biblioteki.",
+    description: "Fiszki i karty do rozmowy po angielsku. Zobacz podglądy i odbierz wspólny dostęp do materiałów online i do druku.",
     heroHint: "Fiszki PDF do druku",
     openPdf: "Otwórz PDF",
     newTab: "w nowej karcie",

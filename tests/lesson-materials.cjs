@@ -23,6 +23,30 @@ const access = load('src/lib/lesson-materials/access.ts', {
 const contacts = load('src/lib/lesson-materials/contacts.ts', {
   '@/lib/supabase/server': {},
 })
+const catalogue = load('src/lib/lesson-materials/catalogue.ts', {
+  '@/app/lib/lesson-materials': load('src/app/lib/lesson-materials.ts', {}),
+})
+let pdfAccess = false
+let storageRequests = 0
+const pdfRoute = load('src/app/lesson-materials/[file]/route.ts', {
+  '@/lib/lesson-materials/catalogue': catalogue,
+  '@/lib/lesson-materials/access': {
+    ...access, hasMaterialsAccess: async () => pdfAccess,
+  },
+  '@/lib/supabase/server': {
+    createAdminClient: () => {
+      storageRequests++
+      return { storage: { from: bucket => {
+        assert.equal(bucket, 'lesson-material-pdfs')
+        return { createSignedUrl: async (file, seconds) => {
+          assert.equal(file, 'conversation-cards.pdf')
+          assert.equal(seconds, 300)
+          return { data: { signedUrl: 'https://example.invalid/private-pdf' }, error: null }
+        } }
+      } } }
+    },
+  },
+})
 
 async function run() {
   assert.equal(await access.hasMaterialsAccess(), false)
@@ -61,6 +85,25 @@ async function run() {
   assert.equal(contacts.hasMaterialNewsletterConsent({ ...consent, newsletter_opted_in_at: null }), false)
   assert.equal(contacts.hasMaterialNewsletterConsent({ ...consent, newsletter_unsubscribed_at: '2026-11-18T13:00:00.000Z' }), false)
   assert.equal(contacts.hasMaterialNewsletterConsent({ ...consent, newsletter_unsubscribed_at: '2026-11-18T11:00:00.000Z' }), true)
-  console.log('Verified signed access cookies, expiry, tamper rejection, fragment-only links and newsletter eligibility')
+  assert.equal(catalogue.materialAccessPath('conversation-cards', 'en'), '/en/conversation-cards')
+  assert.equal(catalogue.materialAccessPath('colours', 'pl'), '/pl/meterials/colours')
+  assert.equal(catalogue.materialAccessPath('https://example.invalid', 'pl'), '/pl/meterials')
+  assert.equal(catalogue.materialRequestTopic('../conversation-cards'), null)
+  const { NextRequest } = require('next/server')
+  const pdfRequest = new NextRequest('https://unick-academy.pl/lesson-materials/conversation-cards.pdf?lang=en')
+  const pdfContext = { params: Promise.resolve({ file: 'conversation-cards.pdf' }) }
+  const locked = await pdfRoute.GET(pdfRequest, pdfContext)
+  assert.equal(locked.status, 307)
+  assert.equal(locked.headers.get('location'), 'https://unick-academy.pl/en/conversation-cards')
+  assert.equal(storageRequests, 0)
+  pdfAccess = true
+  const unlocked = await pdfRoute.GET(pdfRequest, pdfContext)
+  assert.equal(unlocked.headers.get('location'), 'https://example.invalid/private-pdf')
+  assert.equal(unlocked.headers.get('cache-control'), 'private, no-store')
+  assert.equal(storageRequests, 1)
+  const unknown = await pdfRoute.GET(pdfRequest, { params: Promise.resolve({ file: '../secret.pdf' }) })
+  assert.equal(unknown.status, 404)
+  assert.equal(storageRequests, 1)
+  console.log('Verified signed access, expiry, tamper rejection, safe resource redirects, private PDF authorization and newsletter eligibility')
 }
 run().catch(error => { console.error(error); process.exitCode = 1 })

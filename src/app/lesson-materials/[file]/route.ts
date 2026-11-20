@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { lessonMaterials } from '@/app/lib/lesson-materials'
+import { materialAccessPath, materialRequestTopic } from '@/lib/lesson-materials/catalogue'
 import { createAdminClient } from '@/lib/supabase/server'
 import { hasMaterialsAccess, materialLocale, PRIVATE_PDF_BUCKET, PRIVATE_RESPONSE_HEADERS } from '@/lib/lesson-materials/access'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ file: string }> }) {
   const { file } = await context.params
-  const material = lessonMaterials.find(({ slug }) => file === `${slug}.pdf`)
-  if (!material) return new Response(null, { status: 404, headers: PRIVATE_RESPONSE_HEADERS })
+  const slug = file.endsWith('.pdf') ? materialRequestTopic(file.slice(0, -4)) : null
+  if (!slug) return new Response(null, { status: 404, headers: PRIVATE_RESPONSE_HEADERS })
   const language = materialLocale(request.nextUrl.searchParams.get('lang'))
-  const preview = new URL(`/${language}/meterials/${material.slug}`, request.url)
+  const preview = new URL(materialAccessPath(slug, language), request.url)
   if (!await hasMaterialsAccess()) {
     return NextResponse.redirect(preview, { status: 307, headers: PRIVATE_RESPONSE_HEADERS })
   }

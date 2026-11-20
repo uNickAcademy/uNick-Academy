@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { materialsCopy } from '@/lib/lesson-materials/copy'
-import { lessonMaterials } from '@/app/lib/lesson-materials'
+import { materialRequestTopic } from '@/lib/lesson-materials/catalogue'
 import { isEmailConfigured, sendAuthActionEmail } from '@/lib/email/send'
 import { createAdminClient } from '@/lib/supabase/server'
 import {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   if (!isEmailConfigured()) return NextResponse.json({ code: 'unavailable' }, { status: 503 })
 
   const { email, locale, topic, newsletter } = input.data
-  const requestedTopic = lessonMaterials.find(material => material.slug === topic)?.slug ?? null
+  const requestedTopic = materialRequestTopic(topic)
   const token = createAccessToken()
   const tokenHash = hashAccessToken(token)
   const admin = createAdminClient()
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   const url = materialsActionUrl('confirm', locale, token)
   const pl = locale === 'pl'
-  const subject = pl ? 'Twój link do fiszek uNick Academy' : 'Your uNick Academy flashcards link'
+  const subject = pl ? 'Twój link do materiałów uNick Academy' : 'Your uNick Academy materials link'
   const label = newsletter
     ? (pl ? 'Potwierdź dostęp i newsletter' : 'Confirm access and newsletter')
     : (pl ? 'Przejdź do materiałów' : 'Go to lesson materials')
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
       : 'Optional newsletter consent was also selected on the form. By using the button, you confirm that consent. ' + materialsCopy.en.newsletter)
     : ''
   const description = pl
-    ? 'Otwórz link i potwierdź dostęp, aby pobierać fiszki do druku. Link jest ważny 30 minut.'
-    : 'Open the link and confirm access to download printable flashcards. The link expires in 30 minutes.'
+    ? 'Otwórz link i potwierdź dostęp do fiszek oraz 100 kart do rozmowy online i do druku. Link jest ważny 30 minut.'
+    : 'Open the link and confirm access to the flashcards and 100 conversation cards, online and in print. The link expires in 30 minutes.'
   const footer = pl
     ? 'Wiadomość wysłana w odpowiedzi na prośbę o dostęp do materiałów.'
     : 'This email was sent in response to a request for access to lesson materials.'

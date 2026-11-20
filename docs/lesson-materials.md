@@ -63,3 +63,29 @@ The communication page links to an administrator-only contact list with separate
 download-access and newsletter status. Export includes unsubscribe links for
 eligible newsletter subscribers. A future newsletter sender must check consent
 again at send time and attach the recipient's unsubscribe link.
+
+## Conversation cards
+
+The teacher zone and library link to `/[locale]/conversation-cards`. Both material
+types use the same verified-email cookie; an existing flashcard session also
+unlocks all 100 conversation questions and the printable PDF. The shared form,
+confirmation and email copy explicitly describe both resources. Existing consent,
+retention, contact administration and throttling are unchanged.
+
+The page checks access on the server. Public visitors receive only three sample
+questions in HTML/RSC and the client bundle imports the question type only.
+The full deck is passed to the drawing component only after access is verified.
+Drawing does not repeat questions until restarted. The theme selector and question
+list use the same permitted pool. Questions remain in English in both interfaces.
+
+`src/lib/lesson-materials/catalogue.ts` validates request topics and resolves safe
+post-confirmation/download destinations, including `conversation-cards`. This
+resource is separate from the 33 vocabulary topics so their teaching order and
+count remain unchanged. The private bucket contains `conversation-cards.pdf`;
+only its first-page WebP preview is public. No database migration is required.
+
+Rebuild the 11-page A4 PDF with `scripts/build-conversation-cards.py`, supplying
+`--font-dir` (Rubik regular/bold TTFs), `--poppler-bin` and `--output-dir` outside
+`public`. The script reads canonical questions from `src/app/lib/conversation-cards.ts`,
+asserts every question and website footer, renders all pages for review and updates
+the public sample. Upload the reviewed PDF to the private bucket before publishing.

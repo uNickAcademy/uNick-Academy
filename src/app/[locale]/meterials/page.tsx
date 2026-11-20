@@ -3,6 +3,7 @@ import Link from "next/link"
 import { getDictionary } from "../../lib/dictionaries"
 import { lessonMaterials } from "../../lib/lesson-materials"
 import { buildMetadata } from "../../lib/seo"
+import MaterialsResourceLinks from "../../components/MaterialsResourceLinks"
 import MaterialsAccessForm from "../../components/MaterialsAccessForm"
 import { hasMaterialsAccess } from "@/lib/lesson-materials/access"
 import { materialsCopy } from "@/lib/lesson-materials/copy"
@@ -37,8 +38,11 @@ export default async function LessonMaterialsPage({ params }: PageProps) {
         <p>{t.description}</p>
       </header>
 
+      <MaterialsResourceLinks language={language} />
+
       {access ? <p className={styles.accessReady}>{copy.accessReady}</p> : <MaterialsAccessForm language={language} />}
 
+      <h2 id="flashcards" className={styles.collectionHeading}>{language === "pl" ? "Fiszki" : "Flashcards"}</h2>
       <ul className={styles.grid}>
         {lessonMaterials.map(({ slug, title }) => (
           <li key={slug}>

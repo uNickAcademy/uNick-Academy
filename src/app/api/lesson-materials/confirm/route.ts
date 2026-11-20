@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { lessonMaterials } from '@/app/lib/lesson-materials'
+import { materialAccessPath } from '@/lib/lesson-materials/catalogue'
 import { createAdminClient } from '@/lib/supabase/server'
 import {
   accessTokenPattern, createMaterialsSession, hashAccessToken, materialLocale,
@@ -12,7 +12,7 @@ export function GET(request: NextRequest) {
   const pl = language === 'pl'
   return confirmationPage({
     language, action: 'confirm',
-    title: pl ? 'Twoje fiszki są gotowe' : 'Your flashcards are ready',
+    title: pl ? 'Twoje materiały są gotowe' : 'Your materials are ready',
     description: pl ? 'Potwierdź dostęp do biblioteki uNick Academy.' : 'Confirm access to the uNick Academy library.',
     button: pl ? 'Otwórz materiały' : 'Open lesson materials',
   })
@@ -38,8 +38,7 @@ export async function POST(request: NextRequest) {
   }
   if (!data) return invalidLink()
   const result = data as { language: string; requested_topic: string | null }
-  const topic = lessonMaterials.find(material => material.slug === result.requested_topic)?.slug
-  const target = new URL(`/${materialLocale(result.language)}/meterials${topic ? `/${topic}` : ''}`, request.url)
+  const target = new URL(materialAccessPath(result.requested_topic, materialLocale(result.language)), request.url)
   const response = NextResponse.redirect(target, { status: 303, headers: PRIVATE_RESPONSE_HEADERS })
   response.cookies.set(MATERIALS_COOKIE, createMaterialsSession(), {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',

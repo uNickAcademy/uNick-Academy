@@ -9,7 +9,7 @@ export function GET(request: NextRequest) {
   return confirmationPage({
     language, action: 'unsubscribe',
     title: pl ? 'Wypisz się z newslettera' : 'Unsubscribe from the newsletter',
-    description: pl ? 'Dostęp do fiszek działa niezależnie od subskrypcji.' : 'Your flashcard access is independent of your subscription.',
+    description: pl ? 'Dostęp do materiałów działa niezależnie od subskrypcji.' : 'Your materials access is independent of your subscription.',
     button: pl ? 'Wypisz mnie' : 'Unsubscribe',
   })
 }
@@ -37,6 +37,6 @@ export async function POST(request: NextRequest) {
   return confirmationPage({
     language,
     title: pl ? 'Subskrypcja zakończona' : 'You’re unsubscribed',
-    description: pl ? 'Nadal możesz korzystać z biblioteki fiszek.' : 'You can still use the flashcard library.',
+    description: pl ? 'Nadal możesz korzystać z fiszek i kart do rozmowy.' : 'You can still use the flashcards and conversation cards.',
   })
 }
