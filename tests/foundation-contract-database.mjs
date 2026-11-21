@@ -11,6 +11,7 @@ for (const name of [
   "20261113213234_foundation_participant_contracts",
   "20261120165847_foundation_confirmation_responses",
   "20261120231307_foundation_participant_details_and_mailings",
+  "20261121064120_foundation_schedule_response_changes",
 ])
   await db.exec(await fs.readFile(`supabase/migrations/${name}.sql`, "utf8"));
 const invitation = "33333333-3333-4333-8333-333333333333",
@@ -59,10 +60,17 @@ await db.query(
   "insert into public.foundation_contract_responses(invite_id,choice) values($1,'yes')",
   [invitation],
 );
-await assert.rejects(
-  () => db.query("update public.foundation_contract_responses set choice='no'"),
-  /permission denied/,
-);
+const recordChoice=(choice,note='')=>db.query('select public.foundation_record_schedule_response($1,$2,$3) as response',[hash,choice,note]);
+const initialHistory=(await db.query('select count(*) as n from public.foundation_contract_response_history')).rows[0].n;
+await recordChoice('no','Pasuje mi wtorek po 17:00.');
+assert.equal((await db.query('select choice from public.foundation_contract_responses')).rows[0].choice,'no');
+await assert.rejects(submit,/schedule_not_confirmed/);
+await assert.rejects(()=>db.query(`select public.foundation_save_participant_details($1,'{}',false)`,[hash]),/schedule_not_confirmed/);
+await recordChoice('no','Pasuje mi wtorek po 17:00.');
+assert.equal((await db.query('select count(*) as n from public.foundation_contract_response_history')).rows[0].n,initialHistory+1);
+await recordChoice('yes');
+assert.equal((await db.query('select count(*) as n from public.foundation_contract_response_history')).rows[0].n,initialHistory+2);
+await assert.rejects(()=>db.query("update public.foundation_contract_response_history set note='changed'"),/permission denied/);
 const saveDetails=()=>db.query(`select public.foundation_save_participant_details($1,'{"participantFirstName":"Jan","address":"ul. Testowa 1, 62-090 Rokietnica"}',false) as id`,[hash]);
 const [detail1,detail2]=await Promise.all([saveDetails(),saveDetails()]);assert.equal(detail1.rows[0].id,detail2.rows[0].id);
 assert.equal((await db.query('select * from public.foundation_participant_details')).rows.length,1);
@@ -92,6 +100,7 @@ await db.query(
   [invitation],
 );
 await assert.rejects(submit, /invalid_invitation/);
+await assert.rejects(()=>recordChoice('no'),/invalid_invitation/);
 await db.query(
   "update public.foundation_contract_invites set revoked_at=null,expires_at=now()-interval '1 minute' where id=$1",
   [invitation],
@@ -132,6 +141,6 @@ assert.equal(
   1,
 );
 console.log(
-  "OK: both migrations; anonymous/student isolation; admin access; immutable schedule response; consent gate; idempotent submissions; scan/original separation; revocation/expiry; 12-person capacity.",
+  "OK: both migrations; anonymous/student isolation; admin access; response changes with immutable history and idempotency; current-schedule gate; idempotent submissions; scan/original separation; revocation/expiry; 12-person capacity.",
 );
 await db.close();

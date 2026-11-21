@@ -1,3 +1,9 @@
+## Zmiana odpowiedzi o terminie (21.11.2026)
+
+Przycisk „Zmień odpowiedź dotyczącą terminu” działa również po wcześniejszym potwierdzeniu lub zapisaniu danych. Odpowiedź „Nie, termin mi nie odpowiada — proszę o kontakt” zapisuje opcjonalną wiadomość i wyświetla potwierdzenie bez żądania danych. W panelu potwierdzeń widać aktualną odpowiedź, wiadomość rodzica i liczbę próśb o kontakt. Wysłane linki działają dalej; zmiana formularza nie wysyła kolejnych maili.
+
+Aktualny stan jest w `foundation_contract_responses`, a kolejne odpowiedzi w oddzielnej historii tylko do dopisywania. RPC blokuje zaproszenie i sprawdza jego ważność; powtórzenie identycznego żądania nie powiela historii. Zapis danych sprawdza aktualną odpowiedź, więc po zmianie na „nie” nie zapisuje nowego formularza. Poprzednio zapisane dane pozostają zachowane. Migracja: `20261121064120_foundation_schedule_response_changes.sql`.
+
 # Aktualny etap — potwierdzenia i dane (21.11.2026)
 
 Rodzic potwierdza termin i uzupełnia dane uczestnika oraz rodzica/opiekuna. Pełny adres zastępuje pole miejscowości. Formularz nie zbiera zgód ani akceptacji umowy, nie zapisuje ich domyślnie i nie generuje PDF. Jedyna informacja pod przyciskiem: „Na podstawie tych danych zostanie sporządzona umowa.” Pełna informacja o danych jest dostępna pod oddzielnym linkiem w stopce. Pełnoletni uczestnik podaje własny kontakt. Poprawki nazwiska lub wieku zapisują się do wyjaśnienia, bez automatycznego odrzucania wcześniej przydzielonej osoby.

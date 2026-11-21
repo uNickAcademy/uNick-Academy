@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { tokenSchema } from "@/lib/foundation/contracts/model";
 import {
+  hashToken,
   json,
   liveInvitation,
   readBody,
@@ -34,36 +35,20 @@ export async function POST(request: NextRequest) {
         { error: "Link wygasł lub został wycofany. Poproś Fundację o nowy." },
         404,
       );
-    // A response is immutable; corrections use a new invitation and retain the history.
-    const { error } = await context.db
-      .from("foundation_contract_responses")
-      .upsert(
-        {
-          invite_id: context.invite.id,
-          choice: parsed.data.choice,
-          note: parsed.data.note,
-        },
-        { onConflict: "invite_id", ignoreDuplicates: true },
-      );
-    if (error)
+    const { data, error } = await context.db.rpc(
+      "foundation_record_schedule_response",
+      {
+        p_token_hash: hashToken(context.token),
+        p_choice: parsed.data.choice,
+        p_note: parsed.data.note,
+      },
+    );
+    if (error || !data)
       return json(
         { error: "Nie udało się zapisać odpowiedzi. Spróbuj ponownie." },
         503,
       );
-    const { data, error: readError } = await context.db
-      .from("foundation_contract_responses")
-      .select("choice")
-      .eq("invite_id", context.invite.id)
-      .single();
-    if (readError)
-      return json(
-        {
-          error:
-            "Nie udało się sprawdzić odpowiedzi. Otwórz ponownie ten sam link.",
-        },
-        503,
-      );
-    return json({ choice: data.choice });
+    return json({ choice: data.choice, note: data.note });
   } catch {
     return json(
       { error: "Nie udało się zapisać odpowiedzi. Spróbuj ponownie." },

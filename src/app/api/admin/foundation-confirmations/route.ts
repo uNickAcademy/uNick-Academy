@@ -24,13 +24,35 @@ export async function GET(request: NextRequest) {
   const { data: rows, error } = await context.db
     .from("foundation_confirmation_mailings")
     .select(
-      "id,participant_label,to_email,status,sender,sent_at,last_error,provider_message_id",
+      "id,participant_label,to_email,status,sender,sent_at,last_error,provider_message_id,invite_id",
     )
     .eq("campaign", CONFIRMATION_CAMPAIGN)
     .order("sort_order")
     .limit(200);
   if (error)
     return json({ error: "Nie udało się pobrać rejestru wysyłki." }, 503);
+  const inviteIds = (rows ?? []).flatMap((row) =>
+    row.invite_id ? [row.invite_id] : [],
+  );
+  const { data: responses, error: responsesError } = inviteIds.length
+    ? await context.db
+        .from("foundation_contract_responses")
+        .select("invite_id,choice,note")
+        .in("invite_id", inviteIds)
+    : { data: [], error: null };
+  if (responsesError)
+    return json(
+      { error: "Nie udało się pobrać odpowiedzi dotyczących terminów." },
+      503,
+    );
+  const responseMap = new Map(
+    (responses ?? []).map((response) => [response.invite_id, response]),
+  );
+  const mailingRows = (rows ?? []).map((row) => ({
+    ...row,
+    scheduleChoice: responseMap.get(row.invite_id)?.choice ?? null,
+    scheduleNote: responseMap.get(row.invite_id)?.note ?? "",
+  }));
   const { count, error: detailsError } = await context.db
     .from("foundation_participant_details")
     .select("invite_id", { count: "exact", head: true });
@@ -99,7 +121,11 @@ export async function GET(request: NextRequest) {
       },
     });
   }
-  return json({ rows, sender: CONFIRMATION_SENDER, detailsCount: count ?? 0 });
+  return json({
+    rows: mailingRows,
+    sender: CONFIRMATION_SENDER,
+    detailsCount: count ?? 0,
+  });
 }
 export async function POST(request: NextRequest) {
   const context = await adminContext();

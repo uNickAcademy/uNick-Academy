@@ -13,6 +13,7 @@ type Context = {
   documents: { contact: string };
   submitted: boolean;
   choice?: "yes" | "no" | null;
+  note?: string;
 };
 export default function ContractForm({ preview }: { preview?: Context } = {}) {
   const [context, setContext] = useState<Context | null>(preview ?? null),
@@ -20,6 +21,8 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
     [choice, setChoice] = useState<"yes" | "no" | null>(
       preview?.choice ?? null,
     ),
+    [editingChoice, setEditingChoice] = useState(false),
+    [note, setNote] = useState(preview?.note ?? ""),
     [birth, setBirth] = useState(""),
     [submitted, setSubmitted] = useState(preview?.submitted ?? false),
     [loading, setLoading] = useState(!preview),
@@ -46,6 +49,7 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
         setToken(secret);
         setContext(data);
         setChoice(data.choice);
+        setNote(data.note ?? "");
         setSubmitted(data.submitted);
       }
     }
@@ -107,6 +111,8 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
     const fields = new FormData(event.currentTarget);
     if (preview) {
       setChoice(fields.get("choice") as "yes" | "no");
+      setNote(String(fields.get("note") ?? ""));
+      setEditingChoice(false);
       return;
     }
     const data = await post("/api/foundation-contract/respond", {
@@ -114,7 +120,11 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
       choice: fields.get("choice"),
       note: fields.get("note") || "",
     });
-    if (data) setChoice(data.choice);
+    if (data) {
+      setChoice(data.choice);
+      setNote(data.note ?? "");
+      setEditingChoice(false);
+    }
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -148,8 +158,8 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
         <p className={styles.eyebrow}>uNick Academy Foundation</p>
         <h1>Potwierdźmy Twoje zajęcia.</h1>
         <p>
-          Udział w programie jest bezpłatny. Sprawdź termin i miejsce zajęć. Jeśli odpowiadają, potwierdź
-          uczestnictwo i uzupełnij dane.
+          Udział w programie jest bezpłatny. Sprawdź termin i miejsce zajęć.
+          Jeśli odpowiadają, potwierdź uczestnictwo i uzupełnij dane.
         </p>
         <p
           ref={alert}
@@ -182,173 +192,220 @@ export default function ContractForm({ preview }: { preview?: Context } = {}) {
                 }).format(new Date(context.firstSupport + "T12:00:00Z"))}
               </p>
             </section>
-            {!choice && !submitted && (
+            {choice && !editingChoice && (
+              <button
+                type="button"
+                className={styles.changeResponse}
+                disabled={busy}
+                onClick={() => setEditingChoice(true)}
+              >
+                Zmień odpowiedź dotyczącą terminu
+              </button>
+            )}
+            {(!choice || editingChoice) && (
               <form onSubmit={respond}>
                 <fieldset>
                   <legend>Czy termin i miejsce nadal odpowiadają?</legend>
                   <label className={styles.check}>
-                    <input type="radio" name="choice" value="yes" required />
+                    <input
+                      type="radio"
+                      name="choice"
+                      value="yes"
+                      defaultChecked={choice === "yes"}
+                      required
+                    />
                     Tak, potwierdzam uczestnictwo.
                   </label>
                   <label className={styles.check}>
-                    <input type="radio" name="choice" value="no" required />
-                    Nie, potrzebuję kontaktu w sprawie terminu lub rezygnuję.
+                    <input
+                      type="radio"
+                      name="choice"
+                      value="no"
+                      defaultChecked={choice === "no"}
+                      required
+                    />
+                    Nie, termin mi nie odpowiada — proszę o kontakt.
                   </label>
                   <label className={styles.note}>
-                    Wiadomość do Fundacji (opcjonalnie)
-                    <textarea name="note" maxLength={1500} rows={3} />
+                    Jakie dni lub godziny pasują? Wiadomość do Fundacji
+                    (opcjonalnie)
+                    <textarea
+                      name="note"
+                      defaultValue={note}
+                      maxLength={1500}
+                      rows={3}
+                      placeholder="Np. odpowiada mi wtorek po 17:00. Możesz też zgłosić rezygnację."
+                    />
                   </label>
                 </fieldset>
                 <button type="submit" disabled={busy}>
                   {busy ? "Zapisywanie…" : "Zapisz odpowiedź"}
                 </button>
+                {choice && (
+                  <button
+                    type="button"
+                    className={styles.changeResponse}
+                    disabled={busy}
+                    onClick={() => setEditingChoice(false)}
+                  >
+                    Anuluj zmianę
+                  </button>
+                )}
               </form>
             )}
             {choice === "no" && (
               <section className={styles.success} role="status">
                 <h2>Dziękujemy za odpowiedź.</h2>
-                <p>Skontaktujemy się, aby omówić dostępne możliwości.</p>
+                <p>
+                  Zapisaliśmy informację, że termin nie odpowiada. Skontaktujemy
+                  się, aby omówić dostępne możliwości. Nie musisz teraz
+                  wypełniać danych uczestnika i rodzica.
+                </p>
+                {note && <p>Twoja wiadomość: {note}</p>}
               </section>
             )}
-            {submitted ? (
-              <section className={styles.success} role="status">
-                <h2>Dziękujemy. Dane zostały zapisane.</h2>
-                <p>Na podstawie tych danych zostanie sporządzona umowa.</p>
-              </section>
-            ) : choice === "yes" ? (
-              <form onSubmit={submit}>
-                <fieldset>
-                  <legend>Dane uczestnika</legend>
-                  <div className={styles.grid}>
-                    <label>
-                      Imię uczestnika *
-                      <input
-                        name="participantFirstName"
-                        required
-                        maxLength={100}
-                        autoComplete="off"
-                      />
-                    </label>
-                    <label>
-                      Nazwisko uczestnika *
-                      <input
-                        name="participantLastName"
-                        required
-                        maxLength={100}
-                        autoComplete="off"
-                      />
-                    </label>
-                    <label>
-                      Data urodzenia *
-                      <input
-                        name="birthDate"
-                        type="date"
-                        value={birth}
-                        onChange={(event) => setBirth(event.target.value)}
-                        required
-                        aria-describedby="birth-help"
-                      />
-                    </label>
-                    <label>
-                      Gmina zamieszkania *
-                      <select name="municipality" required defaultValue="">
-                        <option value="">Wybierz</option>
-                        {municipalityOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <label className={styles.note}>
-                    Adres zamieszkania *
-                    <textarea
-                      name="address"
-                      autoComplete="street-address"
-                      required
-                      minLength={8}
-                      maxLength={500}
-                      rows={3}
-                      placeholder="Ulica, numer domu i mieszkania, kod pocztowy, miejscowość"
-                    />
-                  </label>
-                  <p id="birth-help" className={styles.hint}>
-                    Data urodzenia służy do obliczenia wieku uczestnika. Nie
-                    podawaj numeru PESEL ani numeru dokumentu tożsamości.
-                  </p>
-                </fieldset>
-                <fieldset>
-                  <legend>
-                    {adult
-                      ? "Dane kontaktowe uczestnika"
-                      : "Dane rodzica lub opiekuna"}
-                  </legend>
-                  {!adult && (
+            {choice === "yes" &&
+              (submitted ? (
+                <section className={styles.success} role="status">
+                  <h2>Dziękujemy. Dane zostały zapisane.</h2>
+                  <p>Na podstawie tych danych zostanie sporządzona umowa.</p>
+                </section>
+              ) : (
+                <form onSubmit={submit}>
+                  <fieldset>
+                    <legend>Dane uczestnika</legend>
                     <div className={styles.grid}>
                       <label>
-                        Imię rodzica lub opiekuna *
+                        Imię uczestnika *
                         <input
-                          name="contactFirstName"
+                          name="participantFirstName"
                           required
                           maxLength={100}
-                          autoComplete="given-name"
+                          autoComplete="off"
                         />
                       </label>
                       <label>
-                        Nazwisko rodzica lub opiekuna *
+                        Nazwisko uczestnika *
                         <input
-                          name="contactLastName"
+                          name="participantLastName"
                           required
                           maxLength={100}
-                          autoComplete="family-name"
+                          autoComplete="off"
                         />
                       </label>
                       <label>
-                        Relacja z uczestnikiem *
-                        <select name="contactRole" defaultValue="parent">
-                          <option value="parent">Rodzic</option>
-                          <option value="guardian">Opiekun prawny</option>
+                        Data urodzenia *
+                        <input
+                          name="birthDate"
+                          type="date"
+                          value={birth}
+                          onChange={(event) => setBirth(event.target.value)}
+                          required
+                          aria-describedby="birth-help"
+                        />
+                      </label>
+                      <label>
+                        Gmina zamieszkania *
+                        <select name="municipality" required defaultValue="">
+                          <option value="">Wybierz</option>
+                          {municipalityOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     </div>
-                  )}
-                  {adult && (
-                    <p>Jako osoba pełnoletnia podaj własne dane kontaktowe.</p>
-                  )}
-                  <div className={styles.grid}>
-                    <label>
-                      E-mail *
-                      <input
-                        type="email"
-                        name="email"
+                    <label className={styles.note}>
+                      Adres zamieszkania *
+                      <textarea
+                        name="address"
+                        autoComplete="street-address"
                         required
-                        maxLength={180}
-                        autoComplete="email"
+                        minLength={8}
+                        maxLength={500}
+                        rows={3}
+                        placeholder="Ulica, numer domu i mieszkania, kod pocztowy, miejscowość"
                       />
                     </label>
-                    <label>
-                      Telefon *
-                      <input
-                        type="tel"
-                        name="phone"
-                        required
-                        maxLength={30}
-                        autoComplete="tel"
-                      />
-                    </label>
-                  </div>
-                </fieldset>
-                <button type="submit" disabled={busy}>
-                  {busy
-                    ? "Zapisujemy dane…"
-                    : "Zapisz dane i potwierdź uczestnictwo"}
-                </button>
-                <p className={styles.hint}>
-                  Na podstawie tych danych zostanie sporządzona umowa.
-                </p>
-              </form>
-            ) : null}
+                    <p id="birth-help" className={styles.hint}>
+                      Data urodzenia służy do obliczenia wieku uczestnika. Nie
+                      podawaj numeru PESEL ani numeru dokumentu tożsamości.
+                    </p>
+                  </fieldset>
+                  <fieldset>
+                    <legend>
+                      {adult
+                        ? "Dane kontaktowe uczestnika"
+                        : "Dane rodzica lub opiekuna"}
+                    </legend>
+                    {!adult && (
+                      <div className={styles.grid}>
+                        <label>
+                          Imię rodzica lub opiekuna *
+                          <input
+                            name="contactFirstName"
+                            required
+                            maxLength={100}
+                            autoComplete="given-name"
+                          />
+                        </label>
+                        <label>
+                          Nazwisko rodzica lub opiekuna *
+                          <input
+                            name="contactLastName"
+                            required
+                            maxLength={100}
+                            autoComplete="family-name"
+                          />
+                        </label>
+                        <label>
+                          Relacja z uczestnikiem *
+                          <select name="contactRole" defaultValue="parent">
+                            <option value="parent">Rodzic</option>
+                            <option value="guardian">Opiekun prawny</option>
+                          </select>
+                        </label>
+                      </div>
+                    )}
+                    {adult && (
+                      <p>
+                        Jako osoba pełnoletnia podaj własne dane kontaktowe.
+                      </p>
+                    )}
+                    <div className={styles.grid}>
+                      <label>
+                        E-mail *
+                        <input
+                          type="email"
+                          name="email"
+                          required
+                          maxLength={180}
+                          autoComplete="email"
+                        />
+                      </label>
+                      <label>
+                        Telefon *
+                        <input
+                          type="tel"
+                          name="phone"
+                          required
+                          maxLength={30}
+                          autoComplete="tel"
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
+                  <button type="submit" disabled={busy}>
+                    {busy
+                      ? "Zapisujemy dane…"
+                      : "Zapisz dane i potwierdź uczestnictwo"}
+                  </button>
+                  <p className={styles.hint}>
+                    Na podstawie tych danych zostanie sporządzona umowa.
+                  </p>
+                </form>
+              ))}
             <p className={styles.contact}>
               Potrzebujesz pomocy?{" "}
               <a href={`mailto:${context.documents.contact}`}>

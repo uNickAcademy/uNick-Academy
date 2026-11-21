@@ -9,6 +9,8 @@ type Row = {
   sender: string;
   sent_at: string | null;
   last_error: string | null;
+  scheduleChoice: "yes" | "no" | null;
+  scheduleNote: string;
 };
 const labels = {
   queued: "Oczekuje",
@@ -24,7 +26,8 @@ export default function ConfirmationMailing() {
     [detailsCount, setDetailsCount] = useState(0),
     [sender, setSender] = useState(""),
     [message, setMessage] = useState("");
-  const running = useRef(false), cancel=useRef(false);
+  const running = useRef(false),
+    cancel = useRef(false);
   async function load() {
     const response = await fetch("/api/admin/foundation-confirmations", {
         cache: "no-store",
@@ -37,14 +40,35 @@ export default function ConfirmationMailing() {
     return data.rows as Row[];
   }
   useEffect(() => {
-    let active=true;
-    fetch('/api/admin/foundation-confirmations',{cache:'no-store'}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error);return data}).then(data=>{if(active){setRows(data.rows);setDetailsCount(data.detailsCount);setSender(data.sender)}}).catch(error=>{if(active)setError(error.message)}).finally(()=>{if(active)setLoading(false)});
-    return()=>{active=false};
+    let active = true;
+    fetch("/api/admin/foundation-confirmations", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        return data;
+      })
+      .then((data) => {
+        if (active) {
+          setRows(data.rows);
+          setDetailsCount(data.detailsCount);
+          setSender(data.sender);
+        }
+      })
+      .catch((error) => {
+        if (active) setError(error.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function send(all: boolean) {
     if (running.current) return;
-    running.current = true; cancel.current=false;
+    running.current = true;
+    cancel.current = false;
     setBusy(true);
     setError("");
     setMessage("");
@@ -52,7 +76,7 @@ export default function ConfirmationMailing() {
       const pending = (await load()).filter((row) => row.status === "queued");
       const selection = all ? pending : pending.slice(0, 1);
       for (const [index, row] of selection.entries()) {
-        if(cancel.current)break;
+        if (cancel.current) break;
         setMessage(
           `Wysyłanie: ${row.participant_label} (${index + 1}/${selection.length})`,
         );
@@ -93,15 +117,23 @@ export default function ConfirmationMailing() {
           umowy i generowania PDF.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
           ["Uczestników", rows.length],
           ["Wysłano", sent],
           ["Oczekuje", pending],
           ["Zapisane dane rodzin", detailsCount],
+          [
+            "Terminy potwierdzone",
+            rows.filter((row) => row.scheduleChoice === "yes").length,
+          ],
+          [
+            "Prośby o kontakt",
+            rows.filter((row) => row.scheduleChoice === "no").length,
+          ],
         ].map(([label, count]) => (
           <div key={label} className="rounded-xl border p-4">
-      <p className="text-sm text-stone-600">{label}</p>
+            <p className="text-sm text-stone-600">{label}</p>
             <strong className="text-2xl">{count}</strong>
           </div>
         ))}
@@ -112,7 +144,17 @@ export default function ConfirmationMailing() {
         </p>
       )}
       {message && <p role="status">{message}</p>}
-      {busy&&<button className="rounded-xl border px-5 py-3" onClick={()=>{cancel.current=true;setMessage('Zatrzymamy wysyłkę po bieżącej wiadomości.')}}>Zatrzymaj wysyłkę po bieżącej wiadomości</button>}
+      {busy && (
+        <button
+          className="rounded-xl border px-5 py-3"
+          onClick={() => {
+            cancel.current = true;
+            setMessage("Zatrzymamy wysyłkę po bieżącej wiadomości.");
+          }}
+        >
+          Zatrzymaj wysyłkę po bieżącej wiadomości
+        </button>
+      )}
       <div className="flex flex-wrap gap-3">
         <button
           disabled={busy || loading || !pending}
@@ -135,7 +177,8 @@ export default function ConfirmationMailing() {
         >
           Odśwież status
         </button>
-        <Link prefetch={false}
+        <Link
+          prefetch={false}
           href="/api/admin/foundation-confirmations?format=csv"
           className="rounded-xl border px-5 py-3"
         >
@@ -160,6 +203,7 @@ export default function ConfirmationMailing() {
                   "Adres rodzica / uczestnika",
                   "Status",
                   "Nadawca",
+                  "Potwierdzenie terminu",
                 ].map((label) => (
                   <th key={label} className="border-b p-3">
                     {label}
@@ -181,6 +225,26 @@ export default function ConfirmationMailing() {
                     )}
                   </td>
                   <td className="border-b p-3">{row.sender}</td>
+                  <td className="border-b p-3">
+                    <span
+                      className={
+                        row.scheduleChoice === "no"
+                          ? "font-semibold text-amber-900"
+                          : undefined
+                      }
+                    >
+                      {row.scheduleChoice === "yes"
+                        ? "Termin potwierdzony"
+                        : row.scheduleChoice === "no"
+                          ? "Termin nie odpowiada — prośba o kontakt"
+                          : "Oczekujemy odpowiedzi"}
+                    </span>
+                    {row.scheduleNote && (
+                      <p className="mt-2 max-w-sm whitespace-pre-wrap break-words text-sm">
+                        {row.scheduleNote}
+                      </p>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

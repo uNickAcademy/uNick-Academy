@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     const { data: response, error: responseError } = await db
       .from("foundation_contract_responses")
-      .select("choice")
+      .select("choice,note")
       .eq("invite_id", invite.id)
       .maybeSingle();
     if (responseError)
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       documents: { contact: invite.documents.contact },
       submitted: Boolean(data),
       choice: response?.choice ?? null,
+      note: response?.note ?? "",
     });
   } catch {
     return json(

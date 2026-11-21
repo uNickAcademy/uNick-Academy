@@ -184,3 +184,5 @@
 .page button:disabled {
   cursor: default;
 }
+
+.page .changeResponse{background:transparent;color:#315c4b;padding:10px 12px;text-decoration:underline;margin:4px 0;min-height:44px}
