@@ -180,6 +180,21 @@ def post_ideas():
     return c.convert("RGB")
 
 
+# ---------------------------------------------------------------- Post 6
+def post_differentability():
+    W, H = 1080, 1350
+    c = Image.new("RGBA", (W, H), NAVY)
+    d = ImageDraw.Draw(c)
+    d.text((70, 110), "differentability", font=head(132), fill=CREAM)
+    d.text((74, 270), "noun", font=body(34, True), fill=BLUE)
+    y = text_block(d, (70, 360), "A different way of doing things, one that does not conform to the majority.", head(70), CREAM, W - 140, 1.02)
+    d.rectangle([70, y + 40, 270, y + 46], fill=CORAL)
+    text_block(d, (70, y + 90), "Not a lack. Not a flaw to hide. Material to build with.", head(70), CORAL, W - 140, 1.02)
+    d.text((70, H - 230), "From the uNickorns manifesto", font=body(28), fill=(160, 170, 195))
+    paste_fit_width(c, WORDMARK, 70, H - 170, 300)
+    return c.convert("RGB")
+
+
 # ---------------------------------------------------------------- YouTube thumbnail
 def thumb():
     W, H = 1280, 720
@@ -284,6 +299,7 @@ if __name__ == "__main__":
     post_mascot().save(os.path.join(OUT, "post3-too-much-for-school.png"))
     post_offer().save(os.path.join(OUT, "post4-founding-cohort.png"))
     post_ideas().save(os.path.join(OUT, "post5-ideas-everywhere.png"))
+    post_differentability().save(os.path.join(OUT, "post6-differentability.png"))
     thumb().save(os.path.join(OUT, "youtube-thumbnail-ask-your-own-questions.png"))
     reel(os.path.join(OUT, "reel1-ask-your-own-questions.mp4"))
     print("done")
