@@ -245,6 +245,8 @@ assert.equal(validation.validateFoundationInterest({...base, municipality: 'othe
 assert.equal(validation.validateFoundationInterest({...base, residenceConfirmed: false}).ok, false)
 assert.equal(validation.validateFoundationInterest({...base, consentContact: false}).ok, false)
 assert.equal(validation.validateFoundationInterest({...base, startedAt: Date.now()}).ok, false)
+// Browser autofill used to fill a hidden trap field and block real families.
+assert.equal(validation.validateFoundationInterest({...base, uniBallPotwierdzenie: 'Antoni Rudd'}).ok, true)
 console.log('OK: server derives age and rejects invalid location, consents and bot traps')
 
 const valid = validation.validateFoundationInterest(base)

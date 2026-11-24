@@ -184,11 +184,6 @@
   color: #8b1a14;
 }
 
-.honey {
-  position: absolute !important;
-  left: -9999px !important;
-}
-
 .success { text-align: center; }
 .success h3 { color: var(--color-blue); }
 
