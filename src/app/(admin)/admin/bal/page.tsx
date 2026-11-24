@@ -96,8 +96,7 @@ export default async function Page() {
 
         {rows.length === 0 ? (
           <p className="rounded-xl bg-white p-8 text-gray-500">
-            Brak zgłoszeń. Formularz działa pod{' '}
-            <span className="font-mono text-sm">/ball</span>.
+            Brak zgłoszeń. Strona balu została zdjęta z serwisu, a stary adres /ball prowadzi do Fundacji.
           </p>
         ) : (
           <div className="space-y-3">

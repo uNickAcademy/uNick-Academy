@@ -30,17 +30,6 @@ export async function generateMetadata({ params }) {
 
 const projects = [
   {
-    id: 'bal',
-    href: '/ball',
-    image: '/foundation/unickorn-ball-2026.webp',
-    width: 1145,
-    height: 1374,
-    alt: 'Plakat The uNickorn Ball – Magiczny Bal Charytatywny',
-    title: 'The uNickorn Ball',
-    subtitle: 'Magiczny Bal Charytatywny',
-    tone: 'night',
-  },
-  {
     id: 'deklaracja',
     href: '/creators',
     image: '/foundation/kreatorzy-przyszlosci-card-v2.png',
@@ -50,6 +39,21 @@ const projects = [
     title: 'Kreatorzy Przyszłości',
     subtitle: 'Bezpłatne zajęcia dla młodzieży',
     tone: 'cream',
+    cta: 'Dowiedz się więcej',
+    position: 'right center',
+  },
+  {
+    id: 'ferie',
+    href: '/ferie',
+    image: '/foundation/winter-project-week-2027.webp',
+    width: 1414,
+    height: 2000,
+    alt: 'Plakat Winter Project Week – Kreatywne ferie po angielsku, 22–26 lutego 2027',
+    title: 'Winter Project Week',
+    subtitle: 'Ferie z pomysłem · 22–26 lutego 2027',
+    tone: 'navy',
+    cta: 'Zapisz się na ferie',
+    position: 'center center',
   },
 ]
 
@@ -115,7 +119,7 @@ export default async function Page({ params }) {
           <div className={styles.projectCards}>
             {projects.map((project) => (
               <Reveal as="article" id={project.id} className={styles.projectCard} key={project.href}>
-                <Link href={project.href} className={styles.projectCardLink} aria-label={`Dowiedz się więcej: ${project.title}`}>
+                <Link href={project.href} className={styles.projectCardLink} aria-label={`${project.cta}: ${project.title}`}>
                   <span className={styles.projectCardMedia}>
                     <Image
                       src={project.image}
@@ -123,13 +127,14 @@ export default async function Page({ params }) {
                       width={project.width}
                       height={project.height}
                       sizes="(max-width: 760px) 92vw, 46vw"
+                      style={{ objectPosition: project.position }}
                     />
                   </span>
                   <span className={`${styles.projectCardBody} ${styles[`projectCardBody_${project.tone}`]}`}>
                     <span className={styles.projectCardTitle}>{project.title}</span>
                     <span className={styles.projectCardSubtitle}>{project.subtitle}</span>
                     <span className={styles.projectCardCta}>
-                      Dowiedz się więcej <span aria-hidden="true">→</span>
+                      {project.cta} <span aria-hidden="true">→</span>
                     </span>
                   </span>
                 </Link>

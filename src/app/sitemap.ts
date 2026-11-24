@@ -39,7 +39,7 @@ const UNLOCALIZED_PUBLIC_ROUTES: { path: string; lastmod: string; priority: numb
   { path: '/zapisy', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/grupowe', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/indywidualne', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
-  { path: '/ball', lastmod: '2026-10-14', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/ferie', lastmod: '2026-11-24', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/creators', lastmod: '2026-10-14', priority: 0.9, changeFrequency: 'monthly' },
 ]
 

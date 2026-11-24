@@ -80,6 +80,10 @@
   line-height: 1.45;
 }
 
+.shell .consent {
+  display: flex;
+}
+
 .shell .consent,
 .shell .consent span,
 .shell .consent a {
@@ -90,6 +94,7 @@
 .consent input,
 .course input {
   width: auto;
+  flex-shrink: 0;
   margin-top: 3px;
   accent-color: var(--color-teal);
 }
