@@ -1,0 +1,387 @@
+<title>Teenpreneurs Launch Campaign</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one long reading column with a sticky section rail on wide screens; samples sit in a wrapping grid.
+   Type: Baloo 2 for headings (uNickorns heading face), Inter for text. Colour: uNickorns navy, cream, coral. */
+:root {
+  --bg: #fff5e6;
+  --surface: #fffaf3;
+  --surface-2: #f6e8d2;
+  --fg: #0b1326;
+  --muted: #4a5470;
+  --line: rgba(11, 19, 38, 0.14);
+  --accent: #ff6b4a;
+  --accent-ink: #c63f26;
+  --on-accent: #0b1326;
+  --blue: #006fa8;
+  --good: #0f7a6c;
+  --warn: #9a5b00;
+  --font-head: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1326; --surface: #111c36; --surface-2: #17264a; --fg: #fff5e6; --muted: #b4bdd3;
+    --line: rgba(255, 245, 230, 0.16); --accent: #ff6b4a; --accent-ink: #ff8a6e; --on-accent: #0b1326;
+    --blue: #00b6ff; --good: #2dd4bf; --warn: #ffb84d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1326; --surface: #111c36; --surface-2: #17264a; --fg: #fff5e6; --muted: #b4bdd3;
+  --line: rgba(255, 245, 230, 0.16); --accent: #ff6b4a; --accent-ink: #ff8a6e; --on-accent: #0b1326;
+  --blue: #00b6ff; --good: #2dd4bf; --warn: #ffb84d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-block: 0 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.12; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 800; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 800; margin-bottom: 0.9rem; }
+h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; }
+p { margin: 0 0 0.9rem; max-width: 68ch; }
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+.eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 0.5rem; }
+.top { padding-top: calc(env(safe-area-inset-top, 0px) + 2.2rem); padding-bottom: 2rem; border-bottom: 1px solid var(--line); }
+.top p.lead { font-size: 1.15rem; margin-top: 1rem; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.2rem; }
+.chip { background: var(--surface-2); border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; font-weight: 600; }
+.chip.coral { background: var(--accent); color: var(--on-accent); }
+nav.rail { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; padding: 0.9rem 0; font-size: 0.9rem; font-weight: 600; border-bottom: 1px solid var(--line); }
+nav.rail a { text-decoration: none; color: var(--fg); }
+nav.rail a:hover { color: var(--accent-ink); }
+section { padding-block: 2.6rem; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.2rem; min-width: 0; }
+.card p:last-child { margin-bottom: 0; }
+.card.hot { background: var(--fg); color: var(--bg); border-color: transparent; }
+.card.hot h3 { color: var(--accent); }
+.big { font-family: var(--font-head); font-weight: 800; font-size: 2.4rem; line-height: 1; color: var(--accent-ink); }
+.small { font-size: 0.88rem; color: var(--muted); }
+ul.tight { margin: 0 0 0.9rem; padding-left: 1.2rem; }
+ul.tight li { margin-bottom: 0.35rem; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 1rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; min-width: 640px; }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.55rem; border-radius: 999px; background: var(--surface-2); white-space: nowrap; }
+.tag.live { background: var(--accent); color: var(--on-accent); }
+details.week { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 0.7rem; }
+details.week > summary { cursor: pointer; padding: 0.8rem 1rem; font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+details.week > summary::after { content: "+"; color: var(--accent-ink); font-weight: 800; }
+details.week[open] > summary::after { content: "\2212"; }
+details.week .tablebox { border: 0; border-radius: 0; border-top: 1px solid var(--line); margin: 0; }
+details.week table { min-width: 760px; }
+.samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.4rem; align-items: start; }
+figure { margin: 0; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+figure.wide { grid-column: 1 / -1; }
+figure.wide img { max-width: 640px; }
+figcaption { font-size: 0.88rem; margin-top: 0.6rem; color: var(--muted); }
+figcaption strong { color: var(--fg); display: block; font-size: 0.95rem; }
+.cap { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 0.85rem; margin-top: 0.5rem; color: var(--fg); user-select: all; }
+.checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+.checklist li { display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.6rem; }
+.checklist .box { width: 1.2rem; height: 1.2rem; border: 2px solid var(--accent-ink); border-radius: 5px; margin-top: 0.25rem; }
+.done .box { background: var(--good); border-color: var(--good); }
+.note { border-left: 4px solid var(--accent); padding: 0.4rem 0 0.4rem 1rem; margin: 1rem 0; max-width: 68ch; }
+.src { font-size: 0.88rem; color: var(--muted); }
+.src li { margin-bottom: 0.3rem; }
+@media (prefers-reduced-motion: no-preference) { details.week > summary::after { transition: transform 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Draft one for Milly &middot; 24 November 2026</div>
+    <h1>Teenpreneurs launch campaign</h1>
+    <p class="lead">A seven week sprint to fill the Founding Cohort, built so the same machine can later fill ten live hours a week for hundreds of teens, in the US, the UK and everywhere else.</p>
+    <div class="meta">
+      <span class="chip coral">Intro call 5 Jan 2027, 19:00 CET</span>
+      <span class="chip">Groups start 12 and 13 Jan</span>
+      <span class="chip">24 seats, 2 groups</span>
+      <span class="chip">$70 / £50 / €60 a month, 4 payments</span>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Sections">
+    <a href="#short">The short version</a><a href="#facts">Where we stand</a><a href="#message">Big idea</a><a href="#audience">Audiences</a><a href="#channels">Channels</a><a href="#calendar">Calendar</a><a href="#samples">Samples</a><a href="#numbers">Numbers</a><a href="#scale">Scaling</a><a href="#next">What I need</a>
+  </nav>
+
+  <section id="short">
+    <div class="eyebrow">The short version</div>
+    <h2>Fill 13 seats, and build an audience that outlives them.</h2>
+    <div class="grid3">
+      <div class="card"><h3>The story</h3><p>Jobs are changing fast. The teens who will do well can start things, finish things and work with people. School rarely has time to practise that. Teenpreneurs does. The tone stays hopeful, never fearful.</p></div>
+      <div class="card"><h3>The buyer</h3><p>Parents, first of all homeschool and home education families in the US and UK, plus international families who want an English speaking room for a teen who thinks differently. Teens themselves discover us on TikTok and YouTube.</p></div>
+      <div class="card"><h3>The engine</h3><p>Short videos for reach, a free live workshop and the 5 January intro call for trust, a parent email sequence for conversion, and partnerships with homeschool communities for scale.</p></div>
+    </div>
+    <p class="note" style="margin-top:1.2rem">One timing issue matters more than any ad: Group 2 meets Wednesday at 04:00 New York time. For the US, only Group 1 works in this first cohort. A third, US friendly slot is the cheapest way to open that market.</p>
+  </section>
+
+  <section id="facts">
+    <div class="eyebrow">Where we stand</div>
+    <h2>What unickorns.com says today</h2>
+    <div class="grid2">
+      <div class="tablebox" style="margin:0"><table style="min-width:0">
+        <tr><th colspan="2">The offer</th></tr>
+        <tr><td>Programme</td><td>Teenpreneurs, live online, in English, ages 13 to 18</td></tr>
+        <tr><td>Length</td><td>16 weekly sessions of 60 minutes, ending in a Demo Day</td></tr>
+        <tr><td>Group 1</td><td>Tuesday 19:00 Poland, 18:00 UK, 13:00 New York. Starts 12 Jan</td></tr>
+        <tr><td>Group 2</td><td>Wednesday 10:00 Poland, 09:00 UK, 04:00 New York. Starts 13 Jan</td></tr>
+        <tr><td>Size</td><td>Up to 12 per group, 24 in the Founding Cohort</td></tr>
+        <tr><td>Price</td><td>$70 / £50 / €60 a month for 4 months ($280 / £200 / €240), or 10% off upfront</td></tr>
+        <tr><td>Safety net</td><td>14 day money back guarantee from the first live session</td></tr>
+        <tr><td>Proof</td><td>Portfolio of Proof for every participant</td></tr>
+      </table></div>
+      <div class="card">
+        <h3>Seats to fill</h3>
+        <p class="big">13</p>
+        <p class="small">If the 11 families you mentioned are confirmed, 24 minus 11 leaves 13 seats, about $3,640 at $280 each. Please confirm whether the 11 are paid, or only applied.</p>
+        <h3 style="margin-top:1rem">Time left</h3>
+        <p class="small">Six weeks to the intro call, seven to the first session. This is a sprint, so the plan puts effort where it converts fastest.</p>
+      </div>
+    </div>
+    <h3 style="margin-top:1.6rem">What Group 1 and Group 2 mean for each market</h3>
+    <div class="tablebox"><table>
+      <tr><th>Market</th><th>Group 1 (Tue)</th><th>Group 2 (Wed)</th><th>Read</th></tr>
+      <tr><td>UK</td><td>18:00</td><td>09:00</td><td>Both work. Group 2 suits home educators in the daytime</td></tr>
+      <tr><td>US East</td><td>13:00</td><td>04:00</td><td>Only Group 1</td></tr>
+      <tr><td>US West</td><td>10:00</td><td>01:00</td><td>Only Group 1</td></tr>
+      <tr><td>Central Europe</td><td>19:00</td><td>10:00</td><td>Both work</td></tr>
+      <tr><td>Gulf and India</td><td>22:00 / 23:30</td><td>13:00 / 14:30</td><td>Group 2 works well</td></tr>
+      <tr><td>Singapore and Australia</td><td>02:00 Wed / 05:00 Wed</td><td>17:00 / 20:00</td><td>Group 2 only</td></tr>
+    </table></div>
+    <p class="small">Times are for winter, using the schedule on the site. US clocks change on a different date than Europe, so the site already lists a New York exception in March.</p>
+  </section>
+
+  <section id="message">
+    <div class="eyebrow">Big idea</div>
+    <h2>The old mould is gone. Make something new.</h2>
+    <p>Your brief is the right one, and the site already holds the strongest line: most schools teach you to answer other people's questions well. Teenpreneurs teaches you to ask your own, and act on them. The campaign puts that line next to the one fact everyone feels: work is changing.</p>
+    <div class="grid2">
+      <div class="card hot"><h3>Headline options</h3>
+        <ul class="tight">
+          <li>Ask your own questions.</li>
+          <li>Not made to blend in. Made to create.</li>
+          <li>Too much for school? Just right for this.</li>
+          <li>AI can answer. Your teen can decide.</li>
+          <li>Jobs are changing. Be the one who starts something.</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Six message pillars</h3>
+        <ul class="tight">
+          <li><strong>The world is changing.</strong> Employers expect 170M new jobs and 92M displaced by 2030 (WEF).</li>
+          <li><strong>Agency over obedience.</strong> From waiting to be told, to seeing a problem and starting.</li>
+          <li><strong>Think sideways.</strong> For teens who are too much, or not enough, for the old mould.</li>
+          <li><strong>Proof, not certificates.</strong> A Portfolio of Proof they can show.</li>
+          <li><strong>A global room.</strong> Teens from different countries, one weekly rhythm.</li>
+          <li><strong>AI as a thinking partner.</strong> Never a shortcut around thinking.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">One guardrail from your own site: "We won't sell you urgency." So the AI message is about readiness and curiosity, not fear. Scarcity is allowed because it is true: 24 seats, and the founding price applies to the first edition only.</p>
+  </section>
+
+  <section id="audience">
+    <div class="eyebrow">Audiences</div>
+    <h2>Who we speak to, and where they are</h2>
+    <div class="grid3">
+      <div class="card"><div class="big">3.4M</div><h3>US homeschoolers</h3><p class="small">About 3.4 million K to 12 students in 2024 to 25, roughly 6% (NHERI, range 3.1 to 3.7 million). Group 1 only for now. Parents live in Facebook groups, co ops and Pinterest.</p></div>
+      <div class="card"><div class="big">126k</div><h3>UK home educated</h3><p class="small">About 126,000 children on the autumn 2025 census, and 175,900 at some point in 2024 to 25 (DfE). Growing fast. Both groups work. Home Education groups and local meet ups matter.</p></div>
+      <div class="card"><div class="big">Global</div><h3>International families</h3><p class="small">Expats, bilingual and non native English families, teens who want to meet peers abroad. Your first 11 already come from all over the world, so use that as the proof of concept.</p></div>
+    </div>
+    <h3 style="margin-top:1.4rem">Three parent personas to write for</h3>
+    <div class="grid3">
+      <div class="card"><h3>The worried planner</h3><p class="small">Reads about AI and jobs, wants her teen ready. Needs evidence and safety: Portfolio of Proof, mentors named, refund policy.</p></div>
+      <div class="card"><h3>The parent of a square peg</h3><p class="small">Teen is creative, intense, bored or sensitive. Needs to hear "that is material, not a problem". Your manifesto and Antek's story speak straight to this person.</p></div>
+      <div class="card"><h3>The homeschool curator</h3><p class="small">Builds a patchwork of classes. Needs it to add to what they do, fit a weekly slot and not eat the week. "It doesn't replace school" is the line.</p></div>
+    </div>
+    <p class="note">Ad platforms limit how teens can be targeted, so paid ads speak to parents. Teens are reached organically through TikTok, YouTube and Shorts.</p>
+  </section>
+
+  <section id="channels">
+    <div class="eyebrow">Channels</div>
+    <h2>Four channels first, three later</h2>
+    <div class="tablebox"><table>
+      <tr><th>Channel</th><th>Job</th><th>What goes there</th><th>Cadence</th></tr>
+      <tr><td><strong>TikTok</strong></td><td>Reach, teens and young parents</td><td>Ben led shorts, build challenges, AI skits</td><td>5 to 7 a week</td></tr>
+      <tr><td><strong>YouTube + Shorts</strong></td><td>Trust and search</td><td>Weekly long video, Shorts cut from it, Antek cross links</td><td>1 long, 4 Shorts</td></tr>
+      <tr><td><strong>Instagram + Facebook</strong></td><td>Parents, community</td><td>Carousels, Reels, Stories, homeschool group posts (with admin permission)</td><td>1 post a day, 3 group posts a week</td></tr>
+      <tr><td><strong>Email</strong></td><td>Conversion</td><td>Seven email launch sequence, free workshop invite, intro call reminders</td><td>1 a week, daily in the last week</td></tr>
+      <tr><td>Pinterest</td><td>Evergreen parent traffic</td><td>Pins from blog posts and carousels</td><td>Add in January</td></tr>
+      <tr><td>LinkedIn</td><td>Founder voice, partners</td><td>Milly's story, entrepreneur guests</td><td>1 a week, optional</td></tr>
+      <tr><td>Reddit, forums</td><td>Honest answers</td><td>Helpful replies, never ads. Read each community's rules first</td><td>As it comes</td></tr>
+    </table></div>
+    <h3>Partners and amplifiers</h3>
+    <ul class="tight">
+      <li>Homeschool co ops, hybrid schools and home education groups in the US and UK: offer a free workshop for their teens, which is how most small programmes grow.</li>
+      <li>Homeschool and teen entrepreneurship podcasts: Milly as guest, Ben as the teen voice.</li>
+      <li>Micro creators in the homeschool niche: gifted seats in exchange for honest reviews, always disclosed.</li>
+      <li>The mentors and guest entrepreneurs on the programme, who bring their own audiences.</li>
+    </ul>
+    <h3>Recurring series</h3>
+    <div class="grid3">
+      <div class="card"><h3>Ask your own questions</h3><p class="small">Ben poses one real question a week: how would you start a business that fixes a problem at your school?</p></div>
+      <div class="card"><h3>Idea to prototype</h3><p class="small">Paper, cardboard and AI. A teen builds something in 60 seconds, 45 minutes, or a week. Fails included.</p></div>
+      <div class="card"><h3>Differentability</h3><p class="small">Antek's music and the idea from your manifesto. His approval comes first, and no "inspiration" framing. He plays his own way.</p></div>
+    </div>
+  </section>
+
+  <section id="calendar">
+    <div class="eyebrow">Calendar</div>
+    <h2>Six weeks, one hero post a day</h2>
+    <p>Every day has one main piece. It is cut down for the other channels, so a small team can batch film in two sessions a month. The full list is in <a href="content-calendar.csv">content-calendar.csv</a>, ready for a scheduler. The 19 December workshop is my proposal, not yet on your site.</p>
+    <!--CALENDAR-->
+  </section>
+
+  <section id="samples">
+    <div class="eyebrow">Samples</div>
+    <h2>Six pieces, in your brand</h2>
+    <p>Made with your palette, Baloo 2 and Inter, the wordmark and the hoodie unicorn. The photo is the Ben image from the school site as a stand in, because the photos you attached did not reach me. Swap in the real ones and everything re renders.</p>
+    <div class="samples">
+      <figure>
+        <img src="samples/web/post1-not-made-to-blend-in.jpg" alt="Teens working together around a table of prototypes, with the headline Not made to blend in. Made to create." loading="lazy">
+        <figcaption><strong>Post 1: the brand line (4:5)</strong>Instagram, Facebook, LinkedIn.</figcaption>
+        <div class="cap">Not made to blend in. Made to create. Teenpreneurs is a live online programme for teens aged 13 to 18 who have ideas and think differently. No business idea needed. Founding Cohort starts 12 and 13 January 2027. Link in bio. #teenpreneurs #homeschool #futureskills #teenentrepreneur</div>
+      </figure>
+      <figure>
+        <img src="samples/web/post2-jobs-are-changing.jpg" alt="Two large numbers: 170 million new jobs created and 92 million jobs displaced, expected by 2030." loading="lazy">
+        <figcaption><strong>Post 2: the world is changing (4:5)</strong>Sourced figures, hopeful close.</figcaption>
+        <div class="cap">By 2030, employers expect 170 million new jobs and 92 million displaced (WEF, Future of Jobs Report 2025). Nobody knows exactly which jobs. We do know who will be ready: teens who start things, finish things and work well with others. Teenpreneurs, live online, ages 13 to 18.</div>
+      </figure>
+      <figure>
+        <img src="samples/web/post3-too-much-for-school.jpg" alt="The uNickorns mascot beside the headline Too much for school? Just right for this." loading="lazy">
+        <figcaption><strong>Post 3: the square peg (4:5)</strong>Mascot led, for parents of teens who think sideways.</figcaption>
+        <div class="cap">Too much for school? Just right for this. A live online programme for teens who think sideways. No business idea needed, no perfect English, no loud personality. Curiosity is enough.</div>
+      </figure>
+      <figure>
+        <img src="samples/web/post4-founding-cohort.jpg" alt="Founding Cohort card with dates, time zones, price and the apply link." loading="lazy">
+        <figcaption><strong>Post 4: the offer (4:5)</strong>Dates, time zones, price. Use from 28 December.</figcaption>
+        <div class="cap">Founding Cohort: 24 seats, two groups, one first edition. Starts 12 and 13 January 2027. $70 / £50 / €60 a month, 14 day money back guarantee. Free intro call on Zoom, 5 January. Apply at unickorns.com</div>
+      </figure>
+      <figure class="wide">
+        <img src="samples/web/youtube-thumbnail-ask-your-own-questions.jpg" alt="YouTube thumbnail: Ask your own questions, with a teen leaning over a prototype." loading="lazy">
+        <figcaption><strong>YouTube thumbnail (16:9)</strong>Title: Ask Your Own Questions | Teenpreneurs for Teens 13 to 18</figcaption>
+      </figure>
+      <figure class="wide">
+        <video controls playsinline preload="none" poster="samples/web/reel1-poster.jpg" src="samples/reel1-ask-your-own-questions.mp4"></video>
+        <figcaption><strong>Reel 1: Ask your own questions (9:16, 12 seconds)</strong>TikTok, Reels, Shorts. Silent for now. The soundtrack should be Antek's original music. If the video does not play here, the file is in the samples folder.</figcaption>
+        <div class="cap">Storyboard: 0 to 3s "AI is changing every job." 3 to 5s "Most school teaches you to answer other people's questions." 5 to 9s "We teach you to ask your own." over the Ben photo. 9 to 11s mascot, "Teenpreneurs, ages 13 to 18, live online." 11 to 12s "Applications open, unickorns.com".</div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="numbers">
+    <div class="eyebrow">Numbers</div>
+    <h2>Budget, funnel and what to watch</h2>
+    <div class="tablebox"><table>
+      <tr><th>Level</th><th>Cash</th><th>What it buys</th><th>Right if</th></tr>
+      <tr><td><strong>Lean</strong></td><td class="num">$0 to $300</td><td>All organic, free workshop, partner outreach, templates</td><td>You want proof before spending</td></tr>
+      <tr><td><strong>Focused</strong></td><td class="num">about $900</td><td>Lean plus $20 a day of parent ads for four weeks, and a freelance video editor for batch edits</td><td>You want a real test with the founding price</td></tr>
+      <tr><td><strong>Go big</strong></td><td class="num">$3,000 to $5,000 a month</td><td>$50 to $100 a day, paid creators, weekly editor, a US friendly third slot</td><td>Cohort 1 shows demand, starting spring 2027</td></tr>
+    </table></div>
+    <p class="small">My recommendation is Focused, with the Lean actions done first. These are planning figures, not promises.</p>
+    <h3>The funnel, as assumptions to test</h3>
+    <div class="tablebox"><table>
+      <tr><th>Step</th><th class="num">Planning rate</th><th class="num">For 13 seats</th></tr>
+      <tr><td>Enrolled from applications</td><td class="num">30%</td><td class="num">about 43 applications</td></tr>
+      <tr><td>Applications from site visitors</td><td class="num">3%</td><td class="num">about 1,450 visitors</td></tr>
+      <tr><td>Visitors from video views and clicks</td><td class="num">1% of views</td><td class="num">about 145,000 views</td></tr>
+    </table></div>
+    <p class="small">The two best cheap lifts are the free workshop and the intro call, because parents decide after meeting you. Every link carries a UTM tag, and the "How did you hear about Teenpreneurs?" field on your form tells us the real source.</p>
+    <h3>Weekly dashboard</h3>
+    <p>Views, profile visits, link clicks, applications, workshop sign ups, intro call attendance, seats confirmed, cost per application. Decision rule: if there are fewer than 10 applications by 20 December, shift effort from posting to partners and the workshop.</p>
+  </section>
+
+  <section id="scale">
+    <div class="eyebrow">Scaling</div>
+    <h2>From 2 live hours to 10, and then hundreds a year</h2>
+    <p>One group is one live hour a week, so ten live hours means ten groups. Groups stay at 12, which keeps what makes it good.</p>
+    <div class="tablebox"><table>
+      <tr><th>Stage</th><th class="num">Groups</th><th class="num">Live hours a week</th><th class="num">Seats</th><th class="num">Revenue per 16 week cycle at the founding price</th></tr>
+      <tr><td>Founding Cohort</td><td class="num">2</td><td class="num">2</td><td class="num">24</td><td class="num">$6,720</td></tr>
+      <tr><td>Second edition</td><td class="num">4</td><td class="num">4</td><td class="num">48</td><td class="num">$13,440</td></tr>
+      <tr><td>Third edition</td><td class="num">6</td><td class="num">6</td><td class="num">72</td><td class="num">$20,160</td></tr>
+      <tr><td>Target</td><td class="num">10</td><td class="num">10</td><td class="num">120</td><td class="num">$33,600</td></tr>
+    </table></div>
+    <p class="small">With about 2.5 cycles a year, 10 groups reach roughly 300 teens a year. Later editions are priced higher, per your site. Mentor costs are not included. Open the next group only when the waitlist fills 70% of it.</p>
+    <h3>The flywheel after cohort 1</h3>
+    <ul class="tight">
+      <li>Demo Day in late April 2027 becomes the content of the next launch: real projects, real Portfolios of Proof, real quotes with consent.</li>
+      <li>Alumni and parents refer new families. A referral credit is cheaper than ads.</li>
+      <li>Pick the next slot from the waitlist's time zones. Start with a US friendly slot.</li>
+      <li>Your site already has Polish and Spanish. A Spanish language push to LatAm and Spain homeschoolers is a natural third market.</li>
+    </ul>
+  </section>
+
+  <section id="next">
+    <div class="eyebrow">Implementation</div>
+    <h2>What I did, what I could not, what I need</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Done</h3>
+        <ul class="checklist done">
+          <li><span class="box"></span><span>Read unickorns.com and Antek's channel (needed three hosts allowed on your personal environment, which you approved).</span></li>
+          <li><span class="box"></span><span>Strategy, channel plan and 45 day calendar.</span></li>
+          <li><span class="box"></span><span>Four posts, a thumbnail and a reel, in your brand, with captions.</span></li>
+          <li><span class="box"></span><span>A script that re renders every sample from a new photo.</span></li>
+        </ul>
+        <h3 style="margin-top:1rem">I cannot do these for you</h3>
+        <ul class="tight">
+          <li><strong>Create the accounts.</strong> TikTok, Instagram and YouTube need an adult account holder and phone or email verification. A 10 minute job for you.</li>
+          <li><strong>Download Antek's videos.</strong> I will not rip them. Ask Antek to export the originals. Use only his original music in ads. Covers of other bands need licences.</li>
+          <li><strong>See your attached photos.</strong> They did not arrive.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>I need from you</h3>
+        <ul class="checklist">
+          <li><span class="box"></span><span>Confirm the 11: paid, or applied?</span></li>
+          <li><span class="box"></span><span>A handle to claim everywhere. I suggest @unickorns, if free.</span></li>
+          <li><span class="box"></span><span>Real photos of Ben, and written consent from you and Ben for use in ads. Same for Antek, who also decides how his story is told.</span></li>
+          <li><span class="box"></span><span>Antek's original music files.</span></li>
+          <li><span class="box"></span><span>The monogram and other mascot poses from the brand board. I only have the standing pose and wordmark as files.</span></li>
+          <li><span class="box"></span><span>A budget level, and a yes or no to the 19 December workshop and a third US slot.</span></li>
+          <li><span class="box"></span><span>Your safeguarding policy finished before paid ads. The site says it is still a launch requirement.</span></li>
+        </ul>
+        <p class="small" style="margin-top:0.8rem">Once the accounts exist, I can queue the six weeks through the Postiz scheduling skill I have available, after you connect them there. Make and Zapier are also connected here, so applications can flow into email and a tracker.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="guardrails">
+    <div class="eyebrow">Guardrails</div>
+    <h2>Keep it trustworthy</h2>
+    <ul class="tight">
+      <li>Ben and Antek are minors. Get written consent, keep accounts owned by an adult, and share only what they are happy with.</li>
+      <li>No invented testimonials, student counts or seat numbers. Every number on a post must match the site and the real enrolment.</li>
+      <li>No income or job promises. Claims stay at confidence, agency and evidence of work.</li>
+      <li>Scarcity must be true. Update the seat count the same day it changes.</li>
+      <li>Ask homeschool group admins before posting. Many groups ban promotion, and a good post removed is worse than none.</li>
+      <li>Email only with opt in. Your form has an optional box for updates, so build the list from that.</li>
+    </ul>
+  </section>
+
+  <section id="sources">
+    <div class="eyebrow">Sources</div>
+    <ul class="src tight">
+      <li><a href="https://www.weforum.org/press/2025/01/future-of-jobs-report-2025-78-million-new-job-opportunities-by-2030-but-urgent-upskilling-needed-to-prepare-workforces/">World Economic Forum, Future of Jobs Report 2025</a>: 170 million jobs created and 92 million displaced by 2030 (employer survey).</li>
+      <li><a href="https://explore-education-statistics.service.gov.uk/find-statistics/elective-home-education">UK Department for Education, Elective home education</a>: 126,000 children in autumn 2025, 175,900 during 2024 to 25.</li>
+      <li><a href="https://nheri.org/?p=309582">NHERI, how many homeschool students in the US</a>: about 3.4 million in 2024 to 25.</li>
+      <li><a href="https://www.pewresearch.org/short-reads/2025/02/20/a-look-at-homeschooling-in-the-us/">Pew Research Center, homeschooling in the US</a>: federal rate of 3.4% in 2022 to 23.</li>
+      <li>Course facts, prices and dates: unickorns.com as read on 24 November 2026.</li>
+    </ul>
+  </section>
+</div>
