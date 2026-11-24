@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Teenpreneurs Launch Campaign</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,6 +100,12 @@ figcaption strong { color: var(--fg); display: block; font-size: 0.95rem; }
 .note { border-left: 4px solid var(--accent); padding: 0.4rem 0 0.4rem 1rem; margin: 1rem 0; max-width: 68ch; }
 .src { font-size: 0.88rem; color: var(--muted); }
 .src li { margin-bottom: 0.3rem; }
+.photocard { position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); aspect-ratio: 4 / 5; }
+.photocard.wide-ratio { aspect-ratio: 16 / 9; }
+.photocard img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; display: block; border-radius: 0; border: 0; }
+.photocard .ptag { position: absolute; top: 0.9rem; left: 0.9rem; background: var(--accent); color: var(--on-accent); font-family: var(--font-head); font-weight: 800; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 999px; }
+.photocard .pheadline { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.1rem 1rem 1.3rem; background: linear-gradient(0deg, rgba(11,19,38,0.92) 8%, rgba(11,19,38,0.55) 55%, rgba(11,19,38,0) 100%); }
+.photocard .pheadline h4 { margin: 0; font-family: var(--font-head); font-weight: 800; color: #fff5e6; font-size: 1.55rem; line-height: 1.1; text-wrap: balance; }
 @media (prefers-reduced-motion: no-preference) { details.week > summary::after { transition: transform 0.15s; } }
 </style>
 
@@ -356,11 +363,16 @@ figcaption strong { color: var(--fg); display: block; font-size: 0.95rem; }
   <section id="samples">
     <div class="eyebrow">Samples</div>
     <h2>Ten pieces, in your brand</h2>
-    <p>Made with your palette, Baloo 2 and Inter, the wordmark and the hoodie unicorn. The photo is the Ben image from the school site as a stand in, because the photos you attached did not reach me. Swap in the real ones and everything re renders.</p>
+    <p>Made with your palette, Baloo 2 and Inter, the wordmark and the hoodie unicorn. Post 1 and the YouTube thumbnail below now carry real photos of Ben, pulled from the set on your desktop. The other six post graphics and the reel are still the original placeholder JPGs: they were composed as flat image files outside this environment, so they need to go back through whatever tool made them to be re-rendered with the real photos. I rebuilt the two most photo-led pieces directly as live HTML instead.</p>
+    <p class="note">These are drafts for your review, not ready to post. Ben is a minor: get his written sign-off and yours, per the guardrails near the end of this doc, before anything with his photo goes out publicly or in a paid ad.</p>
     <div class="samples">
       <figure>
-        <img src="samples/web/post1-not-made-to-blend-in.jpg" alt="Teens working together around a table of prototypes, with the headline Not made to blend in. Made to create." loading="lazy">
-        <figcaption><strong>Post 1: the brand line (4:5)</strong>Instagram, Facebook, LinkedIn.</figcaption>
+        <div class="photocard">
+          <img src="/_blob/70e80955dc3bb3d3cf577dce38c0ef3f" alt="Ben standing confidently in a red zip hoodie against a plain backdrop." loading="lazy">
+          <span class="ptag">Teenpreneurs</span>
+          <div class="pheadline"><h4>Not made to blend in.<br>Made to create.</h4></div>
+        </div>
+        <figcaption><strong>Post 1: the brand line (4:5)</strong>Instagram, Facebook, LinkedIn. Real photo of Ben.</figcaption>
         <div class="cap">Not made to blend in. Made to create. Teenpreneurs is a live online programme for teens aged 13 to 18 who have ideas and think differently. No business idea needed. Founding Cohort starts 12 and 13 January 2027. Link in bio. #teenpreneurs #homeschool #futureskills #teenentrepreneur</div>
       </figure>
       <figure>
@@ -399,11 +411,14 @@ figcaption strong { color: var(--fg); display: block; font-size: 0.95rem; }
         <div class="cap">The conveyor belt trap. School, university, job, retirement. What if your path does not look like that? Swipe for the five questions from chapter 1 to ask your teen this week.</div>
       </figure>
       <figure class="wide">
-        <img src="samples/web/youtube-thumbnail-ask-your-own-questions.jpg" alt="YouTube thumbnail: Ask your own questions, with a teen leaning over a prototype." loading="lazy">
-        <figcaption><strong>YouTube thumbnail (16:9)</strong>Title: Ask Your Own Questions | Teenpreneurs for Teens 13 to 18</figcaption>
+        <div class="photocard wide-ratio" style="max-width:640px">
+          <img src="/_blob/392df0bfd6b75f139e003615fa505b84" alt="Ben, thoughtful, hand on chin, looking up and away from camera." loading="lazy">
+          <div class="pheadline"><h4>Ask Your Own Questions</h4></div>
+        </div>
+        <figcaption><strong>YouTube thumbnail (16:9)</strong>Title: Ask Your Own Questions | Teenpreneurs for Teens 13 to 18. Real photo of Ben.</figcaption>
       </figure>
       <figure class="wide">
-        <video controls playsinline preload="none" poster="samples/web/reel1-poster.jpg" src="samples/reel1-ask-your-own-questions.mp4"></video>
+        <video controls playsinline preload="none" poster="/_blob/392df0bfd6b75f139e003615fa505b84" src="samples/reel1-ask-your-own-questions.mp4"></video>
         <figcaption><strong>Reel 1: Ask your own questions (9:16, 12 seconds)</strong>TikTok, Reels, Shorts. Silent for now. The soundtrack should be Antek's original music. If the video does not play here, the file is in the samples folder.</figcaption>
         <div class="cap">Storyboard: 0 to 3s "AI is changing every job." 3 to 5s "Most school teaches you to answer other people's questions." 5 to 9s "We teach you to ask your own." over the Ben photo. 9 to 11s mascot, "Teenpreneurs, ages 13 to 18, live online." 11 to 12s "Applications open, unickorns.com".</div>
       </figure>
@@ -517,3 +532,5 @@ figcaption strong { color: var(--fg); display: block; font-size: 0.95rem; }
     </ul>
   </section>
 </div>
+
+</body></html>
