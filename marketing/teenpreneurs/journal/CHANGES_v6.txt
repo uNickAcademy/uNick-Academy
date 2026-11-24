@@ -1,0 +1,29 @@
+EDITORIAL CHANGES IN v6 (everything beyond layout)
+
+Punctuation (whole book)
+- Em dashes replaced with commas, full stops or colons. Wording otherwise untouched.
+
+Accuracy
+- Apple "Think Different" quote now matches the advert's wording and is credited to Apple, not Steve Jobs.
+- Ch 8: Michael Jordan did not make varsity in his second year (he was not "cut from the team"). Jobs "pushed out" instead of "fired".
+- Ch 8: added The Beatles example (your draft had a note to add it). Decca turned them down in 1962.
+- Doubt chapter: removed "Harvard researchers found 70% of top executives" (not a reliable claim). Now says imposter syndrome is very common.
+- Doubt chapter: removed the Theodore Roosevelt attribution for "comparison is the thief of joy" (the attribution is unproven).
+- Doubt chapter: removed the Marie Forleo "growth moments" attribution (could not be verified) and the claim that perfectionism is "the lowest standard".
+- Power pose: removed "it's hard to feel defeated when your body says I'm confident". Now says some people find it helps.
+- Ch 1: "designed during the industrial era to prepare people for factories" is now "took shape in the industrial era". Ch 2: "most schools are designed to" is now "many schools reward".
+
+Tone and safety
+- "Give Perfectionism the Middle Finger" is now "Show Perfectionism the Door". Emojis removed.
+- "feel like crap" and "suck" avoided. Journaling is no longer described as "like therapy you can carry in your pocket".
+- Ch 1: added two sentences saying the journal is not against school (matches unickorns.com: "it doesn't replace school").
+- Ch 6: added a line on staying safe when looking for communities online. Ch 7: added a line to talk to a parent before selling anything.
+- Ch 9: added a callout "If a system keeps falling apart, the system is the problem, not you".
+- Intro and Ch 3 and others: added "You don't have to answer every question. Start with the one that pulls you."
+
+Condensed
+- "When the Doubt Comes" is condensed from about 2,400 words to short tool cards. The best ideas and lines are kept.
+
+New pages (drafted by Claude, please review)
+- Contents page. "Think Alongside AI" bonus chapter. "If things feel too heavy". "My Project Log". "Talk to Real People". Closing page with unickorns.com and a QR code.
+- Author line now names uNickorns and uNick Academy.

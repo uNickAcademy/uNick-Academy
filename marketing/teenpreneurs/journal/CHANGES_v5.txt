@@ -1,0 +1,28 @@
+The Teenpreneur Journal, v4 to v5
+
+- p3: accent bar moved up 24.6 pt so it clears the text
+- p5: accent bar moved up 6.1 pt so it clears the text
+- p8: accent bar moved up 24.1 pt so it clears the text
+- p57: accent bar moved up 18.8 pt so it clears the text
+- p61: accent bar moved up 23.5 pt so it clears the text
+- p66: accent bar moved up 6.5 pt so it clears the text
+- p71: accent bar moved up 21.0 pt so it clears the text
+- p75: accent bar moved up 17.4 pt so it clears the text
+- p80: accent bar moved up 16.7 pt so it clears the text
+- p21: removed the duplicate 'The Teenpreneur Journal' footer line
+- p22: removed the duplicate 'The Teenpreneur Journal' footer line
+- p23: removed the duplicate 'The Teenpreneur Journal' footer line
+- p24: removed the duplicate 'The Teenpreneur Journal' footer line
+- p27: removed the duplicate 'The Teenpreneur Journal' footer line
+- p28: removed the duplicate 'The Teenpreneur Journal' footer line
+- p29: removed the duplicate 'The Teenpreneur Journal' footer line
+- p30: removed the duplicate 'The Teenpreneur Journal' footer line
+- p4: quote credit changed from Steve Jobs to Apple, Think Different (1997)
+- p4: author line now names uNickorns and uNick Academy, and the missing bullet before 'Lover of dogs' is back
+- p71: 'moreexperienced' now reads 'more experienced'
+- p88: heading 'Give perfectionism the middle finger' is now 'Show perfectionism the door'
+- p92: title moved up so the subtitle no longer overlaps it
+- p93 (new): 'If things feel too heavy', a short page pointing teens to a trusted adult, a doctor and helplines
+- p94 (new): 'My Project Log', mirrors the Portfolio of Proof steps on the course page
+- p95 (new): a lined notes page
+- p96 (new): closing page with the uNickorns wordmark, mascot, programme line and a QR code to unickorns.com
