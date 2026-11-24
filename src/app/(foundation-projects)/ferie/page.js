@@ -9,7 +9,7 @@ import { WINTER } from '@/lib/winter/event'
 import styles from '../../[locale]/foundation/FoundationPage.module.css'
 
 const title = `${WINTER.name}: ${WINTER.tagline}`
-const description = `Pięć dni twórczej pracy młodzieży z różnych miejscowości w ramach Kreatorów Przyszłości. ${WINTER.dateLabel}, bezpłatnie, 20 uczestników w wieku 10–18 lat.`
+const description = `Pięć dni twórczej pracy młodzieży z różnych miejscowości w ramach Kreatorów Przyszłości. ${WINTER.dateLabel}, bezpłatnie, 20 uczestników w wieku 10+.`
 
 const quickFacts = [
   [WINTER.dateLabel, 'termin'],
@@ -101,7 +101,7 @@ export default function WinterWeekPage() {
           <Reveal>
             <span className="eyebrow">Dla kogo?</span>
             <h2>Dla młodzieży, która tworzy razem z nami</h2>
-            <p>Dla młodzieży w wieku 10–18 lat, która brała udział w regularnych zajęciach projektu, zamieszkującej gminy Tarnowo Podgórne, Rokietnica, Kaźmierz lub Szamotuły.</p>
+            <p>Dla młodzieży w wieku 10+, która brała udział w regularnych zajęciach projektu, zamieszkującej gminy Tarnowo Podgórne, Rokietnica, Kaźmierz lub Szamotuły.</p>
             <p><strong>Priorytet udziału mają osoby biorące udział w regularnych zajęciach „Kreatorów Przyszłości”.</strong></p>
           </Reveal>
           <Reveal>

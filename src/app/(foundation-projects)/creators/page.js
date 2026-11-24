@@ -11,7 +11,7 @@ import { projectSchedule } from '@/lib/foundation/schedule'
 import styles from '../../[locale]/foundation/FoundationPage.module.css'
 
 const title = 'Kreatorzy Przyszłości – bezpłatne zajęcia dla dzieci i młodzieży'
-const description = 'Bezpłatny program rozwoju kreatywności, przedsiębiorczości i umiejętności społecznych dla dzieci i młodzieży 10–18 lat z czterech gmin.'
+const description = 'Bezpłatny program rozwoju kreatywności, przedsiębiorczości i umiejętności społecznych dla dzieci i młodzieży w wieku 10+ z czterech gmin.'
 
 const courseVisuals = {
   teenpreneurs: {
@@ -37,14 +37,14 @@ const courseVisuals = {
 }
 
 const quickFacts = [
-  ['10–18 lat', 'wiek uczestników'],
+  ['10+', 'wiek uczestników'],
   ['4 gminy', 'lokalne grupy'],
   ['0 zł', 'udział bezpłatny'],
   ['ok. 6 miesięcy', 'czas programu'],
 ]
 
 const audiencePoints = [
-  'mają od 10 do 18 lat i mieszkają w jednej z czterech wymienionych gmin,',
+  'są w wieku 10+ i mieszkają w jednej z czterech wymienionych gmin,',
   'chcą rozwijać swoje zainteresowania i poznawać nowych ludzi,',
   'lubią tworzyć, rozmawiać, eksperymentować lub chciałyby spróbować czegoś nowego,',
   'chcą nabrać odwagi do komunikowania się po angielsku.',
@@ -142,7 +142,7 @@ export default function CreatorsPage() {
             <span className="eyebrow">Bezpłatny program dla młodych ludzi</span>
             <h1>Kreatorzy Przyszłości</h1>
             <p className={styles.creatorsLead}>
-              <strong>Bezpłatny program rozwoju kreatywności, przedsiębiorczości i umiejętności społecznych dla dzieci i młodzieży w wieku 10–18 lat.</strong>
+              <strong>Bezpłatny program rozwoju kreatywności, przedsiębiorczości i umiejętności społecznych dla dzieci i młodzieży w wieku 10+.</strong>
             </p>
             <p>
               <strong>uNick Academy Foundation</strong> przygotowuje wyjątkową przestrzeń dla młodych ludzi z czterech gmin: <strong>Tarnowo Podgórne, Rokietnica, Kaźmierz i Szamotuły</strong>.

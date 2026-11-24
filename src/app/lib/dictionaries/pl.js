@@ -841,7 +841,7 @@ const pl = {
       { title: "Kompetencje przyszłości", text: "Rozwijamy komunikację, odpowiedzialność, współpracę, krytyczne myślenie i świadome korzystanie z nowych technologii." },
       { title: "Równość dostępu", text: "Dążymy do tego, aby wartościowe działania rozwojowe były dostępne także dla osób, dla których barierą są koszty, dojazd, miejsce zamieszkania lub indywidualne potrzeby." },
     ] },
-    projects: { eyebrow: "Projekty Fundacji", title: "Kreatorzy Przyszłości", subtitle: "Bezpłatne zajęcia dla dzieci i młodzieży w wieku 10–18 lat", interestButton: "Zgłoś chęć udziału" },
+    projects: { eyebrow: "Projekty Fundacji", title: "Kreatorzy Przyszłości", subtitle: "Bezpłatne zajęcia dla dzieci i młodzieży w wieku 10+", interestButton: "Zgłoś chęć udziału" },
     activities: { eyebrow: "Bezpłatne zajęcia", title: "Wybierz to, co najbardziej ciekawi Twoje dziecko", languageNote: "Zajęcia odbywają się po angielsku, ale nie wymagamy konkretnego poziomu języka. Prowadzący dostosują sposób komunikacji do wieku i możliwości grupy.", items: [
       { id: "teenpreneurs", title: "Teenpreneurs", age: "13–18 lat", intro: "Przedsiębiorczość w praktyce. Uczestnicy będą tworzyć własne pomysły na produkty, usługi i inicjatywy, pracować zespołowo, podejmować decyzje i uczyć się prezentowania swoich projektów." },
       { id: "podcasts_audio_video", title: "Podcasts", age: "10–16 lat", intro: "Od pomysłu do własnego nagrania! Rozmowy, wywiady, storytelling, praca z mikrofonem i kamerą oraz tworzenie materiałów audio i wideo. Zajęcia rozwijają komunikację, kreatywność i umiejętność współpracy." },
