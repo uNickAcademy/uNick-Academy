@@ -165,6 +165,21 @@ def post_offer():
     return c.convert("RGB")
 
 
+# ---------------------------------------------------------------- Post 5
+def post_ideas():
+    W, H = 1080, 1350
+    c = Image.new("RGBA", (W, H), (217, 244, 255))
+    d = ImageDraw.Draw(c)
+    m = MASCOT.resize((int(MASCOT.width * 0.86), int(MASCOT.height * 0.86)), Image.LANCZOS)
+    c.paste(m, (W - m.width + 20, H - m.height + 30), m)
+    d = ImageDraw.Draw(c)
+    y = text_block(d, (60, 90), "Ideas everywhere?", head(100), NAVY, 600, 0.98)
+    y = text_block(d, (60, y + 20), "Good. Let's finish one.", head(100), CORAL_INK, 600, 0.98)
+    text_block(d, (60, y + 44), "A live, hands on programme in small groups, for creative, intense, easily bored teens.", body(32, True), NAVY, 470, 1.4)
+    paste_fit_width(c, WORDMARK, 60, H - 150, 260)
+    return c.convert("RGB")
+
+
 # ---------------------------------------------------------------- YouTube thumbnail
 def thumb():
     W, H = 1280, 720
@@ -268,6 +283,7 @@ if __name__ == "__main__":
     post_stat().save(os.path.join(OUT, "post2-jobs-are-changing.png"))
     post_mascot().save(os.path.join(OUT, "post3-too-much-for-school.png"))
     post_offer().save(os.path.join(OUT, "post4-founding-cohort.png"))
+    post_ideas().save(os.path.join(OUT, "post5-ideas-everywhere.png"))
     thumb().save(os.path.join(OUT, "youtube-thumbnail-ask-your-own-questions.png"))
     reel(os.path.join(OUT, "reel1-ask-your-own-questions.mp4"))
     print("done")
