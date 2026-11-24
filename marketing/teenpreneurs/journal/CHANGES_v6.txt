@@ -27,3 +27,12 @@ Condensed
 New pages (drafted by Claude, please review)
 - Contents page. "Think Alongside AI" bonus chapter. "If things feel too heavy". "My Project Log". "Talk to Real People". Closing page with unickorns.com and a QR code.
 - Author line now names uNickorns and uNick Academy.
+
+Illustrations (added after v6.0)
+- 23 bold outline doodles in the style of the WAKE UP alarm clock: one for each chapter, four part openers, the doubt chapter, toolkit, commitment, wellbeing page and more.
+- Drawn as vectors, so they print sharp and take each chapter's colour automatically. Chapter 1 keeps your conveyor belt illustration.
+- Where a chapter has no room beside the text, the drawing moves into the colour band so no page is added.
+
+Starter Edition (the lead magnet)
+- A 40 page version for download: Start here page, foreword and intro, chapters 1, 2, 4 and 8, Think Alongside AI, the Emergency Toolkit, Commitment, Talk to Real People, My Project Log, If things feel too heavy, then a page for teens and a page for parents with the Founding Cohort details and tracked links.
+- Clickable contents, PDF bookmarks, a FREE sticker on the cover. Edit the dates and prices in content.py (CTA) when they change.

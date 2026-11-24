@@ -1,11 +1,16 @@
 # The Teenpreneur Journal, v6 (uNickorns style)
 
 Files
+- Teenpreneur_Journal_Starter_Edition.pdf: the FREE lead magnet. 40 pages, 1.8 MB, clickable contents, tracked links. Use this on the landing page.
 - Teenpreneur_Journal_v6_PRINT_A5_3mm-bleed.pdf: for the printer. A5 (148 x 210 mm) with 3 mm bleed, no crop marks. 104 pages.
 - Teenpreneur_Journal_v6_DIGITAL_A5.pdf: same book, trimmed, for screens and PDF sharing.
 - CHANGES_v6.txt: every editorial change, so you can accept or reverse each one.
 - Teenpreneur_Journal_PRINT_READY_v5.pdf: the OLD Canva design with only the layout bugs repaired (kept as a fallback).
 - book/: the source. Edit book/content.py (all the words), then run: python3 book/build_book.py && node book/render.js
+
+Updating the lead magnet
+- Dates, prices and links for the call to action live in book/content.py under CTA. Change them, then run: python3 book/build_book.py && node book/render.js && python3 book/finish.py
+- The illustrations are in book/art.py. They are vectors that take each chapter's colour.
 
 Before printing
 1. ISBN is blank on page 2.

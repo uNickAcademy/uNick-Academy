@@ -8,16 +8,18 @@ const fs = require('fs');
   const outDir = path.join(dir, 'out');
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch();
-  for (const [name, bleed] of [['print', 3], ['digital', 0]]) {
+  for (const [name, bleed] of [['print', 3], ['digital', 0], ['starter', 0]]) {
     const page = await browser.newPage();
     const url = 'file://' + path.join(dir, `book_${name}.html`);
     await page.goto(url, { waitUntil: 'load' });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(400);
     const report = await page.evaluate(() => window.__report);
-    console.log(name, JSON.stringify(report));
+    fs.writeFileSync(path.join(outDir, `${name}.toc.json`), JSON.stringify(report.toc || []));
+    delete report.toc;
+    console.log(name, JSON.stringify(report).slice(0, 700));
     await page.pdf({
-      path: path.join(outDir, `Teenpreneur_Journal_v6_${name}.pdf`),
+      path: path.join(outDir, name === 'starter' ? 'Teenpreneur_Journal_Starter_Edition_raw.pdf' : `Teenpreneur_Journal_v6_${name}.pdf`),
       width: `${148 + 2 * bleed}mm`, height: `${210 + 2 * bleed}mm`,
       printBackground: true, preferCSSPageSize: true,
     });

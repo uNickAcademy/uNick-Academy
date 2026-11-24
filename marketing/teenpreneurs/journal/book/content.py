@@ -492,4 +492,73 @@ Condensed
 New pages (drafted by Claude, please review)
 - Contents page. "Think Alongside AI" bonus chapter. "If things feel too heavy". "My Project Log". "Talk to Real People". Closing page with unickorns.com and a QR code.
 - Author line now names uNickorns and uNick Academy.
+
+Illustrations (added after v6.0)
+- 23 bold outline doodles in the style of the WAKE UP alarm clock: one for each chapter, four part openers, the doubt chapter, toolkit, commitment, wellbeing page and more.
+- Drawn as vectors, so they print sharp and take each chapter's colour automatically. Chapter 1 keeps your conveyor belt illustration.
+- Where a chapter has no room beside the text, the drawing moves into the colour band so no page is added.
+
+Starter Edition (the lead magnet)
+- A 40 page version for download: Start here page, foreword and intro, chapters 1, 2, 4 and 8, Think Alongside AI, the Emergency Toolkit, Commitment, Talk to Real People, My Project Log, If things feel too heavy, then a page for teens and a page for parents with the Founding Cohort details and tracked links.
+- Clickable contents, PDF bookmarks, a FREE sticker on the cover. Edit the dates and prices in content.py (CTA) when they change.
 """
+
+
+# ================================================================ STARTER EDITION (lead magnet)
+# Everything below is only used by the free Starter Edition. Facts come from unickorns.com as read on 24 Nov 2026.
+# Update CTA when dates or prices change.
+UTM = "utm_source=journal&utm_medium=lead-magnet&utm_campaign=starter-edition"
+CTA = dict(
+    apply_url="https://unickorns.com/apply?" + UTM,
+    parents_url="https://unickorns.com/parents?" + UTM,
+    cohort="Founding Cohort: starts 12 and 13 January 2027. Tuesday or Wednesday groups, up to 12 teens each. $70 / £50 / €60 a month for four months. 14 day money back guarantee.",
+    intro_call="Free intro meeting on Zoom: 5 January 2027, 19:00 CET (18:00 UK, 13:00 New York).",
+)
+STARTER_CHAPTERS = [1, 2, 4, 8]
+ART_FOR_CHAPTER = {2: "switch", 3: "sprout", 4: "brain", 5: "compass", 6: "friends", 7: "coins", 8: "flask", 9: "system",
+                   10: "headphones", 11: "battery", 12: "signpost", 13: "megaphone", 14: "bubbles", 15: "book", "+": "robot"}
+
+STARTER_COPYRIGHT_EXTRA = "Starter Edition. This is a free sample of the full Teenpreneur Journal: chapters 1, 2, 4 and 8, the Think Alongside AI bonus chapter, the Emergency Toolkit and two builder tools. For personal use. Please don’t pass it on. Your friends can download their own copy at unickorns.com."
+
+STARTART = [
+    ("p", "Three ways to use this journal. Pick whichever feels easiest."),
+    ("h", "On a screen"),
+    ("p", "Read it on a phone or tablet. Add your answers with a stylus, or in any notes app. Tap a line in the contents to jump straight to it."),
+    ("h", "On paper"),
+    ("p", "Print it at home. Each page is A5, so choose “2 pages per sheet” on A4 or Letter paper, or print one page at a time to write on."),
+    ("h", "Just in your head"),
+    ("p", "Pick one question and talk it through with someone you trust."),
+    ("h", "Your first 10 minutes"),
+    ("ol", ["Read Chapter 2, “You Are Not Lazy”, on page {{ref:ch2}}. It takes about four minutes.",
+            "Answer the one question that pulls you most. Messy is fine.",
+            "Try one tiny step from the Emergency Toolkit on page {{ref:toolkit}}."]),
+    ("q", "You don’t have to finish it. You don’t have to go in order. Just show up."),
+]
+
+WHATNEXT_TEEN = [
+    ("p", "You’ve just done the first part: asking better questions. Teenpreneurs is where you turn them into something real, with other teens, live."),
+    ("h", "What Teenpreneurs is"),
+    ("ul", ["A live online programme for teenagers aged 13 to 18, in English",
+            "16 weekly 60 minute sessions, in small international groups of up to 12",
+            "Real projects, guest sessions and a final Demo Day",
+            "A Portfolio of Proof: evidence of what you made, decided and learned",
+            "No business idea, no perfect English and no loud personality needed"]),
+    ("h", "The Founding Cohort"),
+    ("p", CTA["cohort"]),
+    ("p", CTA["intro_call"]),
+    ("q", "Every Teenpreneurs participant also gets the full Teenpreneur Journal: 15 chapters, more than 70 questions, and the whole “When the Doubt Comes” chapter."),
+    ("cta", "Apply at unickorns.com", CTA["apply_url"], "Applications are open until the groups are full."),
+]
+WHATNEXT_PARENTS = [
+    ("p", "Hello, I’m Milena. I’m a home educator of two teenagers, I have ADHD and dyslexia, and I wrote this journal because I wish I’d had it at 13."),
+    ("h", "What it is"),
+    ("p", "A place for your teen to think, not a programme to complete. Short chapters, honest questions and space to write. It is not therapy and not a substitute for professional support."),
+    ("h", "How you can help"),
+    ("ul", ["Let them choose where to start. The question that pulls them is the right one.",
+            "Ask what they noticed or made, not what they got right.",
+            "Don’t ask to read it. The journal works because it is private.",
+            "If something worries you, see “If things feel too heavy” on page {{ref:wellbeing}}."]),
+    ("h", "About Teenpreneurs"),
+    ("p", "A live online programme for ages 13 to 18. It adds to school, it doesn’t replace it. Before enrolment, every family receives the mentor’s name, role and experience, and the safeguarding rules. The Founding Cohort is led personally by me."),
+    ("cta", "Read the parents’ page", CTA["parents_url"], "unickorns.com/parents"),
+]

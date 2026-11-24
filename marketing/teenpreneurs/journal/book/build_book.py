@@ -15,6 +15,9 @@ import qrcode
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import content as C
+import art
+
+FOOT = "The Teenpreneur Journal"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
@@ -46,9 +49,9 @@ def blk(b):
     if k == "q":
         return f'<div class="blk q">{esc(b[1])}</div>'
     if k == "ul":
-        return '<ul class="blk ul">' + "".join(f"<li>{esc(i)}</li>" for i in b[1]) + "</ul>"
+        return '<ul class="blk ul">' + "".join(f"<li>{ref(esc(i))}</li>" for i in b[1]) + "</ul>"
     if k == "ol":
-        return '<ol class="blk ol">' + "".join(f"<li>{esc(i)}</li>" for i in b[1]) + "</ol>"
+        return '<ol class="blk ol">' + "".join(f"<li>{ref(esc(i))}</li>" for i in b[1]) + "</ol>"
     if k == "img":
         return '<figure class="blk img"><img src="assets/belt.png" alt=""></figure>'
     if k == "pq":
@@ -60,6 +63,11 @@ def blk(b):
         return f'<div class="blk ex"><b>{esc(b[1])}</b><p>{esc(b[2])}</p>{fields}</div>'
     if k == "tool":
         return f'<div class="blk tool"><b>{esc(b[1])}</b><p>{esc(b[2])}</p></div>'
+    if k == "art":
+        return f'<div class="blk art">{art.svg(b[1])}</div>'
+    if k == "cta":
+        return (f'<div class="blk cta"><div><a href="{b[2]}">{esc(b[1])}</a><small>{esc(b[3])}</small></div>'
+                f'<img src="{qr_uri(b[2])}" alt="QR code"></div>')
     raise ValueError(k)
 
 
@@ -85,7 +93,7 @@ def page(cls, inner, tone="coral", toc=None, pid=None, foot=True, stripe=True, b
     return (f'<div class="item page t-{tone} {cls}{nofoot}" {attrs}>{bg}'
             f'{"<div class=stripe></div>" if stripe and not band else ""}{band or ""}'
             f'<div class="safe{" withband" if band else ""}">{inner}</div>'
-            f'<div class="foot"><span>The Teenpreneur Journal</span><span class="num"></span></div></div>')
+            f'<div class="foot"><span>{FOOT}</span><span class="num"></span></div></div>')
 
 
 DOTS = ('<svg class="grid" width="100%" height="100%"><defs><pattern id="dp" width="5mm" height="5mm" patternUnits="userSpaceOnUse">'
@@ -99,7 +107,8 @@ LINES = ('<svg class="grid" width="100%" height="100%"><defs><pattern id="lp" wi
 def prompt_block(num, text, hint=None):
     badge = f'<span class="badge">{num}</span>' if num else ""
     h = f'<small>{esc(hint)}</small>' if hint else ""
-    return f'<div class="prompt"><div class="q">{badge}<div>{esc(text)}{h}</div></div><div class="w">{DOTS}</div></div>'
+    deco = f'<div class="wart">{art.svg("bulb")}</div>' if text in ("Idea space", "My business idea") else ""
+    return f'<div class="prompt"><div class="q">{badge}<div>{esc(text)}{h}</div></div><div class="w">{DOTS}{deco}</div></div>'
 
 
 def prompt_pages(ch, tone, label):
@@ -129,8 +138,9 @@ def qr_uri(url):
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def cover():
-    return ('<div class="item page cover nofoot" data-tone="coral"><div class="safe cv">'
+def cover(edition="full"):
+    sticker = f'<div class="cv-sticker">{art.sticker("FREE", "STARTER EDITION")}</div>' if edition == "starter" else ""
+    return ('<div class="item page cover t-coral nofoot" data-tone="coral">' + sticker + '<div class="safe cv">'
             '<img class="cv-wm" src="assets/wordmark.png" alt="uNickorns">'
             '<div class="cv-title"><span class="the">The</span><span class="teen">Teenpreneur</span><span class="jr">Journal</span>'
             '<p>For Dreamers, Doers<br>&amp; Difference-Makers</p></div>'
@@ -139,10 +149,11 @@ def cover():
             '<div class="cv-co"><span>This journal is cowritten by</span><i></i></div></div></div>')
 
 
-def copyright_page():
+def copyright_page(edition="full"):
     c = C.COPYRIGHT
+    extra = f'<p class="cp-x">{esc(C.STARTER_COPYRIGHT_EXTRA)}</p>' if edition == "starter" else ""
     inner = (f'<div class="copy"><img class="cp-wm" src="assets/wordmark.png" alt="">'
-             f'<p class="cp-t">{esc(c[0])}</p><p>{esc(c[1])}</p><p>{esc(c[2])}</p><p>{esc(c[3])}</p>'
+             f'<p class="cp-t">{esc(c[0])}</p>{extra}<p>{esc(c[1])}</p><p>{esc(c[2])}</p><p>{esc(c[3])}</p>'
              f'<p class="cp-s">First published 2026. Printed in Poland.<br>ISBN: ____________________</p>'
              f'<p class="cp-s">Made for Teenpreneurs, a uNickorns programme.<br>unickorns.com</p></div>')
     return page("copypage", inner, "coral", foot=False, stripe=False)
@@ -156,20 +167,20 @@ def toc_page():
 def part_opener(p, n):
     tone = p["tone"]
     inner = (f'<div class="op-in"><div class="op-label">{esc(p["label"])}</div><h1>{esc(p["title"])}</h1>'
-             f'<p>{esc(p["sub"])}</p></div><img class="op-mascot pos{n}" src="assets/mascot.png" alt="">')
+             f'<p>{esc(p["sub"])}</p></div><div class="op-art pos{n}">{art.opener(n)}</div><img class="op-mascot pos{n}" src="assets/mascot.png" alt="">')
     return (f'<div class="item page opener t-{tone} nofoot" data-tone="{tone}" data-toc="{esc(p["label"].title())}: {esc(p["title"])}|part">'
             f'<div class="safe">{inner}</div></div>')
 
 
 def lined_page(title, sub, inner_extra="", tone="coral", toc=None):
-    head = f'<h2 class="ptitle">{esc(title)}</h2><p class="psub">{esc(sub)}</p>{inner_extra}'
+    head = f'<div class="pgart">{art.svg("book")}</div><h2 class="ptitle">{esc(title)}</h2><p class="psub">{esc(sub)}</p>{inner_extra}'
     return page("linepage", head + f'<div class="lined">{LINES}</div>', tone, toc=toc)
 
 
 def commitment_page():
     def lines(n):
         return "".join('<i class="ln"></i>' for _ in range(n))
-    inner = ('<h2 class="ptitle">My Commitment</h2><p class="psub">Make it small. Make it real.</p>'
+    inner = (f'<div class="pgart">{art.svg("flag")}</div><h2 class="ptitle">My Commitment</h2><p class="psub">Make it small. Make it real.</p>'
              '<div class="cm"><b>I will…</b>' + lines(3) + '<b>I will stop…</b>' + lines(3) +
              '<div class="sign"><span>Signed</span><i></i><span>Date</span><i></i></div>'
              '<div class="cm-end">You’ve got this. Now go out there and surprise yourself.</div></div>')
@@ -178,9 +189,9 @@ def commitment_page():
 
 def toolkit_page():
     items = "".join(f'<div class="tk"><span class="n">{i}</span><div><b>{esc(t)}</b><p>{esc(d)}</p></div></div>' for i, (t, d) in enumerate(C.TOOLKIT, 1))
-    inner = ('<h2 class="ptitle">Emergency Doubt-Busting Toolkit</h2><p class="psub">For when you’re freaking out and don’t have time to reread the whole chapter.</p>'
+    inner = (f'<div class="pgart">{art.svg("toolbox")}</div><h2 class="ptitle">Emergency Doubt-Busting Toolkit</h2><p class="psub">For when you’re freaking out and don’t have time to reread the whole chapter.</p>'
              f'<div class="tkgrid">{items}</div>')
-    return page("tkpage", inner, "coral", toc="Emergency Doubt-Busting Toolkit|item")
+    return page("tkpage", inner, "coral", toc="Emergency Doubt-Busting Toolkit|item", pid="toolkit")
 
 
 def project_log():
@@ -220,26 +231,14 @@ def chapter_items(ch, tone, ptitle):
     band = band_html(kicker, ch["title"], ch["sub"], numeral)
     label = f"{'Chapter ' + str(n) if isinstance(n, int) else 'Bonus'}: {ch['title']}"
     toc = f"{'Chapter ' + str(n) if isinstance(n, int) else 'Bonus'}  {ch['title']}|ch"
-    return flow(tone, ch["blocks"], band=band, toc=toc) + prompt_pages(ch, tone, label)
+    key = C.ART_FOR_CHAPTER.get(n)
+    blocks = ([("art", key)] if key else []) + list(ch["blocks"])
+    return flow(tone, blocks, band=band, toc=toc, pid=f"ch{n}") + prompt_pages(ch, tone, label)
 
 
-def build_items():
-    it = [cover(), copyright_page(), toc_page()]
-    it.append(flow("coral", C.FOREWORD, head='<h2 class="ptitle">Foreword</h2>', toc="Foreword|item"))
-    it.append(flow("coral", C.INTRO, head='<h2 class="ptitle">This Is Not Another School Book</h2><p class="psub">A quick word before we begin</p>', toc="This Is Not Another School Book|item"))
-    it.append(why_page())
-    for i, p in enumerate(C.PARTS, 1):
-        it.append(part_opener(p, i))
-        for ch in p["chapters"]:
-            it.append(chapter_items(ch, p["tone"], p["title"]))
-            if ch["n"] == 15:
-                it.append(lined_page("A Letter From Your Future Self", "Write freely. No rules. Just you.", '<p class="dear">Dear younger me…</p>', "blue", toc="A Letter From Your Future Self|item"))
-                it.append(page("linepage", f'<div class="lined">{LINES}</div>', "blue"))
-    # bonus AI chapter
-    it.append(chapter_items(C.BONUS_AI, "seafoam", "Think alongside AI"))
-    # doubt chapter
+def doubt_flow():
     doubt_band = band_html("EMERGENCY CHAPTER", "When the Doubt Comes", "For those days when fear and imposter syndrome crash the party.", "")
-    blocks = list(C.DOUBT_INTRO)
+    blocks = [("art", "storm")] + list(C.DOUBT_INTRO)
     e = C.DOUBT_EXERCISE
     blocks.append(("ex", e["title"], e["text"], e["fields"]))
     blocks.append(("h", "Flip the Script: Tools to Tackle Doubt"))
@@ -250,23 +249,64 @@ def build_items():
         blocks.append(("tool", t, d))
     blocks.append(("h", "Your Challenge: Turning Doubt into Dominance"))
     blocks += C.DOUBT_CHALLENGE
-    it.append(flow("coral", blocks, band=doubt_band, toc="When the Doubt Comes|item"))
+    return flow("coral", blocks, band=doubt_band, toc="When the Doubt Comes|item")
+
+
+def real_people_flow():
+    rp = C.REAL_PEOPLE
+    person = lambda n: ("ex", f"Person {n}", "Who are they, and what did they say?", ["Who", "Their exact words", "What surprised me"])
+    blocks = [("art", "bubbles"), ("p", rp["intro"]), ("h", "Five questions to ask"), ("ol", rp["qs"]), person(1), person(2), person(3),
+              ("ex", "What I noticed across all three", "Patterns, surprises, and what I will change.", ["The pattern I saw", "What I will try next"])]
+    return flow("seafoam", blocks, band=band_html("BUILDER TOOLS", rp["title"], rp["sub"], ""), toc="Talk to Real People|item", compact=True)
+
+
+def wellbeing_flow():
+    w = C.WELLBEING
+    wb = [("art", "heart"), ("p", w["p1"]), ("p", w["p2"]), ("h", "Who you can talk to"), ("ul", w["talk"]), ("h", "If you need someone right now"),
+          ("p", w["now"]), ("ul", w["lines"]), ("q", w["note"])]
+    return flow("blue", wb, band=band_html("TAKE CARE", w["title"], w["sub"], ""), toc="If things feel too heavy|item", pid="wellbeing", compact=True)
+
+
+def build_items(edition="full"):
+    global FOOT
+    FOOT = "The Teenpreneur Journal" + (" · Starter edition" if edition == "starter" else "")
+    it = [cover(edition), copyright_page(edition)]
+    if edition == "starter":
+        it.append(flow("coral", C.STARTART, head='<h2 class="ptitle">Start here</h2><p class="psub">Your free starter edition of The Teenpreneur Journal.</p>', toc="Start here|item"))
+    it.append(toc_page())
+    it.append(flow("coral", C.FOREWORD, head='<h2 class="ptitle">Foreword</h2>', toc="Foreword|item"))
+    it.append(flow("coral", C.INTRO, head='<h2 class="ptitle">This Is Not Another School Book</h2><p class="psub">A quick word before we begin</p>', toc="This Is Not Another School Book|item"))
+    it.append(why_page())
+    if edition == "starter":
+        for p in C.PARTS:
+            for ch in p["chapters"]:
+                if ch["n"] in C.STARTER_CHAPTERS:
+                    it.append(chapter_items(ch, p["tone"], p["title"]))
+        it.append(chapter_items(C.BONUS_AI, "seafoam", "Think alongside AI"))
+        it.append(toolkit_page())
+        it.append(commitment_page())
+        it.append(real_people_flow())
+        it.append(project_log())
+        it.append(wellbeing_flow())
+        it.append(flow("seafoam", C.WHATNEXT_TEEN, band=band_html("WHAT NEXT", "Ready to build something real?", "From the inner game to the outer game.", ""), toc="Ready to build something real?|item", compact=True))
+        it.append(flow("blue", C.WHATNEXT_PARENTS, band=band_html("FOR PARENTS", "A note for parents", "What this journal is, and how to use it with your teen.", ""), toc="A note for parents|item", compact=True))
+        it.append(closing_page())
+        return "".join(it)
+    for i, p in enumerate(C.PARTS, 1):
+        it.append(part_opener(p, i))
+        for ch in p["chapters"]:
+            it.append(chapter_items(ch, p["tone"], p["title"]))
+            if ch["n"] == 15:
+                it.append(lined_page("A Letter From Your Future Self", "Write freely. No rules. Just you.", '<p class="dear">Dear younger me…</p>', "blue", toc="A Letter From Your Future Self|item"))
+                it.append(page("linepage", f'<div class="lined">{LINES}</div>', "blue"))
+    it.append(chapter_items(C.BONUS_AI, "seafoam", "Think alongside AI"))
+    it.append(doubt_flow())
     it.append(prompt_pages(dict(prompts=C.DOUBT_PROMPTS), "coral", "Your challenge"))
     it.append(commitment_page())
     it.append(toolkit_page())
-    # builder tools
-    rp = C.REAL_PEOPLE
-    blocks = [("p", rp["intro"]), ("h", "Five questions to ask"), ("ol", rp["qs"]),
-              ("ex", "Person 1", "Who are they, and what did they say?", ["Who", "Their exact words", "What surprised me"]),
-              ("ex", "Person 2", "Who are they, and what did they say?", ["Who", "Their exact words", "What surprised me"]),
-              ("ex", "Person 3", "Who are they, and what did they say?", ["Who", "Their exact words", "What surprised me"]),
-              ("ex", "What I noticed across all three", "Patterns, surprises, and what I will change.", ["The pattern I saw", "What I will try next"])]
-    it.append(flow("seafoam", blocks, band=band_html("BUILDER TOOLS", rp["title"], rp["sub"], ""), toc="Talk to Real People|item", compact=True))
+    it.append(real_people_flow())
     it.append(project_log())
-    w = C.WELLBEING
-    wb = [("p", w["p1"]), ("p", w["p2"]), ("h", "Who you can talk to"), ("ul", w["talk"]), ("h", "If you need someone right now"),
-          ("p", w["now"]), ("ul", w["lines"]), ("q", w["note"])]
-    it.append(flow("blue", wb, band=band_html("TAKE CARE", w["title"], w["sub"], ""), toc="If things feel too heavy|item", pid="wellbeing", compact=True))
+    it.append(wellbeing_flow())
     it.append(notes_page())
     it.append(notes_page())
     it.append(closing_page())
@@ -370,11 +410,11 @@ h1,h2,h3{font-family:"Baloo 2",sans-serif;margin:0}
 .op-label{font-weight:700;font-size:9pt;letter-spacing:.24em;margin-bottom:3mm}
 .opener h1{font-weight:800;font-size:46pt;line-height:.94;margin-bottom:5mm}
 .opener p{font-style:italic;font-weight:500;font-size:13pt;margin:0;width:84mm;line-height:1.35}
-.op-mascot{position:absolute;height:104mm}
-.op-mascot.pos1{right:-6mm;bottom:calc(-1 * var(--b) - 22mm + 0mm)}
-.op-mascot.pos2{left:-4mm;bottom:calc(-1 * var(--b) - 26mm)}
-.op-mascot.pos3{right:-12mm;bottom:calc(-1 * var(--b) - 20mm)}
-.op-mascot.pos4{left:14mm;bottom:calc(-1 * var(--b) - 24mm)}
+.op-mascot{position:absolute;height:66mm}
+.op-mascot.pos1{right:-8mm;bottom:calc(-1 * var(--b) - 22mm)}
+.op-mascot.pos2{right:-6mm;bottom:calc(-1 * var(--b) - 22mm)}
+.op-mascot.pos3{right:-8mm;bottom:calc(-1 * var(--b) - 22mm)}
+.op-mascot.pos4{right:-6mm;bottom:calc(-1 * var(--b) - 22mm)}
 /* toc */
 #toc{margin-top:3mm}
 #toc .row{display:flex;align-items:baseline;gap:2mm;font-size:8.2pt;line-height:1;padding:.86mm 0}
@@ -436,23 +476,41 @@ h1,h2,h3{font-family:"Baloo 2",sans-serif;margin:0}
 .cl-qr span{font-family:"Baloo 2";font-weight:800;font-size:13pt}
 .cl-wm{position:absolute;left:-2mm;bottom:2mm;width:46mm}
 .cl-mascot{position:absolute;right:-12mm;bottom:-6mm;height:104mm}
+.blk.art{float:right;width:calc(38mm * var(--aw,1));margin:.5mm 0 2mm 5mm}
+.blk.q,.blk.ex,.blk.tool,.blk.cta{display:flow-root}
+.blk.cta{display:flex;gap:4mm;align-items:center;background:var(--navy);color:var(--cream);border-radius:4mm;padding:4mm 5mm;margin:4mm 0 0;clear:both}
+.blk.cta a{color:var(--coral);font-family:"Baloo 2";font-weight:800;font-size:13.5pt;text-decoration:none;display:block;line-height:1.1}
+.blk.cta small{display:block;font-size:8pt;margin-top:1.2mm;opacity:.9}
+.blk.cta img{width:24mm;height:24mm;border-radius:2.4mm;background:#fff;flex:none;margin-left:auto}
+.pgart{position:absolute;right:0;top:-2mm;width:30mm}
+.tkpage .ptitle,.cmpage .ptitle,.linepage .ptitle{max-width:84mm}
+.band-art{position:absolute;right:calc(var(--b) + 13mm);top:calc(var(--b) + 7mm);width:24mm}
+.band-art svg{width:100%}
+.wart{position:absolute;right:3.5mm;bottom:2.5mm;width:24mm}
+.op-art{position:absolute;left:-5mm;top:84mm;width:122mm}
+.op-art svg{width:100%;display:block}
+.cv-sticker{position:absolute;right:calc(var(--b) + 6mm);top:calc(var(--b) + 8mm)}
+.copy .cp-x{font-weight:600;color:var(--ink);background:var(--tint);border-radius:3mm;padding:3mm 3.6mm}
+.foot a{color:inherit;text-decoration:none}
+#toc .row a{display:flex;flex:1;align-items:baseline;gap:2mm;color:inherit;text-decoration:none}
 """
 
 
-def html_doc(bleed):
+def html_doc(bleed, edition="full"):
     w, h = 148 + 2 * bleed, 210 + 2 * bleed
-    css = CSS.replace("__W__", str(w)).replace("__H__", str(h)).replace("__B__", f"{bleed}mm")
-    tones = "".join(f'<style>.t-{k}{{}}</style>' for k in TONES)
-    items = build_items()
+    css = CSS.replace("__W__", str(w)).replace("__H__", str(h)).replace("__B__", f"{bleed}mm") + art.CSS
+    items = build_items(edition)
     js = open(os.path.join(HERE, "paginate.js"), encoding="utf-8").read()
-    return (f'<!doctype html><html><head><meta charset="utf-8"><title>The Teenpreneur Journal</title><style>{css}</style></head>'
-            f'<body><div id="src" style="display:none">{items}</div><div id="book"></div><script>{js}</script></body></html>')
+    title = "The Teenpreneur Journal" + (": Starter Edition" if edition == "starter" else "")
+    return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>{css}</style></head>'
+            f'<body><div id="src" style="display:none">{items}</div><template id="notes-tpl">{notes_page()}</template><div id="book"></div>'
+            f'<script>window.FOOT={FOOT!r};</script><script>{js}</script></body></html>')
 
 
 if __name__ == "__main__":
-    for name, bleed in (("print", 3), ("digital", 0)):
+    for name, bleed, edition in (("print", 3, "full"), ("digital", 0, "full"), ("starter", 0, "starter")):
         with open(os.path.join(HERE, f"book_{name}.html"), "w", encoding="utf-8") as f:
-            f.write(html_doc(bleed))
+            f.write(html_doc(bleed, edition))
     with open(os.path.join(HERE, "..", "CHANGES_v6.txt"), "w", encoding="utf-8") as f:
         f.write(C.CHANGES)
     print("built html")
