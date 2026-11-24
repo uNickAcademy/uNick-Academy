@@ -6,7 +6,7 @@ Brand tokens come from unickorns.com (navy, coral, cream, Baloo 2 + Inter).
 """
 import os
 import subprocess
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "samples")
@@ -195,6 +195,39 @@ def post_differentability():
     return c.convert("RGB")
 
 
+# ---------------------------------------------------------------- Post 7
+def post_not_lazy():
+    W, H = 1080, 1350
+    c = Image.new("RGBA", (W, H), NAVY)
+    d = ImageDraw.Draw(c)
+    d.text((70, 110), "FROM THE TEENPRENEUR JOURNAL", font=sub(34), fill=BLUE)
+    y = text_block(d, (70, 190), "You are not lazy.", head(124), CREAM, W - 140, 1.0)
+    y = text_block(d, (70, y + 10), "You are unchallenged.", head(124), CORAL, W - 140, 1.0)
+    d.rectangle([70, y + 50, 270, y + 56], fill=CORAL)
+    text_block(d, (70, y + 100), "When your brain gets bored or switches off, it is not a flaw. It is feedback that says: I need something real. Something that matters to me.", body(38, True), CREAM, W - 140, 1.4)
+    d.text((70, H - 230), "Chapter 2. The Teenpreneur Journal, a support book for Teenpreneurs.", font=body(26), fill=(160, 170, 195))
+    paste_fit_width(c, WORDMARK, 70, H - 170, 300)
+    return c.convert("RGB")
+
+
+# ---------------------------------------------------------------- Post 8
+def post_conveyor():
+    W, H = 1080, 1350
+    c = Image.new("RGB", (W, H), CREAM)
+    d = ImageDraw.Draw(c)
+    y = text_block(d, (60, 80), "The conveyor belt trap", head(88), NAVY, W - 120, 0.98)
+    text_block(d, (60, y + 24), "School. University. Job. Retirement. What if your path does not look like that?", body(34, True), NAVY, W - 120, 1.4)
+    belt = Image.open(os.path.join(HERE, "assets", "journal-conveyor-belt.png")).convert("RGB")
+    belt = belt.resize((W, int(belt.height * W / belt.width)), Image.LANCZOS)
+    region = c.crop((0, 440, W, 440 + belt.height))
+    c.paste(ImageChops.multiply(belt, region), (0, 440))
+    d = ImageDraw.Draw(c)
+    d.text((60, H - 130), "Chapter 1. The Teenpreneur Journal", font=body(26, True), fill=CORAL_INK)
+    c = c.convert("RGBA")
+    paste_fit_width(c, WORDMARK, W - 60 - 260, H - 160, 260)
+    return c.convert("RGB")
+
+
 # ---------------------------------------------------------------- YouTube thumbnail
 def thumb():
     W, H = 1280, 720
@@ -300,6 +333,8 @@ if __name__ == "__main__":
     post_offer().save(os.path.join(OUT, "post4-founding-cohort.png"))
     post_ideas().save(os.path.join(OUT, "post5-ideas-everywhere.png"))
     post_differentability().save(os.path.join(OUT, "post6-differentability.png"))
+    post_not_lazy().save(os.path.join(OUT, "post7-you-are-not-lazy.png"))
+    post_conveyor().save(os.path.join(OUT, "post8-conveyor-belt-trap.png"))
     thumb().save(os.path.join(OUT, "youtube-thumbnail-ask-your-own-questions.png"))
     reel(os.path.join(OUT, "reel1-ask-your-own-questions.mp4"))
     print("done")
