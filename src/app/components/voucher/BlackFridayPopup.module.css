@@ -1,17 +1,19 @@
 .dialog{position:fixed;inset:0;margin:auto;padding:0;border:0;border-radius:24px;width:min(1000px,calc(100vw - 40px));max-height:calc(100dvh - 40px);overflow:auto;background:#fffdf9;color:#1c2b4a;font-family:var(--font-body),sans-serif;box-shadow:0 24px 90px #10213b40}
 .dialog[open]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .dialog::backdrop{background:#101d35a6;backdrop-filter:blur(5px)}
-.close{position:absolute;right:14px;top:14px;z-index:1;width:44px;height:44px;border:1px solid #a64b3940;border-radius:50%;background:#fffdf9;color:#1c2b4a;font-size:28px;line-height:1;cursor:pointer}
+.close{position:absolute;right:14px;top:14px;z-index:1;width:44px;height:44px;border:1px solid #C0392B40;border-radius:50%;background:#fffdf9;color:#1c2b4a;font-size:28px;line-height:1;cursor:pointer}
 .artwork{display:grid;align-items:center;background:#fff4e7;min-width:0}
 .artwork img{display:block;width:100%;height:auto}
 .copy{padding:52px 34px 30px;min-width:0;align-self:center}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;color:#a24836;margin:0 0 18px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--color-red, #C0392B);margin:0 0 18px}
 .copy h2{font-family:var(--font-display),serif;font-size:clamp(28px,3vw,38px);font-weight:400;line-height:1.15;margin:0 0 20px;letter-spacing:-.02em}
-.copy h2 em{font-style:normal;color:#a24836}
+.copy h2 em{font-style:normal;color:var(--color-red, #C0392B)}
 .copy>p:not(.eyebrow):not(.note):not(.details){font-size:16px;line-height:1.7;margin:0 0 20px}
 .note{font-size:14px;line-height:1.6;margin:18px 0}
-.button{display:block;background:#a24836;border-radius:999px;color:#fffdf9;text-align:center;text-decoration:none;font-size:14px;font-weight:600;padding:17px 12px}
+.button{display:block;background:var(--color-red, #C0392B);border-radius:999px;color:#fffdf9;text-align:center;text-decoration:none;font-size:14px;font-weight:600;padding:17px 12px}
 .later{display:block;margin:10px auto 0;border:0;background:transparent;color:#526074;padding:12px;min-height:44px;font:inherit;font-size:14px;cursor:pointer}
 .details{font-size:12px;line-height:1.5;text-align:center;color:#526074;margin:14px 0 0}
 .dialog :is(button,a):focus-visible{outline:3px solid #1c2b4a;outline-offset:4px}
 @media(max-width:720px){.dialog{width:calc(100vw - 28px);max-height:calc(100dvh - 28px);border-radius:18px}.dialog[open]{display:block}.artwork{height:210px}.artwork img{height:210px;width:100%;object-fit:contain}.copy{padding:24px}.copy h2{font-size:30px}.eyebrow{padding-right:0;font-size:11px}.close{width:40px;height:40px;right:8px;top:8px}.note{font-size:14px}}
+
+.button:hover{background:var(--color-red, #C0392B)}

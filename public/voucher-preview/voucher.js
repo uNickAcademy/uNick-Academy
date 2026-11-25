@@ -16,7 +16,7 @@ export function createVoucherSvg({value, code, validUntil = '27.11.2027'}) {
   <text x="626" y="526" font-family="Arial,sans-serif" font-weight="700" font-size="35" fill="#082547">Z native speakerami</text>
   <text x="628" y="572" font-family="Arial,sans-serif" font-size="22" fill="#35445a">Indywidualnie lub w grupie · online lub stacjonarnie</text>
   <text x="628" y="665" font-family="Arial,sans-serif" font-weight="700" font-size="22" fill="#082547">DLA</text>
-  <path d="M707 676H1517" stroke="#b49f87" stroke-width="2" stroke-dasharray="4 8"/>
+  <path d="M707 676H1517" stroke="#C0392B" stroke-width="2" stroke-dasharray="4 8"/>
   <text x="628" y="751" font-family="Arial,sans-serif" font-size="18" letter-spacing="2" fill="#35445a">TWÓJ KOD</text>
   <text x="626" y="801" font-family="monospace" font-size="35" font-weight="600" fill="#082547">${escapeXml(code)}</text>
   <text x="628" y="867" font-family="Arial,sans-serif" font-size="23" fill="#35445a">Ważny do ${escapeXml(validUntil)}</text>
