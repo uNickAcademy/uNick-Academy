@@ -9,7 +9,7 @@ export const voucherTerms = `REGULAMIN VOUCHERÓW BLACK FRIDAY 2026 — ${VOUCHE
 ${VOUCHER_SELLER}. Kontakt: hello@unick-academy.pl, +48 666 661 750.
 
 2. Oferta
-Promocja trwa od 27 listopada 2026 r., godz. 00:00 do 30 listopada 2026 r., godz. 23:59 czasu polskiego. W tym okresie należy złożyć i opłacić zamówienie. Ceny są całkowite i w PLN; wysyłka elektroniczna jest bezpłatna.
+Promocja trwa od 26 listopada 2026 r., godz. 00:00 do 30 listopada 2026 r., godz. 23:59 czasu polskiego. W tym okresie należy złożyć i opłacić zamówienie. Ceny są całkowite i w PLN; wysyłka elektroniczna jest bezpłatna.
 Wartość 250 zł: cena 239 zł, bonus 11 zł.
 Wartość 500 zł: cena 449 zł, bonus 51 zł.
 Wartość 1000 zł: cena 849 zł, bonus 151 zł.

@@ -1,5 +1,5 @@
 export const VOUCHER_TERMS_VERSION = 'bf2026-v1'
-export const SALES_START = Date.parse('2026-11-27T00:00:00+01:00')
+export const SALES_START = Date.parse('2026-11-26T00:00:00+01:00')
 export const SALES_END = Date.parse('2026-12-01T00:00:00+01:00')
 export const VOUCHER_ORIGIN = 'https://unick-academy.pl'
 

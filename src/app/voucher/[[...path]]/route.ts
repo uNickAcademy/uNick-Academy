@@ -16,7 +16,7 @@ export async function GET(_request: Request, context: { params: Promise<{ path?:
   const template = await readFile(path.join(process.cwd(), 'public/voucher-preview/index.html'), 'utf8')
   const html = page === 'zasady' ? termsHtml() : template
     .replace('src="./app.js"', 'src="./checkout.js"')
-    .replace(/<div class="preview-bar">[\s\S]*?<\/div>/, '<div class="preview-bar">BLACK FRIDAY · 27–30 listopada 2026 · Dla siebie lub na prezent</div>')
+    .replace(/<div class="preview-bar">[\s\S]*?<\/div>/, '<div class="preview-bar">BLACK FRIDAY · 26–30 listopada 2026 · Dla siebie lub na prezent</div>')
     .replace(/<dialog[\s\S]*?<\/dialog>/g, '')
     .replace(' — podgląd', '')
   return new Response(html, {

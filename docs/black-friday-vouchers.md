@@ -6,9 +6,13 @@ Docelowa witryna `/voucher` zastępuje publiczny mock. Oferta 250/239, 500/449,
 opcjonalne dane fakturowe, bez konta odbiorcy. Puste miejsce na imię w PNG.
 
 Sprzedaż pozostaje zablokowana (`VOUCHER_SALES_ENABLED=false`). Konto PayU w
-ActiveNow jest aktywne, ale strona nie ma jeszcze kluczy REST PayU. Użytkowniczka
-przekazała komunikat o awarii panelu PayU 25.11.2026. Nie wykonano płatności ani
-rzeczywistej wysyłki vouchera. Nie należy opisywać integracji jako uruchomionej.
+ActiveNow jest aktywne. Utworzono osobny sklep „uNick Academy — vouchery” dla
+https://unick-academy.pl (ID dy4OZupF), punkt REST 4562922; jego cztery klucze
+są tajnymi zmiennymi produkcyjnymi Vercel u-nick-academy. PayU wskazuje, że
+nowy sklep czeka na weryfikację i aktywację; lista metod płatności jest pusta.
+Test REST: OAuth 200, paymethods 200/SUCCESS, payByLinks=[].
+Nie wykonano płatności ani rzeczywistej wysyłki vouchera. Nie należy opisywać
+integracji jako uruchomionej. Termin promocji: 26–30 listopada 2026, pięć dni.
 
 ## Architektura
 - `src/lib/vouchers`: konfiguracja oferty w groszach, walidacja, PayU, podpisy,
@@ -50,15 +54,15 @@ ActiveNow. Zwrotów częściowych nie obsługuje ten przycisk — należy uzgodn
 indywidualnie i nie używać przycisku pełnego zwrotu.
 
 ## Warunki przed odblokowaniem płatności
-1. Po przywróceniu panelu PayU uzyskać klucze REST właściwego POS, zweryfikować
-   sprzedawcę, walutę PLN, dostępne BLIK/karty i tryb automatycznego odbioru.
-2. Ustawić cztery PAYU_* w produkcyjnym Vercel, bez ujawniania wartości.
+1. Poczekać na aktywację sklepu voucherów przez PayU, następnie zweryfikować
+   dostępne BLIK/karty i tryb automatycznego odbioru. Sprzedawca i PLN sprawdzone.
+2. Cztery PAYU_* są zapisane jako Sensitive w produkcyjnym Vercel.
 3. Przejść checkout do strony PayU bez rzeczywistej płatności. Pełne potwierdzenie
    dostarczenia sprawdzić w środowisku testowym lub osobno uzgodnionym teście.
 4. Zweryfikować model aktywacji wartości w ActiveNow na odrębnym koncie testowym,
    z oddzieleniem części opłaconej i zniżki; sprawdzić fakturowanie/ujęcie bonu.
 5. Dopiero po spełnieniu powyższego zmienić flagę na true i wdrożyć. Serwer
-   niezależnie pilnuje 27–30 listopada, więc sama flaga nie otwiera zakupu wcześniej.
+   niezależnie pilnuje 26–30 listopada, więc sama flaga nie otwiera zakupu wcześniej.
 
 Stare testowe wydarzenia i formularze ActiveNow pozostają wyłączone; nie należy
 równocześnie uruchamiać dwóch ścieżek sprzedaży. 50 niewydanych kodów z arkusza

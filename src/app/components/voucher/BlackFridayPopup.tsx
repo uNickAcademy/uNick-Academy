@@ -37,10 +37,10 @@ export default function BlackFridayPopup({ locale }: { locale: string }) {
       <div className={styles.artwork}>
         {/* Supplied artwork preserves uNickorn's official shield. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/voucher-preview/assets/black-friday-reference.png" width="1254" height="1254" alt="Black Friday uNick Academy: vouchery 250, 500, 1000 i 5000 zł na zajęcia z native speakerami." />
+        <img src="/voucher-preview/assets/black-friday-5-days.png" width="1254" height="1254" alt="Black Friday uNick Academy: vouchery 250, 500, 1000 i 5000 zł na zajęcia z native speakerami." />
       </div>
       <div className={styles.copy}>
-        <p className={styles.eyebrow}>BLACK FRIDAY · 27–30 LISTOPADA 2026</p>
+        <p className={styles.eyebrow}>BLACK FRIDAY · 26–30 LISTOPADA 2026</p>
         <h2 id="black-friday-title">Podaruj komuś<br /><em>więcej niż słowa.</em></h2>
         <p>Voucher na zajęcia z native speakerami. Dla bliskiej osoby. Albo dla siebie.</p>
         <p id="black-friday-preview-note" className={styles.note}>Voucher z kodem i miejscem na imię — gotowy do podarowania.</p>

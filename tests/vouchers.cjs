@@ -7,8 +7,8 @@ function load(file,mocks={}){const code=ts.transpileModule(fs.readFileSync(file,
 const config=load('src/lib/vouchers/config.ts')
 const validation=load('src/lib/vouchers/validation.ts')
 const security=load('src/lib/vouchers/security.ts')
-assert.equal(config.salesWindow(Date.parse('2026-11-26T22:59:59Z')),'before')
-assert.equal(config.salesWindow(Date.parse('2026-11-26T23:00:00Z')),'open')
+assert.equal(config.salesWindow(Date.parse('2026-11-25T22:59:59Z')),'before')
+assert.equal(config.salesWindow(Date.parse('2026-11-25T23:00:00Z')),'open')
 assert.equal(config.salesWindow(Date.parse('2026-11-30T22:59:59Z')),'open')
 assert.equal(config.salesWindow(Date.parse('2026-11-30T23:00:00Z')),'after')
 for(const offer of config.VOUCHER_OFFERS){assert.equal(offer.cash+offer.bonus,offer.face);assert.equal(offer.value*100,offer.face)}

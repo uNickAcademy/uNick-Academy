@@ -10,7 +10,7 @@ const receiptId=receipt.get('order')||'';
 const receiptAccess=receipt.get('access')||'';
 const headers=()=>({Authorization:`Bearer ${receiptAccess}`});
 
-function statusLabel(){return configuration?.window==='before'?'Sprzedaż od 27 listopada':configuration?.window==='after'?'Promocja zakończona':'Sprzedaż chwilowo niedostępna';}
+function statusLabel(){return configuration?.window==='before'?'Sprzedaż od 26 listopada':configuration?.window==='after'?'Promocja zakończona':'Sprzedaż chwilowo niedostępna';}
 function updateSummary(){
   document.querySelector('[data-summary-value]').textContent=currency(selectedOffer.value);
   document.querySelector('[data-summary-bonus]').textContent=currency(selectedOffer.bonus);
