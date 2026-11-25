@@ -43,7 +43,6 @@ export default function BlackFridayPopup({ locale }: { locale: string }) {
         <p className={styles.eyebrow}>BLACK FRIDAY · 27–30 LISTOPADA 2026</p>
         <h2 id="black-friday-title">Podaruj komuś<br /><em>więcej niż słowa.</em></h2>
         <p>Voucher na zajęcia z native speakerami. Dla bliskiej osoby. Albo dla siebie.</p>
-        <div className={styles.offer}><span>1000 zł na zajęcia</span><strong>za 849 zł</strong></div>
         <p id="black-friday-preview-note" className={styles.note}>Podgląd przed uruchomieniem sprzedaży. Możesz przetestować zakup bez płatności.</p>
         <a className={styles.button} href="/voucher" onClick={rememberDismissal}>Zobacz vouchery — podgląd</a>
         <button className={styles.later} type="button" onClick={close}>Teraz zostaję na stronie</button>
