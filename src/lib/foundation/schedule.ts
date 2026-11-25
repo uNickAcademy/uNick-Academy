@@ -52,14 +52,14 @@ export const projectSchedule: readonly ProjectLocation[] = [
   },
   {
     municipality: 'szamotuly',
-    name: 'Przecław (gmina Szamotuły)',
-    day: 'Poniedziałki',
-    dayOfWeek: 'monday',
-    venue: null,
-    address: 'ul. Długa 28, 64-514 Przecław',
+    name: 'Szamotuły',
+    day: 'Czwartki',
+    dayOfWeek: 'thursday',
+    venue: 'Zespół Szkół Technicznych',
+    address: 'ul. Nowa 60, Tarnowo Podgórne',
     courses: [
-      {activity: 'teenage_talk', title: 'Teenage Talk', time: '16:30'},
-      {activity: 'podcasts_audio_video', title: 'Podcasts', time: '17:30'},
+      {activity: 'teenage_talk', title: 'Teenage Talk', time: '15:00'},
+      {activity: 'podcasts_audio_video', title: 'Podcasts', time: '16:15'},
     ],
   },
 ]
