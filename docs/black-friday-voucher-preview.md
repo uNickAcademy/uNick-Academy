@@ -1,3 +1,7 @@
+# Historyczny podgląd Black Friday
+
+Ten dokument opisuje poprzedni etap makiety. Bieżący stan i ograniczenia: [black-friday-vouchers.md](./black-friday-vouchers.md).
+
 # Black Friday 2026 — public preview
 
 Purpose: review the approved voucher design on the existing school domain.

@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   // natywnie z node_modules zamiast przepuszczać przez bundler: korzystają
   // z gniazd TCP i dynamicznych require, których webpack nie lubi.
   serverExternalPackages: ["imapflow", "mailparser", "nodemailer"],
-  outputFileTracingIncludes: {'/voucher/[[...path]]':['./public/voucher-preview/index.html'], '/api/admin/foundation-contracts/preview':['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf'], '/api/foundation-contract/submit': ['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf']},
+  outputFileTracingIncludes: {'/api/vouchers/**/*':['./public/voucher-preview/assets/*.woff2'], '/api/admin/vouchers':['./public/voucher-preview/assets/*.woff2'], '/voucher/[[...path]]':['./public/voucher-preview/index.html'], '/api/admin/foundation-contracts/preview':['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf'], '/api/foundation-contract/submit': ['./assets/foundation-contract/**/*','./public/foundation/contracts/informacja-wojewodztwa.pdf']},
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "xkydfgunafxfuzsggmca.supabase.co" },

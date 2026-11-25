@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import styles from './BlackFridayPopup.module.css'
 
-const DISMISSED_KEY = 'unick-black-friday-2026-preview-dismissed'
+const DISMISSED_KEY = 'unick-black-friday-2026-live-dismissed'
 const PROMOTION_END = Date.parse('2026-12-01T00:00:00+01:00')
 
 export default function BlackFridayPopup({ locale }: { locale: string }) {
@@ -43,8 +43,8 @@ export default function BlackFridayPopup({ locale }: { locale: string }) {
         <p className={styles.eyebrow}>BLACK FRIDAY · 27–30 LISTOPADA 2026</p>
         <h2 id="black-friday-title">Podaruj komuś<br /><em>więcej niż słowa.</em></h2>
         <p>Voucher na zajęcia z native speakerami. Dla bliskiej osoby. Albo dla siebie.</p>
-        <p id="black-friday-preview-note" className={styles.note}>Podgląd przed uruchomieniem sprzedaży. Możesz przetestować zakup bez płatności.</p>
-        <a className={styles.button} href="/voucher" onClick={rememberDismissal}>Zobacz vouchery — podgląd</a>
+        <p id="black-friday-preview-note" className={styles.note}>Voucher z kodem i miejscem na imię — gotowy do podarowania.</p>
+        <a className={styles.button} href="/voucher" onClick={rememberDismissal}>Zobacz vouchery</a>
         <button className={styles.later} type="button" onClick={close}>Teraz zostaję na stronie</button>
         <p className={styles.details}>Cztery wartości do wyboru · 12 miesięcy ważności</p>
       </div>

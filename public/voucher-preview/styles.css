@@ -39,3 +39,5 @@ img{height:auto}
 .summary-row{min-width:0}.summary-total{flex-wrap:wrap;gap:5px 18px}.summary-total strong{white-space:nowrap}
 @media(max-width:720px){.welcome-art>img{object-fit:contain;object-position:center}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.button:hover{transform:none}}
+
+.button:disabled{opacity:.65;cursor:default;transform:none}.sale-status{padding:16px 20px;background:#F7E2DD;color:#1c2b4a;border-radius:12px;margin-bottom:24px;font-weight:600}.invoice-details{border-block:1px solid var(--border);padding:16px 0;margin-top:22px}.invoice-details summary{cursor:pointer;font-size:14px;font-weight:600}.voucher-code{overflow-wrap:anywhere;font-family:monospace;font-size:20px}

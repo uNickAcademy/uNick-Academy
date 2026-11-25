@@ -35,6 +35,7 @@ const NAV = [
   { href: '/admin/komunikacja', label: 'Komunikacja', icon: Megaphone },
   // Agent Skrzynki: treści maili to dane osobowe, więc tylko dla admina.
   { href: '/admin/skrzynka', label: 'Skrzynka', icon: Mail, adminOnly: true },
+  { href: '/admin/vouchery', label: 'Vouchery', icon: Gift },
   { href: '/admin/polecenia', label: 'Polecenia', icon: Gift, adminOnly: true },
   { href: '/ufos', label: 'Finanse (uFOS)', icon: Landmark, adminOnly: true },
 ]

@@ -4,10 +4,10 @@ import { voucherArtworkData } from './assets/voucher-art-data.js';
 const escapeXml = value => String(value).replace(/[<>&"']/g, character => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[character]));
 
 /** Render-only demonstration artwork. DEMO codes have no monetary value. */
-export function createVoucherSvg({value, code, validUntil = '27.11.2027'}) {
+export function createVoucherSvg({value, code, validUntil = '27.11.2027', demo = true}) {
   const amount = new Intl.NumberFormat('pl-PL').format(value);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
-  <title>Przykładowy voucher uNick Academy ${amount} zł, kod nieaktywny</title>
+  <title>Voucher uNick Academy ${amount} zł${demo ? ', wzór nieaktywny' : ''}</title>
   <image href="${voucherArtworkData}" x="0" y="0" width="1600" height="1000" preserveAspectRatio="xMidYMid slice"/>
   <image href="${officialLogoData}" x="36" y="10" width="255" height="112" style="mix-blend-mode:multiply"/>
   <text x="1040" y="186" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="91" letter-spacing="1" fill="#fff7e7">BLACK FRIDAY</text>
@@ -21,7 +21,7 @@ export function createVoucherSvg({value, code, validUntil = '27.11.2027'}) {
   <text x="626" y="801" font-family="monospace" font-size="35" font-weight="600" fill="#082547">${escapeXml(code)}</text>
   <text x="628" y="867" font-family="Arial,sans-serif" font-size="23" fill="#35445a">Ważny do ${escapeXml(validUntil)}</text>
   <text x="78" y="960" font-family="Arial,sans-serif" font-weight="700" font-size="23" fill="#ffffff">unick-academy.pl</text>
-  <text x="1519" y="960" text-anchor="end" font-family="Arial,sans-serif" font-size="20" letter-spacing="1" fill="#fff7e7">WZÓR · KOD NIEAKTYWNY</text>
+  <text x="1519" y="960" text-anchor="end" font-family="Arial,sans-serif" font-size="20" letter-spacing="1" fill="#fff7e7">${demo ? 'WZÓR · KOD NIEAKTYWNY' : 'TWÓJ DOBRY POCZĄTEK'}</text>
   </svg>`;
 }
 
