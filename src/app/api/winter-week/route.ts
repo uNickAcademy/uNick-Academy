@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
       dateLabel: WINTER.dateLabel,
       hours: WINTER.hours,
       priority: data.regularParticipant,
+      locale: (body as {locale?: unknown})?.locale === 'en' ? 'en' : 'pl',
     }),
     notifyFoundationEmail({
       title: `Winter Project Week: nowe zgłoszenie ${row.reference}, ${data.participantName}`,

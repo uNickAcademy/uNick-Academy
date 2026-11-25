@@ -129,7 +129,7 @@ export default function WinterWeekForm({locale: rawLocale = 'pl'}: {locale?: str
       const response = await fetch('/api/winter-week', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload),
+        body: JSON.stringify({...payload, locale}),
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {

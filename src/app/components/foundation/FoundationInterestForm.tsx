@@ -120,7 +120,7 @@ export default function FoundationInterestForm({copy, locale: rawLocale}: Props)
       const response = await fetch('/api/foundation-interest', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload),
+        body: JSON.stringify({...payload, locale}),
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {

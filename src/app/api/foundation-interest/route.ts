@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     sendFoundationInterestConfirmation(data.email, {
       contactName: data.contactName as string,
       participantFirstName: data.participantFirstName as string,
+      locale: (body as {locale?: unknown})?.locale === 'en' ? 'en' : 'pl',
     }),
     notifyFoundationEmail({
       title: `Nowa deklaracja: ${data.participantFirstName}, ${data.participantAge} lat`,
