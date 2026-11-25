@@ -834,6 +834,30 @@ const pl = {
         "Tworzymy projekty, w których młodzież nie jest jedynie odbiorcą gotowych zajęć. Może odkrywać swoje mocne strony, pracować z innymi, wyrażać własne zdanie, tworzyć i doświadczać, że jej pomysły mają znaczenie.",
       ],
     },
+    ui: {
+      mascotAlt: "uNickorn machający na powitanie",
+      projectsTitle: "Projekty Fundacji",
+      detailsLabel: "Dane Fundacji",
+      projectsNote: "",
+      labels: { legalForm: "Forma prawna", registrationDate: "Data rejestracji" },
+      legalFormValue: "Fundacja",
+      registrationDateValue: "18 grudnia 2025 r.",
+      countryValue: "Polska",
+      projects: {
+        deklaracja: {
+          alt: "Kreatorzy Przyszłości – bezpłatne zajęcia",
+          title: "Kreatorzy Przyszłości",
+          subtitle: "Bezpłatne zajęcia dla młodzieży",
+          cta: "Dowiedz się więcej",
+        },
+        ferie: {
+          alt: "Plakat Winter Project Week – Kreatywne ferie po angielsku, 22–26 lutego 2027",
+          title: "Winter Project Week",
+          subtitle: "Ferie z pomysłem · 22–26 lutego 2027",
+          cta: "Zapisz się na ferie",
+        },
+      },
+    },
     areas: { eyebrow: "Obszary działania Fundacji", title: "Rozwój, który zaczyna się od relacji i prowadzi do działania", items: [
       { title: "Sprawczość i inicjatywa", text: "Pomagamy młodym ludziom przechodzić od pomysłu do działania oraz dostrzegać, że mogą wpływać na swoje życie i otoczenie." },
       { title: "Relacje i integracja", text: "Tworzymy bezpieczne przestrzenie do poznawania rówieśników, współpracy, komunikacji i budowania poczucia przynależności." },

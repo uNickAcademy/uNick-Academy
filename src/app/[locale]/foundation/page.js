@@ -10,7 +10,7 @@ import styles from './FoundationPage.module.css'
 
 export async function generateMetadata({ params }) {
   const { locale } = await params
-  if (locale !== 'pl') {
+  if (!['pl', 'en'].includes(locale)) {
     return {
       title: 'uNick Academy Foundation',
       robots: { index: false, follow: false },
@@ -18,13 +18,12 @@ export async function generateMetadata({ params }) {
     }
   }
 
-  const copy = getDictionary('pl').foundation
+  const copy = getDictionary(locale).foundation
   return buildMetadata({
     locale,
     path: '/foundation',
     title: copy.meta.title,
     description: copy.meta.description,
-    availableLocales: ['pl'],
   })
 }
 
@@ -35,11 +34,7 @@ const projects = [
     image: '/foundation/kreatorzy-przyszlosci-card-v2.png',
     width: 1122,
     height: 1402,
-    alt: 'Kreatorzy Przyszłości – bezpłatne zajęcia',
-    title: 'Kreatorzy Przyszłości',
-    subtitle: 'Bezpłatne zajęcia dla młodzieży',
     tone: 'cream',
-    cta: 'Dowiedz się więcej',
     position: 'right center',
   },
   {
@@ -48,22 +43,19 @@ const projects = [
     image: '/foundation/winter-project-week-2027.webp',
     width: 1414,
     height: 2000,
-    alt: 'Plakat Winter Project Week – Kreatywne ferie po angielsku, 22–26 lutego 2027',
-    title: 'Winter Project Week',
-    subtitle: 'Ferie z pomysłem · 22–26 lutego 2027',
     tone: 'navy',
-    cta: 'Zapisz się na ferie',
     position: 'center center',
   },
 ]
 
 export default async function Page({ params }) {
   const { locale } = await params
-  if (locale !== 'pl') redirect('/pl/foundation')
+  if (!['pl', 'en'].includes(locale)) redirect('/pl/foundation')
 
-  const copy = getDictionary('pl').foundation
+  const copy = getDictionary(locale).foundation
+  const ui = copy.ui
   const foundation = foundationConfig
-  const url = `${siteConfig.url}/pl/foundation`
+  const url = `${siteConfig.url}/${locale}/foundation`
 
   return (
     <>
@@ -84,7 +76,7 @@ export default async function Page({ params }) {
               url,
               name: copy.meta.title,
               description: copy.meta.description,
-              inLanguage: 'pl-PL',
+              inLanguage: locale === 'pl' ? 'pl-PL' : 'en',
               about: { '@id': `${url}#foundation` },
             },
           ],
@@ -103,7 +95,7 @@ export default async function Page({ params }) {
           <Reveal className={styles.heroMascot}>
             <Image
               src="/unicorn.PNG"
-              alt="uNickorn machający na powitanie"
+              alt={ui.mascotAlt}
               width={1024}
               height={1536}
               priority
@@ -115,9 +107,11 @@ export default async function Page({ params }) {
 
       <section className={styles.projectChooser} aria-labelledby="foundation-projects-title">
         <div className="container">
-          <h2 id="foundation-projects-title" className="visually-hidden">Projekty Fundacji</h2>
+          <h2 id="foundation-projects-title" className="visually-hidden">{ui.projectsTitle}</h2>
           <div className={styles.projectCards}>
-            {projects.map((project) => (
+            {projects.map((raw) => {
+              const project = { ...raw, ...ui.projects[raw.id] }
+              return (
               <Reveal as="article" id={project.id} className={styles.projectCard} key={project.href}>
                 <Link href={project.href} className={styles.projectCardLink} aria-label={`${project.cta}: ${project.title}`}>
                   <span className={styles.projectCardMedia}>
@@ -139,8 +133,10 @@ export default async function Page({ params }) {
                   </span>
                 </Link>
               </Reveal>
-            ))}
+              )
+            })}
           </div>
+          {ui.projectsNote ? <p className={styles.lead}>{ui.projectsNote}</p> : null}
         </div>
       </section>
 
@@ -148,19 +144,19 @@ export default async function Page({ params }) {
         <div className="container">
           <Reveal>
             <aside className={styles.identity}>
-              <small id="foundation-details-title">Dane Fundacji</small>
+              <small id="foundation-details-title">{ui.detailsLabel}</small>
               <h3>{foundation.legalName}</h3>
               <dl>
                 <div><dt>KRS</dt><dd>{foundation.krs}</dd></div>
                 <div><dt>NIP</dt><dd>{foundation.nip}</dd></div>
                 <div><dt>REGON</dt><dd>{foundation.regon}</dd></div>
-                <div><dt>Forma prawna</dt><dd>{foundation.legalForm}</dd></div>
-                <div><dt>Data rejestracji</dt><dd>{foundation.registrationDate}</dd></div>
+                <div><dt>{ui.labels.legalForm}</dt><dd>{ui.legalFormValue}</dd></div>
+                <div><dt>{ui.labels.registrationDate}</dt><dd>{ui.registrationDateValue}</dd></div>
               </dl>
               <p>
                 {foundation.address.streetAddress}, {foundation.address.village},{' '}
                 {foundation.address.postalCode} {foundation.address.addressLocality},{' '}
-                {foundation.address.addressCountry}
+                {ui.countryValue}
               </p>
             </aside>
           </Reveal>

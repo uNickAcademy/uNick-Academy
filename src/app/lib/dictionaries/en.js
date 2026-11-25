@@ -823,6 +823,42 @@ const en = {
     },
   },
 
+  foundation: {
+    meta: { title: "uNick Academy Foundation | Supporting children and young people", description: "uNick Academy Foundation helps children and young people build agency, creativity, social skills and the courage to act. Discover the Foundation's projects." },
+    hero: {
+      subtitle: "We help young people discover that they can create, take action and make a real difference in their surroundings.",
+      paragraphs: [
+        "In 2025 we founded uNick Academy Foundation to extend our social work and bring valuable programmes to children and teenagers who do not always have access to such opportunities.",
+        "We support young people in building confidence, agency, creativity, teamwork skills and the courage to start their own initiatives.",
+        "We create projects in which young people are not just recipients of ready-made classes. They can discover their strengths, work with others, express their own opinions, create and experience that their ideas matter.",
+      ],
+    },
+    ui: {
+      mascotAlt: "uNickorn waving hello",
+      projectsTitle: "Foundation projects",
+      detailsLabel: "Foundation details",
+      projectsNote: "Project pages and sign-up forms are currently available in Polish only.",
+      labels: { legalForm: "Legal form", registrationDate: "Registration date" },
+      legalFormValue: "Foundation",
+      registrationDateValue: "18 December 2025",
+      countryValue: "Poland",
+      projects: {
+        deklaracja: {
+          alt: "Creators of the Future, free classes",
+          title: "Creators of the Future",
+          subtitle: "Free classes for young people",
+          cta: "Learn more",
+        },
+        ferie: {
+          alt: "Winter Project Week poster, creative winter holidays in English, 22–26 February 2027",
+          title: "Winter Project Week",
+          subtitle: "Winter holidays with an idea · 22–26 February 2027",
+          cta: "Sign up for the winter week",
+        },
+      },
+    },
+  },
+
   consultationModal: {
     closeAria: "Close",
     eyebrow: "Free consultation",

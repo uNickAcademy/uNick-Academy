@@ -19,6 +19,7 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/how-we-teach', lastmod: '2026-07-22', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/meet-us', lastmod: '2026-07-22', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/contact', lastmod: '2026-07-22', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/foundation', lastmod: '2026-11-25', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/meet-unickorn', lastmod: '2026-07-22', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/teachers-zone', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/meterials', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
@@ -28,7 +29,6 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
 ]
 
 const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
-  { path: '/foundation', lastmod: '2026-10-14', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/foundation/privacy', lastmod: '2026-08-04', priority: 0.2, changeFrequency: 'yearly' },
 ]
 

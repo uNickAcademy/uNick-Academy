@@ -117,7 +117,7 @@ const NAV_ROUTES = [
   { key: "howWeTeach", path: "/how-we-teach" },
   { key: "meetUs", children: [
     { key: "meetAcademy", path: "/meet-us" },
-    { key: "foundation", path: "/foundation", locales: ["pl"] },
+    { key: "foundation", path: "/foundation" },
   ] },
   { key: "contact", path: "/contact" },
   { key: "teachersZone", path: "/teachers-zone" },
