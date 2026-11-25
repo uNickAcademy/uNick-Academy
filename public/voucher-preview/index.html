@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/voucher-preview/" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#fffdf9" />
+    <title>Vouchery Black Friday | uNick Academy — podgląd</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="./assets/fonts.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="/voucher#main">Przejdź do treści</a>
+    <div class="preview-bar"><span>MAKIETA</span> PODGLĄD — sprzedaż nie jest uruchomiona. Płatność i e-mail są symulowane.</div>
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="/pl" class="brand" aria-label="uNick Academy — strona główna"><img src="./assets/official-logo.jpg" width="164" height="72" alt="uNick Academy" /></a>
+        <nav aria-label="Menu główne">
+          <a href="/pl">Strona główna</a>
+          <a href="/voucher" data-route data-nav-voucher>Vouchery</a>
+          <a href="/pl/how-we-teach" class="optional-nav">Nasze lekcje</a>
+          <a href="/pl/contact" class="optional-nav">Kontakt</a>
+        </nav>
+        <a class="button small" href="/voucher#zakup" data-route>Wybierz voucher</a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <footer id="kontakt" class="site-footer"><div><strong>uNick Academy</strong><p>Dobre rozmowy zaczynają się od ludzi.</p></div><div><a href="mailto:hello@unick-academy.pl">hello@unick-academy.pl</a><br /><a href="tel:+48666661750">+48 666 661 750</a></div><p class="fine-print">Rumianek · online · z ludźmi z całego świata<br />© 2026 uNick Academy</p></footer>
+    <dialog id="welcome-modal" class="welcome-modal" aria-labelledby="welcome-title">
+      <button type="button" class="close-button" aria-label="Zamknij ofertę Black Friday" data-close-welcome>×</button>
+      <div class="welcome-art"><img src="./assets/black-friday-reference.png" alt="Black Friday uNick Academy: vouchery na zajęcia z native speakerami, dla siebie lub na prezent" width="1254" height="1254" /></div>
+      <div class="welcome-copy"><p class="eyebrow">BLACK FRIDAY · 27–30 LISTOPADA</p><h2 id="welcome-title">Podaruj komuś<br /><em>więcej niż słowa.</em></h2><p>Voucher na angielski z native speakerami. Dla bliskiej osoby. Albo dla siebie.</p><div class="welcome-offer"><span>1000 zł na zajęcia</span><strong>za 849 zł</strong></div><a class="button" href="/voucher#zakup" data-route data-dismiss-welcome>Wybieram voucher</a><button type="button" class="text-button" data-close-welcome>Teraz zostaję na stronie</button><p class="fine-print">Cztery wartości do wyboru · 12 miesięcy ważności</p></div>
+    </dialog>
+    <dialog id="payment-modal" class="payment-modal" aria-labelledby="payment-title"></dialog>
+    <dialog id="terms-modal" class="terms-modal" aria-labelledby="terms-title"><button type="button" class="close-button" aria-label="Zamknij zasady" data-close-terms>×</button><p class="eyebrow">ZASADY W PIGUŁCE</p><h2 id="terms-title">Spokojnie, bez drobnego druku.</h2><ul><li>Oferta Black Friday: 27–30 listopada 2026 r.</li><li>Voucher możesz kupić dla siebie lub na prezent.</li><li>Ważność: 12 miesięcy od opłacenia.</li><li>Wartość wykorzystujesz stopniowo na zajęcia z native speakerami, indywidualnie lub w grupie, online lub stacjonarnie.</li><li>Możesz korzystać z zajęć u różnych nauczycieli według dostępności i uzgodnionych cen.</li><li>Promocja nie łączy się z innymi rabatami.</li></ul><p class="demo-note">To makieta. Ostateczne warunki zakupu i informacja o prywatności zostaną dołączone przed uruchomieniem sprzedaży.</p></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

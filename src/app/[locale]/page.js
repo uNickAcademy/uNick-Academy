@@ -13,6 +13,7 @@ import AvailabilityBanner from "../components/availability/AvailabilityBanner";
 import AvailabilityPopup from "../components/availability/AvailabilityPopup";
 import LocationSection from "../components/LocationSection";
 import { getDictionary } from "../lib/dictionaries";
+import BlackFridayPopup from "../components/voucher/BlackFridayPopup";
 
 // Strona jest prerenderowana, a tymczasowy pasek naboru ma zniknąć sam po
 // 7.09.2026 — bez odświeżania wisiałby dalej. Usuń razem z banerem.
@@ -24,6 +25,7 @@ export default async function HomePage({ params }) {
 
   return (
     <>
+      <BlackFridayPopup locale={locale} />
       {/* TYMCZASOWE (nabór wrzesień 2026) — dwie linijki do skasowania. */}
       <AvailabilityBanner locale={locale} />
       <AvailabilityPopup locale={locale} />
