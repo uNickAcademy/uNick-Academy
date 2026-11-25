@@ -28,7 +28,7 @@ const conditions = [
 export const metadata = {
   title,
   description,
-  alternates: { canonical: WINTER.path },
+  alternates: { canonical: WINTER.path, languages: { pl: WINTER.path, en: '/en/ferie', 'x-default': WINTER.path } },
   openGraph: {
     title: `${title} | uNick Academy`,
     description,

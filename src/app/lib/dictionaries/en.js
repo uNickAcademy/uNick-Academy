@@ -837,7 +837,7 @@ const en = {
       mascotAlt: "uNickorn waving hello",
       projectsTitle: "Foundation projects",
       detailsLabel: "Foundation details",
-      projectsNote: "Project pages and sign-up forms are currently available in Polish only.",
+      projectsNote: "",
       labels: { legalForm: "Legal form", registrationDate: "Registration date" },
       legalFormValue: "Foundation",
       registrationDateValue: "18 December 2025",
@@ -857,6 +857,25 @@ const en = {
         },
       },
     },
+    activities: { eyebrow: "Free classes", title: "Choose what interests your child most", items: [
+      { id: "teenpreneurs", title: "Teenpreneurs", age: "13–18 years old", intro: "Entrepreneurship in practice. Participants create their own ideas for products, services and initiatives, work in teams, make decisions and learn to present their projects." },
+      { id: "podcasts_audio_video", title: "Podcasts", age: "10–16 years old", intro: "From an idea to your own recording! Conversations, interviews, storytelling, working with a microphone and camera, and creating audio and video content. The classes build communication, creativity and teamwork." },
+      { id: "teenage_talk", title: "Teenage Talk", age: "13–18 years old", intro: "A space to talk about things that matter to young people. Discussions, exchanging opinions, interesting topics, shared challenges and building the courage to speak your mind." },
+      { id: "art_performance_9_13", title: "Art & Creative Performance", age: "10–16 years old", intro: "Theatre, improvisation, art, music, movement and creative projects. No experience or special artistic talent needed. What counts is inventiveness, experimenting and the joy of creating together." },
+    ] },
+    form: {
+      submit: "Send submission", submitting: "Sending…", requiredHint: "Fields marked * are required.", errorTitle: "Please check the form", genericError: "We could not send your submission. Please try again in a moment.", successTitle: "Thank you, we have received your submission", successText: "We will contact you about available places, the schedule and next steps.",
+      consents: ["I understand that submitting the form is an expression of interest and does not guarantee a place.", "I consent to contact by phone, SMS, WhatsApp or email from uNick Academy Foundation solely regarding the Creators of the Future project. I know I can withdraw my consent at any time.", "I consent to the processing of the data provided in the form for the purpose of handling my expression of interest and further contact about the project."],
+    },
+    privacy: { metaTitle: "Personal data processing information | Creators of the Future", metaDescription: "Information on how personal data is processed when you express interest in the Creators of the Future project.", title: "Personal data processing information", lastUpdated: "Version in force from 14 October 2026", intro: "The information below applies only to an expression of interest in the Creators of the Future project. The data will not enter the uNick Academy sales funnel or be used to promote paid courses.", sections: [
+      { title: "Data controller", text: "The data controller is UNICK ACADEMY FOUNDATION, a foundation based at ul. Nowa 23 in Rumianek, 62-080 Tarnowo Podgórne, Poland, KRS 0001212961, NIP 7812102071, REGON 543545058." },
+      { title: "Purpose and legal basis", text: "The data is processed to handle your expression of interest, choose classes suitable for the participant's age, verify the municipality of residence, arrange groups and schedules, and stay in contact. The basis for contact and processing is voluntary consent, which can be withdrawn at any time without affecting the lawfulness of earlier processing." },
+      { title: "Scope of data", text: "We collect the information given in the form: the participant's first and last name, date of birth, municipality of residence, class preferences and availability, optional accessibility needs and the parent's or guardian's contact details. We do not ask for an exact address, PESEL number or detailed medical data." },
+      { title: "Recipients of data", text: "Only authorised persons acting for the Foundation and providers that maintain the website, store data securely and send messages may have access to the data, under appropriate agreements and only on the Foundation's instructions." },
+      { title: "Retention period", text: "The data will be kept until the interest survey ends, the outcome of the call and any recruitment has been communicated, or until consent is withdrawn earlier. It will then be deleted, unless further storage is required to establish, pursue or defend legal claims." },
+      { title: "Your rights", text: "You have the right to access your data, rectify it, erase it, restrict its processing, transfer it and withdraw consent. You also have the right to lodge a complaint with the President of the Personal Data Protection Office (UODO)." },
+      { title: "Voluntary provision of data", text: "Providing data is voluntary but necessary to send the submission and to be contacted about the project. The data will not be used for a newsletter, general marketing, promoting paid courses or creating sales leads." },
+    ] },
   },
 
   consultationModal: {

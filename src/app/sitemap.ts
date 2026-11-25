@@ -20,6 +20,7 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/meet-us', lastmod: '2026-07-22', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/contact', lastmod: '2026-07-22', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/foundation', lastmod: '2026-11-25', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/foundation/privacy', lastmod: '2026-11-25', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/meet-unickorn', lastmod: '2026-07-22', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/teachers-zone', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/meterials', lastmod: '2026-11-18', priority: 0.5, changeFrequency: 'monthly' },
@@ -28,9 +29,7 @@ const SHARED_ROUTES: { path: string; lastmod: string; priority: number; changeFr
   { path: '/terms-of-service', lastmod: '2026-06-23', priority: 0.2, changeFrequency: 'yearly' },
 ]
 
-const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = [
-  { path: '/foundation/privacy', lastmod: '2026-08-04', priority: 0.2, changeFrequency: 'yearly' },
-]
+const POLISH_ONLY_ROUTES: typeof SHARED_ROUTES = []
 
 // Te polskojęzyczne strony żyją poza routingiem [locale], więc nie mają pary
 // hreflang. Obejmuje to zapisy do szkoły oraz osobne strony projektów Fundacji.
@@ -39,8 +38,12 @@ const UNLOCALIZED_PUBLIC_ROUTES: { path: string; lastmod: string; priority: numb
   { path: '/zapisy', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/grupowe', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/zapisy/indywidualne', lastmod: '2026-09-11', priority: 0.9, changeFrequency: 'monthly' },
-  { path: '/ferie', lastmod: '2026-11-24', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/creators', lastmod: '2026-10-14', priority: 0.9, changeFrequency: 'monthly' },
+]
+
+// Strony projektów Fundacji mają polską wersję poza [locale] i angielską pod /en.
+const FOUNDATION_PROJECT_ROUTES: typeof SHARED_ROUTES = [
+  { path: '/ferie', lastmod: '2026-11-25', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/creators', lastmod: '2026-11-25', priority: 0.9, changeFrequency: 'monthly' },
 ]
 
 // Lokalna strona docelowa ma inny slug w każdym języku, dlatego łączymy je
@@ -91,6 +94,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: route.changeFrequency,
       priority: route.priority,
     })
+  }
+
+  for (const route of FOUNDATION_PROJECT_ROUTES) {
+    const languages = {
+      pl: `${BASE}${route.path}`,
+      en: `${BASE}/en${route.path}`,
+      'x-default': `${BASE}${route.path}`,
+    }
+    for (const url of [`${BASE}${route.path}`, `${BASE}/en${route.path}`]) {
+      entries.push({
+        url,
+        lastModified: route.lastmod,
+        changeFrequency: route.changeFrequency,
+        priority: route.priority,
+        alternates: { languages },
+      })
+    }
   }
 
   // Lokalna strona docelowa (para PL/EN o różnych slugach).

@@ -62,7 +62,7 @@ const organizationFacts = [
 export const metadata = {
   title,
   description,
-  alternates: { canonical: '/creators' },
+  alternates: { canonical: '/creators', languages: { pl: '/creators', en: '/en/creators', 'x-default': '/creators' } },
   openGraph: {
     title: `${title} | uNick Academy`,
     description,

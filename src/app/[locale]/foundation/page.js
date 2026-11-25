@@ -113,7 +113,7 @@ export default async function Page({ params }) {
               const project = { ...raw, ...ui.projects[raw.id] }
               return (
               <Reveal as="article" id={project.id} className={styles.projectCard} key={project.href}>
-                <Link href={project.href} className={styles.projectCardLink} aria-label={`${project.cta}: ${project.title}`}>
+                <Link href={locale === 'en' ? `/en${project.href}` : project.href} className={styles.projectCardLink} aria-label={`${project.cta}: ${project.title}`}>
                   <span className={styles.projectCardMedia}>
                     <Image
                       src={project.image}
