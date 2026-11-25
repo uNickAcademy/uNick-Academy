@@ -98,10 +98,11 @@ assert.equal(options.calculateAgeOnDate('2012-02-30'), null)
 console.log('OK: birthdays and leap days')
 
 const coursesByMunicipality = {
-  tarnowo_podgorne: ['teenpreneurs', 'art_performance_9_13'],
+  tarnowo_podgorne: ['teenpreneurs', 'art_performance_9_13', 'podcasts_audio_video', 'teenage_talk'],
   kazmierz: ['teenage_talk', 'podcasts_audio_video'],
   rokietnica: ['podcasts_audio_video', 'teenage_talk'],
-  szamotuly: ['podcasts_audio_video', 'teenage_talk'],
+  // The Szamotuły group moved to a second Tarnowo Podgórne location; no group is tied to this residence anymore.
+  szamotuly: [],
 }
 
 for (const municipality of options.municipalityOptions.map(item => item.value)) {
@@ -111,7 +112,11 @@ for (const municipality of options.municipalityOptions.map(item => item.value)) 
       coursesByMunicipality[municipality].includes(activity.value)
       && age >= activity.minAge && age <= activity.maxAge)
     assert.deepEqual(eligible.map(activity => activity.value), expected.map(activity => activity.value), `${municipality}, ${age}: unexpected location filter`)
-    assert.ok(eligible.length > 0, `${municipality}, ${age}: no eligible course`)
+    if (coursesByMunicipality[municipality].length) {
+      assert.ok(eligible.length > 0, `${municipality}, ${age}: no eligible course`)
+    } else {
+      assert.equal(eligible.length, 0, `${municipality}, ${age}: Szamotuły no longer hosts a group`)
+    }
     for (const activity of eligible) {
       const result = validation.validateFoundationInterest({
         ...base,
@@ -131,15 +136,15 @@ assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazm
 assert.equal(validation.validateFoundationInterest({...base, municipality: 'kazmierz', birthDate: birthDateForAge(12), activities: ['teenage_talk'], primaryActivity: 'teenage_talk'}).ok, false)
 assert.equal(schedule.courseScheduleDescription('rokietnica', 'podcasts_audio_video'), 'Czwartki, godz. 16:30. Sala OSP, ul. Szkolna 18B, 62-090 Rokietnica.')
 assert.equal(schedule.courseScheduleDescription('kazmierz', 'teenpreneurs'), null)
-assert.equal(schedule.courseScheduleDescription('szamotuly', 'teenage_talk'), 'Poniedziałki, godz. 16:30. ul. Długa 28, 64-514 Przecław.')
-assert.equal(schedule.courseScheduleDescription('szamotuly', 'podcasts_audio_video'), 'Poniedziałki, godz. 17:30. ul. Długa 28, 64-514 Przecław.')
-for (const [id, time] of [['szamotuly:teenage_talk', '16:30'], ['szamotuly:podcasts_audio_video', '17:30']]) {
+assert.equal(schedule.courseScheduleDescription('tarnowo_podgorne', 'teenage_talk'), 'Czwartki, godz. 15:00. Zespół Szkół Technicznych, ul. Nowa 60, Tarnowo Podgórne.')
+assert.equal(schedule.courseScheduleDescription('tarnowo_podgorne', 'podcasts_audio_video'), 'Czwartki, godz. 16:15. Zespół Szkół Technicznych, ul. Nowa 60, Tarnowo Podgórne.')
+for (const [id, time] of [['tarnowo_podgorne_zst:teenage_talk', '15:00'], ['tarnowo_podgorne_zst:podcasts_audio_video', '16:15']]) {
   const group = groups.foundationGroupOptions.find(item => item.id === id)
-  assert.ok(group.selection.label.includes('Przecław (gmina Szamotuły)'))
+  assert.ok(group.selection.label.includes('Zespół Szkół Technicznych'))
   assert.ok(group.selection.label.includes(time))
-  assert.ok(group.selection.label.includes('ul. Długa 28, 64-514 Przecław'))
+  assert.ok(group.selection.label.includes('ul. Nowa 60, Tarnowo Podgórne'))
 }
-console.log('OK: confirmed timetable and Przecław address in both Szamotuły group snapshots')
+console.log('OK: confirmed timetable and venue address in both Tarnowo Podgórne Thursday group snapshots')
 
 for (const residence of options.municipalityOptions.map(item => item.value)) {
   for (const courseMunicipality of options.projectLocationOptions.map(item => item.value)) {
@@ -214,24 +219,24 @@ console.log('OK: eight groups; mixed venues; snapshots; invalid and age-ineligib
 
 const fixedSchedulePayload = {
   ...base,
-  selectedGroups: ['szamotuly:teenage_talk', 'szamotuly:podcasts_audio_video'],
-  primaryGroup: 'szamotuly:teenage_talk',
+  selectedGroups: ['tarnowo_podgorne_zst:teenage_talk', 'tarnowo_podgorne_zst:podcasts_audio_video'],
+  primaryGroup: 'tarnowo_podgorne_zst:teenage_talk',
 }
 delete fixedSchedulePayload.availableDays
 delete fixedSchedulePayload.timeSlots
 const fixedSchedule = validation.validateFoundationInterest(fixedSchedulePayload)
 assert.equal(fixedSchedule.ok, true)
-assert.deepEqual(fixedSchedule.data.availableDays, ['monday'])
-assert.deepEqual(fixedSchedule.data.timeSlots, ['16:30', '17:30'])
+assert.deepEqual(fixedSchedule.data.availableDays, ['thursday'])
+assert.deepEqual(fixedSchedule.data.timeSlots, ['15:00', '16:15'])
 const fixedRecord = record.toFoundationRecord(fixedSchedule.data)
-assert.deepEqual(fixedRecord.available_days, ['monday'])
-assert.equal(fixedRecord.earliest_start, '16:30, 17:30')
+assert.deepEqual(fixedRecord.available_days, ['thursday'])
+assert.equal(fixedRecord.earliest_start, '15:00, 16:15')
 const forgedAvailability = validation.validateFoundationInterest({
   ...fixedSchedulePayload, availableDays: ['saturday'], timeSlots: ['sobota 9:00–12:00'],
 })
 assert.equal(forgedAvailability.ok, true)
-assert.deepEqual(forgedAvailability.data.availableDays, ['monday'])
-assert.deepEqual(forgedAvailability.data.timeSlots, ['16:30', '17:30'])
+assert.deepEqual(forgedAvailability.data.availableDays, ['thursday'])
+assert.deepEqual(forgedAvailability.data.timeSlots, ['15:00', '16:15'])
 assert.deepEqual(mixedGroups.data.availableDays, ['wednesday', 'thursday'])
 assert.deepEqual(mixedGroups.data.timeSlots, ['16:30', '17:30'])
 assert.equal(validation.validateFoundationInterest({...base, availableDays: []}).ok, false)
@@ -343,8 +348,8 @@ const request = payload => ({
   assert.equal(notificationCount, 6)
 
   assert.equal((await route.POST(request(fixedSchedulePayload))).status, 201)
-  assert.deepEqual(inserted.available_days, ['monday'])
-  assert.equal(inserted.earliest_start, '16:30, 17:30')
+  assert.deepEqual(inserted.available_days, ['thursday'])
+  assert.equal(inserted.earliest_start, '15:00, 16:15')
   assert.equal(record.readFoundationDetails(inserted.organizational_needs).selectedGroups.length, 2)
   assert.equal(notificationCount, 8)
 

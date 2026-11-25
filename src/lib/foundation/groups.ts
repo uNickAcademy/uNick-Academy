@@ -11,12 +11,13 @@ export type FoundationGroupSelection = {
 export const foundationGroupOptions = projectSchedule.flatMap(location =>
   location.courses.map(course => {
     const activity = activityOptions.find(item => item.value === course.activity)!
-    const id = `${location.municipality}:${course.activity}`
+    const id = `${location.slug}:${course.activity}`
     const label = `${course.title} — ${location.name}, ${location.day.toLocaleLowerCase('pl-PL')}${course.time ? `, ${course.time}` : ', godzina do potwierdzenia'}`
     return {
       id,
       activity: course.activity,
       municipality: location.municipality,
+      locationSlug: location.slug,
       title: course.title,
       age: `${activity.minAge}–${activity.maxAge} lat`,
       minAge: activity.minAge,

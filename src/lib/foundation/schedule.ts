@@ -3,6 +3,8 @@ import type {activityOptions, Municipality} from './options'
 type Activity = typeof activityOptions[number]['value']
 
 type ProjectLocation = {
+  /** Distinguishes locations that share a municipality, e.g. two groups in Tarnowo Podgórne. */
+  slug: string
   municipality: Municipality
   name: string
   day: string
@@ -15,6 +17,7 @@ type ProjectLocation = {
 /** Shared by the public timetable and the registration course descriptions. */
 export const projectSchedule: readonly ProjectLocation[] = [
   {
+    slug: 'tarnowo_podgorne',
     municipality: 'tarnowo_podgorne',
     name: 'Tarnowo Podgórne',
     day: 'Środy',
@@ -27,6 +30,7 @@ export const projectSchedule: readonly ProjectLocation[] = [
     ],
   },
   {
+    slug: 'kazmierz',
     municipality: 'kazmierz',
     name: 'Kaźmierz',
     day: 'Wtorki',
@@ -39,6 +43,7 @@ export const projectSchedule: readonly ProjectLocation[] = [
     ],
   },
   {
+    slug: 'rokietnica',
     municipality: 'rokietnica',
     name: 'Rokietnica',
     day: 'Czwartki',
@@ -51,8 +56,9 @@ export const projectSchedule: readonly ProjectLocation[] = [
     ],
   },
   {
-    municipality: 'szamotuly',
-    name: 'Szamotuły',
+    slug: 'tarnowo_podgorne_zst',
+    municipality: 'tarnowo_podgorne',
+    name: 'Tarnowo Podgórne',
     day: 'Czwartki',
     dayOfWeek: 'thursday',
     venue: 'Zespół Szkół Technicznych',
@@ -65,7 +71,8 @@ export const projectSchedule: readonly ProjectLocation[] = [
 ]
 
 export function courseScheduleDescription(municipality: string, activity: string) {
-  const location = projectSchedule.find(item => item.municipality === municipality)
+  const location = projectSchedule.find(item =>
+    item.municipality === municipality && item.courses.some(course => course.activity === activity))
   const course = location?.courses.find(item => item.activity === activity)
   if (!location || !course) return null
   if (!course.time || !location.address) {

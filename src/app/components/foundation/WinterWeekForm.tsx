@@ -215,9 +215,9 @@ export default function WinterWeekForm({locale: rawLocale = 'pl'}: {locale?: str
       {regular === 'yes' && <>
         <p className={styles.fieldHint}>{t.pickGroups}</p>
         {participantAge == null && <p className={styles.fieldHint}>{t.birthFirst}</p>}
-        {projectSchedule.map(location => <section key={location.municipality} className={styles.groupLocation} aria-labelledby={`winter-groups-${location.municipality}`}>
-          <header><h3 id={`winter-groups-${location.municipality}`}>{placeLabel(location.name, locale)} · {dayLabel(location.day, locale)}</h3></header>
-          <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.municipality === location.municipality).map(group => {
+        {projectSchedule.map(location => <section key={location.slug} className={styles.groupLocation} aria-labelledby={`winter-groups-${location.slug}`}>
+          <header><h3 id={`winter-groups-${location.slug}`}>{placeLabel(location.name, locale)} · {dayLabel(location.day, locale)}</h3></header>
+          <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.locationSlug === location.slug).map(group => {
             const eligible = participantAge != null && participantAge >= group.minAge && participantAge <= group.maxAge
             return <label key={group.id} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
               <input

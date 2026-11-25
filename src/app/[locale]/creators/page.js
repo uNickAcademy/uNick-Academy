@@ -182,7 +182,7 @@ export default async function CreatorsPage({ params }) {
           />
           <div className={styles.creatorLocationGrid}>
             {projectSchedule.map(location => (
-              <Reveal as="article" className={styles.creatorLocationCard} key={location.municipality}>
+              <Reveal as="article" className={styles.creatorLocationCard} key={location.slug}>
                 <header>
                   <h3>{placeLabel(location.name, 'en')}</h3>
                   <p className={styles.creatorLocationDay}>{dayLabel(location.day, 'en')}</p>

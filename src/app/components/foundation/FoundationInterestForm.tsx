@@ -55,7 +55,7 @@ export default function FoundationInterestForm({copy, locale: rawLocale}: Props)
   const locale: FoundationLocale = rawLocale === 'en' ? 'en' : 'pl'
   const t = TEXT[locale]
   const groupText = (group: typeof foundationGroupOptions[number]) => {
-    const location = projectSchedule.find(item => item.municipality === group.municipality)
+    const location = projectSchedule.find(item => item.slug === group.locationSlug)
     return (location && groupLabel(group, location, locale)) || group.label
   }
   const startedAt = useRef(0)
@@ -207,14 +207,14 @@ export default function FoundationInterestForm({copy, locale: rawLocale}: Props)
       <legend>{t.groups}</legend>
       <p className={styles.fieldHint}>{t.groupsHint}</p>
       {participantAge == null && <p className={styles.fieldHint}>{t.birthFirst}</p>}
-      {projectSchedule.map(location => <section key={location.municipality} className={styles.groupLocation} aria-labelledby={`groups-${location.municipality}`}>
+      {projectSchedule.map(location => <section key={location.slug} className={styles.groupLocation} aria-labelledby={`groups-${location.slug}`}>
         <header>
-          <h3 id={`groups-${location.municipality}`}>{placeLabel(location.name, locale)} · {dayLabel(location.day, locale)}</h3>
+          <h3 id={`groups-${location.slug}`}>{placeLabel(location.name, locale)} · {dayLabel(location.day, locale)}</h3>
           <p>{location.address
             ? [location.venue && venueLabel(location.venue, locale), location.address].filter(Boolean).join(', ')
             : t.venuePending}</p>
         </header>
-        <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.municipality === location.municipality).map(group => {
+        <div className={styles.courseGrid}>{foundationGroupOptions.filter(group => group.locationSlug === location.slug).map(group => {
           const eligible = participantAge != null && participantAge >= group.minAge && participantAge <= group.maxAge
           return <label key={group.id} className={`${styles.course} ${eligible ? '' : styles.disabled}`}>
             <input

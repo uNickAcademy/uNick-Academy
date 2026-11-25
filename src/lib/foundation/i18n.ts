@@ -17,9 +17,7 @@ const venues: Record<string, string> = {
   'Sala OSP': 'Volunteer Fire Brigade hall (OSP)',
 }
 
-const places: Record<string, string> = {
-  'Przecław (gmina Szamotuły)': 'Przecław (Szamotuły municipality)',
-}
+const places: Record<string, string> = {}
 
 const errors: Record<string, string> = {
   'Odśwież stronę i spróbuj ponownie.': 'Refresh the page and try again.',

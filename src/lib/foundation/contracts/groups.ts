@@ -3,18 +3,18 @@ import type { ContractGroup } from "./model";
 
 /** Post-recruitment groups are separate from the original declaration choices. */
 const locations = Object.fromEntries(
-  projectSchedule.map((location) => [location.municipality, location]),
+  projectSchedule.map((location) => [location.slug, location]),
 );
 function group(
   id: string,
   title: string,
-  municipality: string,
+  locationSlug: string,
   schedule: string,
   minAge: number,
   maxAge: number,
   firstSupport: string,
 ): ContractGroup & { firstSupport: string; label: string } {
-  const place = locations[municipality];
+  const place = locations[locationSlug];
   const address = [place.venue, place.address].filter(Boolean).join(", ");
   return {
     id,
